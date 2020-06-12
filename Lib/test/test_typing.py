@@ -365,18 +365,6 @@ class UnionTests(BaseTestCase):
         A = Union[str, Pattern]
         A
 
-    def test_etree(self):
-        # See https://github.com/python/typing/issues/229
-        # (Only relevant for Python 2.)
-        from xml.etree.ElementTree import Element
-
-        Union[Element, str]  # Shouldn't crash
-
-        def Elem(*args):
-            return Element(*args)
-
-        Union[Elem, str]  # Nor should this
-
 
 class TupleTests(BaseTestCase):
 

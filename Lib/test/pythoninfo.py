@@ -557,16 +557,6 @@ def collect_zlib(info_add):
     copy_attributes(info_add, zlib, 'zlib.%s', attributes)
 
 
-def collect_expat(info_add):
-    try:
-        from xml.parsers import expat
-    except ImportError:
-        return
-
-    attributes = ('EXPAT_VERSION',)
-    copy_attributes(info_add, expat, 'expat.%s', attributes)
-
-
 def collect_decimal(info_add):
     try:
         import _decimal
@@ -753,7 +743,6 @@ def collect_info(info):
         collect_cc,
         collect_datetime,
         collect_decimal,
-        collect_expat,
         collect_fips,
         collect_gdb,
         collect_gdbm,
