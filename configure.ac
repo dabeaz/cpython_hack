@@ -3034,15 +3034,6 @@ LIBS="$withval $LIBS"
 
 PKG_PROG_PKG_CONFIG
 
-# Check for use of the system expat library
-AC_MSG_CHECKING(for --with-system-expat)
-AC_ARG_WITH(system_expat,
-            AS_HELP_STRING([--with-system-expat], [build pyexpat module using an installed expat library, see Doc/library/pyexpat.rst (default is no)]),
-            [],
-            [with_system_expat="no"])
-
-AC_MSG_RESULT($with_system_expat)
-
 # Check for use of the system libffi library
 AC_MSG_CHECKING(for --with-system-ffi)
 AC_ARG_WITH(system_ffi,

@@ -1665,80 +1665,6 @@ class PyBuildExt(build_ext):
         else:
             self.missing.append('_lzma')
 
-    def detect_expat_elementtree(self):
-        # Interface to the Expat XML parser
-        #
-        # Expat was written by James Clark and is now maintained by a group of
-        # developers on SourceForge; see www.libexpat.org for more information.
-        # The pyexpat module was written by Paul Prescod after a prototype by
-        # Jack Jansen.  The Expat source is included in Modules/expat/.  Usage
-        # of a system shared libexpat.so is possible with --with-system-expat
-        # configure option.
-        #
-        # More information on Expat can be found at www.libexpat.org.
-        #
-        if '--with-system-expat' in sysconfig.get_config_var("CONFIG_ARGS"):
-            expat_inc = []
-            define_macros = []
-            extra_compile_args = []
-            expat_lib = ['expat']
-            expat_sources = []
-            expat_depends = []
-        else:
-            expat_inc = [os.path.join(self.srcdir, 'Modules', 'expat')]
-            define_macros = [
-                ('HAVE_EXPAT_CONFIG_H', '1'),
-                # bpo-30947: Python uses best available entropy sources to
-                # call XML_SetHashSalt(), expat entropy sources are not needed
-                ('XML_POOR_ENTROPY', '1'),
-            ]
-            extra_compile_args = []
-            expat_lib = []
-            expat_sources = ['expat/xmlparse.c',
-                             'expat/xmlrole.c',
-                             'expat/xmltok.c']
-            expat_depends = ['expat/ascii.h',
-                             'expat/asciitab.h',
-                             'expat/expat.h',
-                             'expat/expat_config.h',
-                             'expat/expat_external.h',
-                             'expat/internal.h',
-                             'expat/latin1tab.h',
-                             'expat/utf8tab.h',
-                             'expat/xmlrole.h',
-                             'expat/xmltok.h',
-                             'expat/xmltok_impl.h'
-                             ]
-
-            cc = sysconfig.get_config_var('CC').split()[0]
-            ret = run_command(
-                      '"%s" -Werror -Wno-unreachable-code -E -xc /dev/null >/dev/null 2>&1' % cc)
-            if ret == 0:
-                extra_compile_args.append('-Wno-unreachable-code')
-
-        self.add(Extension('pyexpat',
-                           define_macros=define_macros,
-                           extra_compile_args=extra_compile_args,
-                           include_dirs=expat_inc,
-                           libraries=expat_lib,
-                           sources=['pyexpat.c'] + expat_sources,
-                           depends=expat_depends))
-
-        # Fredrik Lundh's cElementTree module.  Note that this also
-        # uses expat (via the CAPI hook in pyexpat).
-
-        if os.path.isfile(os.path.join(self.srcdir, 'Modules', '_elementtree.c')):
-            define_macros.append(('USE_PYEXPAT_CAPI', None))
-            self.add(Extension('_elementtree',
-                               define_macros=define_macros,
-                               include_dirs=expat_inc,
-                               libraries=expat_lib,
-                               sources=['_elementtree.c'],
-                               depends=['pyexpat.c', *expat_sources,
-                                        *expat_depends]))
-        else:
-            self.missing.append('_elementtree')
-
     def detect_multibytecodecs(self):
         # Hye-Shik Chang's CJKCodecs modules.
         self.add(Extension('_multibytecodec',
@@ -1804,7 +1730,6 @@ class PyBuildExt(build_ext):
         self.detect_platform_specific_exts()
         self.detect_nis()
         self.detect_compress_exts()
-        self.detect_expat_elementtree()
         self.detect_multibytecodecs()
         self.detect_decimal()
         self.detect_ctypes()
