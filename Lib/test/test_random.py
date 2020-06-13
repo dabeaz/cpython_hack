@@ -8,7 +8,6 @@ import warnings
 from functools import partial
 from math import log, exp, pi, fsum, sin, factorial
 from test import support
-from fractions import Fraction
 from collections import Counter
 
 class TestBasicOps:
@@ -275,7 +274,6 @@ class TestBasicOps:
         for weights in [
                 [15, 10, 25, 30],                                                 # integer weights
                 [15.1, 10.2, 25.2, 30.3],                                         # float weights
-                [Fraction(1, 3), Fraction(2, 6), Fraction(3, 6), Fraction(4, 6)], # fractional weights
                 [True, False, True, False]                                        # booleans (include / exclude)
         ]:
             self.assertTrue(set(choices(data, weights, k=5)) <= set(data))
@@ -291,7 +289,6 @@ class TestBasicOps:
         for weights in [
                 [15, 10, 25, 30],                                                 # integer cum_weights
                 [15.1, 10.2, 25.2, 30.3],                                         # float cum_weights
-                [Fraction(1, 3), Fraction(2, 6), Fraction(3, 6), Fraction(4, 6)], # fractional cum_weights
         ]:
             self.assertTrue(set(choices(data, cum_weights=weights, k=5)) <= set(data))
 

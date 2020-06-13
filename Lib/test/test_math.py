@@ -5,7 +5,6 @@ from test.support import run_unittest, verbose, requires_IEEE_754
 from test import support
 import unittest
 import itertools
-import decimal
 import math
 import os
 import platform
@@ -506,8 +505,6 @@ class MathTests(unittest.TestCase):
         self.assertRaises(TypeError, math.factorial, 5.2)
         self.assertRaises(TypeError, math.factorial, -1.0)
         self.assertRaises(TypeError, math.factorial, -1e100)
-        self.assertRaises(TypeError, math.factorial, decimal.Decimal('5'))
-        self.assertRaises(TypeError, math.factorial, decimal.Decimal('5.2'))
         self.assertRaises(TypeError, math.factorial, "5")
 
     # Other implementations may place different upper bounds.
@@ -729,9 +726,6 @@ class MathTests(unittest.TestCase):
         self.assertEqual(gcd(MyIndexable(120), MyIndexable(84)), 12)
 
     def testHypot(self):
-        from decimal import Decimal
-        from fractions import Fraction
-
         hypot = math.hypot
 
         # Test different numbers of arguments (from zero to five)
@@ -746,8 +740,6 @@ class MathTests(unittest.TestCase):
         # Test allowable types (those with __float__)
         self.assertEqual(hypot(12.0, 5.0), 13.0)
         self.assertEqual(hypot(12, 5), 13)
-        self.assertEqual(hypot(Decimal(12), Decimal(5)), 13)
-        self.assertEqual(hypot(Fraction(12, 32), Fraction(5, 32)), Fraction(13, 32))
         self.assertEqual(hypot(bool(1), bool(0), bool(1), bool(1)), math.sqrt(3))
 
         # Test corner cases
@@ -803,9 +795,6 @@ class MathTests(unittest.TestCase):
             self.assertEqual(math.hypot(4*scale, 3*scale), 5*scale)
 
     def testDist(self):
-        from decimal import Decimal as D
-        from fractions import Fraction as F
-
         dist = math.dist
         sqrt = math.sqrt
 
@@ -960,7 +949,7 @@ class MathTests(unittest.TestCase):
 
         # Non-integer-like things
         bad_values = [
-            3.5, "a string", decimal.Decimal("3.5"), 3.5j,
+            3.5, "a string", 3.5j,
             100.0, -4.0,
         ]
         for value in bad_values:
@@ -1280,135 +1269,6 @@ class MathTests(unittest.TestCase):
         self.ftest('radians(90)', math.radians(90), math.pi/2)
         self.ftest('radians(-45)', math.radians(-45), -math.pi/4)
         self.ftest('radians(0)', math.radians(0), 0)
-
-    @requires_IEEE_754
-    def testRemainder(self):
-        from fractions import Fraction
-
-        def validate_spec(x, y, r):
-            """
-            Check that r matches remainder(x, y) according to the IEEE 754
-            specification. Assumes that x, y and r are finite and y is nonzero.
-            """
-            fx, fy, fr = Fraction(x), Fraction(y), Fraction(r)
-            # r should not exceed y/2 in absolute value
-            self.assertLessEqual(abs(fr), abs(fy/2))
-            # x - r should be an exact integer multiple of y
-            n = (fx - fr) / fy
-            self.assertEqual(n, int(n))
-            if abs(fr) == abs(fy/2):
-                # If |r| == |y/2|, n should be even.
-                self.assertEqual(n/2, int(n/2))
-
-        # triples (x, y, remainder(x, y)) in hexadecimal form.
-        testcases = [
-            # Remainders modulo 1, showing the ties-to-even behaviour.
-            '-4.0 1 -0.0',
-            '-3.8 1  0.8',
-            '-3.0 1 -0.0',
-            '-2.8 1 -0.8',
-            '-2.0 1 -0.0',
-            '-1.8 1  0.8',
-            '-1.0 1 -0.0',
-            '-0.8 1 -0.8',
-            '-0.0 1 -0.0',
-            ' 0.0 1  0.0',
-            ' 0.8 1  0.8',
-            ' 1.0 1  0.0',
-            ' 1.8 1 -0.8',
-            ' 2.0 1  0.0',
-            ' 2.8 1  0.8',
-            ' 3.0 1  0.0',
-            ' 3.8 1 -0.8',
-            ' 4.0 1  0.0',
-
-            # Reductions modulo 2*pi
-            '0x0.0p+0 0x1.921fb54442d18p+2 0x0.0p+0',
-            '0x1.921fb54442d18p+0 0x1.921fb54442d18p+2  0x1.921fb54442d18p+0',
-            '0x1.921fb54442d17p+1 0x1.921fb54442d18p+2  0x1.921fb54442d17p+1',
-            '0x1.921fb54442d18p+1 0x1.921fb54442d18p+2  0x1.921fb54442d18p+1',
-            '0x1.921fb54442d19p+1 0x1.921fb54442d18p+2 -0x1.921fb54442d17p+1',
-            '0x1.921fb54442d17p+2 0x1.921fb54442d18p+2 -0x0.0000000000001p+2',
-            '0x1.921fb54442d18p+2 0x1.921fb54442d18p+2  0x0p0',
-            '0x1.921fb54442d19p+2 0x1.921fb54442d18p+2  0x0.0000000000001p+2',
-            '0x1.2d97c7f3321d1p+3 0x1.921fb54442d18p+2  0x1.921fb54442d14p+1',
-            '0x1.2d97c7f3321d2p+3 0x1.921fb54442d18p+2 -0x1.921fb54442d18p+1',
-            '0x1.2d97c7f3321d3p+3 0x1.921fb54442d18p+2 -0x1.921fb54442d14p+1',
-            '0x1.921fb54442d17p+3 0x1.921fb54442d18p+2 -0x0.0000000000001p+3',
-            '0x1.921fb54442d18p+3 0x1.921fb54442d18p+2  0x0p0',
-            '0x1.921fb54442d19p+3 0x1.921fb54442d18p+2  0x0.0000000000001p+3',
-            '0x1.f6a7a2955385dp+3 0x1.921fb54442d18p+2  0x1.921fb54442d14p+1',
-            '0x1.f6a7a2955385ep+3 0x1.921fb54442d18p+2  0x1.921fb54442d18p+1',
-            '0x1.f6a7a2955385fp+3 0x1.921fb54442d18p+2 -0x1.921fb54442d14p+1',
-            '0x1.1475cc9eedf00p+5 0x1.921fb54442d18p+2  0x1.921fb54442d10p+1',
-            '0x1.1475cc9eedf01p+5 0x1.921fb54442d18p+2 -0x1.921fb54442d10p+1',
-
-            # Symmetry with respect to signs.
-            ' 1  0.c  0.4',
-            '-1  0.c -0.4',
-            ' 1 -0.c  0.4',
-            '-1 -0.c -0.4',
-            ' 1.4  0.c -0.4',
-            '-1.4  0.c  0.4',
-            ' 1.4 -0.c -0.4',
-            '-1.4 -0.c  0.4',
-
-            # Huge modulus, to check that the underlying algorithm doesn't
-            # rely on 2.0 * modulus being representable.
-            '0x1.dp+1023 0x1.4p+1023  0x0.9p+1023',
-            '0x1.ep+1023 0x1.4p+1023 -0x0.ap+1023',
-            '0x1.fp+1023 0x1.4p+1023 -0x0.9p+1023',
-        ]
-
-        for case in testcases:
-            with self.subTest(case=case):
-                x_hex, y_hex, expected_hex = case.split()
-                x = float.fromhex(x_hex)
-                y = float.fromhex(y_hex)
-                expected = float.fromhex(expected_hex)
-                validate_spec(x, y, expected)
-                actual = math.remainder(x, y)
-                # Cheap way of checking that the floats are
-                # as identical as we need them to be.
-                self.assertEqual(actual.hex(), expected.hex())
-
-        # Test tiny subnormal modulus: there's potential for
-        # getting the implementation wrong here (for example,
-        # by assuming that modulus/2 is exactly representable).
-        tiny = float.fromhex('1p-1074')  # min +ve subnormal
-        for n in range(-25, 25):
-            if n == 0:
-                continue
-            y = n * tiny
-            for m in range(100):
-                x = m * tiny
-                actual = math.remainder(x, y)
-                validate_spec(x, y, actual)
-                actual = math.remainder(-x, y)
-                validate_spec(-x, y, actual)
-
-        # Special values.
-        # NaNs should propagate as usual.
-        for value in [NAN, 0.0, -0.0, 2.0, -2.3, NINF, INF]:
-            self.assertIsNaN(math.remainder(NAN, value))
-            self.assertIsNaN(math.remainder(value, NAN))
-
-        # remainder(x, inf) is x, for non-nan non-infinite x.
-        for value in [-2.3, -0.0, 0.0, 2.3]:
-            self.assertEqual(math.remainder(value, INF), value)
-            self.assertEqual(math.remainder(value, NINF), value)
-
-        # remainder(x, 0) and remainder(infinity, x) for non-NaN x are invalid
-        # operations according to IEEE 754-2008 7.2(f), and should raise.
-        for value in [NINF, -2.3, -0.0, 0.0, 2.3, INF]:
-            with self.assertRaises(ValueError):
-                math.remainder(INF, value)
-            with self.assertRaises(ValueError):
-                math.remainder(NINF, value)
-            with self.assertRaises(ValueError):
-                math.remainder(value, 0.0)
-            with self.assertRaises(ValueError):
-                math.remainder(value, -0.0)
 
     def testSin(self):
         self.assertRaises(TypeError, math.sin)
@@ -1781,8 +1641,6 @@ class MathTests(unittest.TestCase):
         self.assertEqual(type(prod([1, 2.0, 3, 4, 5, 6])), float)
         self.assertEqual(type(prod(range(1, 10000))), int)
         self.assertEqual(type(prod(range(1, 10000), start=1.0)), float)
-        self.assertEqual(type(prod([1, decimal.Decimal(2.0), 3, 4, 5, 6])),
-                         decimal.Decimal)
 
     def testPerm(self):
         perm = math.perm
@@ -1812,10 +1670,8 @@ class MathTests(unittest.TestCase):
         # Raises TypeError if any argument is non-integer or argument count is
         # not 1 or 2
         self.assertRaises(TypeError, perm, 10, 1.0)
-        self.assertRaises(TypeError, perm, 10, decimal.Decimal(1.0))
         self.assertRaises(TypeError, perm, 10, "1")
         self.assertRaises(TypeError, perm, 10.0, 1)
-        self.assertRaises(TypeError, perm, decimal.Decimal(10.0), 1)
         self.assertRaises(TypeError, perm, "10", 1)
 
         self.assertRaises(TypeError, perm)
@@ -1879,10 +1735,8 @@ class MathTests(unittest.TestCase):
         # Raises TypeError if any argument is non-integer or argument count is
         # not 2
         self.assertRaises(TypeError, comb, 10, 1.0)
-        self.assertRaises(TypeError, comb, 10, decimal.Decimal(1.0))
         self.assertRaises(TypeError, comb, 10, "1")
         self.assertRaises(TypeError, comb, 10.0, 1)
-        self.assertRaises(TypeError, comb, decimal.Decimal(10.0), 1)
         self.assertRaises(TypeError, comb, "10", 1)
 
         self.assertRaises(TypeError, comb, 10)
@@ -2117,28 +1971,6 @@ class IsCloseTests(unittest.TestCase):
 
         self.assertAllClose(integer_examples, rel_tol=1e-8)
         self.assertAllNotClose(integer_examples, rel_tol=1e-9)
-
-    def test_decimals(self):
-        # test with Decimal values
-        from decimal import Decimal
-
-        decimal_examples = [(Decimal('1.00000001'), Decimal('1.0')),
-                            (Decimal('1.00000001e-20'), Decimal('1.0e-20')),
-                            (Decimal('1.00000001e-100'), Decimal('1.0e-100')),
-                            (Decimal('1.00000001e20'), Decimal('1.0e20'))]
-        self.assertAllClose(decimal_examples, rel_tol=1e-8)
-        self.assertAllNotClose(decimal_examples, rel_tol=1e-9)
-
-    def test_fractions(self):
-        # test with Fraction values
-        from fractions import Fraction
-
-        fraction_examples = [
-            (Fraction(1, 100000000) + 1, Fraction(1)),
-            (Fraction(100000001), Fraction(100000000)),
-            (Fraction(10**8 + 1, 10**28), Fraction(1, 10**20))]
-        self.assertAllClose(fraction_examples, rel_tol=1e-8)
-        self.assertAllNotClose(fraction_examples, rel_tol=1e-9)
 
 
 def test_main():

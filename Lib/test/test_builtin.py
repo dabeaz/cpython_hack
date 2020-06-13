@@ -4,8 +4,6 @@ import ast
 import asyncio
 import builtins
 import collections
-import decimal
-import fractions
 import io
 import locale
 import os
@@ -1425,8 +1423,7 @@ class BuiltinTest(unittest.TestCase):
         # Verify that ndigits=None means the same as passing in no argument
         for x in [1234,
                   1234.56,
-                  decimal.Decimal('1234.56'),
-                  fractions.Fraction(123456, 100)]:
+                  ]:
             self.assertEqual(round(x, None), round(x))
             self.assertEqual(type(round(x, None)), type(round(x)))
 

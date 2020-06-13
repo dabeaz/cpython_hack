@@ -2,8 +2,6 @@ import unittest
 from test import support
 from itertools import *
 import weakref
-from decimal import Decimal
-from fractions import Fraction
 import operator
 import random
 import copy
@@ -125,7 +123,7 @@ class TestBasicOps(unittest.TestCase):
                           [0, 1, 3, 6, 10, 15, 21, 28, 36, 45])
         self.assertEqual(list(accumulate(iterable=range(10))),      # kw arg
                           [0, 1, 3, 6, 10, 15, 21, 28, 36, 45])
-        for typ in int, complex, Decimal, Fraction:                 # multiple types
+        for typ in int, complex:
             self.assertEqual(
                 list(accumulate(map(typ, range(10)))),
                 list(map(typ, [0, 1, 3, 6, 10, 15, 21, 28, 36, 45])))
@@ -536,10 +534,6 @@ class TestBasicOps(unittest.TestCase):
                          list(range(-maxsize-5, -maxsize+5)))
         self.assertEqual(take(3, count(3.25)), [3.25, 4.25, 5.25])
         self.assertEqual(take(3, count(3.25-4j)), [3.25-4j, 4.25-4j, 5.25-4j])
-        self.assertEqual(take(3, count(Decimal('1.1'))),
-                         [Decimal('1.1'), Decimal('2.1'), Decimal('3.1')])
-        self.assertEqual(take(3, count(Fraction(2, 3))),
-                         [Fraction(2, 3), Fraction(5, 3), Fraction(8, 3)])
         BIGINT = 1<<1000
         self.assertEqual(take(3, count(BIGINT)), [BIGINT, BIGINT+1, BIGINT+2])
         c = count(3)
@@ -586,10 +580,6 @@ class TestBasicOps(unittest.TestCase):
                          list(range(10, 10+3*(maxsize+5), maxsize+5)))
         self.assertEqual(take(3, count(2, 1.25)), [2, 3.25, 4.5])
         self.assertEqual(take(3, count(2, 3.25-4j)), [2, 5.25-4j, 8.5-8j])
-        self.assertEqual(take(3, count(Decimal('1.1'), Decimal('.1'))),
-                         [Decimal('1.1'), Decimal('1.2'), Decimal('1.3')])
-        self.assertEqual(take(3, count(Fraction(2,3), Fraction(1,7))),
-                         [Fraction(2,3), Fraction(17,21), Fraction(20,21)])
         BIGINT = 1<<1000
         self.assertEqual(take(3, count(step=BIGINT)), [0, BIGINT, 2*BIGINT])
         self.assertEqual(repr(take(3, count(10, 2.5))), repr([10, 12.5, 15.0]))

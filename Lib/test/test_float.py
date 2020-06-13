@@ -1,4 +1,3 @@
-import fractions
 import operator
 import os
 import random
@@ -262,20 +261,6 @@ class GeneralFloatCases(unittest.TestCase):
             f *= 10 ** random.randint(-100, 100)
             n, d = f.as_integer_ratio()
             self.assertEqual(float(n).__truediv__(d), f)
-
-        R = fractions.Fraction
-        self.assertEqual(R(0, 1),
-                         R(*float(0.0).as_integer_ratio()))
-        self.assertEqual(R(5, 2),
-                         R(*float(2.5).as_integer_ratio()))
-        self.assertEqual(R(1, 2),
-                         R(*float(0.5).as_integer_ratio()))
-        self.assertEqual(R(4728779608739021, 2251799813685248),
-                         R(*float(2.1).as_integer_ratio()))
-        self.assertEqual(R(-4728779608739021, 2251799813685248),
-                         R(*float(-2.1).as_integer_ratio()))
-        self.assertEqual(R(-2100, 1),
-                         R(*float(-2100.0).as_integer_ratio()))
 
         self.assertRaises(OverflowError, float('inf').as_integer_ratio)
         self.assertRaises(OverflowError, float('-inf').as_integer_ratio)

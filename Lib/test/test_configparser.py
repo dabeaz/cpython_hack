@@ -1658,34 +1658,6 @@ class CoverageOneHundredTestCase(unittest.TestCase):
         """)
         self.assertEqual(repr(parser['section']), '<Section: section>')
 
-    def test_inconsistent_converters_state(self):
-        parser = configparser.ConfigParser()
-        import decimal
-        parser.converters['decimal'] = decimal.Decimal
-        parser.read_string("""
-            [s1]
-            one = 1
-            [s2]
-            two = 2
-        """)
-        self.assertIn('decimal', parser.converters)
-        self.assertEqual(parser.getdecimal('s1', 'one'), 1)
-        self.assertEqual(parser.getdecimal('s2', 'two'), 2)
-        self.assertEqual(parser['s1'].getdecimal('one'), 1)
-        self.assertEqual(parser['s2'].getdecimal('two'), 2)
-        del parser.getdecimal
-        with self.assertRaises(AttributeError):
-            parser.getdecimal('s1', 'one')
-        self.assertIn('decimal', parser.converters)
-        del parser.converters['decimal']
-        self.assertNotIn('decimal', parser.converters)
-        with self.assertRaises(AttributeError):
-            parser.getdecimal('s1', 'one')
-        with self.assertRaises(AttributeError):
-            parser['s1'].getdecimal('one')
-        with self.assertRaises(AttributeError):
-            parser['s2'].getdecimal('two')
-
 
 class ExceptionPicklingTestCase(unittest.TestCase):
     """Tests for issue #13760: ConfigParser exceptions are not picklable."""
@@ -1987,33 +1959,7 @@ class ConvertersTestCase(BasicTestCase, unittest.TestCase):
         self.assertEqual(s.getlist('list'), ['a', 'b', 'c', 'd',
                                              'e', 'f', 'g'])
         self.assertEqual(s.getboolean('bool'), True)
-        with self.assertRaises(AttributeError):
-            cfg.getdecimal('s', 'float')
-        with self.assertRaises(AttributeError):
-            s.getdecimal('float')
-        import decimal
-        cfg.converters['decimal'] = decimal.Decimal
-        self.assertIn('decimal', cfg.converters)
-        self.assertIsNotNone(cfg.converters['decimal'])
-        self.assertEqual(len(cfg.converters), 5)
-        dec0_5 = decimal.Decimal('0.5')
-        self.assertEqual(cfg.getdecimal('s', 'float'), dec0_5)
-        self.assertEqual(s.getdecimal('float'), dec0_5)
-        del cfg.converters['decimal']
-        self.assertNotIn('decimal', cfg.converters)
-        self.assertEqual(len(cfg.converters), 4)
-        with self.assertRaises(AttributeError):
-            cfg.getdecimal('s', 'float')
-        with self.assertRaises(AttributeError):
-            s.getdecimal('float')
-        with self.assertRaises(KeyError):
-            del cfg.converters['decimal']
-        with self.assertRaises(KeyError):
-            del cfg.converters['']
-        with self.assertRaises(KeyError):
-            del cfg.converters[None]
-
-
+        
 class BlatantOverrideConvertersTestCase(unittest.TestCase):
     """What if somebody overrode a getboolean()? We want to make sure that in
     this case the automatic converters do not kick in."""

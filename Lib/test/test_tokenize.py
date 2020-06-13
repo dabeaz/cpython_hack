@@ -968,29 +968,6 @@ def decistmt(s):
             result.append((toknum, tokval))
     return untokenize(result).decode('utf-8')
 
-class TestMisc(TestCase):
-
-    def test_decistmt(self):
-        # Substitute Decimals for floats in a string of statements.
-        # This is an example from the docs.
-
-        from decimal import Decimal
-        s = '+21.3e-5*-.1234/81.7'
-        self.assertEqual(decistmt(s),
-                         "+Decimal ('21.3e-5')*-Decimal ('.1234')/Decimal ('81.7')")
-
-        # The format of the exponent is inherited from the platform C library.
-        # Known cases are "e-007" (Windows) and "e-07" (not Windows).  Since
-        # we're only showing 11 digits, and the 12th isn't close to 5, the
-        # rest of the output should be platform-independent.
-        self.assertRegex(repr(eval(s)), '-3.2171603427[0-9]*e-0+7')
-
-        # Output from calculations with Decimal should be identical across all
-        # platforms.
-        self.assertEqual(eval(decistmt(s)),
-                         Decimal('-3.217160342717258261933904529E-7'))
-
-
 class TestTokenizerAdheresToPep0263(TestCase):
     """
     Test that tokenizer adheres to the coding behaviour stipulated in PEP 0263.

@@ -6,10 +6,8 @@ import asynchat
 import asyncore
 import codecs
 import contextlib
-import decimal
 import errno
 import fnmatch
-import fractions
 import itertools
 import locale
 import mmap
@@ -1519,7 +1517,7 @@ class ChownFileTests(unittest.TestCase):
         stat = os.stat(support.TESTFN)
         uid = stat.st_uid
         gid = stat.st_gid
-        for value in (-1.0, -1j, decimal.Decimal(-1), fractions.Fraction(-2, 2)):
+        for value in (-1.0, -1j,):
             self.assertRaises(TypeError, os.chown, support.TESTFN, value, gid)
             self.assertRaises(TypeError, os.chown, support.TESTFN, uid, value)
         self.assertIsNone(os.chown(support.TESTFN, uid, gid))

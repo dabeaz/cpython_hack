@@ -20,8 +20,6 @@ from itertools import permutations, product
 from random import randrange, sample, choice
 import warnings
 import sys, array, io, os
-from decimal import Decimal
-from fractions import Fraction
 
 try:
     from _testbuffer import *
@@ -2526,7 +2524,7 @@ class TestBufferProtocol(unittest.TestCase):
         def f(): return 7
 
         values = [INT(9), IDX(9),
-                  2.2+3j, Decimal("-21.1"), 12.2, Fraction(5, 2),
+                  2.2+3j, 12.2,
                   [1,2,3], {4,5,6}, {7:8}, (), (9,),
                   True, False, None, Ellipsis,
                   b'a', b'abc', bytearray(b'a'), bytearray(b'abc'),

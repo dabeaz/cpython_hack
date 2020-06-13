@@ -827,8 +827,6 @@ with_memory_sanitizer
 with_undefined_behavior_sanitizer
 with_libs
 with_system_ffi
-with_system_libmpdec
-with_decimal_contextvar
 enable_loadable_sqlite_extensions
 with_tcltk_includes
 with_tcltk_libs
@@ -1542,11 +1540,6 @@ Optional Packages:
   --with-system-ffi       build _ctypes module using an installed ffi library,
                           see Doc/library/ctypes.rst (default is
                           system-dependent)
-  --with-system-libmpdec  build _decimal module using an installed libmpdec
-                          library, see Doc/library/decimal.rst (default is no)
-  --with-decimal-contextvar
-                          build _decimal module using a coroutine-local rather
-                          than a thread-local context (default is yes)
   --with-tcltk-includes='-I...'
                           override search for Tcl and Tk include files
   --with-tcltk-libs='-L...'
@@ -10513,43 +10506,6 @@ else
     LIBFFI_INCLUDEDIR=""
 fi
 
-
-# Check for use of the system libmpdec library
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for --with-system-libmpdec" >&5
-$as_echo_n "checking for --with-system-libmpdec... " >&6; }
-
-# Check whether --with-system_libmpdec was given.
-if test "${with_system_libmpdec+set}" = set; then :
-  withval=$with_system_libmpdec;
-else
-  with_system_libmpdec="no"
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_system_libmpdec" >&5
-$as_echo "$with_system_libmpdec" >&6; }
-
-# Check whether _decimal should use a coroutine-local or thread-local context
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for --with-decimal-contextvar" >&5
-$as_echo_n "checking for --with-decimal-contextvar... " >&6; }
-
-# Check whether --with-decimal_contextvar was given.
-if test "${with_decimal_contextvar+set}" = set; then :
-  withval=$with_decimal_contextvar;
-else
-  with_decimal_contextvar="yes"
-fi
-
-
-if test "$with_decimal_contextvar" != "no"
-then
-
-$as_echo "#define WITH_DECIMAL_CONTEXTVAR 1" >>confdefs.h
-
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_decimal_contextvar" >&5
-$as_echo "$with_decimal_contextvar" >&6; }
 
 # Check for support for loadable sqlite extensions
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for --enable-loadable-sqlite-extensions" >&5

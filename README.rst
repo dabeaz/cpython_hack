@@ -8,7 +8,8 @@ Deletions
 Some people do a "100 days of code" challenge.  This is the opposite.
 
 - Day 1 (6/12/2020). Removed xml package, _elementtree.c, xmlrpc, plistlib.
-
+- Day 2 (6/13/2020). Removed decimal, fractions, statistics.
+  
 Copyright and License Information
 ---------------------------------
 

@@ -3068,30 +3068,6 @@ else
 fi
 AC_SUBST(LIBFFI_INCLUDEDIR)
 
-# Check for use of the system libmpdec library
-AC_MSG_CHECKING(for --with-system-libmpdec)
-AC_ARG_WITH(system_libmpdec,
-            AS_HELP_STRING([--with-system-libmpdec], [build _decimal module using an installed libmpdec library, see Doc/library/decimal.rst (default is no)]),
-            [],
-            [with_system_libmpdec="no"])
-
-AC_MSG_RESULT($with_system_libmpdec)
-
-# Check whether _decimal should use a coroutine-local or thread-local context
-AC_MSG_CHECKING(for --with-decimal-contextvar)
-AC_ARG_WITH(decimal_contextvar,
-            AS_HELP_STRING([--with-decimal-contextvar], [build _decimal module using a coroutine-local rather than a thread-local context (default is yes)]),
-            [],
-            [with_decimal_contextvar="yes"])
-
-if test "$with_decimal_contextvar" != "no"
-then
-    AC_DEFINE(WITH_DECIMAL_CONTEXTVAR, 1,
-      [Define if you want build the _decimal module using a coroutine-local rather than a thread-local context])
-fi
-
-AC_MSG_RESULT($with_decimal_contextvar)
-
 # Check for support for loadable sqlite extensions
 AC_MSG_CHECKING(for --enable-loadable-sqlite-extensions)
 AC_ARG_ENABLE(loadable-sqlite-extensions,
