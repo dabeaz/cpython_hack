@@ -3,7 +3,6 @@ import os
 import random
 import signal
 import socket
-import statistics
 import subprocess
 import sys
 import time
@@ -1145,7 +1144,7 @@ class StressTest(unittest.TestCase):
             time.sleep(1e-3)
 
         durations = [times[i+1] - times[i] for i in range(len(times) - 1)]
-        med = statistics.median(durations)
+        med = sorted(durations)[len(durations)//2]
         if support.verbose:
             print("detected median itimer() resolution: %.6f s." % (med,))
         return med

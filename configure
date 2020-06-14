@@ -653,8 +653,6 @@ DTRACE_OBJS
 DTRACE_HEADERS
 DFLAGS
 DTRACE
-TCLTK_LIBS
-TCLTK_INCLUDES
 LIBFFI_INCLUDEDIR
 PKG_CONFIG_LIBDIR
 PKG_CONFIG_PATH
@@ -828,8 +826,6 @@ with_undefined_behavior_sanitizer
 with_libs
 with_system_ffi
 enable_loadable_sqlite_extensions
-with_tcltk_includes
-with_tcltk_libs
 with_dbmliborder
 enable_ipv6
 with_doc_strings
@@ -1540,10 +1536,6 @@ Optional Packages:
   --with-system-ffi       build _ctypes module using an installed ffi library,
                           see Doc/library/ctypes.rst (default is
                           system-dependent)
-  --with-tcltk-includes='-I...'
-                          override search for Tcl and Tk include files
-  --with-tcltk-libs='-L...'
-                          override search for Tcl and Tk libs
   --with-dbmliborder=db1:db2:...
                           override order to check db backends for dbm; a valid
                           value is a colon separated string with the backend
@@ -10521,46 +10513,6 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_loadable_sqlite_extensions" >&5
 $as_echo "$enable_loadable_sqlite_extensions" >&6; }
 
-# Check for --with-tcltk-includes=path and --with-tcltk-libs=path
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for --with-tcltk-includes" >&5
-$as_echo_n "checking for --with-tcltk-includes... " >&6; }
-
-# Check whether --with-tcltk-includes was given.
-if test "${with_tcltk_includes+set}" = set; then :
-  withval=$with_tcltk_includes;
-else
-  with_tcltk_includes="default"
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_tcltk_includes" >&5
-$as_echo "$with_tcltk_includes" >&6; }
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for --with-tcltk-libs" >&5
-$as_echo_n "checking for --with-tcltk-libs... " >&6; }
-
-# Check whether --with-tcltk-libs was given.
-if test "${with_tcltk_libs+set}" = set; then :
-  withval=$with_tcltk_libs;
-else
-  with_tcltk_libs="default"
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_tcltk_libs" >&5
-$as_echo "$with_tcltk_libs" >&6; }
-if test "x$with_tcltk_includes" = xdefault || test "x$with_tcltk_libs" = xdefault
-then
-  if test "x$with_tcltk_includes" != "x$with_tcltk_libs"
-  then
-    as_fn_error $? "use both --with-tcltk-includes='...' and --with-tcltk-libs='...' or neither" "$LINENO" 5
-  fi
-  TCLTK_INCLUDES=""
-  TCLTK_LIBS=""
-else
-  TCLTK_INCLUDES="$with_tcltk_includes"
-  TCLTK_LIBS="$with_tcltk_libs"
-fi
-
 # Check for --with-dbmliborder
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for --with-dbmliborder" >&5
 $as_echo_n "checking for --with-dbmliborder... " >&6; }
@@ -14900,36 +14852,6 @@ _ACEOF
 
 
 fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for UCS-4 tcl" >&5
-$as_echo_n "checking for UCS-4 tcl... " >&6; }
-have_ucs4_tcl=no
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <tcl.h>
-#if TCL_UTF_MAX != 6
-# error "NOT UCS4_TCL"
-#endif
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-
-
-$as_echo "#define HAVE_UCS4_TCL 1" >>confdefs.h
-
-  have_ucs4_tcl=yes
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_ucs4_tcl" >&5
-$as_echo "$have_ucs4_tcl" >&6; }
 
 # check whether wchar_t is signed or not
 if test "$wchar_h" = yes

@@ -820,9 +820,6 @@ class MathTests(unittest.TestCase):
         # Test allowable types (those with __float__)
         self.assertEqual(dist((14.0, 1.0), (2.0, -4.0)), 13.0)
         self.assertEqual(dist((14, 1), (2, -4)), 13)
-        self.assertEqual(dist((D(14), D(1)), (D(2), D(-4))), D(13))
-        self.assertEqual(dist((F(14, 32), F(1, 32)), (F(2, 32), F(-4, 32))),
-                         F(13, 32))
         self.assertEqual(dist((True, True, False, True, False),
                               (True, False, True, True, False)),
                          sqrt(2.0))

@@ -387,25 +387,6 @@ def collect_gdb(info_add):
     info_add('gdb_version', version)
 
 
-def collect_tkinter(info_add):
-    try:
-        import _tkinter
-    except ImportError:
-        pass
-    else:
-        attributes = ('TK_VERSION', 'TCL_VERSION')
-        copy_attributes(info_add, _tkinter, 'tkinter.%s', attributes)
-
-    try:
-        import tkinter
-    except ImportError:
-        pass
-    else:
-        tcl = tkinter.Tcl()
-        patchlevel = tcl.call('info', 'patchlevel')
-        info_add('tkinter.info_patchlevel', patchlevel)
-
-
 def collect_time(info_add):
     import time
 
@@ -761,7 +742,6 @@ def collect_info(info):
         collect_sysconfig,
         collect_testcapi,
         collect_time,
-        collect_tkinter,
         collect_windows,
         collect_zlib,
 

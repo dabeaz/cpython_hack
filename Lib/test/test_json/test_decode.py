@@ -1,14 +1,9 @@
-import decimal
 from io import StringIO
 from collections import OrderedDict
 from test.test_json import PyTest, CTest
 
 
 class TestDecode:
-    def test_decimal(self):
-        rval = self.loads('1.1', parse_float=decimal.Decimal)
-        self.assertTrue(isinstance(rval, decimal.Decimal))
-        self.assertEqual(rval, decimal.Decimal('1.1'))
 
     def test_float(self):
         rval = self.loads('1', parse_int=float)

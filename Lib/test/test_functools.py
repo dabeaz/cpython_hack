@@ -27,8 +27,6 @@ import functools
 py_functools = support.import_fresh_module('functools', blocked=['_functools'])
 c_functools = support.import_fresh_module('functools', fresh=['_functools'])
 
-decimal = support.import_fresh_module('decimal', fresh=['_decimal'])
-
 @contextlib.contextmanager
 def replaced_module(name, replacement):
     original_module = sys.modules[name]
@@ -1815,25 +1813,6 @@ class TestSingleDispatch(unittest.TestCase):
         self.assertEqual(g.__name__, "g")
         if sys.flags.optimize < 2:
             self.assertEqual(g.__doc__, "Simple test")
-
-    @unittest.skipUnless(decimal, 'requires _decimal')
-    @support.cpython_only
-    def test_c_classes(self):
-        @functools.singledispatch
-        def g(obj):
-            return "base"
-        @g.register(decimal.DecimalException)
-        def _(obj):
-            return obj.args
-        subn = decimal.Subnormal("Exponent < Emin")
-        rnd = decimal.Rounded("Number got rounded")
-        self.assertEqual(g(subn), ("Exponent < Emin",))
-        self.assertEqual(g(rnd), ("Number got rounded",))
-        @g.register(decimal.Subnormal)
-        def _(obj):
-            return "Too small to care."
-        self.assertEqual(g(subn), "Too small to care.")
-        self.assertEqual(g(rnd), ("Number got rounded",))
 
     def test_compose_mro(self):
         # None of the examples in this test depend on haystack ordering.
