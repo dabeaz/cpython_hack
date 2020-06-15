@@ -26,7 +26,6 @@ read_mime_types(file) -- parse one file, return a dictionary or None
 import os
 import sys
 import posixpath
-import urllib.parse
 try:
     import winreg as _winreg
 except ImportError:
@@ -114,26 +113,6 @@ class MimeTypes:
         but non-standard types.
         """
         url = os.fspath(url)
-        scheme, url = urllib.parse._splittype(url)
-        if scheme == 'data':
-            # syntax of data URLs:
-            # dataurl   := "data:" [ mediatype ] [ ";base64" ] "," data
-            # mediatype := [ type "/" subtype ] *( ";" parameter )
-            # data      := *urlchar
-            # parameter := attribute "=" value
-            # type/subtype defaults to "text/plain"
-            comma = url.find(',')
-            if comma < 0:
-                # bad data URL
-                return None, None
-            semi = url.find(';', 0, comma)
-            if semi >= 0:
-                type = url[:semi]
-            else:
-                type = url[:comma]
-            if '=' in type or '/' not in type:
-                type = 'text/plain'
-            return type, None           # never compressed, so encoding is None
         base, ext = posixpath.splitext(url)
         while ext in self.suffix_map:
             base, ext = posixpath.splitext(base + self.suffix_map[ext])

@@ -20,17 +20,8 @@ IMPORT_MAPPING = {
     'dumbdbm': 'dbm.dumb',
     'dbm': 'dbm.ndbm',
     'gdbm': 'dbm.gnu',
-    'httplib': 'http.client',
-    'htmlentitydefs' : 'html.entities',
-    'HTMLParser' : 'html.parser',
-    'Cookie': 'http.cookies',
-    'cookielib': 'http.cookiejar',
-    'BaseHTTPServer': 'http.server',
     'test.test_support': 'test.support',
     'commands': 'subprocess',
-    'urlparse' : 'urllib.parse',
-    'robotparser' : 'urllib.robotparser',
-    'urllib2': 'urllib.request',
     'anydbm': 'dbm',
     '_abcoll' : 'collections.abc',
 }
@@ -59,20 +50,6 @@ NAME_MAPPING = {
     ('_multiprocessing', 'Connection'): ('multiprocessing.connection', 'Connection'),
     ('multiprocessing.process', 'Process'): ('multiprocessing.context', 'Process'),
     ('multiprocessing.forking', 'Popen'): ('multiprocessing.popen_fork', 'Popen'),
-    ('urllib', 'ContentTooShortError'): ('urllib.error', 'ContentTooShortError'),
-    ('urllib', 'getproxies'): ('urllib.request', 'getproxies'),
-    ('urllib', 'pathname2url'): ('urllib.request', 'pathname2url'),
-    ('urllib', 'quote_plus'): ('urllib.parse', 'quote_plus'),
-    ('urllib', 'quote'): ('urllib.parse', 'quote'),
-    ('urllib', 'unquote_plus'): ('urllib.parse', 'unquote_plus'),
-    ('urllib', 'unquote'): ('urllib.parse', 'unquote'),
-    ('urllib', 'url2pathname'): ('urllib.request', 'url2pathname'),
-    ('urllib', 'urlcleanup'): ('urllib.request', 'urlcleanup'),
-    ('urllib', 'urlencode'): ('urllib.parse', 'urlencode'),
-    ('urllib', 'urlopen'): ('urllib.request', 'urlopen'),
-    ('urllib', 'urlretrieve'): ('urllib.request', 'urlretrieve'),
-    ('urllib2', 'HTTPError'): ('urllib.error', 'HTTPError'),
-    ('urllib2', 'URLError'): ('urllib.error', 'URLError'),
 }
 
 PYTHON2_EXCEPTIONS = (
@@ -156,8 +133,6 @@ assert len(REVERSE_NAME_MAPPING) == len(NAME_MAPPING)
 
 IMPORT_MAPPING.update({
     'cPickle': 'pickle',
-    'SimpleHTTPServer': 'http.server',
-    'CGIHTTPServer': 'http.server',
     # For compatibility with broken pickles saved in old Python 3 versions
     'UserDict': 'collections',
     'UserList': 'collections',
@@ -184,10 +159,6 @@ NAME_MAPPING.update({
 
 REVERSE_NAME_MAPPING.update({
     ('_functools', 'reduce'): ('__builtin__', 'reduce'),
-    ('http.server', 'SimpleHTTPRequestHandler'):
-        ('SimpleHTTPServer', 'SimpleHTTPRequestHandler'),
-    ('http.server', 'CGIHTTPRequestHandler'):
-        ('CGIHTTPServer', 'CGIHTTPRequestHandler'),
     ('_socket', 'socket'): ('socket', '_socketobject'),
 })
 
