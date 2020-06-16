@@ -11,7 +11,8 @@ Some people do a "100 days of code" challenge.  This is the opposite.
 - Day 2 (6/13/2020). Removed decimal, fractions, statistics.
 - Day 3 (6/14/2020). Obliterated tkinter.
 - Day 4 (6/15/2020). Wasted the web. html, http, urllib, cgi? Gone.
-  
+- Day 6 (6/16/2020). Eliminated email (and smtp, pop, imap, etc.).
+
 Copyright and License Information
 ---------------------------------
 

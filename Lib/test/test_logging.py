@@ -53,9 +53,6 @@ import warnings
 import weakref
 
 import asyncore
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import smtpd
-from urllib.parse import urlparse, parse_qs
 from socketserver import (ThreadingUDPServer, DatagramRequestHandler,
                           ThreadingTCPServer, StreamRequestHandler)
 
@@ -797,79 +794,6 @@ class StreamHandlerTest(BaseTest):
         h = logging.StreamHandler(StreamWithIntName())
         self.assertEqual(repr(h), '<StreamHandler 2 (NOTSET)>')
 
-# -- The following section could be moved into a server_helper.py module
-# -- if it proves to be of wider utility than just test_logging
-
-class TestSMTPServer(smtpd.SMTPServer):
-    """
-    This class implements a test SMTP server.
-
-    :param addr: A (host, port) tuple which the server listens on.
-                 You can specify a port value of zero: the server's
-                 *port* attribute will hold the actual port number
-                 used, which can be used in client connections.
-    :param handler: A callable which will be called to process
-                    incoming messages. The handler will be passed
-                    the client address tuple, who the message is from,
-                    a list of recipients and the message data.
-    :param poll_interval: The interval, in seconds, used in the underlying
-                          :func:`select` or :func:`poll` call by
-                          :func:`asyncore.loop`.
-    :param sockmap: A dictionary which will be used to hold
-                    :class:`asyncore.dispatcher` instances used by
-                    :func:`asyncore.loop`. This avoids changing the
-                    :mod:`asyncore` module's global state.
-    """
-
-    def __init__(self, addr, handler, poll_interval, sockmap):
-        smtpd.SMTPServer.__init__(self, addr, None, map=sockmap,
-                                  decode_data=True)
-        self.port = self.socket.getsockname()[1]
-        self._handler = handler
-        self._thread = None
-        self.poll_interval = poll_interval
-
-    def process_message(self, peer, mailfrom, rcpttos, data):
-        """
-        Delegates to the handler passed in to the server's constructor.
-
-        Typically, this will be a test case method.
-        :param peer: The client (host, port) tuple.
-        :param mailfrom: The address of the sender.
-        :param rcpttos: The addresses of the recipients.
-        :param data: The message.
-        """
-        self._handler(peer, mailfrom, rcpttos, data)
-
-    def start(self):
-        """
-        Start the server running on a separate daemon thread.
-        """
-        self._thread = t = threading.Thread(target=self.serve_forever,
-                                            args=(self.poll_interval,))
-        t.setDaemon(True)
-        t.start()
-
-    def serve_forever(self, poll_interval):
-        """
-        Run the :mod:`asyncore` loop until normal termination
-        conditions arise.
-        :param poll_interval: The interval, in seconds, used in the underlying
-                              :func:`select` or :func:`poll` call by
-                              :func:`asyncore.loop`.
-        """
-        asyncore.loop(poll_interval, map=self._map)
-
-    def stop(self):
-        """
-        Stop the thread by closing the server instance.
-        Wait for the server thread to terminate.
-        """
-        self.close()
-        threading_helper.join_thread(self._thread)
-        self._thread = None
-        asyncore.close_all(map=self._map, ignore_all=True)
-
 
 class ControlMixin(object):
     """
@@ -920,47 +844,6 @@ class ControlMixin(object):
             self._thread = None
         self.server_close()
         self.ready.clear()
-
-class TestHTTPServer(ControlMixin, HTTPServer):
-    """
-    An HTTP server which is controllable using :class:`ControlMixin`.
-
-    :param addr: A tuple with the IP address and port to listen on.
-    :param handler: A handler callable which will be called with a
-                    single parameter - the request - in order to
-                    process the request.
-    :param poll_interval: The polling interval in seconds.
-    :param log: Pass ``True`` to enable log messages.
-    """
-    def __init__(self, addr, handler, poll_interval=0.5,
-                 log=False, sslctx=None):
-        class DelegatingHTTPRequestHandler(BaseHTTPRequestHandler):
-            def __getattr__(self, name, default=None):
-                if name.startswith('do_'):
-                    return self.process_request
-                raise AttributeError(name)
-
-            def process_request(self):
-                self.server._handler(self)
-
-            def log_message(self, format, *args):
-                if log:
-                    super(DelegatingHTTPRequestHandler,
-                          self).log_message(format, *args)
-        HTTPServer.__init__(self, addr, DelegatingHTTPRequestHandler)
-        ControlMixin.__init__(self, handler, poll_interval)
-        self.sslctx = sslctx
-
-    def get_request(self):
-        try:
-            sock, addr = self.socket.accept()
-            if self.sslctx:
-                sock = self.sslctx.wrap_socket(sock, server_side=True)
-        except OSError as e:
-            # socket errors are silenced by the caller, print them here
-            sys.stderr.write("Got an error:\n%s\n" % e)
-            raise
-        return sock, addr
 
 class TestTCPServer(ControlMixin, ThreadingTCPServer):
     """
@@ -1048,38 +931,6 @@ if hasattr(socket, "AF_UNIX"):
         address_family = socket.AF_UNIX
 
 # - end of server_helper section
-
-class SMTPHandlerTest(BaseTest):
-    # bpo-14314, bpo-19665, bpo-34092: don't wait forever
-    TIMEOUT = support.LONG_TIMEOUT
-
-    def test_basic(self):
-        sockmap = {}
-        server = TestSMTPServer((socket_helper.HOST, 0), self.process_message, 0.001,
-                                sockmap)
-        server.start()
-        addr = (socket_helper.HOST, server.port)
-        h = logging.handlers.SMTPHandler(addr, 'me', 'you', 'Log',
-                                         timeout=self.TIMEOUT)
-        self.assertEqual(h.toaddrs, ['you'])
-        self.messages = []
-        r = logging.makeLogRecord({'msg': 'Hello \u2713'})
-        self.handled = threading.Event()
-        h.handle(r)
-        self.handled.wait(self.TIMEOUT)
-        server.stop()
-        self.assertTrue(self.handled.is_set())
-        self.assertEqual(len(self.messages), 1)
-        peer, mailfrom, rcpttos, data = self.messages[0]
-        self.assertEqual(mailfrom, 'me')
-        self.assertEqual(rcpttos, ['you'])
-        self.assertIn('\nSubject: Log\n', data)
-        self.assertTrue(data.endswith('\n\nHello \u2713'))
-        h.close()
-
-    def process_message(self, *args):
-        self.messages.append(args)
-        self.handled.set()
 
 class MemoryHandlerTest(BaseTest):
 
@@ -5337,7 +5188,7 @@ def test_main():
         ConfigDictTest, ManagerTest, FormatterTest, BufferingFormatterTest,
         StreamHandlerTest, LogRecordFactoryTest, ChildLoggerTest,
         QueueHandlerTest, ShutdownTest, ModuleLevelMiscTest, BasicConfigTest,
-        LoggerAdapterTest, LoggerTest, SMTPHandlerTest, FileHandlerTest,
+        LoggerAdapterTest, LoggerTest, FileHandlerTest,
         RotatingFileHandlerTest,  LastResortTest, LogRecordTest,
         ExceptionTest, SysLogHandlerTest, IPv6SysLogHandlerTest, HTTPHandlerTest,
         NTEventLogHandlerTest, TimedRotatingFileHandlerTest,

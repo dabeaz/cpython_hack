@@ -7,7 +7,6 @@ being built/installed/distributed.
 import sys
 import os
 import re
-from email import message_from_file
 
 try:
     import warnings

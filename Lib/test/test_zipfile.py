@@ -1181,20 +1181,6 @@ class PyZipFileTests(unittest.TestCase):
             self.assertNotIn(bn, zipfp.namelist())
             self.assertCompiledIn(bn, zipfp.namelist())
 
-    def test_write_python_package(self):
-        import email
-        packagedir = os.path.dirname(email.__file__)
-        self.requiresWriteAccess(packagedir)
-
-        with TemporaryFile() as t, zipfile.PyZipFile(t, "w") as zipfp:
-            zipfp.writepy(packagedir)
-
-            # Check for a couple of modules at different levels of the
-            # hierarchy
-            names = zipfp.namelist()
-            self.assertCompiledIn('email/__init__.py', names)
-            self.assertCompiledIn('email/mime/text.py', names)
-
     def test_write_filtered_python_package(self):
         import test
         packagedir = os.path.dirname(test.__file__)
@@ -1224,21 +1210,6 @@ class PyZipFileTests(unittest.TestCase):
             if reportStr:
                 print(reportStr)
             self.assertTrue('SyntaxError' not in reportStr)
-
-    def test_write_with_optimization(self):
-        import email
-        packagedir = os.path.dirname(email.__file__)
-        self.requiresWriteAccess(packagedir)
-        optlevel = 1 if __debug__ else 0
-        ext = '.pyc'
-
-        with TemporaryFile() as t, \
-             zipfile.PyZipFile(t, "w", optimize=optlevel) as zipfp:
-            zipfp.writepy(packagedir)
-
-            names = zipfp.namelist()
-            self.assertIn('email/__init__' + ext, names)
-            self.assertIn('email/mime/text' + ext, names)
 
     def test_write_python_directory(self):
         os.mkdir(TESTFN2)
