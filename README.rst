@@ -12,7 +12,8 @@ Some people do a "100 days of code" challenge.  This is the opposite.
 - Day 3 (6/14/2020). Obliterated tkinter.
 - Day 4 (6/15/2020). Wasted the web. html, http, urllib, cgi? Gone.
 - Day 6 (6/16/2020). Eliminated email (and smtp, pop, imap, etc.).
-
+- Day 7 (6/17/2020). No news is good news (nntplib).
+  
 Copyright and License Information
 ---------------------------------
 
