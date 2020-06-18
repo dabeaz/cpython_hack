@@ -20,13 +20,6 @@ TESTFN = support.TESTFN
 
 class TestSupport(unittest.TestCase):
 
-    def test_import_module(self):
-        support.import_module("ftplib")
-        self.assertRaises(unittest.SkipTest, support.import_module, "foo")
-
-    def test_import_fresh_module(self):
-        support.import_fresh_module("ftplib")
-
     def test_get_attribute(self):
         self.assertEqual(support.get_attribute(self, "test_get_attribute"),
                         self.test_get_attribute)

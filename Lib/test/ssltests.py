@@ -6,7 +6,7 @@ import sys
 import subprocess
 
 TESTS = [
-    'test_asyncio', 'test_ensurepip.py', 'test_ftplib', 'test_hashlib',
+    'test_asyncio', 'test_ensurepip.py', 'test_hashlib',
     'test_hmac', 'test_ssl', 'test_venv', 
 ]
 
