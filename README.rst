@@ -14,7 +14,8 @@ Some people do a "100 days of code" challenge.  This is the opposite.
 - Day 6 (6/16/2020). Eliminated email (and smtp, pop, imap, etc.).
 - Day 7 (6/17/2020). No news is good news (nntplib).
 - Day 8 (6/18/2020). Fetch THAT.  (ftplib, telnetlib).
-
+- Day 9 (6/19/2020). Asyncore, no more.
+  
 Copyright and License Information
 ---------------------------------
 

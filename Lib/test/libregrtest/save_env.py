@@ -58,7 +58,7 @@ class saved_test_environment:
 
     resources = ('sys.argv', 'cwd', 'sys.stdin', 'sys.stdout', 'sys.stderr',
                  'os.environ', 'sys.path', 'sys.path_hooks', '__import__',
-                 'warnings.filters', 'asyncore.socket_map',
+                 'warnings.filters', 
                  'logging._handlers', 'logging._handlerList', 'sys.gettrace',
                  'sys.warnoptions',
                  # multiprocessing.process._cleanup() may release ref
@@ -135,16 +135,6 @@ class saved_test_environment:
     def restore_warnings_filters(self, saved_filters):
         warnings.filters = saved_filters[1]
         warnings.filters[:] = saved_filters[2]
-
-    def get_asyncore_socket_map(self):
-        asyncore = sys.modules.get('asyncore')
-        # XXX Making a copy keeps objects alive until __exit__ gets called.
-        return asyncore and asyncore.socket_map.copy() or {}
-    def restore_asyncore_socket_map(self, saved_map):
-        asyncore = sys.modules.get('asyncore')
-        if asyncore is not None:
-            asyncore.close_all(ignore_all=True)
-            asyncore.socket_map.update(saved_map)
 
     def get_shutil_archive_formats(self):
         # we could call get_archives_formats() but that only returns the

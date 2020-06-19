@@ -17,7 +17,6 @@ import pprint
 import urllib.request
 import threading
 import traceback
-import asyncore
 import weakref
 import platform
 import sysconfig
@@ -2566,124 +2565,6 @@ class ThreadedEchoServer(threading.Thread):
     def stop(self):
         self.active = False
 
-class AsyncoreEchoServer(threading.Thread):
-
-    # this one's based on asyncore.dispatcher
-
-    class EchoServer (asyncore.dispatcher):
-
-        class ConnectionHandler(asyncore.dispatcher_with_send):
-
-            def __init__(self, conn, certfile):
-                self.socket = test_wrap_socket(conn, server_side=True,
-                                              certfile=certfile,
-                                              do_handshake_on_connect=False)
-                asyncore.dispatcher_with_send.__init__(self, self.socket)
-                self._ssl_accepting = True
-                self._do_ssl_handshake()
-
-            def readable(self):
-                if isinstance(self.socket, ssl.SSLSocket):
-                    while self.socket.pending() > 0:
-                        self.handle_read_event()
-                return True
-
-            def _do_ssl_handshake(self):
-                try:
-                    self.socket.do_handshake()
-                except (ssl.SSLWantReadError, ssl.SSLWantWriteError):
-                    return
-                except ssl.SSLEOFError:
-                    return self.handle_close()
-                except ssl.SSLError:
-                    raise
-                except OSError as err:
-                    if err.args[0] == errno.ECONNABORTED:
-                        return self.handle_close()
-                else:
-                    self._ssl_accepting = False
-
-            def handle_read(self):
-                if self._ssl_accepting:
-                    self._do_ssl_handshake()
-                else:
-                    data = self.recv(1024)
-                    if support.verbose:
-                        sys.stdout.write(" server:  read %s from client\n" % repr(data))
-                    if not data:
-                        self.close()
-                    else:
-                        self.send(data.lower())
-
-            def handle_close(self):
-                self.close()
-                if support.verbose:
-                    sys.stdout.write(" server:  closed connection %s\n" % self.socket)
-
-            def handle_error(self):
-                raise
-
-        def __init__(self, certfile):
-            self.certfile = certfile
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.port = socket_helper.bind_port(sock, '')
-            asyncore.dispatcher.__init__(self, sock)
-            self.listen(5)
-
-        def handle_accepted(self, sock_obj, addr):
-            if support.verbose:
-                sys.stdout.write(" server:  new connection from %s:%s\n" %addr)
-            self.ConnectionHandler(sock_obj, self.certfile)
-
-        def handle_error(self):
-            raise
-
-    def __init__(self, certfile):
-        self.flag = None
-        self.active = False
-        self.server = self.EchoServer(certfile)
-        self.port = self.server.port
-        threading.Thread.__init__(self)
-        self.daemon = True
-
-    def __str__(self):
-        return "<%s %s>" % (self.__class__.__name__, self.server)
-
-    def __enter__(self):
-        self.start(threading.Event())
-        self.flag.wait()
-        return self
-
-    def __exit__(self, *args):
-        if support.verbose:
-            sys.stdout.write(" cleanup: stopping server.\n")
-        self.stop()
-        if support.verbose:
-            sys.stdout.write(" cleanup: joining server thread.\n")
-        self.join()
-        if support.verbose:
-            sys.stdout.write(" cleanup: successfully joined.\n")
-        # make sure that ConnectionHandler is removed from socket_map
-        asyncore.close_all(ignore_all=True)
-
-    def start (self, flag=None):
-        self.flag = flag
-        threading.Thread.start(self)
-
-    def run(self):
-        self.active = True
-        if self.flag:
-            self.flag.set()
-        while self.active:
-            try:
-                asyncore.loop(1)
-            except:
-                pass
-
-    def stop(self):
-        self.active = False
-        self.server.close()
-
 def server_params_test(client_context, server_context, indata=b"FOO\n",
                        chatty=True, connectionchatty=False, sni_name=None,
                        session=None):
@@ -3421,35 +3302,6 @@ class ThreadedTests(unittest.TestCase):
         finally:
             f.close()
         self.assertEqual(d1, d2)
-
-    def test_asyncore_server(self):
-        """Check the example asyncore integration."""
-        if support.verbose:
-            sys.stdout.write("\n")
-
-        indata = b"FOO\n"
-        server = AsyncoreEchoServer(CERTFILE)
-        with server:
-            s = test_wrap_socket(socket.socket())
-            s.connect(('127.0.0.1', server.port))
-            if support.verbose:
-                sys.stdout.write(
-                    " client:  sending %r...\n" % indata)
-            s.write(indata)
-            outdata = s.read()
-            if support.verbose:
-                sys.stdout.write(" client:  read %r\n" % outdata)
-            if outdata != indata.lower():
-                self.fail(
-                    "bad data <<%r>> (%d) received; expected <<%r>> (%d)\n"
-                    % (outdata[:20], len(outdata),
-                       indata[:20].lower(), len(indata)))
-            s.write(b"over\n")
-            if support.verbose:
-                sys.stdout.write(" client:  closing connection.\n")
-            s.close()
-            if support.verbose:
-                sys.stdout.write(" client:  connection closed.\n")
 
     def test_recv_send(self):
         """Test recv(), send() and friends."""

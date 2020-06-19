@@ -278,11 +278,6 @@ class TestSupport(unittest.TestCase):
         with self.assertRaises(AssertionError):
             support.check_syntax_error(self, "x=1")
 
-    def test_CleanImport(self):
-        import importlib
-        with support.CleanImport("asyncore"):
-            importlib.import_module("asyncore")
-
     def test_DirsOnSysPath(self):
         with support.DirsOnSysPath('foo', 'bar'):
             self.assertIn("foo", sys.path)

@@ -52,7 +52,6 @@ import unittest
 import warnings
 import weakref
 
-import asyncore
 from socketserver import (ThreadingUDPServer, DatagramRequestHandler,
                           ThreadingTCPServer, StreamRequestHandler)
 
