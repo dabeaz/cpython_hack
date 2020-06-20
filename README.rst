@@ -15,7 +15,8 @@ Some people do a "100 days of code" challenge.  This is the opposite.
 - Day 7 (6/17/2020). No news is good news (nntplib).
 - Day 8 (6/18/2020). Fetch THAT.  (ftplib, telnetlib).
 - Day 9 (6/19/2020). Asyncore, no more.
-  
+- Day 10 (6/20/2020). Wave goodbye (wavfile, sunau, aifc, sndhdr).
+
 Copyright and License Information
 ---------------------------------
 
