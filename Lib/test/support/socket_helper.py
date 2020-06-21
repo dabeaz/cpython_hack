@@ -190,8 +190,6 @@ _NOT_SET = object()
 def transient_internet(resource_name, *, timeout=_NOT_SET, errnos=()):
     """Return a context manager that raises ResourceDenied when various issues
     with the Internet connection manifest themselves as exceptions."""
-    import nntplib
-    import urllib.error
     if timeout is _NOT_SET:
         timeout = support.INTERNET_TIMEOUT
 
@@ -227,12 +225,6 @@ def transient_internet(resource_name, *, timeout=_NOT_SET, errnos=()):
         n = getattr(err, 'errno', None)
         if (isinstance(err, socket.timeout) or
             (isinstance(err, socket.gaierror) and n in gai_errnos) or
-            (isinstance(err, urllib.error.HTTPError) and
-             500 <= err.code <= 599) or
-            (isinstance(err, urllib.error.URLError) and
-                 (("ConnectionRefusedError" in err.reason) or
-                  ("TimeoutError" in err.reason) or
-                  ("EOFError" in err.reason))) or
             n in captured_errnos):
             if not support.verbose:
                 sys.stderr.write(denied.args[0] + "\n")
@@ -243,10 +235,6 @@ def transient_internet(resource_name, *, timeout=_NOT_SET, errnos=()):
         if timeout is not None:
             socket.setdefaulttimeout(timeout)
         yield
-    except nntplib.NNTPTemporaryError as err:
-        if support.verbose:
-            sys.stderr.write(denied.args[0] + "\n")
-        raise denied from err
     except OSError as err:
         # urllib can wrap original socket errors multiple times (!), we must
         # unwrap to get at the original error.
