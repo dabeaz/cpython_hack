@@ -17,7 +17,8 @@ Some people do a "100 days of code" challenge.  This is the opposite.
 - Day 9 (6/19/2020). Asyncore, no more.
 - Day 10 (6/20/2020). Wave goodbye (wavfile, sunau, aifc, sndhdr).
 - Day 11 (6/21/2020). Wiped wsgiref (and netrc, colorsys, graphlib, msilib).
-  
+- Day 12 (6/22/2020). Excised xdrlib and uu.
+
 Copyright and License Information
 ---------------------------------
 
