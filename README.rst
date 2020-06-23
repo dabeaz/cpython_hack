@@ -18,7 +18,8 @@ Some people do a "100 days of code" challenge.  This is the opposite.
 - Day 10 (6/20/2020). Wave goodbye (wavfile, sunau, aifc, sndhdr).
 - Day 11 (6/21/2020). Wiped wsgiref (and netrc, colorsys, graphlib, msilib).
 - Day 12 (6/22/2020). Excised xdrlib and uu.
-
+- Day 13 (6/23/2020). Tabled tabnanny.
+  
 Copyright and License Information
 ---------------------------------
 
