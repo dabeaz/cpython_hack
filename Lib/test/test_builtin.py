@@ -1,7 +1,6 @@
 # Python test set -- built-in functions
 
 import ast
-import asyncio
 import builtins
 import collections
 import io
@@ -25,8 +24,7 @@ from types import AsyncGeneratorType, FunctionType
 from operator import neg
 from test import support
 from test.support import (
-    EnvironmentVarGuard, TESTFN, check_warnings, swap_attr, unlink,
-    maybe_get_event_loop_policy)
+    EnvironmentVarGuard, TESTFN, check_warnings, swap_attr, unlink)
 from test.support.script_helper import assert_python_ok
 from unittest.mock import MagicMock, patch
 try:
@@ -369,117 +367,6 @@ class BuiltinTest(unittest.TestCase):
                 rv = ns['f']()
                 self.assertEqual(rv, tuple(expected))
 
-    def test_compile_top_level_await(self):
-        """Test whether code some top level await can be compiled.
-
-        Make sure it compiles only with the PyCF_ALLOW_TOP_LEVEL_AWAIT flag
-        set, and make sure the generated code object has the CO_COROUTINE flag
-        set in order to execute it with  `await eval(.....)` instead of exec,
-        or via a FunctionType.
-        """
-
-        # helper function just to check we can run top=level async-for
-        async def arange(n):
-            for i in range(n):
-                yield i
-
-        modes = ('single', 'exec')
-        code_samples = [
-            '''a = await asyncio.sleep(0, result=1)''',
-            '''async for i in arange(1):
-                   a = 1''',
-            '''async with asyncio.Lock() as l:
-                   a = 1''',
-            '''a = [x async for x in arange(2)][1]''',
-            '''a = 1 in {x async for x in arange(2)}''',
-            '''a = {x:1 async for x in arange(1)}[0]''',
-            '''a = [x async for x in arange(2) async for x in arange(2)][1]''',
-            '''a = [x async for x in (x async for x in arange(5))][1]''',
-            '''a, = [1 for x in {x async for x in arange(1)}]''',
-            '''a = [await asyncio.sleep(0, x) async for x in arange(2)][1]'''
-        ]
-        policy = maybe_get_event_loop_policy()
-        try:
-            for mode, code_sample in product(modes, code_samples):
-                source = dedent(code_sample)
-                with self.assertRaises(
-                        SyntaxError, msg=f"source={source} mode={mode}"):
-                    compile(source, '?', mode)
-
-                co = compile(source,
-                             '?',
-                             mode,
-                             flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
-
-                self.assertEqual(co.co_flags & CO_COROUTINE, CO_COROUTINE,
-                                 msg=f"source={source} mode={mode}")
-
-                # test we can create and  advance a function type
-                globals_ = {'asyncio': asyncio, 'a': 0, 'arange': arange}
-                async_f = FunctionType(co, globals_)
-                asyncio.run(async_f())
-                self.assertEqual(globals_['a'], 1)
-
-                # test we can await-eval,
-                globals_ = {'asyncio': asyncio, 'a': 0, 'arange': arange}
-                asyncio.run(eval(co, globals_))
-                self.assertEqual(globals_['a'], 1)
-        finally:
-            asyncio.set_event_loop_policy(policy)
-
-    def test_compile_top_level_await_invalid_cases(self):
-         # helper function just to check we can run top=level async-for
-        async def arange(n):
-            for i in range(n):
-                yield i
-
-        modes = ('single', 'exec')
-        code_samples = [
-            '''def f():  await arange(10)\n''',
-            '''def f():  [x async for x in arange(10)]\n''',
-            '''def f():  [await x async for x in arange(10)]\n''',
-            '''def f():
-                   async for i in arange(1):
-                       a = 1
-            ''',
-            '''def f():
-                   async with asyncio.Lock() as l:
-                       a = 1
-            '''
-        ]
-        policy = maybe_get_event_loop_policy()
-        try:
-            for mode, code_sample in product(modes, code_samples):
-                source = dedent(code_sample)
-                with self.assertRaises(
-                        SyntaxError, msg=f"source={source} mode={mode}"):
-                    compile(source, '?', mode)
-
-                with self.assertRaises(
-                        SyntaxError, msg=f"source={source} mode={mode}"):
-                    co = compile(source,
-                             '?',
-                             mode,
-                             flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
-        finally:
-            asyncio.set_event_loop_policy(policy)
-
-
-    def test_compile_async_generator(self):
-        """
-        With the PyCF_ALLOW_TOP_LEVEL_AWAIT flag added in 3.8, we want to
-        make sure AsyncGenerators are still properly not marked with the
-        CO_COROUTINE flag.
-        """
-        code = dedent("""async def ticker():
-                for i in range(10):
-                    yield i
-                    await asyncio.sleep(0)""")
-
-        co = compile(code, '?', 'exec', flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
-        glob = {}
-        exec(co, glob)
-        self.assertEqual(type(glob['ticker']()), AsyncGeneratorType)
 
     def test_delattr(self):
         sys.spam = 1

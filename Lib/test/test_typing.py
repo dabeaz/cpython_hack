@@ -2669,49 +2669,7 @@ class OverloadTests(BaseTestCase):
 
         blah()
 
-
-ASYNCIO_TESTS = """
-import asyncio
-
-T_a = TypeVar('T_a')
-
-class AwaitableWrapper(typing.Awaitable[T_a]):
-
-    def __init__(self, value):
-        self.value = value
-
-    def __await__(self) -> typing.Iterator[T_a]:
-        yield
-        return self.value
-
-class AsyncIteratorWrapper(typing.AsyncIterator[T_a]):
-
-    def __init__(self, value: typing.Iterable[T_a]):
-        self.value = value
-
-    def __aiter__(self) -> typing.AsyncIterator[T_a]:
-        return self
-
-    async def __anext__(self) -> T_a:
-        data = await self.value
-        if data:
-            return data
-        else:
-            raise StopAsyncIteration
-
-class ACM:
-    async def __aenter__(self) -> int:
-        return 42
-    async def __aexit__(self, etype, eval, tb):
-        return None
-"""
-
-try:
-    exec(ASYNCIO_TESTS)
-except ImportError:
-    ASYNCIO = False  # multithreading is not enabled
-else:
-    ASYNCIO = True
+ASYNCIO = False  # multithreading is not enabled
 
 # Definitions needed for features introduced in Python 3.6
 

@@ -734,12 +734,6 @@ class TestBuggyCases(GetSourceBase):
         self.assertSourceEqual(mod2.cls213, 218, 222)
         self.assertSourceEqual(mod2.cls213().func219(), 220, 221)
 
-    def test_nested_class_definition_inside_async_function(self):
-        import asyncio
-        self.addCleanup(asyncio.set_event_loop_policy, None)
-        self.assertSourceEqual(asyncio.run(mod2.func225()), 226, 227)
-        self.assertSourceEqual(mod2.cls226, 231, 235)
-        self.assertSourceEqual(asyncio.run(mod2.cls226().func232()), 233, 234)
 
 class TestNoEOL(GetSourceBase):
     def setUp(self):

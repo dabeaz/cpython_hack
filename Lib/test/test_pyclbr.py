@@ -241,14 +241,6 @@ class ReadmoduleTests(TestCase):
     def tearDown(self):
         pyclbr._modules = self._modules
 
-
-    def test_dotted_name_not_a_package(self):
-        # test ImportError is raised when the first part of a dotted name is
-        # not a package.
-        #
-        # Issue #14798.
-        self.assertRaises(ImportError, pyclbr.readmodule_ex, 'asyncio.foo')
-
     def test_module_has_no_spec(self):
         module_name = "doesnotexist"
         assert module_name not in pyclbr._modules

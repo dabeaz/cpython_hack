@@ -19,7 +19,8 @@ Some people do a "100 days of code" challenge.  This is the opposite.
 - Day 11 (6/21/2020). Wiped wsgiref (and netrc, colorsys, graphlib, msilib).
 - Day 12 (6/22/2020). Excised xdrlib and uu.
 - Day 13 (6/23/2020). Tabled tabnanny.
-  
+- Day 14 (6/24/2020). Asyncio... awaited.
+
 Copyright and License Information
 ---------------------------------
 

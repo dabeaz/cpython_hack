@@ -2112,48 +2112,6 @@ class CoroutineTest(unittest.TestCase):
         self.assertEqual(run_async(run_gen()), ([], 'end'))
 
 
-class CoroAsyncIOCompatTest(unittest.TestCase):
-
-    def test_asyncio_1(self):
-        # asyncio cannot be imported when Python is compiled without thread
-        # support
-        asyncio = support.import_module('asyncio')
-
-        class MyException(Exception):
-            pass
-
-        buffer = []
-
-        class CM:
-            async def __aenter__(self):
-                buffer.append(1)
-                await asyncio.sleep(0.01)
-                buffer.append(2)
-                return self
-
-            async def __aexit__(self, exc_type, exc_val, exc_tb):
-                await asyncio.sleep(0.01)
-                buffer.append(exc_type.__name__)
-
-        async def f():
-            async with CM() as c:
-                await asyncio.sleep(0.01)
-                raise MyException
-            buffer.append('unreachable')
-
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            loop.run_until_complete(f())
-        except MyException:
-            pass
-        finally:
-            loop.close()
-            asyncio.set_event_loop_policy(None)
-
-        self.assertEqual(buffer, [1, 2, 'MyException'])
-
-
 class OriginTrackingTest(unittest.TestCase):
     def here(self):
         info = inspect.getframeinfo(inspect.currentframe().f_back)
@@ -2284,10 +2242,6 @@ class OriginTrackingTest(unittest.TestCase):
 class UnawaitedWarningDuringShutdownTest(unittest.TestCase):
     # https://bugs.python.org/issue32591#msg310726
     def test_unawaited_warning_during_shutdown(self):
-        code = ("import asyncio\n"
-                "async def f(): pass\n"
-                "asyncio.gather(f())\n")
-        assert_python_ok("-c", code)
 
         code = ("import sys\n"
                 "async def f(): pass\n"
