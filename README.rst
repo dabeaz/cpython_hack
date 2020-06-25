@@ -20,7 +20,8 @@ Some people do a "100 days of code" challenge.  This is the opposite.
 - Day 12 (6/22/2020). Excised xdrlib and uu.
 - Day 13 (6/23/2020). Tabled tabnanny.
 - Day 14 (6/24/2020). Asyncio... awaited.
-
+- Day 15 (6/25/2020). Deadlocked concurrent.
+  
 Copyright and License Information
 ---------------------------------
 
