@@ -352,26 +352,6 @@ class BasicTest(BaseTest):
         )
         self.assertEqual(out.strip(), '0')
 
-    @requireVenvCreate
-    def test_multiprocessing(self):
-        """
-        Test that the multiprocessing is able to spawn.
-        """
-        # Issue bpo-36342: Instantiation of a Pool object imports the
-        # multiprocessing.synchronize module. Skip the test if this module
-        # cannot be imported.
-        import_module('multiprocessing.synchronize')
-        rmtree(self.env_dir)
-        self.run_with_capture(venv.create, self.env_dir)
-        envpy = os.path.join(os.path.realpath(self.env_dir),
-                             self.bindir, self.exe)
-        out, err = check_output([envpy, '-c',
-            'from multiprocessing import Pool; '
-            'pool = Pool(1); '
-            'print(pool.apply_async("Python".lower).get(3)); '
-            'pool.terminate()'])
-        self.assertEqual(out.strip(), "python".encode())
-
     @unittest.skipIf(os.name == 'nt', 'not relevant on Windows')
     def test_deactivate_with_strict_bash_opts(self):
         bash = shutil.which("bash")

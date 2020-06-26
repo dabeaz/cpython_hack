@@ -203,8 +203,6 @@ class RunModuleTestCase(unittest.TestCase, CodeExecutionMixin):
         self.expect_import_error("..eaten")
         self.expect_import_error(".test_runpy")
         self.expect_import_error(".unittest")
-        # Package without __main__.py
-        self.expect_import_error("multiprocessing")
 
     def test_library_module(self):
         self.assertEqual(run_module("runpy")["__name__"], "runpy")

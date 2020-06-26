@@ -3434,106 +3434,6 @@ class QueueHandlerTest(BaseTest):
         listener.stop()
         self.assertEqual(self.stream.getvalue().strip(), "que -> ERROR: error")
 
-if hasattr(logging.handlers, 'QueueListener'):
-    import multiprocessing
-    from unittest.mock import patch
-
-    class QueueListenerTest(BaseTest):
-        """
-        Tests based on patch submitted for issue #27930. Ensure that
-        QueueListener handles all log messages.
-        """
-
-        repeat = 20
-
-        @staticmethod
-        def setup_and_log(log_queue, ident):
-            """
-            Creates a logger with a QueueHandler that logs to a queue read by a
-            QueueListener. Starts the listener, logs five messages, and stops
-            the listener.
-            """
-            logger = logging.getLogger('test_logger_with_id_%s' % ident)
-            logger.setLevel(logging.DEBUG)
-            handler = logging.handlers.QueueHandler(log_queue)
-            logger.addHandler(handler)
-            listener = logging.handlers.QueueListener(log_queue)
-            listener.start()
-
-            logger.info('one')
-            logger.info('two')
-            logger.info('three')
-            logger.info('four')
-            logger.info('five')
-
-            listener.stop()
-            logger.removeHandler(handler)
-            handler.close()
-
-        @patch.object(logging.handlers.QueueListener, 'handle')
-        def test_handle_called_with_queue_queue(self, mock_handle):
-            for i in range(self.repeat):
-                log_queue = queue.Queue()
-                self.setup_and_log(log_queue, '%s_%s' % (self.id(), i))
-            self.assertEqual(mock_handle.call_count, 5 * self.repeat,
-                             'correct number of handled log messages')
-
-        @patch.object(logging.handlers.QueueListener, 'handle')
-        def test_handle_called_with_mp_queue(self, mock_handle):
-            # Issue 28668: The multiprocessing (mp) module is not functional
-            # when the mp.synchronize module cannot be imported.
-            support.import_module('multiprocessing.synchronize')
-            for i in range(self.repeat):
-                log_queue = multiprocessing.Queue()
-                self.setup_and_log(log_queue, '%s_%s' % (self.id(), i))
-                log_queue.close()
-                log_queue.join_thread()
-            self.assertEqual(mock_handle.call_count, 5 * self.repeat,
-                             'correct number of handled log messages')
-
-        @staticmethod
-        def get_all_from_queue(log_queue):
-            try:
-                while True:
-                    yield log_queue.get_nowait()
-            except queue.Empty:
-                return []
-
-        def test_no_messages_in_queue_after_stop(self):
-            """
-            Five messages are logged then the QueueListener is stopped. This
-            test then gets everything off the queue. Failure of this test
-            indicates that messages were not registered on the queue until
-            _after_ the QueueListener stopped.
-            """
-            # Issue 28668: The multiprocessing (mp) module is not functional
-            # when the mp.synchronize module cannot be imported.
-            support.import_module('multiprocessing.synchronize')
-            for i in range(self.repeat):
-                queue = multiprocessing.Queue()
-                self.setup_and_log(queue, '%s_%s' %(self.id(), i))
-                # time.sleep(1)
-                items = list(self.get_all_from_queue(queue))
-                queue.close()
-                queue.join_thread()
-
-                expected = [[], [logging.handlers.QueueListener._sentinel]]
-                self.assertIn(items, expected,
-                              'Found unexpected messages in queue: %s' % (
-                                    [m.msg if isinstance(m, logging.LogRecord)
-                                     else m for m in items]))
-
-        def test_calls_task_done_after_stop(self):
-            # Issue 36813: Make sure queue.join does not deadlock.
-            log_queue = queue.Queue()
-            listener = logging.handlers.QueueListener(log_queue)
-            listener.start()
-            listener.stop()
-            with self.assertRaises(ValueError):
-                # Make sure all tasks are done and .join won't block.
-                log_queue.task_done()
-
-
 ZERO = datetime.timedelta(0)
 
 class UTC(datetime.tzinfo):
@@ -4157,16 +4057,6 @@ class LogRecordTest(BaseTest):
         self.assertEqual(h.records[0].message, 'less is more')
         r.removeHandler(h)
         h.close()
-
-    def test_multiprocessing(self):
-        r = logging.makeLogRecord({})
-        self.assertEqual(r.processName, 'MainProcess')
-        try:
-            import multiprocessing as mp
-            r = logging.makeLogRecord({})
-            self.assertEqual(r.processName, mp.current_process().name)
-        except ImportError:
-            pass
 
     def test_optional(self):
         r = logging.makeLogRecord({})

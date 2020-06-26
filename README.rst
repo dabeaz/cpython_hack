@@ -21,7 +21,8 @@ Some people do a "100 days of code" challenge.  This is the opposite.
 - Day 13 (6/23/2020). Tabled tabnanny.
 - Day 14 (6/24/2020). Asyncio... awaited.
 - Day 15 (6/25/2020). Deadlocked concurrent.
-  
+- Day 16 (6/26/2020). Mauled multiprocessing, mmap, modulefinder, numbers.
+
 Copyright and License Information
 ---------------------------------
 

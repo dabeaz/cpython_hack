@@ -47,9 +47,6 @@ NAME_MAPPING = {
     ('UserString', 'UserString'): ('collections', 'UserString'),
     ('whichdb', 'whichdb'): ('dbm', 'whichdb'),
     ('_socket', 'fromfd'): ('socket', 'fromfd'),
-    ('_multiprocessing', 'Connection'): ('multiprocessing.connection', 'Connection'),
-    ('multiprocessing.process', 'Process'): ('multiprocessing.context', 'Process'),
-    ('multiprocessing.forking', 'Popen'): ('multiprocessing.popen_fork', 'Popen'),
 }
 
 PYTHON2_EXCEPTIONS = (
@@ -112,16 +109,6 @@ else:
 
 for excname in PYTHON2_EXCEPTIONS:
     NAME_MAPPING[("exceptions", excname)] = ("builtins", excname)
-
-MULTIPROCESSING_EXCEPTIONS = (
-    'AuthenticationError',
-    'BufferTooShort',
-    'ProcessError',
-    'TimeoutError',
-)
-
-for excname in MULTIPROCESSING_EXCEPTIONS:
-    NAME_MAPPING[("multiprocessing", excname)] = ("multiprocessing.context", excname)
 
 # Same, but for 3.x to 2.x
 REVERSE_IMPORT_MAPPING = dict((v, k) for (k, v) in IMPORT_MAPPING.items())
