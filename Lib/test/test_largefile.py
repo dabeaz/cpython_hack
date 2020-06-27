@@ -5,12 +5,10 @@ import os
 import stat
 import sys
 import unittest
-import socket
 import shutil
 import threading
 from test.support import TESTFN, requires, unlink, bigmemtest
 from test.support import SHORT_TIMEOUT
-from test.support import socket_helper
 import io  # C implementation of io
 import _pyio as pyio # Python implementation of io
 
@@ -175,60 +173,6 @@ class TestCopyfile(LargeFileTest, unittest.TestCase):
         # os.sendfile().
         size = os.path.getsize(TESTFN)
         shutil.copyfile(TESTFN, TESTFN2)
-        self.assertEqual(os.path.getsize(TESTFN2), size)
-        with open(TESTFN2, 'rb') as f:
-            self.assertEqual(f.read(5), b'z\x00\x00\x00\x00')
-            f.seek(size - 5)
-            self.assertEqual(f.read(), b'\x00\x00\x00\x00a')
-
-
-@unittest.skipIf(not hasattr(os, 'sendfile'), 'sendfile not supported')
-class TestSocketSendfile(LargeFileTest, unittest.TestCase):
-    open = staticmethod(io.open)
-    timeout = SHORT_TIMEOUT
-
-    def setUp(self):
-        super().setUp()
-        self.thread = None
-
-    def tearDown(self):
-        super().tearDown()
-        if self.thread is not None:
-            self.thread.join(self.timeout)
-            self.thread = None
-
-    def tcp_server(self, sock):
-        def run(sock):
-            with sock:
-                conn, _ = sock.accept()
-                conn.settimeout(self.timeout)
-                with conn, open(TESTFN2, 'wb') as f:
-                    event.wait(self.timeout)
-                    while True:
-                        chunk = conn.recv(65536)
-                        if not chunk:
-                            return
-                        f.write(chunk)
-
-        event = threading.Event()
-        sock.settimeout(self.timeout)
-        self.thread = threading.Thread(target=run, args=(sock, ))
-        self.thread.start()
-        event.set()
-
-    # Exact required disk space would be (size * 2), but let's give it a
-    # bit more tolerance.
-    @skip_no_disk_space(TESTFN, size * 2.5)
-    def test_it(self):
-        port = socket_helper.find_unused_port()
-        with socket.create_server(("", port)) as sock:
-            self.tcp_server(sock)
-            with socket.create_connection(("127.0.0.1", port)) as client:
-                with open(TESTFN, 'rb') as f:
-                    client.sendfile(f)
-        self.tearDown()
-
-        size = os.path.getsize(TESTFN)
         self.assertEqual(os.path.getsize(TESTFN2), size)
         with open(TESTFN2, 'rb') as f:
             self.assertEqual(f.read(5), b'z\x00\x00\x00\x00')

@@ -3069,16 +3069,6 @@ else
 fi
 AC_SUBST(LIBFFI_INCLUDEDIR)
 
-# Check for support for loadable sqlite extensions
-AC_MSG_CHECKING(for --enable-loadable-sqlite-extensions)
-AC_ARG_ENABLE(loadable-sqlite-extensions,
-              AS_HELP_STRING([--enable-loadable-sqlite-extensions],
-                             [support loadable extensions in _sqlite module, see Doc/library/sqlite3.rst (default is no)]),
-              [],
-              [enable_loadable_sqlite_extensions="no"])
-
-AC_MSG_RESULT($enable_loadable_sqlite_extensions)
-
 # Check for --with-dbmliborder
 AC_MSG_CHECKING(for --with-dbmliborder)
 AC_ARG_WITH(dbmliborder,
@@ -5610,81 +5600,6 @@ AC_CHECK_FUNCS([shm_open shm_unlink])
 # we don't want to link with librt always, restore LIBS
 LIBS="$save_LIBS"
 ac_includes_default="$save_includes_default"
-
-# Check for usable OpenSSL
-AX_CHECK_OPENSSL([have_openssl=yes],[have_openssl=no])
-
-if test "$have_openssl" = yes; then
-    AC_MSG_CHECKING([for X509_VERIFY_PARAM_set1_host in libssl])
-
-    save_LIBS="$LIBS"
-    save_LDFLAGS="$LDFLAGS"
-    save_CPPFLAGS="$CPPFLAGS"
-    LDFLAGS="$LDFLAGS $OPENSSL_LDFLAGS"
-    LIBS="$OPENSSL_LIBS $LIBS"
-    CPPFLAGS="$OPENSSL_INCLUDES $CPPFLAGS"
-
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([
-        [#include <openssl/x509_vfy.h>]
-    ], [
-        [X509_VERIFY_PARAM *p = X509_VERIFY_PARAM_new();]
-        [X509_VERIFY_PARAM_set1_host(p, "localhost", 0);]
-        [X509_VERIFY_PARAM_set1_ip_asc(p, "127.0.0.1");]
-        [X509_VERIFY_PARAM_set_hostflags(p, 0);]
-    ])
-    ],
-    [
-        ac_cv_has_x509_verify_param_set1_host=yes
-    ],
-    [
-        ac_cv_has_x509_verify_param_set1_host=no
-    ])
-    AC_MSG_RESULT($ac_cv_has_x509_verify_param_set1_host)
-    if test "$ac_cv_has_x509_verify_param_set1_host" = "yes"; then
-        AC_DEFINE(HAVE_X509_VERIFY_PARAM_SET1_HOST, 1,
-        [Define if libssl has X509_VERIFY_PARAM_set1_host and related function])
-    fi
-
-    CPPFLAGS="$save_CPPFLAGS"
-    LDFLAGS="$save_LDFLAGS"
-    LIBS="$save_LIBS"
-fi
-
-# ssl module default cipher suite string
-AH_TEMPLATE(PY_SSL_DEFAULT_CIPHERS,
-  [Default cipher suites list for ssl module.
-   1: Python's preferred selection, 2: leave OpenSSL defaults untouched, 0: custom string])
-AH_TEMPLATE(PY_SSL_DEFAULT_CIPHER_STRING,
-  [Cipher suite string for PY_SSL_DEFAULT_CIPHERS=0]
-)
-
-AC_MSG_CHECKING(for --with-ssl-default-suites)
-AC_ARG_WITH(ssl-default-suites,
-            AS_HELP_STRING([--with-ssl-default-suites=@<:@python|openssl|STRING@:>@],
-                           [override default cipher suites string,
-                            python: use Python's preferred selection (default),
-                            openssl: leave OpenSSL's defaults untouched,
-                            STRING: use a custom string,
-                            PROTOCOL_SSLv2 ignores the setting, see Doc/library/ssl.rst]),
-[
-AC_MSG_RESULT($withval)
-case "$withval" in
-    python)
-        AC_DEFINE(PY_SSL_DEFAULT_CIPHERS, 1)
-        ;;
-    openssl)
-        AC_DEFINE(PY_SSL_DEFAULT_CIPHERS, 2)
-        ;;
-    *)
-        AC_DEFINE(PY_SSL_DEFAULT_CIPHERS, 0)
-        AC_DEFINE_UNQUOTED(PY_SSL_DEFAULT_CIPHER_STRING, "$withval")
-        ;;
-esac
-],
-[
-AC_MSG_RESULT(python)
-AC_DEFINE(PY_SSL_DEFAULT_CIPHERS, 1)
-])
 
 # builtin hash modules
 default_hashlib_hashes="md5,sha1,sha256,sha512,sha3,blake2"

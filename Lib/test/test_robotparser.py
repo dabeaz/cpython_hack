@@ -4,7 +4,6 @@ import threading
 import unittest
 import urllib.robotparser
 from test import support
-from test.support import socket_helper
 from test.support import threading_helper
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -308,80 +307,6 @@ class RobotHandler(BaseHTTPRequestHandler):
         pass
 
 
-class PasswordProtectedSiteTestCase(unittest.TestCase):
-
-    def setUp(self):
-        # clear _opener global variable
-        self.addCleanup(urllib.request.urlcleanup)
-
-        self.server = HTTPServer((socket_helper.HOST, 0), RobotHandler)
-
-        self.t = threading.Thread(
-            name='HTTPServer serving',
-            target=self.server.serve_forever,
-            # Short poll interval to make the test finish quickly.
-            # Time between requests is short enough that we won't wake
-            # up spuriously too many times.
-            kwargs={'poll_interval':0.01})
-        self.t.daemon = True  # In case this function raises.
-        self.t.start()
-
-    def tearDown(self):
-        self.server.shutdown()
-        self.t.join()
-        self.server.server_close()
-
-    @threading_helper.reap_threads
-    def testPasswordProtectedSite(self):
-        addr = self.server.server_address
-        url = 'http://' + socket_helper.HOST + ':' + str(addr[1])
-        robots_url = url + "/robots.txt"
-        parser = urllib.robotparser.RobotFileParser()
-        parser.set_url(url)
-        parser.read()
-        self.assertFalse(parser.can_fetch("*", robots_url))
-
-
-class NetworkTestCase(unittest.TestCase):
-
-    base_url = 'http://www.pythontest.net/'
-    robots_txt = '{}elsewhere/robots.txt'.format(base_url)
-
-    @classmethod
-    def setUpClass(cls):
-        support.requires('network')
-        with socket_helper.transient_internet(cls.base_url):
-            cls.parser = urllib.robotparser.RobotFileParser(cls.robots_txt)
-            cls.parser.read()
-
-    def url(self, path):
-        return '{}{}{}'.format(
-            self.base_url, path, '/' if not os.path.splitext(path)[1] else ''
-        )
-
-    def test_basic(self):
-        self.assertFalse(self.parser.disallow_all)
-        self.assertFalse(self.parser.allow_all)
-        self.assertGreater(self.parser.mtime(), 0)
-        self.assertFalse(self.parser.crawl_delay('*'))
-        self.assertFalse(self.parser.request_rate('*'))
-
-    def test_can_fetch(self):
-        self.assertTrue(self.parser.can_fetch('*', self.url('elsewhere')))
-        self.assertFalse(self.parser.can_fetch('Nutch', self.base_url))
-        self.assertFalse(self.parser.can_fetch('Nutch', self.url('brian')))
-        self.assertFalse(self.parser.can_fetch('Nutch', self.url('webstats')))
-        self.assertFalse(self.parser.can_fetch('*', self.url('webstats')))
-        self.assertTrue(self.parser.can_fetch('*', self.base_url))
-
-    def test_read_404(self):
-        parser = urllib.robotparser.RobotFileParser(self.url('i-robot.txt'))
-        parser.read()
-        self.assertTrue(parser.allow_all)
-        self.assertFalse(parser.disallow_all)
-        self.assertEqual(parser.mtime(), 0)
-        self.assertIsNone(parser.crawl_delay('*'))
-        self.assertIsNone(parser.request_rate('*'))
 
 if __name__=='__main__':
     unittest.main()

@@ -344,7 +344,6 @@ ALT_NAME_MAPPING = {
     ('__builtin__', 'basestring', 'builtins', 'str'),
     ('exceptions', 'StandardError', 'builtins', 'Exception'),
     ('UserDict', 'UserDict', 'collections', 'UserDict'),
-    ('socket', '_socketobject', 'socket', 'SocketType'),
 }
 
 def mapping(module, name):

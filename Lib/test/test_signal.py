@@ -2,7 +2,6 @@ import errno
 import os
 import random
 import signal
-import socket
 import subprocess
 import sys
 import time
@@ -157,13 +156,6 @@ class WakeupFDTests(unittest.TestCase):
         self.assertRaises((ValueError, OSError),
                           signal.set_wakeup_fd, fd)
 
-    def test_invalid_socket(self):
-        sock = socket.socket()
-        fd = sock.fileno()
-        sock.close()
-        self.assertRaises((ValueError, OSError),
-                          signal.set_wakeup_fd, fd)
-
     def test_set_wakeup_fd_result(self):
         r1, w1 = os.pipe()
         self.addCleanup(os.close, r1)
@@ -179,22 +171,6 @@ class WakeupFDTests(unittest.TestCase):
         signal.set_wakeup_fd(w1)
         self.assertEqual(signal.set_wakeup_fd(w2), w1)
         self.assertEqual(signal.set_wakeup_fd(-1), w2)
-        self.assertEqual(signal.set_wakeup_fd(-1), -1)
-
-    def test_set_wakeup_fd_socket_result(self):
-        sock1 = socket.socket()
-        self.addCleanup(sock1.close)
-        sock1.setblocking(False)
-        fd1 = sock1.fileno()
-
-        sock2 = socket.socket()
-        self.addCleanup(sock2.close)
-        sock2.setblocking(False)
-        fd2 = sock2.fileno()
-
-        signal.set_wakeup_fd(fd1)
-        self.assertEqual(signal.set_wakeup_fd(fd2), fd1)
-        self.assertEqual(signal.set_wakeup_fd(-1), fd2)
         self.assertEqual(signal.set_wakeup_fd(-1), -1)
 
     # On Windows, files are always blocking and Windows does not provide a
@@ -399,197 +375,6 @@ class WakeupSignalTests(unittest.TestCase):
             signal.pthread_sigmask(signal.SIG_UNBLOCK, (signum1, signum2))
         """,  signal.SIGUSR1, signal.SIGUSR2, ordered=False)
 
-
-@unittest.skipUnless(hasattr(socket, 'socketpair'), 'need socket.socketpair')
-class WakeupSocketSignalTests(unittest.TestCase):
-
-    @unittest.skipIf(_testcapi is None, 'need _testcapi')
-    def test_socket(self):
-        # use a subprocess to have only one thread
-        code = """if 1:
-        import signal
-        import socket
-        import struct
-        import _testcapi
-
-        signum = signal.SIGINT
-        signals = (signum,)
-
-        def handler(signum, frame):
-            pass
-
-        signal.signal(signum, handler)
-
-        read, write = socket.socketpair()
-        write.setblocking(False)
-        signal.set_wakeup_fd(write.fileno())
-
-        signal.raise_signal(signum)
-
-        data = read.recv(1)
-        if not data:
-            raise Exception("no signum written")
-        raised = struct.unpack('B', data)
-        if raised != signals:
-            raise Exception("%r != %r" % (raised, signals))
-
-        read.close()
-        write.close()
-        """
-
-        assert_python_ok('-c', code)
-
-    @unittest.skipIf(_testcapi is None, 'need _testcapi')
-    def test_send_error(self):
-        # Use a subprocess to have only one thread.
-        if os.name == 'nt':
-            action = 'send'
-        else:
-            action = 'write'
-        code = """if 1:
-        import errno
-        import signal
-        import socket
-        import sys
-        import time
-        import _testcapi
-        from test.support import captured_stderr
-
-        signum = signal.SIGINT
-
-        def handler(signum, frame):
-            pass
-
-        signal.signal(signum, handler)
-
-        read, write = socket.socketpair()
-        read.setblocking(False)
-        write.setblocking(False)
-
-        signal.set_wakeup_fd(write.fileno())
-
-        # Close sockets: send() will fail
-        read.close()
-        write.close()
-
-        with captured_stderr() as err:
-            signal.raise_signal(signum)
-
-        err = err.getvalue()
-        if ('Exception ignored when trying to {action} to the signal wakeup fd'
-            not in err):
-            raise AssertionError(err)
-        """.format(action=action)
-        assert_python_ok('-c', code)
-
-    @unittest.skipIf(_testcapi is None, 'need _testcapi')
-    def test_warn_on_full_buffer(self):
-        # Use a subprocess to have only one thread.
-        if os.name == 'nt':
-            action = 'send'
-        else:
-            action = 'write'
-        code = """if 1:
-        import errno
-        import signal
-        import socket
-        import sys
-        import time
-        import _testcapi
-        from test.support import captured_stderr
-
-        signum = signal.SIGINT
-
-        # This handler will be called, but we intentionally won't read from
-        # the wakeup fd.
-        def handler(signum, frame):
-            pass
-
-        signal.signal(signum, handler)
-
-        read, write = socket.socketpair()
-
-        # Fill the socketpair buffer
-        if sys.platform == 'win32':
-            # bpo-34130: On Windows, sometimes non-blocking send fails to fill
-            # the full socketpair buffer, so use a timeout of 50 ms instead.
-            write.settimeout(0.050)
-        else:
-            write.setblocking(False)
-
-        # Start with large chunk size to reduce the
-        # number of send needed to fill the buffer.
-        written = 0
-        for chunk_size in (2 ** 16, 2 ** 8, 1):
-            chunk = b"x" * chunk_size
-            try:
-                while True:
-                    write.send(chunk)
-                    written += chunk_size
-            except (BlockingIOError, socket.timeout):
-                pass
-
-        print(f"%s bytes written into the socketpair" % written, flush=True)
-
-        write.setblocking(False)
-        try:
-            write.send(b"x")
-        except BlockingIOError:
-            # The socketpair buffer seems full
-            pass
-        else:
-            raise AssertionError("%s bytes failed to fill the socketpair "
-                                 "buffer" % written)
-
-        # By default, we get a warning when a signal arrives
-        msg = ('Exception ignored when trying to {action} '
-               'to the signal wakeup fd')
-        signal.set_wakeup_fd(write.fileno())
-
-        with captured_stderr() as err:
-            signal.raise_signal(signum)
-
-        err = err.getvalue()
-        if msg not in err:
-            raise AssertionError("first set_wakeup_fd() test failed, "
-                                 "stderr: %r" % err)
-
-        # And also if warn_on_full_buffer=True
-        signal.set_wakeup_fd(write.fileno(), warn_on_full_buffer=True)
-
-        with captured_stderr() as err:
-            signal.raise_signal(signum)
-
-        err = err.getvalue()
-        if msg not in err:
-            raise AssertionError("set_wakeup_fd(warn_on_full_buffer=True) "
-                                 "test failed, stderr: %r" % err)
-
-        # But not if warn_on_full_buffer=False
-        signal.set_wakeup_fd(write.fileno(), warn_on_full_buffer=False)
-
-        with captured_stderr() as err:
-            signal.raise_signal(signum)
-
-        err = err.getvalue()
-        if err != "":
-            raise AssertionError("set_wakeup_fd(warn_on_full_buffer=False) "
-                                 "test failed, stderr: %r" % err)
-
-        # And then check the default again, to make sure warn_on_full_buffer
-        # settings don't leak across calls.
-        signal.set_wakeup_fd(write.fileno())
-
-        with captured_stderr() as err:
-            signal.raise_signal(signum)
-
-        err = err.getvalue()
-        if msg not in err:
-            raise AssertionError("second set_wakeup_fd() test failed, "
-                                 "stderr: %r" % err)
-
-        """.format(action=action)
-        assert_python_ok('-c', code)
 
 
 @unittest.skipIf(sys.platform == "win32", "Not valid on Windows")

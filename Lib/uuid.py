@@ -355,29 +355,7 @@ class UUID:
 
 
 def _get_command_stdout(command, *args):
-    import io, os, shutil, subprocess
-
-    try:
-        path_dirs = os.environ.get('PATH', os.defpath).split(os.pathsep)
-        path_dirs.extend(['/sbin', '/usr/sbin'])
-        executable = shutil.which(command, path=os.pathsep.join(path_dirs))
-        if executable is None:
-            return None
-        # LC_ALL=C to ensure English output, stderr=DEVNULL to prevent output
-        # on stderr (Note: we don't have an example where the words we search
-        # for are actually localized, but in theory some system could do so.)
-        env = dict(os.environ)
-        env['LC_ALL'] = 'C'
-        proc = subprocess.Popen((executable,) + args,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.DEVNULL,
-                                env=env)
-        if not proc:
-            return None
-        stdout, stderr = proc.communicate()
-        return io.BytesIO(stdout)
-    except (OSError, subprocess.SubprocessError):
-        return None
+    return None
 
 
 # For MAC (a.k.a. IEEE 802, or EUI-48) addresses, the second least significant
@@ -520,28 +498,6 @@ def _ip_getnode():
 
 def _arp_getnode():
     """Get the hardware address on Unix by running arp."""
-    import os, socket
-    try:
-        ip_addr = socket.gethostbyname(socket.gethostname())
-    except OSError:
-        return None
-
-    # Try getting the MAC addr from arp based on our IP address (Solaris).
-    mac = _find_mac_near_keyword('arp', '-an', [os.fsencode(ip_addr)], lambda i: -1)
-    if mac:
-        return mac
-
-    # This works on OpenBSD
-    mac = _find_mac_near_keyword('arp', '-an', [os.fsencode(ip_addr)], lambda i: i+1)
-    if mac:
-        return mac
-
-    # This works on Linux, FreeBSD and NetBSD
-    mac = _find_mac_near_keyword('arp', '-an', [os.fsencode('(%s)' % ip_addr)],
-                    lambda i: i+2)
-    # Return None instead of 0.
-    if mac:
-        return mac
     return None
 
 def _lanscan_getnode():

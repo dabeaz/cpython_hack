@@ -512,11 +512,7 @@ def collect_ssl(info_add):
 
 
 def collect_socket(info_add):
-    import socket
-
-    hostname = socket.gethostname()
-    info_add('socket.hostname', hostname)
-
+    info_add('socket.hostname', 'localhost')
 
 def collect_sqlite(info_add):
     try:

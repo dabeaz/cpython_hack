@@ -13,7 +13,6 @@ import os
 import pickle
 import shutil
 import signal
-import socket
 import stat
 import subprocess
 import sys
@@ -26,7 +25,6 @@ import unittest
 import uuid
 import warnings
 from test import support
-from test.support import socket_helper
 from test.support import threading_helper
 from platform import win32_is_iot
 

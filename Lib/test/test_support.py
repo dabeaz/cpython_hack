@@ -3,7 +3,6 @@ import importlib
 import io
 import os
 import shutil
-import socket
 import stat
 import subprocess
 import sys
@@ -13,7 +12,6 @@ import time
 import unittest
 from test import support
 from test.support import script_helper
-from test.support import socket_helper
 
 TESTFN = support.TESTFN
 
@@ -28,12 +26,6 @@ class TestSupport(unittest.TestCase):
     @unittest.skip("failing buildbots")
     def test_get_original_stdout(self):
         self.assertEqual(support.get_original_stdout(), sys.stdout)
-
-    def test_unload(self):
-        import sched
-        self.assertIn("sched", sys.modules)
-        support.unload("sched")
-        self.assertNotIn("sched", sys.modules)
 
     def test_unlink(self):
         with open(TESTFN, "w") as f:
@@ -82,21 +74,6 @@ class TestSupport(unittest.TestCase):
             del sys.path[0]
             support.unlink(mod_filename)
             support.rmtree('__pycache__')
-
-    def test_HOST(self):
-        s = socket.create_server((socket_helper.HOST, 0))
-        s.close()
-
-    def test_find_unused_port(self):
-        port = socket_helper.find_unused_port()
-        s = socket.create_server((socket_helper.HOST, port))
-        s.close()
-
-    def test_bind_port(self):
-        s = socket.socket()
-        socket_helper.bind_port(s)
-        s.listen()
-        s.close()
 
     # Tests for temp_dir()
 

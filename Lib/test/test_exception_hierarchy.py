@@ -1,7 +1,6 @@
 import builtins
 import os
 import select
-import socket
 import unittest
 import errno
 from errno import EEXIST
@@ -38,12 +37,6 @@ class HierarchyTest(unittest.TestCase):
         self.assertEqual(OSError.__name__, 'OSError')
         self.assertIs(IOError, OSError)
         self.assertIs(EnvironmentError, OSError)
-
-    def test_socket_errors(self):
-        self.assertIs(socket.error, IOError)
-        self.assertIs(socket.gaierror.__base__, OSError)
-        self.assertIs(socket.herror.__base__, OSError)
-        self.assertIs(socket.timeout.__base__, OSError)
 
     def test_select_error(self):
         self.assertIs(select.error, OSError)

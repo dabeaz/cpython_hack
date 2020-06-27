@@ -9,7 +9,6 @@ IMPORT_MAPPING = {
     '__builtin__' : 'builtins',
     'copy_reg': 'copyreg',
     'Queue': 'queue',
-    'SocketServer': 'socketserver',
     'ConfigParser': 'configparser',
     'repr': 'reprlib',
     'markupbase': '_markupbase',
@@ -46,7 +45,6 @@ NAME_MAPPING = {
     ('UserList', 'UserList'): ('collections', 'UserList'),
     ('UserString', 'UserString'): ('collections', 'UserString'),
     ('whichdb', 'whichdb'): ('dbm', 'whichdb'),
-    ('_socket', 'fromfd'): ('socket', 'fromfd'),
 }
 
 PYTHON2_EXCEPTIONS = (
@@ -141,12 +139,10 @@ NAME_MAPPING.update({
     ('__builtin__', 'basestring'): ('builtins', 'str'),
     ('exceptions', 'StandardError'): ('builtins', 'Exception'),
     ('UserDict', 'UserDict'): ('collections', 'UserDict'),
-    ('socket', '_socketobject'): ('socket', 'SocketType'),
 })
 
 REVERSE_NAME_MAPPING.update({
     ('_functools', 'reduce'): ('__builtin__', 'reduce'),
-    ('_socket', 'socket'): ('socket', '_socketobject'),
 })
 
 PYTHON3_OSERROR_EXCEPTIONS = (
