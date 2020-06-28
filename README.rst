@@ -23,7 +23,8 @@ Some people do a "100 days of code" challenge.  This is the opposite.
 - Day 15 (6/25/2020). Deadlocked concurrent.
 - Day 16 (6/26/2020). Mauled multiprocessing, mmap, modulefinder, numbers.
 - Day 17 (6/27/2020). Sacked socket, socketserver, ssl, sqlite3, select, subprocess, selectors.
-  
+- Day 18 (6/28/2020). No, not tests. Types.
+
 Copyright and License Information
 ---------------------------------
 
