@@ -14,7 +14,6 @@ except ImportError:
     _frozen_importlib_external = _bootstrap_external
 import abc
 import warnings
-from typing import Protocol, runtime_checkable
 
 
 def _register(abstract_cls, *classes):
@@ -389,8 +388,7 @@ class ResourceReader(metaclass=abc.ABCMeta):
 _register(ResourceReader, machinery.SourceFileLoader)
 
 
-@runtime_checkable
-class Traversable(Protocol):
+class Traversable(metaclass=abc.ABCMeta):
     """
     An object with a subset of pathlib.Path methods suitable for
     traversing directories and opening files.

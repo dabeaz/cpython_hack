@@ -856,8 +856,7 @@ def singledispatch(func):
             func = cls
 
             # only import typing if annotation parsing is necessary
-            from typing import get_type_hints
-            argname, cls = next(iter(get_type_hints(func).items()))
+            argname, cls = next(iter(ann.items()))
             if not isinstance(cls, type):
                 raise TypeError(
                     f"Invalid annotation for {argname!r}. "

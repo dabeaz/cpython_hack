@@ -1234,12 +1234,8 @@ bininstall: altbininstall
 	(cd $(DESTDIR)$(LIBPC); $(LN) -s python-$(VERSION).pc python3.pc)
 	-rm -f $(DESTDIR)$(LIBPC)/python3-embed.pc
 	(cd $(DESTDIR)$(LIBPC); $(LN) -s python-$(VERSION)-embed.pc python3-embed.pc)
-	-rm -f $(DESTDIR)$(BINDIR)/idle3
-	(cd $(DESTDIR)$(BINDIR); $(LN) -s idle$(VERSION) idle3)
 	-rm -f $(DESTDIR)$(BINDIR)/pydoc3
 	(cd $(DESTDIR)$(BINDIR); $(LN) -s pydoc$(VERSION) pydoc3)
-	-rm -f $(DESTDIR)$(BINDIR)/2to3
-	(cd $(DESTDIR)$(BINDIR); $(LN) -s 2to3-$(VERSION) 2to3)
 	if test "x$(LIPO_32BIT_FLAGS)" != "x" ; then \
 		rm -f $(DESTDIR)$(BINDIR)/python3-32$(EXE); \
 		(cd $(DESTDIR)$(BINDIR); $(LN) -s python$(VERSION)-32$(EXE) python3-32$(EXE)) \
@@ -1265,89 +1261,17 @@ maninstall:	altmaninstall
 
 # Install the library
 XMLLIBSUBDIRS=  
-LIBSUBDIRS=	tkinter tkinter/test tkinter/test/test_tkinter \
-		tkinter/test/test_ttk site-packages test \
-		test/audiodata \
-		test/capath test/data \
-		test/cjkencodings test/decimaltestdata \
-		test/xmltestdata test/xmltestdata/c14n-20 \
-		test/dtracedata \
-		test/eintrdata \
-		test/imghdrdata \
-		test/libregrtest \
-		test/subprocessdata test/sndhdrdata test/support \
-		test/tracedmodules test/encoded_modules \
-		test/test_import \
-		test/test_import/data \
-		test/test_import/data/circular_imports \
-		test/test_import/data/circular_imports/subpkg \
-		test/test_import/data/package \
-		test/test_import/data/package2 \
-		test/test_import/data/unwritable \
-		importlib \
+LIBSUBDIRS=importlib \
 		importlib/metadata \
-		test/test_importlib \
-		test/test_importlib/builtin \
-		test/test_importlib/data \
-		test/test_importlib/data01 \
-		test/test_importlib/data01/subdirectory \
-		test/test_importlib/data02 \
-		test/test_importlib/data02/one \
-		test/test_importlib/data02/two \
-		test/test_importlib/data03 \
-		test/test_importlib/data03/namespace \
-		test/test_importlib/data03/namespace/portion1 \
-		test/test_importlib/data03/namespace/portion2 \
-		test/test_importlib/extension \
-		test/test_importlib/frozen \
-		test/test_importlib/import_ \
-		test/test_importlib/namespace_pkgs \
-		test/test_importlib/namespace_pkgs/both_portions \
-		test/test_importlib/namespace_pkgs/both_portions/foo \
-		test/test_importlib/namespace_pkgs/module_and_namespace_package \
-		test/test_importlib/namespace_pkgs/module_and_namespace_package/a_test \
-		test/test_importlib/namespace_pkgs/not_a_namespace_pkg \
-		test/test_importlib/namespace_pkgs/not_a_namespace_pkg/foo \
-		test/test_importlib/namespace_pkgs/portion1 \
-		test/test_importlib/namespace_pkgs/portion1/foo \
-		test/test_importlib/namespace_pkgs/portion2 \
-		test/test_importlib/namespace_pkgs/portion2/foo \
-		test/test_importlib/namespace_pkgs/project1 \
-		test/test_importlib/namespace_pkgs/project1/parent \
-		test/test_importlib/namespace_pkgs/project1/parent/child \
-		test/test_importlib/namespace_pkgs/project2 \
-		test/test_importlib/namespace_pkgs/project2/parent \
-		test/test_importlib/namespace_pkgs/project2/parent/child \
-		test/test_importlib/namespace_pkgs/project3 \
-		test/test_importlib/namespace_pkgs/project3/parent \
-		test/test_importlib/namespace_pkgs/project3/parent/child \
-		test/test_importlib/source \
-		test/test_importlib/zipdata01 \
-		test/test_importlib/zipdata02 \
-		test/test_zoneinfo test/test_zoneinfo/data \
-		test/ziptestdata \
-		asyncio \
-		test/test_asyncio \
 		collections concurrent concurrent/futures encodings \
-		email email/mime test/test_email test/test_email/data \
-		ensurepip ensurepip/_bundled \
-		html json test/test_json http dbm xmlrpc \
-		sqlite3 sqlite3/test \
-		logging csv wsgiref urllib \
-		lib2to3 lib2to3/fixes lib2to3/pgen2 lib2to3/tests \
-		lib2to3/tests/data lib2to3/tests/data/fixers \
-		lib2to3/tests/data/fixers/myfixes \
+		json \
+		logging csv \
 		ctypes ctypes/test ctypes/macholib \
-		idlelib idlelib/Icons idlelib/idle_test \
 		distutils distutils/command distutils/tests $(XMLLIBSUBDIRS) \
 		test/test_peg_generator \
 		test/test_tools test/test_warnings test/test_warnings/data \
-		turtledemo \
-		multiprocessing multiprocessing/dummy \
-		unittest unittest/test unittest/test/testmock \
-		venv venv/scripts venv/scripts/common venv/scripts/posix \
-		curses pydoc_data \
 		zoneinfo
+
 libinstall:	build_all $(srcdir)/Modules/xxmodule.c
 	@for i in $(SCRIPTDIR) $(LIBDEST); \
 	do \
