@@ -1073,7 +1073,6 @@ class PyBuildExt(build_ext):
         self.detect_nis()
         self.detect_compress_exts()
         self.detect_multibytecodecs()
-        self.detect_ctypes()
         self.detect_uuid()
 
 ##         # Uncomment these lines if you want to play with xxmodule.c
@@ -1082,121 +1081,6 @@ class PyBuildExt(build_ext):
         if 'd' not in sysconfig.get_config_var('ABIFLAGS'):
             self.add(Extension('xxlimited', ['xxlimited.c'],
                                define_macros=[('Py_LIMITED_API', '0x03050000')]))
-
-    def configure_ctypes_darwin(self, ext):
-        # Darwin (OS X) uses preconfigured files, in
-        # the Modules/_ctypes/libffi_osx directory.
-        ffi_srcdir = os.path.abspath(os.path.join(self.srcdir, 'Modules',
-                                                  '_ctypes', 'libffi_osx'))
-        sources = [os.path.join(ffi_srcdir, p)
-                   for p in ['ffi.c',
-                             'x86/darwin64.S',
-                             'x86/x86-darwin.S',
-                             'x86/x86-ffi_darwin.c',
-                             'x86/x86-ffi64.c',
-                             'powerpc/ppc-darwin.S',
-                             'powerpc/ppc-darwin_closure.S',
-                             'powerpc/ppc-ffi_darwin.c',
-                             'powerpc/ppc64-darwin_closure.S',
-                             ]]
-
-        # Add .S (preprocessed assembly) to C compiler source extensions.
-        self.compiler.src_extensions.append('.S')
-
-        include_dirs = [os.path.join(ffi_srcdir, 'include'),
-                        os.path.join(ffi_srcdir, 'powerpc')]
-        ext.include_dirs.extend(include_dirs)
-        ext.sources.extend(sources)
-        return True
-
-    def configure_ctypes(self, ext):
-        if not self.use_system_libffi:
-            if MACOS:
-                return self.configure_ctypes_darwin(ext)
-            print('INFO: Could not locate ffi libs and/or headers')
-            return False
-        return True
-
-    def detect_ctypes(self):
-        # Thomas Heller's _ctypes module
-        self.use_system_libffi = False
-        include_dirs = []
-        extra_compile_args = ['-DPy_BUILD_CORE_MODULE']
-        extra_link_args = []
-        sources = ['_ctypes/_ctypes.c',
-                   '_ctypes/callbacks.c',
-                   '_ctypes/callproc.c',
-                   '_ctypes/stgdict.c',
-                   '_ctypes/cfield.c']
-        depends = ['_ctypes/ctypes.h']
-
-        if MACOS:
-            sources.append('_ctypes/malloc_closure.c')
-            sources.append('_ctypes/darwin/dlfcn_simple.c')
-            extra_compile_args.append('-DMACOSX')
-            include_dirs.append('_ctypes/darwin')
-            # XXX Is this still needed?
-            # extra_link_args.extend(['-read_only_relocs', 'warning'])
-
-        elif HOST_PLATFORM == 'sunos5':
-            # XXX This shouldn't be necessary; it appears that some
-            # of the assembler code is non-PIC (i.e. it has relocations
-            # when it shouldn't. The proper fix would be to rewrite
-            # the assembler code to be PIC.
-            # This only works with GCC; the Sun compiler likely refuses
-            # this option. If you want to compile ctypes with the Sun
-            # compiler, please research a proper solution, instead of
-            # finding some -z option for the Sun compiler.
-            extra_link_args.append('-mimpure-text')
-
-        elif HOST_PLATFORM.startswith('hp-ux'):
-            extra_link_args.append('-fPIC')
-
-        ext = Extension('_ctypes',
-                        include_dirs=include_dirs,
-                        extra_compile_args=extra_compile_args,
-                        extra_link_args=extra_link_args,
-                        libraries=[],
-                        sources=sources,
-                        depends=depends)
-        self.add(ext)
-        if TEST_EXTENSIONS:
-            # function my_sqrt() needs libm for sqrt()
-            self.add(Extension('_ctypes_test',
-                               sources=['_ctypes/_ctypes_test.c'],
-                               libraries=['m']))
-
-        ffi_inc_dirs = self.inc_dirs.copy()
-        if MACOS:
-            if '--with-system-ffi' not in sysconfig.get_config_var("CONFIG_ARGS"):
-                return
-            # OS X 10.5 comes with libffi.dylib; the include files are
-            # in /usr/include/ffi
-            ffi_inc_dirs.append('/usr/include/ffi')
-
-        ffi_inc = [sysconfig.get_config_var("LIBFFI_INCLUDEDIR")]
-        if not ffi_inc or ffi_inc[0] == '':
-            ffi_inc = find_file('ffi.h', [], ffi_inc_dirs)
-        if ffi_inc is not None:
-            ffi_h = ffi_inc[0] + '/ffi.h'
-            if not os.path.exists(ffi_h):
-                ffi_inc = None
-                print('Header file {} does not exist'.format(ffi_h))
-        ffi_lib = None
-        if ffi_inc is not None:
-            for lib_name in ('ffi', 'ffi_pic'):
-                if (self.compiler.find_library_file(self.lib_dirs, lib_name)):
-                    ffi_lib = lib_name
-                    break
-
-        if ffi_inc and ffi_lib:
-            ext.include_dirs.extend(ffi_inc)
-            ext.libraries.append(ffi_lib)
-            self.use_system_libffi = True
-
-        if sysconfig.get_config_var('HAVE_LIBDL'):
-            # for dlopen, see bpo-32647
-            ext.libraries.append('dl')
 
     def detect_hash_builtins(self):
         # By default we always compile these even when OpenSSL is available
