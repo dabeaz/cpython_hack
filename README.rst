@@ -26,7 +26,8 @@ Some people do a "100 days of code" challenge.  This is the opposite.
 - Day 18 (6/28/2020). No, not tests. Types.
 - Day 19 (6/29/2020). No, not typing either. And take dataclasses with you. And documentation.
 - Day 20 (6/30/2020). No, not even ctypes. Or logging.
-
+- Day 21 (7/01/2020). No, not debugging with pdb. Or help().
+  
 Copyright and License Information
 ---------------------------------
 

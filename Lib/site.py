@@ -410,7 +410,7 @@ def setcopyright():
 
 
 def sethelper():
-    builtins.help = _sitebuiltins._Helper()
+    pass
 
 def enablerlcompleter():
     """Enable default readline configuration on interactive prompts, by
