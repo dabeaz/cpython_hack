@@ -809,20 +809,10 @@ class PyBuildExt(build_ext):
         # on pretty much any POSIXish platform.
         #
 
-        # array objects
-        self.add(Extension('array', ['arraymodule.c']))
-
         shared_math = 'Modules/_math.o'
 
         # math library functions, e.g. sin()
         self.add(Extension('math',  ['mathmodule.c'],
-                           extra_compile_args=['-DPy_BUILD_CORE_MODULE'],
-                           extra_objects=[shared_math],
-                           depends=['_math.h', shared_math],
-                           libraries=['m']))
-
-        # complex math library functions
-        self.add(Extension('cmath', ['cmathmodule.c'],
                            extra_compile_args=['-DPy_BUILD_CORE_MODULE'],
                            extra_objects=[shared_math],
                            depends=['_math.h', shared_math],
@@ -855,12 +845,7 @@ class PyBuildExt(build_ext):
                            extra_compile_args=['-DPy_BUILD_CORE_MODULE']))
         # atexit
         self.add(Extension("atexit", ["atexitmodule.c"]))
-        # _json speedups
-        self.add(Extension("_json", ["_json.c"],
-                           extra_compile_args=['-DPy_BUILD_CORE_MODULE']))
 
-        # profiler (_lsprof is for cProfile.py)
-        self.add(Extension('_lsprof', ['_lsprof.c', 'rotatingtree.c']))
         # static Unicode character database
         self.add(Extension('unicodedata', ['unicodedata.c'],
                            depends=['unicodedata_db.h', 'unicodename_db.h']))
@@ -1047,20 +1032,6 @@ class PyBuildExt(build_ext):
                                ['cjkcodecs/_codecs_%s.c' % loc]))
 
 
-    def detect_uuid(self):
-        # Build the _uuid module if possible
-        uuid_incs = find_file("uuid.h", self.inc_dirs, ["/usr/include/uuid"])
-        if uuid_incs is not None:
-            if self.compiler.find_library_file(self.lib_dirs, 'uuid'):
-                uuid_libs = ['uuid']
-            else:
-                uuid_libs = []
-            self.add(Extension('_uuid', ['_uuidmodule.c'],
-                               libraries=uuid_libs,
-                               include_dirs=uuid_incs))
-        else:
-            self.missing.append('_uuid')
-
     def detect_modules(self):
         self.configure_compiler()
         self.init_inc_lib_dirs()
@@ -1068,12 +1039,10 @@ class PyBuildExt(build_ext):
         self.detect_simple_extensions()
         if TEST_EXTENSIONS:
             self.detect_test_extensions()
-        self.detect_hash_builtins()
         self.detect_platform_specific_exts()
         self.detect_nis()
         self.detect_compress_exts()
         self.detect_multibytecodecs()
-        self.detect_uuid()
 
 ##         # Uncomment these lines if you want to play with xxmodule.c
 ##         self.add(Extension('xx', ['xxmodule.c']))
@@ -1082,74 +1051,6 @@ class PyBuildExt(build_ext):
             self.add(Extension('xxlimited', ['xxlimited.c'],
                                define_macros=[('Py_LIMITED_API', '0x03050000')]))
 
-    def detect_hash_builtins(self):
-        # By default we always compile these even when OpenSSL is available
-        # (issue #14693). It's harmless and the object code is tiny
-        # (40-50 KiB per module, only loaded when actually used).  Modules can
-        # be disabled via the --with-builtin-hashlib-hashes configure flag.
-        supported = {"md5", "sha1", "sha256", "sha512", "sha3", "blake2"}
-
-        configured = sysconfig.get_config_var("PY_BUILTIN_HASHLIB_HASHES")
-        configured = configured.strip('"').lower()
-        configured = {
-            m.strip() for m in configured.split(",")
-        }
-
-        self.disabled_configure.extend(
-            sorted(supported.difference(configured))
-        )
-
-        if "sha256" in configured:
-            self.add(Extension(
-                '_sha256', ['sha256module.c'],
-                extra_compile_args=['-DPy_BUILD_CORE_MODULE'],
-                depends=['hashlib.h']
-            ))
-
-        if "sha512" in configured:
-            self.add(Extension(
-                '_sha512', ['sha512module.c'],
-                extra_compile_args=['-DPy_BUILD_CORE_MODULE'],
-                depends=['hashlib.h']
-            ))
-
-        if "md5" in configured:
-            self.add(Extension(
-                '_md5', ['md5module.c'],
-                depends=['hashlib.h']
-            ))
-
-        if "sha1" in configured:
-            self.add(Extension(
-                '_sha1', ['sha1module.c'],
-                depends=['hashlib.h']
-            ))
-
-        if "blake2" in configured:
-            blake2_deps = glob(
-                os.path.join(self.srcdir, 'Modules/_blake2/impl/*')
-            )
-            blake2_deps.append('hashlib.h')
-            self.add(Extension(
-                '_blake2',
-                [
-                    '_blake2/blake2module.c',
-                    '_blake2/blake2b_impl.c',
-                    '_blake2/blake2s_impl.c'
-                ],
-                depends=blake2_deps
-            ))
-
-        if "sha3" in configured:
-            sha3_deps = glob(
-                os.path.join(self.srcdir, 'Modules/_sha3/kcp/*')
-            )
-            sha3_deps.append('hashlib.h')
-            self.add(Extension(
-                '_sha3',
-                ['_sha3/sha3module.c'],
-                depends=sha3_deps
-            ))
 
     def detect_nis(self):
         if MS_WINDOWS or CYGWIN or HOST_PLATFORM == 'qnx6':

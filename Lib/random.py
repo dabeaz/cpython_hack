@@ -46,14 +46,6 @@ from itertools import accumulate as _accumulate, repeat as _repeat
 from bisect import bisect as _bisect
 import os as _os
 
-try:
-    # hashlib is pretty heavy to load, try lean internal module first
-    from _sha512 import sha512 as _sha512
-except ImportError:
-    # fallback to official implementation
-    from hashlib import sha512 as _sha512
-
-
 __all__ = ["Random","seed","random","uniform","randint","choice","sample",
            "randrange","shuffle","normalvariate","lognormvariate",
            "expovariate","vonmisesvariate","gammavariate","triangular",
@@ -120,7 +112,7 @@ class Random(_random.Random):
                 cls._randbelow = cls._randbelow_without_getrandbits
                 break
 
-    def seed(self, a=None, version=2):
+    def seed(self, a=None, version=1):
         """Initialize internal state from a seed.
 
         The only supported seed types are None, int, float,
@@ -145,12 +137,6 @@ class Random(_random.Random):
                 x = ((1000003 * x) ^ c) & 0xFFFFFFFFFFFFFFFF
             x ^= len(a)
             a = -2 if x == -1 else x
-
-        elif version == 2 and isinstance(a, (str, bytes, bytearray)):
-            if isinstance(a, str):
-                a = a.encode()
-            a += _sha512(a).digest()
-            a = int.from_bytes(a, 'big')
 
         elif not isinstance(a, (type(None), int, float, str, bytes, bytearray)):
             _warn('Seeding based on hashing is deprecated\n'
