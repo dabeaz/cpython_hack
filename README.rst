@@ -28,7 +28,8 @@ Some people do a "100 days of code" challenge.  This is the opposite.
 - Day 20 (6/30/2020). No, not even ctypes. Or logging.
 - Day 21 (7/01/2020). No, not debugging with pdb. Or help().
 - Day 22 (7/02/2020). No, it's not slow if you can't profile it.
-
+- Day 23 (7/03/2020). Grab bag. Removed optparse, pwd, grp, resource, nis, and others.
+  
 Copyright and License Information
 ---------------------------------
 

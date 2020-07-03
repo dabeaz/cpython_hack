@@ -838,8 +838,7 @@ class PyBuildExt(build_ext):
                            extra_compile_args=['-DPy_BUILD_CORE_MODULE']))
         # bisect
         self.add(Extension("_bisect", ["_bisectmodule.c"]))
-        # heapq
-        self.add(Extension("_heapq", ["_heapqmodule.c"]))
+        
         # C-optimized pickle replacement
         self.add(Extension("_pickle", ["_pickle.c"],
                            extra_compile_args=['-DPy_BUILD_CORE_MODULE']))
@@ -855,8 +854,6 @@ class PyBuildExt(build_ext):
         self.add(Extension("_abc", ["_abc.c"]))
         # _queue module
         self.add(Extension("_queue", ["_queuemodule.c"]))
-        # _statistics module
-        self.add(Extension("_statistics", ["_statisticsmodule.c"]))
 
         # Modules with some UNIX dependencies -- on by default:
         # (If you have a really backward UNIX, select and socket may not be
@@ -869,11 +866,6 @@ class PyBuildExt(build_ext):
             libs = ['bsd']
         self.add(Extension('fcntl', ['fcntlmodule.c'],
                            libraries=libs))
-        # pwd(3)
-        self.add(Extension('pwd', ['pwdmodule.c']))
-        # grp(3)
-        if not VXWORKS:
-            self.add(Extension('grp', ['grpmodule.c']))
 
         # Lance Ellinghaus's syslog module
         # syslog daemon interface
@@ -933,7 +925,6 @@ class PyBuildExt(build_ext):
                 # Steen Lumholt's termios module
                 self.add(Extension('termios', ['termios.c']))
                 # Jeremy Hylton's rlimit interface
-            self.add(Extension('resource', ['resource.c']))
         else:
             self.missing.extend(['resource', 'termios'])
 
@@ -1040,7 +1031,6 @@ class PyBuildExt(build_ext):
         if TEST_EXTENSIONS:
             self.detect_test_extensions()
         self.detect_platform_specific_exts()
-        self.detect_nis()
         self.detect_compress_exts()
         self.detect_multibytecodecs()
 
@@ -1050,52 +1040,6 @@ class PyBuildExt(build_ext):
         if 'd' not in sysconfig.get_config_var('ABIFLAGS'):
             self.add(Extension('xxlimited', ['xxlimited.c'],
                                define_macros=[('Py_LIMITED_API', '0x03050000')]))
-
-
-    def detect_nis(self):
-        if MS_WINDOWS or CYGWIN or HOST_PLATFORM == 'qnx6':
-            self.missing.append('nis')
-            return
-
-        libs = []
-        library_dirs = []
-        includes_dirs = []
-
-        # bpo-32521: glibc has deprecated Sun RPC for some time. Fedora 28
-        # moved headers and libraries to libtirpc and libnsl. The headers
-        # are in tircp and nsl sub directories.
-        rpcsvc_inc = find_file(
-            'rpcsvc/yp_prot.h', self.inc_dirs,
-            [os.path.join(inc_dir, 'nsl') for inc_dir in self.inc_dirs]
-        )
-        rpc_inc = find_file(
-            'rpc/rpc.h', self.inc_dirs,
-            [os.path.join(inc_dir, 'tirpc') for inc_dir in self.inc_dirs]
-        )
-        if rpcsvc_inc is None or rpc_inc is None:
-            # not found
-            self.missing.append('nis')
-            return
-        includes_dirs.extend(rpcsvc_inc)
-        includes_dirs.extend(rpc_inc)
-
-        if self.compiler.find_library_file(self.lib_dirs, 'nsl'):
-            libs.append('nsl')
-        else:
-            # libnsl-devel: check for libnsl in nsl/ subdirectory
-            nsl_dirs = [os.path.join(lib_dir, 'nsl') for lib_dir in self.lib_dirs]
-            libnsl = self.compiler.find_library_file(nsl_dirs, 'nsl')
-            if libnsl is not None:
-                library_dirs.append(os.path.dirname(libnsl))
-                libs.append('nsl')
-
-        if self.compiler.find_library_file(self.lib_dirs, 'tirpc'):
-            libs.append('tirpc')
-
-        self.add(Extension('nis', ['nismodule.c'],
-                           libraries=libs,
-                           library_dirs=library_dirs,
-                           include_dirs=includes_dirs))
 
 
 class PyBuildInstall(install):
@@ -1204,7 +1148,7 @@ def main():
           # If you change the scripts installed here, you also need to
           # check the PyBuildScripts command above, and change the links
           # created by the bininstall target in Makefile.pre.in
-          scripts = ["Tools/scripts/pydoc3" ]
+          scripts = []
         )
 
 # --install-platlib

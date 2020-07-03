@@ -17145,8 +17145,6 @@ fi
 # generate output files
 ac_config_files="$ac_config_files Makefile.pre Misc/python.pc Misc/python-embed.pc Misc/python-config.sh"
 
-ac_config_files="$ac_config_files Modules/ld_so_aix"
-
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -17848,7 +17846,6 @@ do
     "Misc/python.pc") CONFIG_FILES="$CONFIG_FILES Misc/python.pc" ;;
     "Misc/python-embed.pc") CONFIG_FILES="$CONFIG_FILES Misc/python-embed.pc" ;;
     "Misc/python-config.sh") CONFIG_FILES="$CONFIG_FILES Misc/python-config.sh" ;;
-    "Modules/ld_so_aix") CONFIG_FILES="$CONFIG_FILES Modules/ld_so_aix" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -18405,11 +18402,6 @@ $as_echo "$as_me: $ac_file is unchanged" >&6;}
 
   esac
 
-
-  case $ac_file$ac_mode in
-    "Modules/ld_so_aix":F) chmod +x Modules/ld_so_aix ;;
-
-  esac
 done # for ac_tag
 
 
