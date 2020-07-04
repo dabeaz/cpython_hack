@@ -13,7 +13,7 @@ import shutil
 import stat
 import struct
 import sys
-import threading
+# import threading
 import time
 import contextlib
 
@@ -723,7 +723,7 @@ class _SharedFile:
         self.tell = file.tell
 
     def seek(self, offset, whence=0):
-        with self._lock:
+        if True:  # with self._lock:
             if self._writing():
                 raise ValueError("Can't reposition in the ZIP file while "
                         "there is an open writing handle on it. "
@@ -733,7 +733,7 @@ class _SharedFile:
             return self._pos
 
     def read(self, n=-1):
-        with self._lock:
+        if True:  # with self._lock:
             if self._writing():
                 raise ValueError("Can't read from the ZIP file while there "
                         "is an open writing handle on it. "
@@ -1248,7 +1248,7 @@ class ZipFile:
             self.fp = file
             self.filename = getattr(file, 'name', None)
         self._fileRefCnt = 1
-        self._lock = threading.RLock()
+        self._lock = None #  threading.RLock()
         self._seekable = True
         self._writing = False
 
@@ -1742,7 +1742,7 @@ class ZipFile:
                 zinfo._compresslevel = self.compresslevel
 
         if zinfo.is_dir():
-            with self._lock:
+            if True: # with self._lock:
                 if self._seekable:
                     self.fp.seek(self.start_dir)
                 zinfo.header_offset = self.fp.tell()  # Start of header bytes
@@ -1798,7 +1798,7 @@ class ZipFile:
             zinfo._compresslevel = compresslevel
 
         zinfo.file_size = len(data)            # Uncompressed size
-        with self._lock:
+        if True:  # with self._lock:
             with self.open(zinfo, mode='w') as dest:
                 dest.write(data)
 
@@ -1819,7 +1819,7 @@ class ZipFile:
 
         try:
             if self.mode in ('w', 'x', 'a') and self._didModify: # write ending records
-                with self._lock:
+                if True: # with self._lock:
                     if self._seekable:
                         self.fp.seek(self.start_dir)
                     self._write_end_record()

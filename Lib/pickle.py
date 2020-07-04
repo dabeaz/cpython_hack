@@ -1811,7 +1811,6 @@ if __name__ == "__main__":
         if not args.pickle_file:
             parser.print_help()
         else:
-            import pprint
             for f in args.pickle_file:
                 obj = load(f)
-                pprint.pprint(obj)
+                print(obj)

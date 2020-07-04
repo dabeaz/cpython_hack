@@ -852,24 +852,10 @@ class PyBuildExt(build_ext):
         self.add(Extension('_opcode', ['_opcode.c']))
         # _abc speedups
         self.add(Extension("_abc", ["_abc.c"]))
-        # _queue module
-        self.add(Extension("_queue", ["_queuemodule.c"]))
 
         # Modules with some UNIX dependencies -- on by default:
         # (If you have a really backward UNIX, select and socket may not be
         # supported...)
-
-        # fcntl(2) and ioctl(2)
-        libs = []
-        if (self.config_h_vars.get('FLOCK_NEEDS_LIBBSD', False)):
-            # May be necessary on AIX for flock function
-            libs = ['bsd']
-        self.add(Extension('fcntl', ['fcntlmodule.c'],
-                           libraries=libs))
-
-        # Lance Ellinghaus's syslog module
-        # syslog daemon interface
-        self.add(Extension('syslog', ['syslogmodule.c']))
 
         # Python interface to subinterpreter C-API.
         self.add(Extension('_xxsubinterpreters', ['_xxsubinterpretersmodule.c']))
@@ -888,35 +874,8 @@ class PyBuildExt(build_ext):
         # 64-bit platforms.
         #
 
-        # CSV files
-        self.add(Extension('_csv', ['_csv.c']))
-
         # POSIX subprocess module helper.
         self.add(Extension('_posixsubprocess', ['_posixsubprocess.c']))
-
-    def detect_test_extensions(self):
-        # Python C API test module
-        self.add(Extension('_testcapi', ['_testcapimodule.c'],
-                           depends=['testcapi_long.h']))
-
-        # Python Internal C API test module
-        self.add(Extension('_testinternalcapi', ['_testinternalcapi.c'],
-                           extra_compile_args=['-DPy_BUILD_CORE_MODULE']))
-
-        # Python PEP-3118 (buffer protocol) test module
-        self.add(Extension('_testbuffer', ['_testbuffer.c']))
-
-        # Test loading multiple modules from one compiled file (http://bugs.python.org/issue16421)
-        self.add(Extension('_testimportmultiple', ['_testimportmultiple.c']))
-
-        # Test multi-phase extension module init (PEP 489)
-        self.add(Extension('_testmultiphase', ['_testmultiphase.c']))
-
-        # Fuzz tests.
-        self.add(Extension('_xxtestfuzz',
-                           ['_xxtestfuzz/_xxtestfuzz.c',
-                            '_xxtestfuzz/fuzzer.c']))
-
 
     def detect_platform_specific_exts(self):
         # Unix-only modules
@@ -1014,25 +973,14 @@ class PyBuildExt(build_ext):
         else:
             self.missing.append('_lzma')
 
-    def detect_multibytecodecs(self):
-        # Hye-Shik Chang's CJKCodecs modules.
-        self.add(Extension('_multibytecodec',
-                           ['cjkcodecs/multibytecodec.c']))
-        for loc in ('kr', 'jp', 'cn', 'tw', 'hk', 'iso2022'):
-            self.add(Extension('_codecs_%s' % loc,
-                               ['cjkcodecs/_codecs_%s.c' % loc]))
-
 
     def detect_modules(self):
         self.configure_compiler()
         self.init_inc_lib_dirs()
 
         self.detect_simple_extensions()
-        if TEST_EXTENSIONS:
-            self.detect_test_extensions()
         self.detect_platform_specific_exts()
         self.detect_compress_exts()
-        self.detect_multibytecodecs()
 
 ##         # Uncomment these lines if you want to play with xxmodule.c
 ##         self.add(Extension('xx', ['xxmodule.c']))

@@ -2,7 +2,7 @@ import io
 import os
 import re
 import abc
-import csv
+# import csv
 import sys
 import email
 import pathlib

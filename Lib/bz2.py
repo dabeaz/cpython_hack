@@ -13,7 +13,7 @@ from builtins import open as _builtin_open
 import io
 import os
 import _compression
-from threading import RLock
+# from threading import RLock
 
 from _bz2 import BZ2Compressor, BZ2Decompressor
 
@@ -55,7 +55,7 @@ class BZ2File(_compression.BaseStream):
         """
         # This lock must be recursive, so that BufferedIOBase's
         # writelines() does not deadlock.
-        self._lock = RLock()
+        self._lock = None  # RLock()
         self._fp = None
         self._closefp = False
         self._mode = _MODE_CLOSED
@@ -104,7 +104,7 @@ class BZ2File(_compression.BaseStream):
         May be called more than once without error. Once the file is
         closed, any other operation on it will raise a ValueError.
         """
-        with self._lock:
+        if True: # with self._lock:
             if self._mode == _MODE_CLOSED:
                 return
             try:
@@ -153,7 +153,7 @@ class BZ2File(_compression.BaseStream):
         Always returns at least one byte of data, unless at EOF.
         The exact number of bytes returned is unspecified.
         """
-        with self._lock:
+        if True: # with self._lock:
             self._check_can_read()
             # Relies on the undocumented fact that BufferedReader.peek()
             # always returns at least one byte (except at EOF), independent
@@ -166,7 +166,7 @@ class BZ2File(_compression.BaseStream):
         If size is negative or omitted, read until EOF is reached.
         Returns b'' if the file is already at EOF.
         """
-        with self._lock:
+        if True: # with self._lock:
             self._check_can_read()
             return self._buffer.read(size)
 
@@ -177,7 +177,7 @@ class BZ2File(_compression.BaseStream):
 
         Returns b'' if the file is at EOF.
         """
-        with self._lock:
+        if True: # with self._lock:
             self._check_can_read()
             if size < 0:
                 size = io.DEFAULT_BUFFER_SIZE
@@ -188,7 +188,7 @@ class BZ2File(_compression.BaseStream):
 
         Returns the number of bytes read (0 for EOF).
         """
-        with self._lock:
+        if True: # with self._lock:
             self._check_can_read()
             return self._buffer.readinto(b)
 
@@ -203,7 +203,7 @@ class BZ2File(_compression.BaseStream):
             if not hasattr(size, "__index__"):
                 raise TypeError("Integer argument expected")
             size = size.__index__()
-        with self._lock:
+        if True: # with self._lock:
             self._check_can_read()
             return self._buffer.readline(size)
 
@@ -218,7 +218,7 @@ class BZ2File(_compression.BaseStream):
             if not hasattr(size, "__index__"):
                 raise TypeError("Integer argument expected")
             size = size.__index__()
-        with self._lock:
+        if True: # with self._lock:
             self._check_can_read()
             return self._buffer.readlines(size)
 
@@ -229,7 +229,7 @@ class BZ2File(_compression.BaseStream):
         always len(data). Note that due to buffering, the file on disk
         may not reflect the data written until close() is called.
         """
-        with self._lock:
+        if True: # with self._lock:
             self._check_can_write()
             compressed = self._compressor.compress(data)
             self._fp.write(compressed)
@@ -244,7 +244,7 @@ class BZ2File(_compression.BaseStream):
 
         Line separators are not added between the written byte strings.
         """
-        with self._lock:
+        if True: # with self._lock:
             return _compression.BaseStream.writelines(self, seq)
 
     def seek(self, offset, whence=io.SEEK_SET):
@@ -262,13 +262,13 @@ class BZ2File(_compression.BaseStream):
         Note that seeking is emulated, so depending on the parameters,
         this operation may be extremely slow.
         """
-        with self._lock:
+        if True: # with self._lock:
             self._check_can_seek()
             return self._buffer.seek(offset, whence)
 
     def tell(self):
         """Return the current file position."""
-        with self._lock:
+        if True: # with self._lock:
             self._check_not_closed()
             if self._mode == _MODE_READ:
                 return self._buffer.tell()
