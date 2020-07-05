@@ -26,7 +26,7 @@ import abc
 import sys
 import stat as st
 
-from _collections_abc import _check_methods
+# from _collections_abc import _check_methods
 
 GenericAlias = type(list[int])
 
@@ -661,9 +661,9 @@ def get_exec_path(env=None):
 
 
 # Change environ to automatically call putenv() and unsetenv()
-from _collections_abc import MutableMapping, Mapping
+# from _collections_abc import MutableMapping, Mapping
 
-class _Environ(MutableMapping):
+class _Environ:
     def __init__(self, data, encodekey, decodekey, encodevalue, decodevalue):
         self.encodekey = encodekey
         self.decodekey = decodekey
@@ -721,15 +721,11 @@ class _Environ(MutableMapping):
         return self
 
     def __or__(self, other):
-        if not isinstance(other, Mapping):
-            return NotImplemented
         new = dict(self)
         new.update(other)
         return new
 
     def __ror__(self, other):
-        if not isinstance(other, Mapping):
-            return NotImplemented
         new = dict(other)
         new.update(self)
         return new

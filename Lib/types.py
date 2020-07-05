@@ -241,57 +241,6 @@ class _GeneratorWrapper:
         return self
     __await__ = __iter__
 
-def coroutine(func):
-    """Convert regular generator function to a coroutine."""
-
-    if not callable(func):
-        raise TypeError('types.coroutine() expects a callable')
-
-    if (func.__class__ is FunctionType and
-        getattr(func, '__code__', None).__class__ is CodeType):
-
-        co_flags = func.__code__.co_flags
-
-        # Check if 'func' is a coroutine function.
-        # (0x180 == CO_COROUTINE | CO_ITERABLE_COROUTINE)
-        if co_flags & 0x180:
-            return func
-
-        # Check if 'func' is a generator function.
-        # (0x20 == CO_GENERATOR)
-        if co_flags & 0x20:
-            # TODO: Implement this in C.
-            co = func.__code__
-            # 0x100 == CO_ITERABLE_COROUTINE
-            func.__code__ = co.replace(co_flags=co.co_flags | 0x100)
-            return func
-
-    # The following code is primarily to support functions that
-    # return generator-like objects (for instance generators
-    # compiled with Cython).
-
-    # Delay functools and _collections_abc import for speeding up types import.
-    import functools
-    import _collections_abc
-    @functools.wraps(func)
-    def wrapped(*args, **kwargs):
-        coro = func(*args, **kwargs)
-        if (coro.__class__ is CoroutineType or
-            coro.__class__ is GeneratorType and coro.gi_code.co_flags & 0x100):
-            # 'coro' is a native coroutine object or an iterable coroutine
-            return coro
-        if (isinstance(coro, _collections_abc.Generator) and
-            not isinstance(coro, _collections_abc.Coroutine)):
-            # 'coro' is either a pure Python generator iterator, or it
-            # implements collections.abc.Generator (and does not implement
-            # collections.abc.Coroutine).
-            return _GeneratorWrapper(coro)
-        # 'coro' is either an instance of collections.abc.Coroutine or
-        # some other object -- pass it through.
-        return coro
-
-    return wrapped
-
 
 GenericAlias = type(list[int])
 

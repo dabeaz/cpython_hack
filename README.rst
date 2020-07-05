@@ -30,7 +30,10 @@ Some people do a "100 days of code" challenge.  This is the opposite.
 - Day 22 (7/02/2020). No, it's not slow if you can't profile it.
 - Day 23 (7/03/2020). Grab bag. Removed optparse, pwd, grp, resource, nis, and others.
 - Day 24 (7/04/2020). Thrashed threading.  And some other things.
+- Day 25 (7/05/2020). Dismantled distutils. And most of the standard library.
 
+Now what?  Still 75 days to go...
+  
 Copyright and License Information
 ---------------------------------
 

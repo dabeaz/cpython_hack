@@ -103,15 +103,15 @@ PYTHONPATH=$(COREPYTHONPATH)
 
 posix -DPy_BUILD_CORE_BUILTIN -I$(srcdir)/Include/internal posixmodule.c # posix (UNIX) system calls
 errno errnomodule.c			# posix (UNIX) errno values
-_sre _sre.c				# Fredrik Lundh's new regular expressions
+# _sre _sre.c				# Fredrik Lundh's new regular expressions
 _codecs _codecsmodule.c			# access to the builtin codecs and codec registry
 _weakref _weakref.c			# weak references
-_functools -DPy_BUILD_CORE_BUILTIN -I$(srcdir)/Include/internal _functoolsmodule.c   # Tools for working with functions and callable objects
-_operator _operator.c	        	# operator.add() and similar goodies
-_collections _collectionsmodule.c	# Container types
+#_functools -DPy_BUILD_CORE_BUILTIN -I$(srcdir)/Include/internal _functoolsmodule.c   # Tools for working with functions and callable objects
+#_operator _operator.c	        	# operator.add() and similar goodies
+#_collections _collectionsmodule.c	# Container types
 _abc _abc.c				# Abstract base classes
-itertools itertoolsmodule.c		# Functions creating iterators for efficient looping
-atexit atexitmodule.c			# Register functions to be run at interpreter-shutdown
+#itertools itertoolsmodule.c		# Functions creating iterators for efficient looping
+#atexit atexitmodule.c			# Register functions to be run at interpreter-shutdown
 _signal -DPy_BUILD_CORE_BUILTIN -I$(srcdir)/Include/internal signalmodule.c
 _stat _stat.c				# stat.h interface
 time -DPy_BUILD_CORE_BUILTIN -I$(srcdir)/Include/internal timemodule.c	# -lm # time operations and variables
@@ -143,7 +143,7 @@ _tracemalloc _tracemalloc.c
 # ======================================================================
 
 # The Python symtable module depends on .h files that setup.py doesn't track
-_symtable symtablemodule.c
+# _symtable symtablemodule.c
 
 # Uncommenting the following line tells makesetup that all following
 # modules are to be built as shared libraries (see above for more
@@ -352,7 +352,7 @@ _symtable symtablemodule.c
 # xx xxmodule.c
 
 # Another example -- the 'xxsubtype' module shows C-level subtyping in action
-xxsubtype xxsubtype.c
+# xxsubtype xxsubtype.c
 
 # Uncommenting the following line tells makesetup that all following modules
 # are not built (see above for more detail).
