@@ -3,11 +3,6 @@
 
 #include <stdbool.h>
 
-
-/* Defined in tracemalloc.c */
-extern void _PyMem_DumpTraceback(int fd, const void *ptr);
-
-
 /* Python's malloc wrappers (see pymem.h) */
 
 #undef  uint
@@ -2506,7 +2501,6 @@ _PyObject_DebugDumpAddress(const void *p)
     fputc('\n', stderr);
 
     fflush(stderr);
-    _PyMem_DumpTraceback(fileno(stderr), p);
 }
 
 

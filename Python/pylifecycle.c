@@ -997,14 +997,6 @@ init_interp_main(PyThreadState *tstate)
         return status;
     }
 
-    if (is_main_interp) {
-        /* initialize the faulthandler module */
-        status = _PyFaulthandler_Init(config->faulthandler);
-        if (_PyStatus_EXCEPTION(status)) {
-            return status;
-        }
-    }
-
     status = _PyUnicode_InitEncodings(tstate);
     if (_PyStatus_EXCEPTION(status)) {
         return status;
@@ -1016,10 +1008,6 @@ init_interp_main(PyThreadState *tstate)
             if (_PyStatus_EXCEPTION(status)) {
                 return status;
             }
-        }
-
-        if (_PyTraceMalloc_Init(config->tracemalloc) < 0) {
-            return _PyStatus_ERR("can't initialize tracemalloc");
         }
     }
 
@@ -1441,16 +1429,12 @@ Py_FinalizeEx(void)
 
     /* Disable tracemalloc after all Python objects have been destroyed,
        so it is possible to use tracemalloc in objects destructor. */
-    _PyTraceMalloc_Fini();
 
     /* Destroy the database used by _PyImport_{Fixup,Find}Extension */
     _PyImport_Fini();
 
     /* Cleanup typeobject.c's internal caches. */
     _PyType_Fini();
-
-    /* unload faulthandler module */
-    _PyFaulthandler_Fini();
 
     /* dump hash stats */
     _PyHash_Fini();
@@ -2254,12 +2238,6 @@ fatal_error(FILE *stream, int header, const char *prefix, const char *msg,
     else {
         _Py_FatalError_DumpTracebacks(fd, interp, tss_tstate);
     }
-
-    /* The main purpose of faulthandler is to display the traceback.
-       This function already did its best to display a traceback.
-       Disable faulthandler to prevent writing a second traceback
-       on abort(). */
-    _PyFaulthandler_Fini();
 
     /* Check if the current Python thread hold the GIL */
     if (has_tstate_and_gil) {

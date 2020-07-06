@@ -17,8 +17,6 @@
 extern "C" {
 #endif
 
-/* Defined in tracemalloc.c */
-extern void _PyMem_DumpTraceback(int fd, const void *ptr);
 
 _Py_IDENTIFIER(Py_Repr);
 _Py_IDENTIFIER(__bytes__);
@@ -1820,9 +1818,6 @@ _PyTypes_Init(void)
 void
 _Py_NewReference(PyObject *op)
 {
-    if (_Py_tracemalloc_config.tracing) {
-        _PyTraceMalloc_NewReference(op);
-    }
 #ifdef Py_REF_DEBUG
     _Py_RefTotal++;
 #endif
@@ -2185,8 +2180,6 @@ _PyObject_AssertFailed(PyObject *obj, const char *expr, const char *msg,
         else {
             ptr = (void *)obj;
         }
-        _PyMem_DumpTraceback(fileno(stderr), ptr);
-
         /* This might succeed or fail, but we're about to abort, so at least
            try to provide any extra info we can: */
         _PyObject_Dump(obj);

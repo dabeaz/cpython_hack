@@ -33,6 +33,8 @@ Some people do a "100 days of code" challenge.  This is the opposite.
 - Day 25 (7/05/2020). Dismantled distutils. And most of the standard library.
 
 Now what?  Still 75 days to go...
+
+- Day 26 (7/06/2020). Fracked faulthandler and tracemalloc. 
   
 Copyright and License Information
 ---------------------------------
