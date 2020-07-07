@@ -88,62 +88,6 @@ _PyImportHooks_Init(PyThreadState *tstate)
                         "or path_importer_cache failed");
 }
 
-PyStatus
-_PyImportZip_Init(PyThreadState *tstate)
-{
-    PyObject *path_hooks, *zipimport;
-    int err = 0;
-
-    path_hooks = PySys_GetObject("path_hooks");
-    if (path_hooks == NULL) {
-        _PyErr_SetString(tstate, PyExc_RuntimeError,
-                         "unable to get sys.path_hooks");
-        goto error;
-    }
-
-    int verbose = _PyInterpreterState_GetConfig(tstate->interp)->verbose;
-    if (verbose) {
-        PySys_WriteStderr("# installing zipimport hook\n");
-    }
-
-    zipimport = PyImport_ImportModule("zipimport");
-    if (zipimport == NULL) {
-        _PyErr_Clear(tstate); /* No zip import module -- okay */
-        if (verbose) {
-            PySys_WriteStderr("# can't import zipimport\n");
-        }
-    }
-    else {
-        _Py_IDENTIFIER(zipimporter);
-        PyObject *zipimporter = _PyObject_GetAttrId(zipimport,
-                                                    &PyId_zipimporter);
-        Py_DECREF(zipimport);
-        if (zipimporter == NULL) {
-            _PyErr_Clear(tstate); /* No zipimporter object -- okay */
-            if (verbose) {
-                PySys_WriteStderr("# can't import zipimport.zipimporter\n");
-            }
-        }
-        else {
-            /* sys.path_hooks.insert(0, zipimporter) */
-            err = PyList_Insert(path_hooks, 0, zipimporter);
-            Py_DECREF(zipimporter);
-            if (err < 0) {
-                goto error;
-            }
-            if (verbose) {
-                PySys_WriteStderr("# installed zipimport hook\n");
-            }
-        }
-    }
-
-    return _PyStatus_OK();
-
-  error:
-    PyErr_Print();
-    return _PyStatus_ERR("initializing zipimport failed");
-}
-
 /* Locking primitives to prevent parallel imports of the same module
    in different threads to return with a partially loaded module.
    These calls are serialized by the global interpreter lock. */

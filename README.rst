@@ -35,7 +35,8 @@ Some people do a "100 days of code" challenge.  This is the opposite.
 Now what?  Still 75 days to go...
 
 - Day 26 (7/06/2020). Fracked faulthandler and tracemalloc. 
-  
+- Day 27 (7/07/2020). zipimport, time, atexit.  Gone.
+
 Copyright and License Information
 ---------------------------------
 

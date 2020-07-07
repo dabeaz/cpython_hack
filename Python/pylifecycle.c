@@ -200,7 +200,7 @@ init_importlib_external(PyThreadState *tstate)
         return _PyStatus_ERR("external importer setup failed");
     }
     Py_DECREF(value);
-    return _PyImportZip_Init(tstate);
+    return _PyStatus_OK();    
 }
 
 /* Helper functions to better handle the legacy C locale
@@ -1426,9 +1426,6 @@ Py_FinalizeEx(void)
 #if 0
     _PyGC_CollectIfEnabled();
 #endif
-
-    /* Disable tracemalloc after all Python objects have been destroyed,
-       so it is possible to use tracemalloc in objects destructor. */
 
     /* Destroy the database used by _PyImport_{Fixup,Find}Extension */
     _PyImport_Fini();
