@@ -36,7 +36,8 @@ Now what?  Still 75 days to go...
 
 - Day 26 (7/06/2020). Fracked faulthandler and tracemalloc. 
 - Day 27 (7/07/2020). zipimport, time, atexit.  Gone.
-
+- Day 28 (7/08/2020). Impaled importlib.
+  
 Copyright and License Information
 ---------------------------------
 
