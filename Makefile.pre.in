@@ -356,7 +356,6 @@ PYTHON_OBJS=	\
 		Python/preconfig.o \
 		Python/pyarena.o \
 		Python/pyctype.o \
-		Python/pyfpe.o \
 		Python/pyhash.o \
 		Python/pylifecycle.o \
 		Python/pymath.o \
