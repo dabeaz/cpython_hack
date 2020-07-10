@@ -994,12 +994,6 @@ bytearray_repr(PyByteArrayObject *self)
 static PyObject *
 bytearray_str(PyObject *op)
 {
-    if (_Py_GetConfig()->bytes_warning) {
-        if (PyErr_WarnEx(PyExc_BytesWarning,
-                         "str() on a bytearray instance", 1)) {
-                return NULL;
-        }
-    }
     return bytearray_repr((PyByteArrayObject*)op);
 }
 
@@ -1019,12 +1013,6 @@ bytearray_richcompare(PyObject *self, PyObject *other, int op)
     if (rc < 0)
         return NULL;
     if (rc) {
-        if (_Py_GetConfig()->bytes_warning && (op == Py_EQ || op == Py_NE)) {
-            if (PyErr_WarnEx(PyExc_BytesWarning,
-                            "Comparison between bytearray and string", 1))
-                return NULL;
-        }
-
         Py_RETURN_NOTIMPLEMENTED;
     }
 

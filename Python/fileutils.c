@@ -2029,7 +2029,7 @@ _Py_GetLocaleconvNumeric(struct lconv *lc,
     if (change_locale) {
         oldloc = setlocale(LC_CTYPE, NULL);
         if (!oldloc) {
-            PyErr_SetString(PyExc_RuntimeWarning,
+            PyErr_SetString(PyExc_RuntimeError,
                             "failed to get LC_CTYPE locale");
             return -1;
         }

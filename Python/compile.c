@@ -5328,19 +5328,6 @@ compiler_warn(struct compiler *c, const char *format, ...)
     if (msg == NULL) {
         return 0;
     }
-    if (PyErr_WarnExplicitObject(PyExc_SyntaxWarning, msg, c->c_filename,
-                                 c->u->u_lineno, NULL, NULL) < 0)
-    {
-        if (PyErr_ExceptionMatches(PyExc_SyntaxWarning)) {
-            /* Replace the SyntaxWarning exception with a SyntaxError
-               to get a more accurate error report */
-            PyErr_Clear();
-            assert(PyUnicode_AsUTF8(msg) != NULL);
-            compiler_error(c, PyUnicode_AsUTF8(msg));
-        }
-        Py_DECREF(msg);
-        return 0;
-    }
     Py_DECREF(msg);
     return 1;
 }

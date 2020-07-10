@@ -38,7 +38,8 @@ Now what?  Still 75 days to go...
 - Day 27 (7/07/2020). zipimport, time, atexit.  Gone.
 - Day 28 (7/08/2020). Impaled importlib.
 - Day 29 (7/09/2020). Axed abc, locale, unicodedata, errno. 
-
+- Day 30 (7/10/2020). No, you will never be warned.
+  
 Copyright and License Information
 ---------------------------------
 

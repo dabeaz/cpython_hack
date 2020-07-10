@@ -98,15 +98,6 @@ _Py_IsFinalizing(void)
 int (*_PyOS_mystrnicmp_hack)(const char *, const char *, Py_ssize_t) = \
     PyOS_mystrnicmp; /* Python/pystrcmp.o */
 
-/* PyModule_GetWarningsModule is no longer necessary as of 2.6
-since _warnings is builtin.  This API should not be used. */
-PyObject *
-PyModule_GetWarningsModule(void)
-{
-    return PyImport_ImportModule("warnings");
-}
-
-
 /* APIs to access the initialization flags
  *
  * Can be called prior to Py_Initialize.
@@ -687,11 +678,6 @@ pycore_init_import_warnings(PyThreadState *tstate, PyObject *sysmod)
 
     const PyConfig *config = _PyInterpreterState_GetConfig(tstate->interp);
     if (_Py_IsMainInterpreter(tstate)) {
-        /* Initialize _warnings. */
-        status = _PyWarnings_InitState(tstate);
-        if (_PyStatus_EXCEPTION(status)) {
-            return status;
-        }
 
         if (config->_install_importlib) {
             status = _PyConfig_WritePathConfig(config);
@@ -1283,8 +1269,6 @@ finalize_interp_clear(PyThreadState *tstate)
         _PyArg_Fini();
         _Py_ClearFileSystemEncoding();
     }
-
-    _PyWarnings_Fini(tstate->interp);
 
     if (is_main_interp) {
         _PyExc_Fini();

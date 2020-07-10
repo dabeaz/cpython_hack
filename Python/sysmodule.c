@@ -577,15 +577,7 @@ sys_breakpointhook(PyObject *self, PyObject *const *args, Py_ssize_t nargs, PyOb
   warn:
     /* If any of the imports went wrong, then warn and ignore. */
     _PyErr_Clear(tstate);
-    int status = PyErr_WarnFormat(
-        PyExc_RuntimeWarning, 0,
-        "Ignoring unimportable $PYTHONBREAKPOINT: \"%s\"", envar);
     PyMem_RawFree(envar);
-    if (status < 0) {
-        /* Printing the warning raised an exception. */
-        return NULL;
-    }
-    /* The warning was (probably) issued. */
     Py_RETURN_NONE;
 }
 

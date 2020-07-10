@@ -1668,12 +1668,6 @@ notimplemented_dealloc(PyObject* ignore)
 static int
 notimplemented_bool(PyObject *v)
 {
-    if (PyErr_WarnEx(PyExc_DeprecationWarning,
-                     "NotImplemented should not be used in a boolean context",
-                     1) < 0)
-    {
-        return -1;
-    }
     return 1;
 }
 

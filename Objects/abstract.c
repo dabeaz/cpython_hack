@@ -1349,15 +1349,6 @@ _PyNumber_Index(PyObject *item)
         Py_DECREF(result);
         return NULL;
     }
-    /* Issue #17576: warn if 'result' not of exact type int. */
-    if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
-            "__index__ returned non-int (type %.200s).  "
-            "The ability to return an instance of a strict subclass of int "
-            "is deprecated, and may be removed in a future version of Python.",
-            Py_TYPE(result)->tp_name)) {
-        Py_DECREF(result);
-        return NULL;
-    }
     return result;
 }
 
@@ -1454,14 +1445,6 @@ PyNumber_Long(PyObject *o)
             return NULL;
         }
         /* Issue #17576: warn if 'result' not of exact type int. */
-        if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
-                "__int__ returned non-int (type %.200s).  "
-                "The ability to return an instance of a strict subclass of int "
-                "is deprecated, and may be removed in a future version of Python.",
-                result->ob_type->tp_name)) {
-            Py_DECREF(result);
-            return NULL;
-        }
         Py_SETREF(result, _PyLong_Copy((PyLongObject *)result));
         return result;
     }
@@ -1555,15 +1538,6 @@ PyNumber_Float(PyObject *o)
             PyErr_Format(PyExc_TypeError,
                          "%.50s.__float__ returned non-float (type %.50s)",
                          Py_TYPE(o)->tp_name, Py_TYPE(res)->tp_name);
-            Py_DECREF(res);
-            return NULL;
-        }
-        /* Issue #26983: warn if 'res' not of exact type float. */
-        if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
-                "%.50s.__float__ returned non-float (type %.50s).  "
-                "The ability to return an instance of a strict subclass of float "
-                "is deprecated, and may be removed in a future version of Python.",
-                Py_TYPE(o)->tp_name, Py_TYPE(res)->tp_name)) {
             Py_DECREF(res);
             return NULL;
         }

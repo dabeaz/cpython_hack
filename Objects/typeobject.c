@@ -3083,11 +3083,6 @@ PyType_FromModuleAndSpec(PyObject *module, PyType_Spec *spec, PyObject *bases)
             Py_DECREF(modname);
             if (err != 0)
                 goto fail;
-        } else {
-            if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
-                    "builtin type %.200s has no __module__ attribute",
-                    spec->name))
-                goto fail;
         }
     }
 

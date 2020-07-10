@@ -1105,19 +1105,6 @@ path_converter(PyObject *o, void *p)
     else if (is_buffer) {
         /* XXX Replace PyObject_CheckBuffer with PyBytes_Check in other code
            after removing support of non-bytes buffer objects. */
-        if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
-            "%s%s%s should be %s, not %.200s",
-            path->function_name ? path->function_name : "",
-            path->function_name ? ": "                : "",
-            path->argument_name ? path->argument_name : "path",
-            path->allow_fd && path->nullable ? "string, bytes, os.PathLike, "
-                                               "integer or None" :
-            path->allow_fd ? "string, bytes, os.PathLike or integer" :
-            path->nullable ? "string, bytes, os.PathLike or None" :
-                             "string, bytes or os.PathLike",
-            _PyType_Name(Py_TYPE(o)))) {
-            goto error_exit;
-        }
         bytes = PyBytes_FromObject(o);
         if (!bytes) {
             goto error_exit;
@@ -1379,11 +1366,6 @@ _Py_Sigset_Converter(PyObject *obj, void *addr)
             /* For backwards compatibility, allow idioms such as
              * `range(1, NSIG)` but warn about invalid signal numbers
              */
-            const char msg[] =
-                "invalid signal number %ld, please use valid_signals()";
-            if (PyErr_WarnFormat(PyExc_RuntimeWarning, 1, msg, signum)) {
-                goto error;
-            }
         }
     }
     if (!PyErr_Occurred()) {
@@ -13498,14 +13480,6 @@ ScandirIterator_finalize(ScandirIterator *iterator)
 
     if (!ScandirIterator_is_closed(iterator)) {
         ScandirIterator_closedir(iterator);
-
-        if (PyErr_ResourceWarning((PyObject *)iterator, 1,
-                                  "unclosed scandir iterator %R", iterator)) {
-            /* Spurious errors can appear at shutdown */
-            if (PyErr_ExceptionMatches(PyExc_Warning)) {
-                PyErr_WriteUnraisable((PyObject *) iterator);
-            }
-        }
     }
 
     path_cleanup(&iterator->path);

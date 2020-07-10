@@ -19,22 +19,6 @@ warn_invalid_escape_sequence(Parser *p, unsigned char first_invalid_escape_char,
     if (msg == NULL) {
         return -1;
     }
-    if (PyErr_WarnExplicitObject(PyExc_DeprecationWarning, msg, p->tok->filename,
-                                 t->lineno, NULL, NULL) < 0) {
-        if (PyErr_ExceptionMatches(PyExc_DeprecationWarning)) {
-            /* Replace the DeprecationWarning exception with a SyntaxError
-               to get a more accurate error report */
-            PyErr_Clear();
-
-            /* This is needed, in order for the SyntaxError to point to the token t,
-               since _PyPegen_raise_error uses p->tokens[p->fill - 1] for the
-               error location, if p->known_err_token is not set. */
-            p->known_err_token = t;
-            RAISE_SYNTAX_ERROR("invalid escape sequence \\%c", first_invalid_escape_char);
-        }
-        Py_DECREF(msg);
-        return -1;
-    }
     Py_DECREF(msg);
     return 0;
 }

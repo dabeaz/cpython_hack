@@ -1559,12 +1559,6 @@ resolve_name(PyThreadState *tstate, PyObject *name, PyObject *globals, int level
             if (equal < 0) {
                 goto error;
             }
-            else if (equal == 0) {
-                if (PyErr_WarnEx(PyExc_ImportWarning,
-                        "__package__ != __spec__.parent", 1) < 0) {
-                    goto error;
-                }
-            }
         }
     }
     else if (spec != NULL && spec != Py_None) {
@@ -1579,12 +1573,6 @@ resolve_name(PyThreadState *tstate, PyObject *name, PyObject *globals, int level
         }
     }
     else {
-        if (PyErr_WarnEx(PyExc_ImportWarning,
-                    "can't resolve package from __spec__ or __package__, "
-                    "falling back on __name__ and __path__", 1) < 0) {
-            goto error;
-        }
-
         package = _PyDict_GetItemIdWithError(globals, &PyId___name__);
         if (package == NULL) {
             if (!_PyErr_Occurred(tstate)) {

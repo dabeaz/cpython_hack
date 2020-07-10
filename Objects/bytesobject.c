@@ -1181,14 +1181,6 @@ PyObject *PyBytes_DecodeEscape(const char *s,
                                              &first_invalid_escape);
     if (result == NULL)
         return NULL;
-    if (first_invalid_escape != NULL) {
-        if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
-                             "invalid escape sequence '\\%c'",
-                             (unsigned char)*first_invalid_escape) < 0) {
-            Py_DECREF(result);
-            return NULL;
-        }
-    }
     return result;
 
 }
@@ -1343,12 +1335,6 @@ bytes_repr(PyObject *op)
 static PyObject *
 bytes_str(PyObject *op)
 {
-    if (_Py_GetConfig()->bytes_warning) {
-        if (PyErr_WarnEx(PyExc_BytesWarning,
-                         "str() on a bytes instance", 1)) {
-            return NULL;
-        }
-    }
     return bytes_repr(op);
 }
 
@@ -1508,11 +1494,6 @@ bytes_richcompare(PyBytesObject *a, PyBytesObject *b, int op)
                                          (PyObject*)&PyUnicode_Type);
             if (rc < 0)
                 return NULL;
-            if (rc) {
-                if (PyErr_WarnEx(PyExc_BytesWarning,
-                                 "Comparison between bytes and string", 1))
-                    return NULL;
-            }
             else {
                 rc = PyObject_IsInstance((PyObject*)a,
                                          (PyObject*)&PyLong_Type);
@@ -1521,11 +1502,6 @@ bytes_richcompare(PyBytesObject *a, PyBytesObject *b, int op)
                                              (PyObject*)&PyLong_Type);
                 if (rc < 0)
                     return NULL;
-                if (rc) {
-                    if (PyErr_WarnEx(PyExc_BytesWarning,
-                                     "Comparison between bytes and int", 1))
-                        return NULL;
-                }
             }
         }
         Py_RETURN_NOTIMPLEMENTED;

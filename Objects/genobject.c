@@ -81,7 +81,7 @@ _PyGen_Finalize(PyObject *self)
         ((PyCodeObject *)gen->gi_code)->co_flags & CO_COROUTINE &&
         gen->gi_frame->f_lasti == -1)
     {
-        _PyErr_WarnUnawaitedCoroutine((PyObject *)gen);
+      /* _PyErr_WarnUnawaitedCoroutine((PyObject *)gen); */
     }
     else {
         res = gen_close(gen, NULL);

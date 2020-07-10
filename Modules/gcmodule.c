@@ -2114,13 +2114,6 @@ _PyGC_DumpShutdownStats(PyThreadState *tstate)
         else
             message = "gc: %zd uncollectable objects at " \
                 "shutdown; use gc.set_debug(gc.DEBUG_UNCOLLECTABLE) to list them";
-        /* PyErr_WarnFormat does too many things and we are at shutdown,
-           the warnings module's dependencies (e.g. linecache) may be gone
-           already. */
-        if (PyErr_WarnExplicitFormat(PyExc_ResourceWarning, "gc", 0,
-                                     "gc", NULL, message,
-                                     PyList_GET_SIZE(gcstate->garbage)))
-            PyErr_WriteUnraisable(NULL);
         if (gcstate->debug & DEBUG_UNCOLLECTABLE) {
             PyObject *repr = NULL, *bytes = NULL;
             repr = PyObject_Repr(gcstate->garbage);

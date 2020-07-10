@@ -326,9 +326,6 @@ _io_open_impl(PyObject *module, PyObject *file, const char *mode,
                             "mode U cannot be combined with 'x', 'w', 'a', or '+'");
             goto error;
         }
-        if (PyErr_WarnEx(PyExc_DeprecationWarning,
-                         "'U' mode is deprecated", 1) < 0)
-            goto error;
         reading = 1;
     }
 
@@ -360,15 +357,6 @@ _io_open_impl(PyObject *module, PyObject *file, const char *mode,
         PyErr_SetString(PyExc_ValueError,
                         "binary mode doesn't take a newline argument");
         goto error;
-    }
-
-    if (binary && buffering == 1) {
-        if (PyErr_WarnEx(PyExc_RuntimeWarning,
-                         "line buffering (buffering=1) isn't supported in "
-                         "binary mode, the default buffer size will be used",
-                         1) < 0) {
-           goto error;
-        }
     }
 
     /* Create the Raw file stream */

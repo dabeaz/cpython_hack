@@ -321,7 +321,6 @@ PARSER_HEADERS= \
 # Python
 
 PYTHON_OBJS=	\
-		Python/_warnings.o \
 		Python/Python-ast.o \
 		Python/asdl.o \
 		Python/ast.o \
@@ -1049,7 +1048,6 @@ PYTHON_HEADERS= \
 		$(srcdir)/Include/tupleobject.h \
 		$(srcdir)/Include/ucnhash.h \
 		$(srcdir)/Include/unicodeobject.h \
-		$(srcdir)/Include/warnings.h \
 		$(srcdir)/Include/weakrefobject.h \
 		\
 		pyconfig.h \
@@ -1110,7 +1108,6 @@ PYTHON_HEADERS= \
 		$(srcdir)/Include/internal/pycore_sysmodule.h \
 		$(srcdir)/Include/internal/pycore_traceback.h \
 		$(srcdir)/Include/internal/pycore_tupleobject.h \
-		$(srcdir)/Include/internal/pycore_warnings.h \
 		$(DTRACE_HEADERS)
 
 $(LIBRARY_OBJS) $(MODOBJS) Programs/python.o: $(PYTHON_HEADERS)
@@ -1261,7 +1258,7 @@ LIBSUBDIRS=importlib \
 		ctypes ctypes/test ctypes/macholib \
 		distutils distutils/command distutils/tests $(XMLLIBSUBDIRS) \
 		test/test_peg_generator \
-		test/test_tools test/test_warnings test/test_warnings/data \
+		test/test_tools \
 		zoneinfo
 
 libinstall:	build_all $(srcdir)/Modules/xxmodule.c

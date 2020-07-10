@@ -3486,67 +3486,6 @@ PyUnicode_Decode(const char *s,
 }
 
 PyObject *
-PyUnicode_AsDecodedObject(PyObject *unicode,
-                          const char *encoding,
-                          const char *errors)
-{
-    if (!PyUnicode_Check(unicode)) {
-        PyErr_BadArgument();
-        return NULL;
-    }
-
-    if (PyErr_WarnEx(PyExc_DeprecationWarning,
-                     "PyUnicode_AsDecodedObject() is deprecated; "
-                     "use PyCodec_Decode() to decode from str", 1) < 0)
-        return NULL;
-
-    if (encoding == NULL)
-        encoding = PyUnicode_GetDefaultEncoding();
-
-    /* Decode via the codec registry */
-    return PyCodec_Decode(unicode, encoding, errors);
-}
-
-PyObject *
-PyUnicode_AsDecodedUnicode(PyObject *unicode,
-                           const char *encoding,
-                           const char *errors)
-{
-    PyObject *v;
-
-    if (!PyUnicode_Check(unicode)) {
-        PyErr_BadArgument();
-        goto onError;
-    }
-
-    if (PyErr_WarnEx(PyExc_DeprecationWarning,
-                     "PyUnicode_AsDecodedUnicode() is deprecated; "
-                     "use PyCodec_Decode() to decode from str to str", 1) < 0)
-        return NULL;
-
-    if (encoding == NULL)
-        encoding = PyUnicode_GetDefaultEncoding();
-
-    /* Decode via the codec registry */
-    v = PyCodec_Decode(unicode, encoding, errors);
-    if (v == NULL)
-        goto onError;
-    if (!PyUnicode_Check(v)) {
-        PyErr_Format(PyExc_TypeError,
-                     "'%.400s' decoder returned '%.400s' instead of 'str'; "
-                     "use codecs.decode() to decode to arbitrary types",
-                     encoding,
-                     Py_TYPE(unicode)->tp_name);
-        Py_DECREF(v);
-        goto onError;
-    }
-    return unicode_result(v);
-
-  onError:
-    return NULL;
-}
-
-PyObject *
 PyUnicode_Encode(const Py_UNICODE *s,
                  Py_ssize_t size,
                  const char *encoding,
@@ -3560,37 +3499,6 @@ PyUnicode_Encode(const Py_UNICODE *s,
     v = PyUnicode_AsEncodedString(unicode, encoding, errors);
     Py_DECREF(unicode);
     return v;
-}
-
-PyObject *
-PyUnicode_AsEncodedObject(PyObject *unicode,
-                          const char *encoding,
-                          const char *errors)
-{
-    PyObject *v;
-
-    if (!PyUnicode_Check(unicode)) {
-        PyErr_BadArgument();
-        goto onError;
-    }
-
-    if (PyErr_WarnEx(PyExc_DeprecationWarning,
-                     "PyUnicode_AsEncodedObject() is deprecated; "
-                     "use PyUnicode_AsEncodedString() to encode from str to bytes "
-                     "or PyCodec_Encode() for generic encoding", 1) < 0)
-        return NULL;
-
-    if (encoding == NULL)
-        encoding = PyUnicode_GetDefaultEncoding();
-
-    /* Encode via the codec registry */
-    v = PyCodec_Encode(unicode, encoding, errors);
-    if (v == NULL)
-        goto onError;
-    return v;
-
-  onError:
-    return NULL;
 }
 
 
@@ -3760,16 +3668,6 @@ PyUnicode_AsEncodedString(PyObject *unicode,
     if (PyByteArray_Check(v)) {
         int error;
         PyObject *b;
-
-        error = PyErr_WarnFormat(PyExc_RuntimeWarning, 1,
-            "encoder %s returned bytearray instead of bytes; "
-            "use codecs.encode() to encode to arbitrary types",
-            encoding);
-        if (error) {
-            Py_DECREF(v);
-            return NULL;
-        }
-
         b = PyBytes_FromStringAndSize(PyByteArray_AS_STRING(v),
                                       PyByteArray_GET_SIZE(v));
         Py_DECREF(v);
@@ -3782,45 +3680,6 @@ PyUnicode_AsEncodedString(PyObject *unicode,
                  encoding,
                  Py_TYPE(v)->tp_name);
     Py_DECREF(v);
-    return NULL;
-}
-
-PyObject *
-PyUnicode_AsEncodedUnicode(PyObject *unicode,
-                           const char *encoding,
-                           const char *errors)
-{
-    PyObject *v;
-
-    if (!PyUnicode_Check(unicode)) {
-        PyErr_BadArgument();
-        goto onError;
-    }
-
-    if (PyErr_WarnEx(PyExc_DeprecationWarning,
-                     "PyUnicode_AsEncodedUnicode() is deprecated; "
-                     "use PyCodec_Encode() to encode from str to str", 1) < 0)
-        return NULL;
-
-    if (encoding == NULL)
-        encoding = PyUnicode_GetDefaultEncoding();
-
-    /* Encode via the codec registry */
-    v = PyCodec_Encode(unicode, encoding, errors);
-    if (v == NULL)
-        goto onError;
-    if (!PyUnicode_Check(v)) {
-        PyErr_Format(PyExc_TypeError,
-                     "'%.400s' encoder returned '%.400s' instead of 'str'; "
-                     "use codecs.encode() to encode to arbitrary types",
-                     encoding,
-                     Py_TYPE(v)->tp_name);
-        Py_DECREF(v);
-        goto onError;
-    }
-    return v;
-
-  onError:
     return NULL;
 }
 
@@ -3993,14 +3852,6 @@ PyUnicode_FSDecoder(PyObject* arg, void* addr)
     }
     else if (PyBytes_Check(path) || is_buffer) {
         PyObject *path_bytes = NULL;
-
-        if (!PyBytes_Check(path) &&
-            PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
-            "path should be string, bytes, or os.PathLike, not %.200s",
-            Py_TYPE(arg)->tp_name)) {
-                Py_DECREF(path);
-            return 0;
-        }
         path_bytes = PyBytes_FromObject(path);
         Py_DECREF(path);
         if (!path_bytes) {
@@ -6451,14 +6302,6 @@ PyUnicode_DecodeUnicodeEscape(const char *s,
                                                       &first_invalid_escape);
     if (result == NULL)
         return NULL;
-    if (first_invalid_escape != NULL) {
-        if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
-                             "invalid escape sequence '\\%c'",
-                             (unsigned char)*first_invalid_escape) < 0) {
-            Py_DECREF(result);
-            return NULL;
-        }
-    }
     return result;
 }
 
@@ -15980,7 +15823,7 @@ encode_wstr_utf8(wchar_t *wstr, char **str, const char *name)
     int res;
     res = _Py_EncodeUTF8Ex(wstr, str, NULL, NULL, 1, _Py_ERROR_STRICT);
     if (res == -2) {
-        PyErr_Format(PyExc_RuntimeWarning, "cannot decode %s", name);
+        PyErr_Format(PyExc_RuntimeError, "cannot decode %s", name);
         return -1;
     }
     if (res < 0) {

@@ -317,8 +317,6 @@ def cache_from_source(path, debug_override=None, *, optimization=None):
 
     """
     if debug_override is not None:
-        _warnings.warn('the debug_override parameter is deprecated; use '
-                       "'optimization' instead", DeprecationWarning)
         if optimization is not None:
             message = 'debug_override or optimization must be set to None'
             raise TypeError(message)
@@ -493,7 +491,6 @@ def _find_module_shim(self, fullname):
     loader, portions = self.find_loader(fullname)
     if loader is None and len(portions):
         msg = 'Not importing directory {}: missing __init__'
-        _warnings.warn(msg.format(portions[0]), ImportWarning)
     return loader
 
 
@@ -1237,8 +1234,6 @@ class PathFinder:
     @classmethod
     def _path_hooks(cls, path):
         """Search sys.path_hooks for a finder for 'path'."""
-        if sys.path_hooks is not None and not sys.path_hooks:
-            _warnings.warn('sys.path_hooks is empty', ImportWarning)
         for hook in sys.path_hooks:
             try:
                 return hook(path)
@@ -1588,7 +1583,7 @@ def _setup(_bootstrap_module):
     setattr(self_module, '_pathseps_with_colon', {f':{s}' for s in path_separators})
 
     # Directly load built-in modules needed during bootstrap.
-    builtin_names = ['_io', '_warnings', 'marshal']
+    builtin_names = ['_io', 'marshal']
     if builtin_os == 'nt':
         builtin_names.append('winreg')
     for builtin_name in builtin_names:

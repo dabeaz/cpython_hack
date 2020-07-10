@@ -121,16 +121,6 @@ PyModule_New(const char *name)
 static int
 check_api_version(const char *name, int module_api_version)
 {
-    if (module_api_version != PYTHON_API_VERSION && module_api_version != PYTHON_ABI_VERSION) {
-        int err;
-        err = PyErr_WarnFormat(PyExc_RuntimeWarning, 1,
-            "Python C API version mismatch for module %.100s: "
-            "This Python has API version %d, module %.100s has version %d.",
-             name,
-             PYTHON_API_VERSION, name, module_api_version);
-        if (err)
-            return 0;
-    }
     return 1;
 }
 

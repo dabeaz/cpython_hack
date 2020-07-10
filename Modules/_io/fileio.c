@@ -93,11 +93,6 @@ fileio_dealloc_warn(fileio *self, PyObject *source)
     if (self->fd >= 0 && self->closefd) {
         PyObject *exc, *val, *tb;
         PyErr_Fetch(&exc, &val, &tb);
-        if (PyErr_ResourceWarning(source, 1, "unclosed file %R", source)) {
-            /* Spurious errors can appear at shutdown */
-            if (PyErr_ExceptionMatches(PyExc_Warning))
-                PyErr_WriteUnraisable((PyObject *) self);
-        }
         PyErr_Restore(exc, val, tb);
     }
     Py_RETURN_NONE;

@@ -906,9 +906,6 @@ def _find_spec(name, path, target=None):
         raise ImportError("sys.meta_path is None, Python is likely "
                           "shutting down")
 
-    if not meta_path:
-        _warnings.warn('sys.meta_path is empty', ImportWarning)
-
     # We check sys.modules here for the reload case.  While a passed-in
     # target will usually indicate a reload there is no guarantee, whereas
     # sys.modules provides one.
@@ -992,7 +989,6 @@ def _find_and_load_unlocked(name, import_):
             setattr(parent_module, child, module)
         except AttributeError:
             msg = f"Cannot set an attribute on {parent!r} for child module {child!r}"
-            _warnings.warn(msg, ImportWarning)
     return module
 
 
@@ -1077,17 +1073,10 @@ def _calc___package__(globals):
     package = globals.get('__package__')
     spec = globals.get('__spec__')
     if package is not None:
-        if spec is not None and package != spec.parent:
-            _warnings.warn("__package__ != __spec__.parent "
-                           f"({package!r} != {spec.parent!r})",
-                           ImportWarning, stacklevel=3)
         return package
     elif spec is not None:
         return spec.parent
     else:
-        _warnings.warn("can't resolve package from __spec__ or __package__, "
-                       "falling back on __name__ and __path__",
-                       ImportWarning, stacklevel=3)
         package = globals['__name__']
         if '__path__' not in globals:
             package = package.rpartition('.')[0]
@@ -1165,7 +1154,7 @@ def _setup(sys_module, _imp_module):
 
     # Directly load built-in modules needed during bootstrap.
     self_module = sys.modules[__name__]
-    for builtin_name in ('_thread', '_warnings', '_weakref'):
+    for builtin_name in ('_thread', '_weakref'):
         if builtin_name not in sys.modules:
             builtin_module = _builtin_from_name(builtin_name)
         else:

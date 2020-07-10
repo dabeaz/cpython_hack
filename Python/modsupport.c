@@ -345,10 +345,6 @@ do_mkvalue(const char **p_format, va_list *p_va, int flags)
                     n = va_arg(*p_va, Py_ssize_t);
                 else {
                     n = va_arg(*p_va, int);
-                    if (PyErr_WarnEx(PyExc_DeprecationWarning,
-                                "PY_SSIZE_T_CLEAN will be required for '#' formats", 1)) {
-                        return NULL;
-                    }
                 }
             }
             else
@@ -398,10 +394,6 @@ do_mkvalue(const char **p_format, va_list *p_va, int flags)
                     n = va_arg(*p_va, Py_ssize_t);
                 else {
                     n = va_arg(*p_va, int);
-                    if (PyErr_WarnEx(PyExc_DeprecationWarning,
-                                "PY_SSIZE_T_CLEAN will be required for '#' formats", 1)) {
-                        return NULL;
-                    }
                 }
             }
             else
@@ -436,10 +428,6 @@ do_mkvalue(const char **p_format, va_list *p_va, int flags)
                     n = va_arg(*p_va, Py_ssize_t);
                 else {
                     n = va_arg(*p_va, int);
-                    if (PyErr_WarnEx(PyExc_DeprecationWarning,
-                                "PY_SSIZE_T_CLEAN will be required for '#' formats", 1)) {
-                        return NULL;
-                    }
                 }
             }
             else

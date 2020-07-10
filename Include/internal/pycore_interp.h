@@ -11,7 +11,6 @@ extern "C" {
 #include "pycore_atomic.h"    /* _Py_atomic_address */
 #include "pycore_gil.h"       /* struct _gil_runtime_state  */
 #include "pycore_gc.h"        /* struct _gc_runtime_state */
-#include "pycore_warnings.h"  /* struct _warnings_runtime_state */
 
 struct _Py_parser_state {
     struct {
@@ -210,7 +209,7 @@ struct _is {
 
     uint64_t tstate_next_unique_id;
 
-    struct _warnings_runtime_state warnings;
+  /* struct _warnings_runtime_state warnings;*/
 
     PyObject *audit_hooks;
 

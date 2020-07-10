@@ -306,7 +306,7 @@ PyInterpreterState_Clear(PyInterpreterState *interp)
     Py_CLEAR(interp->after_forkers_child);
 #endif
     if (_PyRuntimeState_GetFinalizing(runtime) == NULL) {
-        _PyWarnings_Fini(interp);
+      /* _PyWarnings_Fini(interp); */
     }
     // XXX Once we have one allocator per interpreter (i.e.
     // per-interpreter GC) we must ensure that all of the interpreter's
