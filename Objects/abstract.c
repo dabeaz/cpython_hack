@@ -174,25 +174,6 @@ PyObject_GetItem(PyObject *o, PyObject *key)
         }
     }
 
-    if (PyType_Check(o)) {
-        PyObject *meth, *result;
-        _Py_IDENTIFIER(__class_getitem__);
-
-        // Special case type[int], but disallow other types so str[int] fails
-        if ((PyTypeObject*)o == &PyType_Type) {
-            return Py_GenericAlias(o, key);
-        }
-
-        if (_PyObject_LookupAttrId(o, &PyId___class_getitem__, &meth) < 0) {
-            return NULL;
-        }
-        if (meth) {
-            result = PyObject_CallOneArg(meth, key);
-            Py_DECREF(meth);
-            return result;
-        }
-    }
-
     return type_error("'%.200s' object is not subscriptable", o);
 }
 

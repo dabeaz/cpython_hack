@@ -398,7 +398,6 @@ OBJECT_OBJS=	\
 		Objects/descrobject.o \
 		Objects/enumobject.o \
 		Objects/exceptions.o \
-		Objects/genericaliasobject.o \
 		Objects/genobject.o \
 		Objects/fileobject.o \
 		Objects/floatobject.o \
@@ -409,14 +408,11 @@ OBJECT_OBJS=	\
 		Objects/listobject.o \
 		Objects/longobject.o \
 		Objects/dictobject.o \
-		Objects/odictobject.o \
 		Objects/memoryobject.o \
 		Objects/methodobject.o \
 		Objects/moduleobject.o \
-		Objects/namespaceobject.o \
 		Objects/object.o \
 		Objects/obmalloc.o \
-		Objects/picklebufobject.o \
 		Objects/rangeobject.o \
 		Objects/setobject.o \
 		Objects/sliceobject.o \
@@ -913,7 +909,6 @@ Objects/bytearrayobject.o: $(srcdir)/Objects/bytearrayobject.c $(BYTESTR_DEPS)
 
 Objects/unicodeobject.o: $(srcdir)/Objects/unicodeobject.c $(UNICODE_DEPS)
 
-Objects/odictobject.o: $(srcdir)/Objects/dict-common.h
 Objects/dictobject.o: $(srcdir)/Objects/stringlib/eq.h $(srcdir)/Objects/dict-common.h
 Objects/setobject.o: $(srcdir)/Objects/stringlib/eq.h
 
@@ -1003,16 +998,13 @@ PYTHON_HEADERS= \
 		$(srcdir)/Include/methodobject.h \
 		$(srcdir)/Include/modsupport.h \
 		$(srcdir)/Include/moduleobject.h \
-		$(srcdir)/Include/namespaceobject.h \
 		$(srcdir)/Include/node.h \
 		$(srcdir)/Include/object.h \
 		$(srcdir)/Include/objimpl.h \
-		$(srcdir)/Include/odictobject.h \
 		$(srcdir)/Include/opcode.h \
 		$(srcdir)/Include/osdefs.h \
 		$(srcdir)/Include/osmodule.h \
 		$(srcdir)/Include/patchlevel.h \
-		$(srcdir)/Include/picklebufobject.h \
 		$(srcdir)/Include/pyarena.h \
 		$(srcdir)/Include/pycapsule.h \
 		$(srcdir)/Include/pyctype.h \
@@ -1633,7 +1625,6 @@ clean-retain-profile: pycremoval
 	find build -name '*.py' -exec rm -f {} ';' || true
 	find build -name '*.py[co]' -exec rm -f {} ';' || true
 	-rm -f pybuilddir.txt
-	-rm -f Lib/lib2to3/*Grammar*.pickle
 	-rm -f Programs/_testembed Programs/_freeze_importlib
 	-find build -type f -a ! -name '*.gc??' -exec rm -f {} ';'
 	-rm -f Include/pydtrace_probes.h

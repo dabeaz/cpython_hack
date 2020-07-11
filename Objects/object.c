@@ -1758,11 +1758,6 @@ _PyTypes_Init(void)
     INIT_TYPE(&PyDictRevIterKey_Type, "reversed dict keys");
     INIT_TYPE(&PyDictRevIterValue_Type, "reversed dict values");
     INIT_TYPE(&PyDictRevIterItem_Type, "reversed dict items");
-    INIT_TYPE(&PyODict_Type, "OrderedDict");
-    INIT_TYPE(&PyODictKeys_Type, "odict_keys");
-    INIT_TYPE(&PyODictItems_Type, "odict_items");
-    INIT_TYPE(&PyODictValues_Type, "odict_values");
-    INIT_TYPE(&PyODictIter_Type, "odict_keyiterator");
     INIT_TYPE(&PySet_Type, "set");
     INIT_TYPE(&PyUnicode_Type, "str");
     INIT_TYPE(&PySlice_Type, "slice");
@@ -1790,7 +1785,7 @@ _PyTypes_Init(void)
     INIT_TYPE(&_PyMethodWrapper_Type, "method wrapper");
     INIT_TYPE(&PyEllipsis_Type, "ellipsis");
     INIT_TYPE(&PyMemberDescr_Type, "member descriptor");
-    INIT_TYPE(&_PyNamespace_Type, "namespace");
+    /*    INIT_TYPE(&_PyNamespace_Type, "namespace");*/
     INIT_TYPE(&PyCapsule_Type, "capsule");
     INIT_TYPE(&PyLongRangeIter_Type, "long range iterator");
     INIT_TYPE(&PyCell_Type, "cell");
@@ -1799,7 +1794,6 @@ _PyTypes_Init(void)
     INIT_TYPE(&PyMethodDescr_Type, "method descr");
     INIT_TYPE(&PyCallIter_Type, "call iter");
     INIT_TYPE(&PySeqIter_Type, "sequence iterator");
-    INIT_TYPE(&PyPickleBuffer_Type, "pickle.PickleBuffer");
     INIT_TYPE(&PyCoro_Type, "coroutine");
     INIT_TYPE(&_PyCoroWrapper_Type, "coroutine wrapper");
     INIT_TYPE(&_PyInterpreterID_Type, "interpreter ID");

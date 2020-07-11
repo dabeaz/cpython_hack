@@ -2555,18 +2555,21 @@ make_version_info(PyThreadState *tstate)
     return version_info;
 }
 
+
 /* sys.implementation values */
 #define NAME "cpython"
 const char *_PySys_ImplName = NAME;
 #define MAJOR Py_STRINGIFY(PY_MAJOR_VERSION)
 #define MINOR Py_STRINGIFY(PY_MINOR_VERSION)
-#define TAG NAME "-" MAJOR MINOR
+/* #define TAG NAME "-" MAJOR MINOR */
+#define TAG NAME
 const char *_PySys_ImplCacheTag = TAG;
 #undef NAME
 #undef MAJOR
 #undef MINOR
 #undef TAG
 
+#if 0
 static PyObject *
 make_impl_info(PyObject *version_info)
 {
@@ -2627,6 +2630,8 @@ error:
     Py_CLEAR(impl_info);
     return NULL;
 }
+
+#endif
 
 static struct PyModuleDef sysmodule = {
     PyModuleDef_HEAD_INIT,
@@ -2752,8 +2757,9 @@ _PySys_InitCore(PyThreadState *tstate, PyObject *sysdict)
     }
 
     /* implementation */
+    /*
     SET_SYS_FROM_STRING("implementation", make_impl_info(version_info));
-
+    */
     /* flags */
     if (FlagsType.tp_name == 0) {
         if (PyStructSequence_InitType2(&FlagsType, &flags_desc) < 0) {

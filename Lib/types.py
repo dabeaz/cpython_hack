@@ -13,7 +13,7 @@ FunctionType = type(_f)
 LambdaType = type(lambda: None)         # Same as FunctionType
 CodeType = type(_f.__code__)
 MappingProxyType = type(type.__dict__)
-SimpleNamespace = type(sys.implementation)
+# SimpleNamespace = type(sys.implementation)
 
 def _cell_factory():
     a = 1
@@ -242,7 +242,7 @@ class _GeneratorWrapper:
     __await__ = __iter__
 
 
-GenericAlias = type(list[int])
+# GenericAlias = type(list[int])
 
 
 __all__ = [n for n in globals() if n[:1] != '_']

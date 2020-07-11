@@ -39,7 +39,8 @@ Now what?  Still 75 days to go...
 - Day 28 (7/08/2020). Impaled importlib.
 - Day 29 (7/09/2020). Axed abc, locale, unicodedata, errno. 
 - Day 30 (7/10/2020). No, you will never be warned.
-  
+- Day 31 (7/11/2020). Gutted genericalias. Also picklebuf, odictobject, and SimpleNamespace.
+
 Copyright and License Information
 ---------------------------------
 

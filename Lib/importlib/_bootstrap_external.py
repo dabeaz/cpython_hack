@@ -324,7 +324,7 @@ def cache_from_source(path, debug_override=None, *, optimization=None):
     path = _os.fspath(path)
     head, tail = _path_split(path)
     base, sep, rest = tail.rpartition('.')
-    tag = sys.implementation.cache_tag
+    tag = "cpython"  #  sys.implementation.cache_tag
     if tag is None:
         raise NotImplementedError('sys.implementation.cache_tag is None')
     almost_filename = ''.join([(base if base else rest), sep, tag])
@@ -376,8 +376,6 @@ def source_from_cache(path):
     sys.implementation.cache_tag is None then NotImplementedError is raised.
 
     """
-    if sys.implementation.cache_tag is None:
-        raise NotImplementedError('sys.implementation.cache_tag is None')
     path = _os.fspath(path)
     head, pycache_filename = _path_split(path)
     found_in_pycache_prefix = False

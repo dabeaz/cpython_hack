@@ -105,7 +105,7 @@
 #include "tupleobject.h"
 #include "listobject.h"
 #include "dictobject.h"
-#include "odictobject.h"
+/* #include "odictobject.h" */
 #include "enumobject.h"
 #include "setobject.h"
 #include "methodobject.h"
@@ -122,12 +122,12 @@
 #include "iterobject.h"
 #include "genobject.h"
 #include "descrobject.h"
-#include "genericaliasobject.h"
+/* #include "genericaliasobject.h" */
 /* #include "warnings.h" */
 #include "weakrefobject.h"
 #include "structseq.h"
-#include "namespaceobject.h"
-#include "picklebufobject.h"
+/* #include "namespaceobject.h" */
+/* #include "picklebufobject.h" */
 
 #include "codecs.h"
 #include "pyerrors.h"
