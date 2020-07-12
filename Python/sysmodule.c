@@ -2420,7 +2420,7 @@ static PyStructSequence_Field flags_fields[] = {
     {"debug",                   "-d"},
     {"inspect",                 "-i"},
     {"interactive",             "-i"},
-    {"optimize",                "-O or -OO"},
+    /*    {"optimize",                "-O or -OO"},*/
     {"dont_write_bytecode",     "-B"},
     {"no_user_site",            "-s"},
     {"no_site",                 "-S"},
@@ -2441,7 +2441,7 @@ static PyStructSequence_Desc flags_desc = {
     "sys.flags",        /* name */
     flags__doc__,       /* doc */
     flags_fields,       /* fields */
-    15
+    14
 };
 
 static PyObject*
@@ -2463,7 +2463,6 @@ make_flags(PyThreadState *tstate)
     SetFlag(config->parser_debug);
     SetFlag(config->inspect);
     SetFlag(config->interactive);
-    SetFlag(config->optimization_level);
     SetFlag(!config->write_bytecode);
     SetFlag(!config->user_site_directory);
     SetFlag(!config->site_import);

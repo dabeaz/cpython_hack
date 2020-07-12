@@ -2834,7 +2834,7 @@ _PyBuiltin_Init(PyThreadState *tstate)
     SETBUILTIN("tuple",                 &PyTuple_Type);
     SETBUILTIN("type",                  &PyType_Type);
     SETBUILTIN("zip",                   &PyZip_Type);
-    debug = PyBool_FromLong(config->optimization_level == 0);
+    debug = PyBool_FromLong(1); /* config->optimization_level == 0); */
     if (PyDict_SetItemString(dict, "__debug__", debug) < 0) {
         Py_DECREF(debug);
         return NULL;

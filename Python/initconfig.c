@@ -623,7 +623,6 @@ _PyConfig_InitCompatConfig(PyConfig *config)
     config->bytes_warning = -1;
     config->inspect = -1;
     config->interactive = -1;
-    config->optimization_level = -1;
     config->parser_debug= -1;
     config->write_bytecode = -1;
     config->verbose = -1;
@@ -653,7 +652,6 @@ config_init_defaults(PyConfig *config)
     config->bytes_warning = 0;
     config->inspect = 0;
     config->interactive = 0;
-    config->optimization_level = 0;
     config->parser_debug= 0;
     config->write_bytecode = 1;
     config->verbose = 0;
@@ -831,7 +829,6 @@ _PyConfig_Copy(PyConfig *config, const PyConfig *config2)
     COPY_ATTR(bytes_warning);
     COPY_ATTR(inspect);
     COPY_ATTR(interactive);
-    COPY_ATTR(optimization_level);
     COPY_ATTR(parser_debug);
     COPY_ATTR(write_bytecode);
     COPY_ATTR(verbose);
@@ -933,7 +930,6 @@ config_as_dict(const PyConfig *config)
     SET_ITEM_INT(bytes_warning);
     SET_ITEM_INT(inspect);
     SET_ITEM_INT(interactive);
-    SET_ITEM_INT(optimization_level);
     SET_ITEM_INT(parser_debug);
     SET_ITEM_INT(write_bytecode);
     SET_ITEM_INT(verbose);
@@ -1042,7 +1038,6 @@ config_get_global_vars(PyConfig *config)
     COPY_FLAG(bytes_warning, Py_BytesWarningFlag);
     COPY_FLAG(inspect, Py_InspectFlag);
     COPY_FLAG(interactive, Py_InteractiveFlag);
-    COPY_FLAG(optimization_level, Py_OptimizeFlag);
     COPY_FLAG(parser_debug, Py_DebugFlag);
     COPY_FLAG(verbose, Py_VerboseFlag);
     COPY_FLAG(quiet, Py_QuietFlag);
@@ -1079,7 +1074,6 @@ config_set_global_vars(const PyConfig *config)
     COPY_FLAG(bytes_warning, Py_BytesWarningFlag);
     COPY_FLAG(inspect, Py_InspectFlag);
     COPY_FLAG(interactive, Py_InteractiveFlag);
-    COPY_FLAG(optimization_level, Py_OptimizeFlag);
     COPY_FLAG(parser_debug, Py_DebugFlag);
     COPY_FLAG(verbose, Py_VerboseFlag);
     COPY_FLAG(quiet, Py_QuietFlag);
@@ -1299,7 +1293,6 @@ config_read_env_vars(PyConfig *config)
     /* Get environment variables */
     _Py_get_env_flag(use_env, &config->parser_debug, "PYTHONDEBUG");
     _Py_get_env_flag(use_env, &config->verbose, "PYTHONVERBOSE");
-    _Py_get_env_flag(use_env, &config->optimization_level, "PYTHONOPTIMIZE");
     _Py_get_env_flag(use_env, &config->inspect, "PYTHONINSPECT");
 
     int dont_write_bytecode = 0;
@@ -1983,10 +1976,6 @@ config_parse_cmdline(PyConfig *config, PyWideStringList *warnoptions,
 
         /* case 'J': reserved for Jython */
 
-        case 'O':
-            config->optimization_level++;
-            break;
-
         case 'B':
             config->write_bytecode = 0;
             break;
@@ -2548,7 +2537,6 @@ PyConfig_Read(PyConfig *config)
     assert(config->bytes_warning >= 0);
     assert(config->inspect >= 0);
     assert(config->interactive >= 0);
-    assert(config->optimization_level >= 0);
     assert(config->parser_debug >= 0);
     assert(config->write_bytecode >= 0);
     assert(config->verbose >= 0);

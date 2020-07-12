@@ -40,7 +40,8 @@ Now what?  Still 75 days to go...
 - Day 29 (7/09/2020). Axed abc, locale, unicodedata, errno. 
 - Day 30 (7/10/2020). No, you will never be warned.
 - Day 31 (7/11/2020). Gutted genericalias. Also picklebuf, odictobject, and SimpleNamespace.
-
+- Day 32 (7/12/2020). Offed optimize mode.
+  
 Copyright and License Information
 ---------------------------------
 

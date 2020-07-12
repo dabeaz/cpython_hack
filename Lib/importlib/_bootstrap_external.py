@@ -329,10 +329,7 @@ def cache_from_source(path, debug_override=None, *, optimization=None):
         raise NotImplementedError('sys.implementation.cache_tag is None')
     almost_filename = ''.join([(base if base else rest), sep, tag])
     if optimization is None:
-        if sys.flags.optimize == 0:
-            optimization = ''
-        else:
-            optimization = sys.flags.optimize
+        optimization = ''
     optimization = str(optimization)
     if optimization != '':
         if not optimization.isalnum():

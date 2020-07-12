@@ -252,13 +252,6 @@ typedef struct {
        inherit Py_InteractiveFlag value. */
     int interactive;
 
-    /* Optimization level.
-
-       Incremented by the -O command line option. Set by the PYTHONOPTIMIZE
-       environment variable. If set to -1 (default), inherit Py_OptimizeFlag
-       value. */
-    int optimization_level;
-
     /* If greater than 0, enable the debug mode: turn on parser debugging
        output (for expert only, depending on compilation options).
 

@@ -348,7 +348,7 @@ PyAST_CompileObject(mod_ty mod, PyObject *filename, PyCompilerFlags *flags,
     c.c_future->ff_features = merged;
     flags->cf_flags = merged;
     c.c_flags = flags;
-    c.c_optimize = (optimize == -1) ? _Py_GetConfig()->optimization_level : optimize;
+    c.c_optimize = 0;  
     c.c_nestlevel = 0;
     c.c_do_not_emit_bytecode = 0;
 
