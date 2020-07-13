@@ -24,7 +24,6 @@
 */
 
 #include "Python.h"
-#include "pycore_context.h"
 #include "pycore_initconfig.h"
 #include "pycore_interp.h"      // PyInterpreterState.gc
 #include "pycore_object.h"
@@ -1040,7 +1039,6 @@ clear_freelists(PyThreadState *tstate)
     _PyList_ClearFreeList(tstate);
     _PyDict_ClearFreeList();
     _PyAsyncGen_ClearFreeLists(tstate);
-    _PyContext_ClearFreeList(tstate);
 }
 
 // Show stats for objects in each generations

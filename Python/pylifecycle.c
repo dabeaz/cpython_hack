@@ -6,7 +6,6 @@
 #undef Yield   /* undefine macro conflicting with <winbase.h> */
 
 #include "pycore_ceval.h"         // _PyEval_FiniGIL()
-#include "pycore_context.h"       // _PyContext_Init()
 #include "pycore_fileutils.h"     // _Py_ResetForceASCII()
 #include "pycore_import.h"        // _PyImport_Cleanup()
 #include "pycore_initconfig.h"    // _PyStatus_OK()
@@ -612,13 +611,7 @@ pycore_init_types(PyThreadState *tstate)
     if (_PyStatus_EXCEPTION(status)) {
         return status;
     }
-
-    if (is_main_interp) {
-        if (!_PyContext_Init()) {
-            return _PyStatus_ERR("can't init context");
-        }
-    }
-
+    
     return _PyStatus_OK();
 }
 
@@ -1227,7 +1220,6 @@ finalize_interp_types(PyThreadState *tstate, int is_main_interp)
 {
     _PyFrame_Fini(tstate);
     _PyAsyncGen_Fini(tstate);
-    _PyContext_Fini(tstate);
 
     if (is_main_interp) {
         _PySet_Fini();

@@ -41,7 +41,8 @@ Now what?  Still 75 days to go...
 - Day 30 (7/10/2020). No, you will never be warned.
 - Day 31 (7/11/2020). Gutted genericalias. Also picklebuf, odictobject, and SimpleNamespace.
 - Day 32 (7/12/2020). Offed optimize mode.
-  
+- Day 33 (7/13/2020). Clipped contextvars.
+
 Copyright and License Information
 ---------------------------------
 
