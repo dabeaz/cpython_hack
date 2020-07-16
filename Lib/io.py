@@ -42,7 +42,7 @@ __author__ = ("Guido van Rossum <guido@python.org>, "
               "Benjamin Peterson <benjamin@python.org>")
 
 __all__ = ["BlockingIOError", "open", "open_code", "IOBase", "RawIOBase",
-           "FileIO", "BytesIO", "StringIO", "BufferedIOBase",
+           "FileIO", "BufferedIOBase",
            "BufferedReader", "BufferedWriter", "BufferedRWPair",
            "BufferedRandom", "TextIOBase", "TextIOWrapper",
            "UnsupportedOperation", "SEEK_SET", "SEEK_CUR", "SEEK_END"]
@@ -51,7 +51,7 @@ __all__ = ["BlockingIOError", "open", "open_code", "IOBase", "RawIOBase",
 import _io
 
 from _io import (DEFAULT_BUFFER_SIZE, BlockingIOError, UnsupportedOperation,
-                 open, open_code, FileIO, BytesIO, StringIO, BufferedReader,
+                 open, open_code, FileIO, BufferedReader,
                  BufferedWriter, BufferedRWPair, BufferedRandom,
                  IncrementalNewlineDecoder, TextIOWrapper)
 

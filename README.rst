@@ -43,6 +43,8 @@ Now what?  Still 75 days to go...
 - Day 32 (7/12/2020). Offed optimize mode.
 - Day 33 (7/13/2020). Clipped contextvars.
 - Day 34 (7/14/2020). Cut clinic files.
+- Day 35 (7/15/2020). Chopped clinic.
+- Day 36 (7/16/2020). Closed BytesIO and StringIO.
   
 Copyright and License Information
 ---------------------------------

@@ -285,9 +285,7 @@ IO_OBJS=	\
 		Modules/_io/iobase.o \
 		Modules/_io/fileio.o \
 		Modules/_io/bufferedio.o \
-		Modules/_io/textio.o \
-		Modules/_io/bytesio.o \
-		Modules/_io/stringio.o
+		Modules/_io/textio.o
 
 ##########################################################################
 
@@ -557,11 +555,6 @@ coverage-report: regen-token regen-importlib
 	@ # build lcov report
 	$(MAKE) coverage-lcov
 
-# Run "Argument Clinic" over all source files
-.PHONY=clinic
-clinic: check-clean-src $(srcdir)/Modules/_blake2/blake2s_impl.c
-	$(PYTHON_FOR_REGEN) $(srcdir)/Tools/clinic/clinic.py --make --srcdir $(srcdir)
-
 # Build the interpreter
 $(BUILDPYTHON):	Programs/python.o $(LIBRARY) $(LDLIBRARY) $(PY3LIBRARY)
 	$(LINKCC) $(PY_CORE_LDFLAGS) $(LINKFORSHARED) -o $@ Programs/python.o $(BLDLIBRARY) $(LIBS) $(MODLIBS) $(SYSLIBS)
@@ -588,11 +581,6 @@ pybuilddir.txt: $(BUILDPYTHON)
 # This is shared by the math and cmath modules
 Modules/_math.o: Modules/_math.c Modules/_math.h
 	$(CC) -c $(CCSHARED) $(PY_CORE_CFLAGS) -o $@ $<
-
-# blake2s is auto-generated from blake2b
-$(srcdir)/Modules/_blake2/blake2s_impl.c: $(srcdir)/Modules/_blake2/blake2b_impl.c $(srcdir)/Modules/_blake2/blake2b2s.py
-	$(PYTHON_FOR_REGEN) $(srcdir)/Modules/_blake2/blake2b2s.py
-	$(PYTHON_FOR_REGEN) $(srcdir)/Tools/clinic/clinic.py -f $@
 
 # Build the shared modules
 # Under GNU make, MAKEFLAGS are sorted and normalized; the 's' for
@@ -718,7 +706,7 @@ regen-importlib: Programs/_freeze_importlib
 # Regenerate all generated files
 
 regen-all: regen-opcode regen-opcode-targets regen-typeslots \
-	regen-token regen-symbol regen-ast regen-importlib clinic \
+	regen-token regen-symbol regen-ast regen-importlib \
 	regen-pegen-metaparser regen-pegen
 
 ############################################################################

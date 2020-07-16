@@ -708,14 +708,17 @@ PyInit__io(void)
     ADD_TYPE(&PyFileIO_Type);
 
     /* BytesIO */
+    /*
     PyBytesIO_Type.tp_base = &PyBufferedIOBase_Type;
     ADD_TYPE(&PyBytesIO_Type);
     if (PyType_Ready(&_PyBytesIOBuffer_Type) < 0)
         goto fail;
-
+    */
     /* StringIO */
+    /*
     PyStringIO_Type.tp_base = &PyTextIOBase_Type;
     ADD_TYPE(&PyStringIO_Type);
+    */
 
 #ifdef MS_WINDOWS
     /* WindowsConsoleIO */
