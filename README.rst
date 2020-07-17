@@ -45,7 +45,8 @@ Now what?  Still 75 days to go...
 - Day 34 (7/14/2020). Cut clinic files.
 - Day 35 (7/15/2020). Chopped clinic.
 - Day 36 (7/16/2020). Closed BytesIO and StringIO.
-  
+- Day 37 (7/17/2020). Ceased .imag, .real, .numerator .denominator.
+
 Copyright and License Information
 ---------------------------------
 

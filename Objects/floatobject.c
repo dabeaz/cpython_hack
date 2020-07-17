@@ -2165,18 +2165,6 @@ float___set_format___impl(PyTypeObject *type, const char *typestr,
     Py_RETURN_NONE;
 }
 
-static PyObject *
-float_getreal(PyObject *v, void *closure)
-{
-    return float_float(v);
-}
-
-static PyObject *
-float_getimag(PyObject *v, void *closure)
-{
-    return PyFloat_FromDouble(0.0);
-}
-
 /*[clinic input]
 float.__format__
 
@@ -2223,14 +2211,6 @@ static PyMethodDef float_methods[] = {
 };
 
 static PyGetSetDef float_getset[] = {
-    {"real",
-     float_getreal, (setter)NULL,
-     "the real part of a complex number",
-     NULL},
-    {"imag",
-     float_getimag, (setter)NULL,
-     "the imaginary part of a complex number",
-     NULL},
     {NULL}  /* Sentinel */
 };
 

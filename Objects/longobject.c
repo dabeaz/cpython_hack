@@ -5363,18 +5363,6 @@ int___getnewargs___impl(PyObject *self)
     return Py_BuildValue("(N)", _PyLong_Copy((PyLongObject *)self));
 }
 
-static PyObject *
-long_get0(PyObject *Py_UNUSED(self), void *Py_UNUSED(context))
-{
-    return PyLong_FromLong(0L);
-}
-
-static PyObject *
-long_get1(PyObject *Py_UNUSED(self), void *Py_UNUSED(ignored))
-{
-    return PyLong_FromLong(1L);
-}
-
 /*[clinic input]
 int.__format__
 
@@ -5884,22 +5872,6 @@ static PyMethodDef long_methods[] = {
 };
 
 static PyGetSetDef long_getset[] = {
-    {"real",
-     (getter)long_long_meth, (setter)NULL,
-     "the real part of a complex number",
-     NULL},
-    {"imag",
-     long_get0, (setter)NULL,
-     "the imaginary part of a complex number",
-     NULL},
-    {"numerator",
-     (getter)long_long_meth, (setter)NULL,
-     "the numerator of a rational number in lowest terms",
-     NULL},
-    {"denominator",
-     long_get1, (setter)NULL,
-     "the denominator of a rational number in lowest terms",
-     NULL},
     {NULL}  /* Sentinel */
 };
 
