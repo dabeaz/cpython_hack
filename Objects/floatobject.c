@@ -506,10 +506,6 @@ PyFloat_FromDouble(double fval)
     struct _Py_float_state *state = &interp->float_state;
     PyFloatObject *op = state->free_list;
     if (op != NULL) {
-#ifdef Py_DEBUG
-        // PyFloat_FromDouble() must not be called after _PyFloat_Fini()
-        assert(state->numfree != -1);
-#endif
         state->free_list = (PyFloatObject *) Py_TYPE(op);
         state->numfree--;
     }
@@ -613,10 +609,6 @@ float_dealloc(PyFloatObject *op)
     if (PyFloat_CheckExact(op)) {
         PyInterpreterState *interp = _PyInterpreterState_GET();
         struct _Py_float_state *state = &interp->float_state;
-#ifdef Py_DEBUG
-        // float_dealloc() must not be called after _PyFloat_Fini()
-        assert(state->numfree != -1);
-#endif
         if (state->numfree >= PyFloat_MAXFREELIST)  {
             PyObject_FREE(op);
             return;
@@ -2368,10 +2360,6 @@ void
 _PyFloat_Fini(PyThreadState *tstate)
 {
     _PyFloat_ClearFreeList(tstate);
-#ifdef Py_DEBUG
-    struct _Py_float_state *state = &tstate->interp->float_state;
-    state->numfree = -1;
-#endif
 }
 
 /* Print summary info about the state of the optimized allocator */

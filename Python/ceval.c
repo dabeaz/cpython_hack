@@ -32,12 +32,6 @@
 
 #include <ctype.h>
 
-#ifdef Py_DEBUG
-/* For debugging the interpreter: */
-#define LLTRACE  1      /* Low-level trace feature */
-#define CHECKEXC 1      /* Double-check exception checking */
-#endif
-
 #if !defined(Py_BUILD_CORE)
 #  error "ceval.c must be build with Py_BUILD_CORE define for best performance"
 #endif
@@ -103,14 +97,7 @@ static long dxp[256];
 #endif
 
 /* per opcode cache */
-#ifdef Py_DEBUG
-// --with-pydebug is used to find memory leak.  opcache makes it harder.
-// So we disable opcache when Py_DEBUG is defined.
-// See bpo-37146
-#define OPCACHE_MIN_RUNS 0  /* disable opcache */
-#else
 #define OPCACHE_MIN_RUNS 1024  /* create opcache when code executed this time */
-#endif
 #define OPCACHE_STATS 0  /* Enable stats */
 
 #if OPCACHE_STATS
@@ -1077,11 +1064,7 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
 
 /* Tuple access macros */
 
-#ifndef Py_DEBUG
 #define GETITEM(v, i) PyTuple_GET_ITEM((PyTupleObject *)(v), (i))
-#else
-#define GETITEM(v, i) PyTuple_GetItem((v), (i))
-#endif
 
 /* Code access macros */
 
@@ -1375,13 +1358,6 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
 
     if (throwflag) /* support for generator.throw() */
         goto error;
-
-#ifdef Py_DEBUG
-    /* _PyEval_EvalFrameDefault() must not be called with an exception set,
-       because it can clear it (directly or indirectly) and so the
-       caller loses its exception */
-    assert(!_PyErr_Occurred(tstate));
-#endif
 
 main_loop:
     for (;;) {

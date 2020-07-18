@@ -1223,13 +1223,6 @@ type_call(PyTypeObject *type, PyObject *args, PyObject *kwds)
     PyObject *obj;
     PyThreadState *tstate = _PyThreadState_GET();
 
-#ifdef Py_DEBUG
-    /* type_call() must not be called with an exception set,
-       because it can clear it (directly or indirectly) and so the
-       caller loses its exception */
-    assert(!_PyErr_Occurred(tstate));
-#endif
-
     /* Special case: type(x) should return Py_TYPE(x) */
     /* We only want type itself to accept the one-argument form (#27157) */
     if (type == &PyType_Type) {

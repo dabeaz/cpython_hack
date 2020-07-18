@@ -79,10 +79,6 @@ typedef union {
 PyAPI_DATA(_Py_HashSecret_t) _Py_HashSecret;
 #endif
 
-#ifdef Py_DEBUG
-PyAPI_DATA(int) _Py_HashSecret_Initialized;
-#endif
-
 
 /* hash function definition */
 #ifndef Py_LIMITED_API

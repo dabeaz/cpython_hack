@@ -45,11 +45,6 @@ _Py_CheckFunctionResult(PyThreadState *tstate, PyObject *callable,
                 _PyErr_Format(tstate, PyExc_SystemError,
                               "%s returned NULL without setting an error",
                               where);
-#ifdef Py_DEBUG
-            /* Ensure that the bug is caught in debug mode.
-               Py_FatalError() logs the SystemError exception raised above. */
-            Py_FatalError("a function returned NULL without setting an error");
-#endif
             return NULL;
         }
     }
@@ -67,11 +62,6 @@ _Py_CheckFunctionResult(PyThreadState *tstate, PyObject *callable,
                     tstate, PyExc_SystemError,
                     "%s returned a result with an error set", where);
             }
-#ifdef Py_DEBUG
-            /* Ensure that the bug is caught in debug mode.
-               Py_FatalError() logs the SystemError exception raised above. */
-            Py_FatalError("a function returned a result with an error set");
-#endif
             return NULL;
         }
     }
@@ -412,12 +402,6 @@ PyEval_CallObjectWithKeywords(PyObject *callable,
                               PyObject *args, PyObject *kwargs)
 {
     PyThreadState *tstate = _PyThreadState_GET();
-#ifdef Py_DEBUG
-    /* PyEval_CallObjectWithKeywords() must not be called with an exception
-       set. It raises a new exception if parameters are invalid or if
-       PyTuple_New() fails, and so the original exception is lost. */
-    assert(!_PyErr_Occurred(tstate));
-#endif
 
     if (args != NULL && !PyTuple_Check(args)) {
         _PyErr_SetString(tstate, PyExc_TypeError,

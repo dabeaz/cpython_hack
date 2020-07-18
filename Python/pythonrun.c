@@ -90,9 +90,6 @@ PyRun_InteractiveLoopFlags(FILE *fp, const char *filename_str, PyCompilerFlags *
     int ret, err;
     PyCompilerFlags local_flags = _PyCompilerFlags_INIT;
     int nomem_count = 0;
-#ifdef Py_REF_DEBUG
-    int show_ref_count = _Py_GetConfig()->show_ref_count;
-#endif
 
     filename = PyUnicode_DecodeFSDefault(filename_str);
     if (filename == NULL) {
@@ -134,11 +131,6 @@ PyRun_InteractiveLoopFlags(FILE *fp, const char *filename_str, PyCompilerFlags *
         } else {
             nomem_count = 0;
         }
-#ifdef Py_REF_DEBUG
-        if (show_ref_count) {
-            _PyDebug_PrintTotalRefs();
-        }
-#endif
     } while (ret != E_EOF);
     Py_DECREF(filename);
     return err;

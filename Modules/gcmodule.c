@@ -39,11 +39,6 @@ module gc
 [clinic start generated code]*/
 /*[clinic end generated code: output=da39a3ee5e6b4b0d input=b5c9690ecc842d79]*/
 
-
-#ifdef Py_DEBUG
-#  define GC_DEBUG
-#endif
-
 #define GC_NEXT _PyGCHead_NEXT
 #define GC_PREV _PyGCHead_PREV
 
@@ -352,65 +347,6 @@ append_objects(PyObject *py_list, PyGC_Head *gc_list)
     return 0;
 }
 
-// Constants for validate_list's flags argument.
-enum flagstates {collecting_clear_unreachable_clear,
-                 collecting_clear_unreachable_set,
-                 collecting_set_unreachable_clear,
-                 collecting_set_unreachable_set};
-
-#ifdef GC_DEBUG
-// validate_list checks list consistency.  And it works as document
-// describing when flags are expected to be set / unset.
-// `head` must be a doubly-linked gc list, although it's fine (expected!) if
-// the prev and next pointers are "polluted" with flags.
-// What's checked:
-// - The `head` pointers are not polluted.
-// - The objects' PREV_MASK_COLLECTING and NEXT_MASK_UNREACHABLE flags are all
-//   `set or clear, as specified by the 'flags' argument.
-// - The prev and next pointers are mutually consistent.
-static void
-validate_list(PyGC_Head *head, enum flagstates flags)
-{
-    assert((head->_gc_prev & PREV_MASK_COLLECTING) == 0);
-    assert((head->_gc_next & NEXT_MASK_UNREACHABLE) == 0);
-    uintptr_t prev_value = 0, next_value = 0;
-    switch (flags) {
-        case collecting_clear_unreachable_clear:
-            break;
-        case collecting_set_unreachable_clear:
-            prev_value = PREV_MASK_COLLECTING;
-            break;
-        case collecting_clear_unreachable_set:
-            next_value = NEXT_MASK_UNREACHABLE;
-            break;
-        case collecting_set_unreachable_set:
-            prev_value = PREV_MASK_COLLECTING;
-            next_value = NEXT_MASK_UNREACHABLE;
-            break;
-        default:
-            assert(! "bad internal flags argument");
-    }
-    PyGC_Head *prev = head;
-    PyGC_Head *gc = GC_NEXT(head);
-    while (gc != head) {
-        PyGC_Head *trueprev = GC_PREV(gc);
-        PyGC_Head *truenext = (PyGC_Head *)(gc->_gc_next  & ~NEXT_MASK_UNREACHABLE);
-        assert(truenext != NULL);
-        assert(trueprev == prev);
-        assert((gc->_gc_prev & PREV_MASK_COLLECTING) == prev_value);
-        assert((gc->_gc_next & NEXT_MASK_UNREACHABLE) == next_value);
-        prev = gc;
-        gc = truenext;
-    }
-    assert(prev == GC_PREV(head));
-}
-#else
-#define validate_list(x, y) do{}while(0)
-#endif
-
-/*** end of list stuff ***/
-
-
 /* Set all gc_refs = ob_refcnt.  After this, gc_refs is > 0 and
  * PREV_MASK_COLLECTING bit is set for all objects in containers.
  */
@@ -704,7 +640,6 @@ clear_unreachable_mask(PyGC_Head *unreachable)
         gc->_gc_next &= ~NEXT_MASK_UNREACHABLE;
         next = (PyGC_Head*)gc->_gc_next;
     }
-    validate_list(unreachable, collecting_set_unreachable_clear);
 }
 
 /* A traversal callback for move_legacy_finalizer_reachable. */
@@ -1089,7 +1024,6 @@ by a call to 'move_legacy_finalizers'), the 'unreachable' list is not a normal
 list and we can not use most gc_list_* functions for it. */
 static inline void
 deduce_unreachable(PyGC_Head *base, PyGC_Head *unreachable) {
-    validate_list(base, collecting_clear_unreachable_clear);
     /* Using ob_refcnt and gc_refs, calculate which objects in the
      * container set are reachable from outside the set (i.e., have a
      * refcount greater than 0 when all the references within the
@@ -1135,8 +1069,6 @@ deduce_unreachable(PyGC_Head *base, PyGC_Head *unreachable) {
      */
     gc_list_init(unreachable);
     move_unreachable(base, unreachable);  // gc_prev is pointer again
-    validate_list(base, collecting_clear_unreachable_clear);
-    validate_list(unreachable, collecting_set_unreachable_set);
 }
 
 /* Handle objects that may have resurrected after a call to 'finalize_garbage', moving
@@ -1222,7 +1154,6 @@ collect(PyThreadState *tstate, int generation,
         old = GEN_HEAD(gcstate, generation+1);
     else
         old = young;
-    validate_list(old, collecting_clear_unreachable_clear);
 
     deduce_unreachable(young, &unreachable);
 
@@ -1255,9 +1186,6 @@ collect(PyThreadState *tstate, int generation,
      */
     move_legacy_finalizer_reachable(&finalizers);
 
-    validate_list(&finalizers, collecting_clear_unreachable_clear);
-    validate_list(&unreachable, collecting_set_unreachable_clear);
-
     /* Print debugging information. */
     if (gcstate->debug & DEBUG_COLLECTABLE) {
         for (gc = GC_NEXT(&unreachable); gc != &unreachable; gc = GC_NEXT(gc)) {
@@ -1267,9 +1195,6 @@ collect(PyThreadState *tstate, int generation,
 
     /* Clear weakrefs and invoke callbacks as necessary. */
     m += handle_weakrefs(&unreachable, old);
-
-    validate_list(old, collecting_clear_unreachable_clear);
-    validate_list(&unreachable, collecting_set_unreachable_clear);
 
     /* Call tp_finalize on objects which have one. */
     finalize_garbage(tstate, &unreachable);
@@ -1306,7 +1231,6 @@ collect(PyThreadState *tstate, int generation,
      * this if they insist on creating this type of structure.
      */
     handle_legacy_finalizers(tstate, gcstate, &finalizers, old);
-    validate_list(old, collecting_clear_unreachable_clear);
 
     /* Clear free list only during the collection of the highest
      * generation */
@@ -2518,21 +2442,6 @@ _PyGC_Dump(PyGC_Head *g)
     _PyObject_Dump(FROM_GC(g));
 }
 
-
-#ifdef Py_DEBUG
-static int
-visit_validate(PyObject *op, void *parent_raw)
-{
-    PyObject *parent = _PyObject_CAST(parent_raw);
-    if (_PyObject_IsFreed(op)) {
-        _PyObject_ASSERT_FAILED_MSG(parent,
-                                    "PyObject_GC_Track() object is not valid");
-    }
-    return 0;
-}
-#endif
-
-
 /* extension modules might be compiled with GC support so these
    functions must always be available */
 
@@ -2546,13 +2455,6 @@ PyObject_GC_Track(void *op_raw)
                                     "by the garbage collector");
     }
     _PyObject_GC_TRACK(op);
-
-#ifdef Py_DEBUG
-    /* Check that the object is valid: validate objects traversed
-       by tp_traverse() */
-    traverseproc traverse = Py_TYPE(op)->tp_traverse;
-    (void)traverse(op, visit_validate, op);
-#endif
 }
 
 void

@@ -111,9 +111,6 @@ _Py_EnsureFuncTstateNotNULL(const char *func, PyThreadState *tstate)
    and _PyGILState_GetInterpreterStateUnsafe(). */
 static inline PyInterpreterState* _PyInterpreterState_GET(void) {
     PyThreadState *tstate = _PyThreadState_GET();
-#ifdef Py_DEBUG
-    _Py_EnsureTstateNotNULL(tstate);
-#endif
     return tstate->interp;
 }
 

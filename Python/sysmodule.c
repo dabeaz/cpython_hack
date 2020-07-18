@@ -728,37 +728,6 @@ exit:
     return return_value;
 }
 
-#if defined(Py_REF_DEBUG)
-
-PyDoc_STRVAR(sys_gettotalrefcount__doc__,
-"gettotalrefcount($module, /)\n"
-"--\n"
-"\n");
-
-#define SYS_GETTOTALREFCOUNT_METHODDEF    \
-    {"gettotalrefcount", (PyCFunction)sys_gettotalrefcount, METH_NOARGS, sys_gettotalrefcount__doc__},
-
-static Py_ssize_t
-sys_gettotalrefcount_impl(PyObject *module);
-
-static PyObject *
-sys_gettotalrefcount(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    PyObject *return_value = NULL;
-    Py_ssize_t _return_value;
-
-    _return_value = sys_gettotalrefcount_impl(module);
-    if ((_return_value == -1) && PyErr_Occurred()) {
-        goto exit;
-    }
-    return_value = PyLong_FromSsize_t(_return_value);
-
-exit:
-    return return_value;
-}
-
-#endif /* defined(Py_REF_DEBUG) */
-
 PyDoc_STRVAR(sys_getallocatedblocks__doc__,
 "getallocatedblocks($module, /)\n"
 "--\n"
@@ -2678,19 +2647,6 @@ sys_getrefcount_impl(PyObject *module, PyObject *object)
     return Py_REFCNT(object);
 }
 
-#ifdef Py_REF_DEBUG
-/*[clinic input]
-sys.gettotalrefcount -> Py_ssize_t
-[clinic start generated code]*/
-
-static Py_ssize_t
-sys_gettotalrefcount_impl(PyObject *module)
-/*[clinic end generated code: output=4103886cf17c25bc input=53b744faa5d2e4f6]*/
-{
-    return _Py_GetRefTotal();
-}
-#endif /* Py_REF_DEBUG */
-
 /*[clinic input]
 sys.getallocatedblocks -> Py_ssize_t
 
@@ -2812,11 +2768,6 @@ sys__debugmallocstats_impl(PyObject *module)
     Py_RETURN_NONE;
 }
 
-#ifdef Py_TRACE_REFS
-/* Defined in objects.c because it uses static globals if that file */
-extern PyObject *_Py_GetObjects(PyObject *, PyObject *);
-#endif
-
 #ifdef DYNAMIC_EXECUTION_PROFILE
 /* Defined in ceval.c because it uses static globals if that file */
 extern PyObject *_Py_GetDXProfile(PyObject *,  PyObject *);
@@ -2891,9 +2842,6 @@ static PyMethodDef sys_methods[] = {
 #endif
     SYS_GETFILESYSTEMENCODING_METHODDEF
     SYS_GETFILESYSTEMENCODEERRORS_METHODDEF
-#ifdef Py_TRACE_REFS
-    {"getobjects",      _Py_GetObjects, METH_VARARGS},
-#endif
     SYS_GETTOTALREFCOUNT_METHODDEF
     SYS_GETREFCOUNT_METHODDEF
     SYS_GETRECURSIONLIMIT_METHODDEF

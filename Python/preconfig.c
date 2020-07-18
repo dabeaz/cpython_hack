@@ -294,11 +294,7 @@ _PyPreConfig_InitCompatConfig(PyPreConfig *config)
 #ifdef EXPERIMENTAL_ISOLATED_SUBINTERPRETERS
     /* bpo-40512: pymalloc is not compatible with subinterpreters,
        force usage of libc malloc() which is thread-safe. */
-#ifdef Py_DEBUG
-    config->allocator = PYMEM_ALLOCATOR_MALLOC_DEBUG;
-#else
     config->allocator = PYMEM_ALLOCATOR_MALLOC;
-#endif
 #else
     config->allocator = PYMEM_ALLOCATOR_NOT_SET;
 #endif

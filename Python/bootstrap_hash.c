@@ -25,11 +25,7 @@
 #  include <sanitizer/msan_interface.h>
 #endif
 
-#ifdef Py_DEBUG
-int _Py_HashSecret_Initialized = 0;
-#else
 static int _Py_HashSecret_Initialized = 0;
-#endif
 
 #ifdef MS_WINDOWS
 static HCRYPTPROV hCryptProv = 0;

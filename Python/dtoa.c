@@ -159,11 +159,6 @@ typedef uint32_t ULong;
 typedef int32_t Long;
 typedef uint64_t ULLong;
 
-#undef DEBUG
-#ifdef Py_DEBUG
-#define DEBUG
-#endif
-
 /* End Python #define linking */
 
 #ifdef DEBUG

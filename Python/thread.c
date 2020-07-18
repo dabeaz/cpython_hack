@@ -41,15 +41,8 @@
 
 #endif /* _POSIX_THREADS */
 
-
-#ifdef Py_DEBUG
-static int thread_debug = 0;
-#define dprintf(args)   (void)((thread_debug & 1) && printf args)
-#define d2printf(args)  ((thread_debug & 8) && printf args)
-#else
 #define dprintf(args)
 #define d2printf(args)
-#endif
 
 static int initialized;
 
@@ -58,16 +51,6 @@ static void PyThread__init_thread(void); /* Forward */
 void
 PyThread_init_thread(void)
 {
-#ifdef Py_DEBUG
-    const char *p = Py_GETENV("PYTHONTHREADDEBUG");
-
-    if (p) {
-        if (*p)
-            thread_debug = atoi(p);
-        else
-            thread_debug = 1;
-    }
-#endif /* Py_DEBUG */
     if (initialized)
         return;
     initialized = 1;

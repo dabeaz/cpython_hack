@@ -205,15 +205,9 @@ static struct {
 #define PYDBGOBJ_ALLOC \
     {&_PyMem_Debug.obj, _PyMem_DebugMalloc, _PyMem_DebugCalloc, _PyMem_DebugRealloc, _PyMem_DebugFree}
 
-#ifdef Py_DEBUG
-static PyMemAllocatorEx _PyMem_Raw = PYDBGRAW_ALLOC;
-static PyMemAllocatorEx _PyMem = PYDBGMEM_ALLOC;
-static PyMemAllocatorEx _PyObject = PYDBGOBJ_ALLOC;
-#else
 static PyMemAllocatorEx _PyMem_Raw = PYRAW_ALLOC;
 static PyMemAllocatorEx _PyMem = PYMEM_ALLOC;
 static PyMemAllocatorEx _PyObject = PYOBJ_ALLOC;
-#endif
 
 
 static int
@@ -253,11 +247,7 @@ int
 _PyMem_SetDefaultAllocator(PyMemAllocatorDomain domain,
                            PyMemAllocatorEx *old_alloc)
 {
-#ifdef Py_DEBUG
-    const int debug = 1;
-#else
     const int debug = 0;
-#endif
     return pymem_set_default_allocator(domain, debug, old_alloc);
 }
 
@@ -2557,27 +2547,6 @@ _PyDebugAllocatorStats(FILE *out,
 
 #ifdef WITH_PYMALLOC
 
-#ifdef Py_DEBUG
-/* Is target in the list?  The list is traversed via the nextpool pointers.
- * The list may be NULL-terminated, or circular.  Return 1 if target is in
- * list, else 0.
- */
-static int
-pool_is_in_list(const poolp target, poolp list)
-{
-    poolp origlist = list;
-    assert(target != NULL);
-    if (list == NULL)
-        return 0;
-    do {
-        if (target == list)
-            return 1;
-        list = list->nextpool;
-    } while (list != NULL && list != origlist);
-    return 0;
-}
-#endif
-
 /* Print summary info to "out" about the state of pymalloc's structures.
  * In Py_DEBUG mode, also perform some expensive internal consistency
  * checks.
@@ -2657,19 +2626,12 @@ _PyObject_DebugMallocStats(FILE *out)
 
             if (p->ref.count == 0) {
                 /* currently unused */
-#ifdef Py_DEBUG
-                assert(pool_is_in_list(p, arenas[i].freepools));
-#endif
                 continue;
             }
             ++numpools[sz];
             numblocks[sz] += p->ref.count;
             freeblocks = NUMBLOCKS(sz) - p->ref.count;
             numfreeblocks[sz] += freeblocks;
-#ifdef Py_DEBUG
-            if (freeblocks > 0)
-                assert(pool_is_in_list(p, usedpools[sz + sz]));
-#endif
         }
     }
     assert(narenas == narenas_currently_allocated);

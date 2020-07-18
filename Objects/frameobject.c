@@ -595,10 +595,6 @@ frame_dealloc(PyFrameObject *f)
     else {
         PyInterpreterState *interp = _PyInterpreterState_GET();
         struct _Py_frame_state *state = &interp->frame;
-#ifdef Py_DEBUG
-        // frame_dealloc() must not be called after _PyFrame_Fini()
-        assert(state->numfree != -1);
-#endif
         if (state->numfree < PyFrame_MAXFREELIST) {
             ++state->numfree;
             f->f_back = state->free_list;
@@ -794,10 +790,6 @@ frame_alloc(PyCodeObject *code)
         }
     }
     else {
-#ifdef Py_DEBUG
-        // frame_alloc() must not be called after _PyFrame_Fini()
-        assert(state->numfree != -1);
-#endif
         assert(state->numfree > 0);
         --state->numfree;
         f = state->free_list;
@@ -871,13 +863,6 @@ PyFrameObject* _Py_HOT_FUNCTION
 _PyFrame_New_NoTrack(PyThreadState *tstate, PyCodeObject *code,
                      PyObject *globals, PyObject *locals)
 {
-#ifdef Py_DEBUG
-    if (code == NULL || globals == NULL || !PyDict_Check(globals) ||
-        (locals != NULL && !PyMapping_Check(locals))) {
-        PyErr_BadInternalCall();
-        return NULL;
-    }
-#endif
 
     PyFrameObject *back = tstate->frame;
     PyObject *builtins = frame_get_builtins(back, globals);
@@ -1196,10 +1181,6 @@ void
 _PyFrame_Fini(PyThreadState *tstate)
 {
     _PyFrame_ClearFreeList(tstate);
-#ifdef Py_DEBUG
-    struct _Py_frame_state *state = &tstate->interp->frame;
-    state->numfree = -1;
-#endif
 }
 
 /* Print summary info about the state of the optimized allocator */

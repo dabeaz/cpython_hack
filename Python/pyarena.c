@@ -61,15 +61,6 @@ struct _arena {
        when the arena is freed.
     */
     PyObject *a_objects;
-
-#if defined(Py_DEBUG)
-    /* Debug output */
-    size_t total_allocs;
-    size_t total_size;
-    size_t total_blocks;
-    size_t total_block_size;
-    size_t total_big_blocks;
-#endif
 };
 
 static block *
@@ -143,13 +134,6 @@ PyArena_New()
         PyMem_Free((void *)arena);
         return (PyArena*)PyErr_NoMemory();
     }
-#if defined(Py_DEBUG)
-    arena->total_allocs = 0;
-    arena->total_size = 0;
-    arena->total_blocks = 1;
-    arena->total_block_size = DEFAULT_BLOCK_SIZE;
-    arena->total_big_blocks = 0;
-#endif
     return arena;
 }
 
@@ -157,15 +141,6 @@ void
 PyArena_Free(PyArena *arena)
 {
     assert(arena);
-#if defined(Py_DEBUG)
-    /*
-    fprintf(stderr,
-        "alloc=%zu size=%zu blocks=%zu block_size=%zu big=%zu objects=%zu\n",
-        arena->total_allocs, arena->total_size, arena->total_blocks,
-        arena->total_block_size, arena->total_big_blocks,
-        PyList_Size(arena->a_objects));
-    */
-#endif
     block_free(arena->a_head);
     /* This property normally holds, except when the code being compiled
        is sys.getobjects(0), in which case there will be two references.
@@ -182,19 +157,9 @@ PyArena_Malloc(PyArena *arena, size_t size)
     void *p = block_alloc(arena->a_cur, size);
     if (!p)
         return PyErr_NoMemory();
-#if defined(Py_DEBUG)
-    arena->total_allocs++;
-    arena->total_size += size;
-#endif
     /* Reset cur if we allocated a new block. */
     if (arena->a_cur->ab_next) {
         arena->a_cur = arena->a_cur->ab_next;
-#if defined(Py_DEBUG)
-        arena->total_blocks++;
-        arena->total_block_size += arena->a_cur->ab_size;
-        if (arena->a_cur->ab_size > DEFAULT_BLOCK_SIZE)
-            ++arena->total_big_blocks;
-#endif
     }
     return p;
 }

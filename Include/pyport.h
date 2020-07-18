@@ -310,12 +310,7 @@ extern "C" {
  * Caution:
  *    VALUE may be evaluated more than once.
  */
-#ifdef Py_DEBUG
-#define Py_SAFE_DOWNCAST(VALUE, WIDE, NARROW) \
-    (assert((WIDE)(NARROW)(VALUE) == (VALUE)), (NARROW)(VALUE))
-#else
 #define Py_SAFE_DOWNCAST(VALUE, WIDE, NARROW) (NARROW)(VALUE)
-#endif
 
 /* Py_SET_ERRNO_ON_MATH_ERROR(x)
  * If a libm function did not set errno, but it looks like the result
@@ -812,12 +807,6 @@ extern _invalid_parameter_handler _Py_silent_invalid_parameter_handler;
  */
 #ifndef WITH_THREAD
 #  define WITH_THREAD
-#endif
-
-/* Check that ALT_SOABI is consistent with Py_TRACE_REFS:
-   ./configure --with-trace-refs should must be used to define Py_TRACE_REFS */
-#if defined(ALT_SOABI) && defined(Py_TRACE_REFS)
-#  error "Py_TRACE_REFS ABI is not compatible with release and debug ABI"
 #endif
 
 #if defined(__ANDROID__) || defined(__VXWORKS__)

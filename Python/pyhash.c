@@ -250,10 +250,6 @@ fnv(const void *src, Py_ssize_t len)
         Py_uhash_t value;
         unsigned char bytes[SIZEOF_PY_UHASH_T];
     } block;
-
-#ifdef Py_DEBUG
-    assert(_Py_HashSecret_Initialized);
-#endif
     remainder = len % SIZEOF_PY_UHASH_T;
     if (remainder == 0) {
         /* Process at least one block byte by byte to reduce hash collisions

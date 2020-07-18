@@ -1428,11 +1428,6 @@ void
 _PyAsyncGen_Fini(PyThreadState *tstate)
 {
     _PyAsyncGen_ClearFreeLists(tstate);
-#ifdef Py_DEBUG
-    struct _Py_async_gen_state *state = &tstate->interp->async_gen;
-    state->value_numfree = -1;
-    state->asend_numfree = -1;
-#endif
 }
 
 
@@ -1477,10 +1472,6 @@ async_gen_asend_dealloc(PyAsyncGenASend *o)
     Py_CLEAR(o->ags_sendval);
     PyInterpreterState *interp = _PyInterpreterState_GET();
     struct _Py_async_gen_state *state = &interp->async_gen;
-#ifdef Py_DEBUG
-    // async_gen_asend_dealloc() must not be called after _PyAsyncGen_Fini()
-    assert(state->asend_numfree != -1);
-#endif
     if (state->asend_numfree < _PyAsyncGen_MAXFREELIST) {
         assert(PyAsyncGenASend_CheckExact(o));
         state->asend_freelist[state->asend_numfree++] = o;
@@ -1639,10 +1630,6 @@ async_gen_asend_new(PyAsyncGenObject *gen, PyObject *sendval)
     PyAsyncGenASend *o;
     PyInterpreterState *interp = _PyInterpreterState_GET();
     struct _Py_async_gen_state *state = &interp->async_gen;
-#ifdef Py_DEBUG
-    // async_gen_asend_new() must not be called after _PyAsyncGen_Fini()
-    assert(state->asend_numfree != -1);
-#endif
     if (state->asend_numfree) {
         state->asend_numfree--;
         o = state->asend_freelist[state->asend_numfree];
@@ -1678,10 +1665,6 @@ async_gen_wrapped_val_dealloc(_PyAsyncGenWrappedValue *o)
     Py_CLEAR(o->agw_val);
     PyInterpreterState *interp = _PyInterpreterState_GET();
     struct _Py_async_gen_state *state = &interp->async_gen;
-#ifdef Py_DEBUG
-    // async_gen_wrapped_val_dealloc() must not be called after _PyAsyncGen_Fini()
-    assert(state->value_numfree != -1);
-#endif
     if (state->value_numfree < _PyAsyncGen_MAXFREELIST) {
         assert(_PyAsyncGenWrappedValue_CheckExact(o));
         state->value_freelist[state->value_numfree++] = o;
@@ -1752,10 +1735,6 @@ _PyAsyncGenValueWrapperNew(PyObject *val)
 
     PyInterpreterState *interp = _PyInterpreterState_GET();
     struct _Py_async_gen_state *state = &interp->async_gen;
-#ifdef Py_DEBUG
-    // _PyAsyncGenValueWrapperNew() must not be called after _PyAsyncGen_Fini()
-    assert(state->value_numfree != -1);
-#endif
     if (state->value_numfree) {
         state->value_numfree--;
         o = state->value_freelist[state->value_numfree];

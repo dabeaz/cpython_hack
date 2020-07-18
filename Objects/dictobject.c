@@ -516,9 +516,6 @@ static void free_keys_object(PyDictKeysObject *keys);
 static inline void
 dictkeys_incref(PyDictKeysObject *dk)
 {
-#ifdef Py_REF_DEBUG
-    _Py_RefTotal++;
-#endif
     dk->dk_refcnt++;
 }
 
@@ -526,9 +523,6 @@ static inline void
 dictkeys_decref(PyDictKeysObject *dk)
 {
     assert(dk->dk_refcnt > 0);
-#ifdef Py_REF_DEBUG
-    _Py_RefTotal--;
-#endif
     if (--dk->dk_refcnt == 0) {
         free_keys_object(dk);
     }
@@ -775,9 +769,6 @@ static PyDictKeysObject *new_keys_object(Py_ssize_t size)
             return NULL;
         }
     }
-#ifdef Py_REF_DEBUG
-    _Py_RefTotal++;
-#endif
     dk->dk_refcnt = 1;
     dk->dk_size = size;
     dk->dk_usable = usable;
@@ -909,10 +900,6 @@ clone_combined_dict(PyDictObject *orig)
        in the system.  Manually call increment _Py_RefTotal to signal that
        we have it now; calling dictkeys_incref would be an error as
        keys->dk_refcnt is already set to 1 (after memcpy). */
-#ifdef Py_REF_DEBUG
-    _Py_RefTotal++;
-#endif
-
     return (PyObject *)new;
 }
 
@@ -1470,9 +1457,6 @@ dictresize(PyDictObject *mp, Py_ssize_t minsize)
 
         assert(oldkeys->dk_lookup != lookdict_split);
         assert(oldkeys->dk_refcnt == 1);
-#ifdef Py_REF_DEBUG
-        _Py_RefTotal--;
-#endif
 #if PyDict_MAXFREELIST > 0
         if (oldkeys->dk_size == PyDict_MINSIZE &&
             numfreekeys < PyDict_MAXFREELIST)
@@ -1598,11 +1582,6 @@ PyDict_GetItem(PyObject *op, PyObject *key)
     }
 
     PyThreadState *tstate = _PyThreadState_GET();
-#ifdef Py_DEBUG
-    // bpo-40839: Before Python 3.10, it was possible to call PyDict_GetItem()
-    // with the GIL released.
-    _Py_EnsureTstateNotNULL(tstate);
-#endif
 
     /* Preserve the existing exception */
     PyObject *exc_type, *exc_value, *exc_tb;

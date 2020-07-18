@@ -355,12 +355,6 @@ hamt_node_find(PyHamtNode *node,
                uint32_t shift, int32_t hash,
                PyObject *key, PyObject **val);
 
-#ifdef Py_DEBUG
-static int
-hamt_node_dump(PyHamtNode *node,
-               _PyUnicodeWriter *writer, int level);
-#endif
-
 static PyHamtNode *
 hamt_node_array_new(Py_ssize_t);
 
@@ -370,29 +364,7 @@ hamt_node_collision_new(int32_t hash, Py_ssize_t size);
 static inline Py_ssize_t
 hamt_node_collision_count(PyHamtNode_Collision *node);
 
-
-#ifdef Py_DEBUG
-static void
-_hamt_node_array_validate(void *obj_raw)
-{
-    PyObject *obj = _PyObject_CAST(obj_raw);
-    assert(IS_ARRAY_NODE(obj));
-    PyHamtNode_Array *node = (PyHamtNode_Array*)obj;
-    Py_ssize_t i = 0, count = 0;
-    for (; i < HAMT_ARRAY_NODE_SIZE; i++) {
-        if (node->a_array[i] != NULL) {
-            count++;
-        }
-    }
-    assert(count == node->a_count);
-}
-
-#define VALIDATE_ARRAY_NODE(NODE) \
-    do { _hamt_node_array_validate(NODE); } while (0);
-#else
 #define VALIDATE_ARRAY_NODE(NODE)
-#endif
-
 
 /* Returns -1 on error */
 static inline int32_t
@@ -439,73 +411,6 @@ hamt_bitindex(uint32_t bitmap, uint32_t bit)
 {
     return (uint32_t)_Py_popcount32(bitmap & (bit - 1));
 }
-
-
-/////////////////////////////////// Dump Helpers
-#ifdef Py_DEBUG
-
-static int
-_hamt_dump_ident(_PyUnicodeWriter *writer, int level)
-{
-    /* Write `'    ' * level` to the `writer` */
-    PyObject *str = NULL;
-    PyObject *num = NULL;
-    PyObject *res = NULL;
-    int ret = -1;
-
-    str = PyUnicode_FromString("    ");
-    if (str == NULL) {
-        goto error;
-    }
-
-    num = PyLong_FromLong((long)level);
-    if (num == NULL) {
-        goto error;
-    }
-
-    res = PyNumber_Multiply(str, num);
-    if (res == NULL) {
-        goto error;
-    }
-
-    ret = _PyUnicodeWriter_WriteStr(writer, res);
-
-error:
-    Py_XDECREF(res);
-    Py_XDECREF(str);
-    Py_XDECREF(num);
-    return ret;
-}
-
-static int
-_hamt_dump_format(_PyUnicodeWriter *writer, const char *format, ...)
-{
-    /* A convenient helper combining _PyUnicodeWriter_WriteStr and
-       PyUnicode_FromFormatV.
-    */
-    PyObject* msg;
-    int ret;
-
-    va_list vargs;
-#ifdef HAVE_STDARG_PROTOTYPES
-    va_start(vargs, format);
-#else
-    va_start(vargs);
-#endif
-    msg = PyUnicode_FromFormatV(format, vargs);
-    va_end(vargs);
-
-    if (msg == NULL) {
-        return -1;
-    }
-
-    ret = _PyUnicodeWriter_WriteStr(writer, msg);
-    Py_DECREF(msg);
-    return ret;
-}
-
-#endif  /* Py_DEBUG */
-/////////////////////////////////// Bitmap Node
 
 
 static PyHamtNode *
@@ -1026,16 +931,6 @@ hamt_node_bitmap_without(PyHamtNode_Bitmap *self,
                     }
                 }
 
-#ifdef Py_DEBUG
-                /* Ensure that Collision.without implementation
-                   converts to Bitmap nodes itself.
-                */
-                if (IS_COLLISION_NODE(sub_node)) {
-                    assert(hamt_node_collision_count(
-                            (PyHamtNode_Collision*)sub_node) > 1);
-                }
-#endif
-
                 PyHamtNode_Bitmap *clone = hamt_node_bitmap_clone(self);
                 if (clone == NULL) {
                     return W_ERROR;
@@ -1168,80 +1063,6 @@ hamt_node_bitmap_dealloc(PyHamtNode_Bitmap *self)
     Py_TYPE(self)->tp_free((PyObject *)self);
     Py_TRASHCAN_END
 }
-
-#ifdef Py_DEBUG
-static int
-hamt_node_bitmap_dump(PyHamtNode_Bitmap *node,
-                      _PyUnicodeWriter *writer, int level)
-{
-    /* Debug build: __dump__() method implementation for Bitmap nodes. */
-
-    Py_ssize_t i;
-    PyObject *tmp1;
-    PyObject *tmp2;
-
-    if (_hamt_dump_ident(writer, level + 1)) {
-        goto error;
-    }
-
-    if (_hamt_dump_format(writer, "BitmapNode(size=%zd count=%zd ",
-                          Py_SIZE(node), Py_SIZE(node) / 2))
-    {
-        goto error;
-    }
-
-    tmp1 = PyLong_FromUnsignedLong(node->b_bitmap);
-    if (tmp1 == NULL) {
-        goto error;
-    }
-    tmp2 = _PyLong_Format(tmp1, 2);
-    Py_DECREF(tmp1);
-    if (tmp2 == NULL) {
-        goto error;
-    }
-    if (_hamt_dump_format(writer, "bitmap=%S id=%p):\n", tmp2, node)) {
-        Py_DECREF(tmp2);
-        goto error;
-    }
-    Py_DECREF(tmp2);
-
-    for (i = 0; i < Py_SIZE(node); i += 2) {
-        PyObject *key_or_null = node->b_array[i];
-        PyObject *val_or_node = node->b_array[i + 1];
-
-        if (_hamt_dump_ident(writer, level + 2)) {
-            goto error;
-        }
-
-        if (key_or_null == NULL) {
-            if (_hamt_dump_format(writer, "NULL:\n")) {
-                goto error;
-            }
-
-            if (hamt_node_dump((PyHamtNode *)val_or_node,
-                               writer, level + 2))
-            {
-                goto error;
-            }
-        }
-        else {
-            if (_hamt_dump_format(writer, "%R: %R", key_or_null,
-                                  val_or_node))
-            {
-                goto error;
-            }
-        }
-
-        if (_hamt_dump_format(writer, "\n")) {
-            goto error;
-        }
-    }
-
-    return 0;
-error:
-    return -1;
-}
-#endif  /* Py_DEBUG */
 
 
 /////////////////////////////////// Collision Node
@@ -1577,45 +1398,6 @@ hamt_node_collision_dealloc(PyHamtNode_Collision *self)
     Py_TRASHCAN_END
 }
 
-#ifdef Py_DEBUG
-static int
-hamt_node_collision_dump(PyHamtNode_Collision *node,
-                         _PyUnicodeWriter *writer, int level)
-{
-    /* Debug build: __dump__() method implementation for Collision nodes. */
-
-    Py_ssize_t i;
-
-    if (_hamt_dump_ident(writer, level + 1)) {
-        goto error;
-    }
-
-    if (_hamt_dump_format(writer, "CollisionNode(size=%zd id=%p):\n",
-                          Py_SIZE(node), node))
-    {
-        goto error;
-    }
-
-    for (i = 0; i < Py_SIZE(node); i += 2) {
-        PyObject *key = node->c_array[i];
-        PyObject *val = node->c_array[i + 1];
-
-        if (_hamt_dump_ident(writer, level + 2)) {
-            goto error;
-        }
-
-        if (_hamt_dump_format(writer, "%R: %R\n", key, val)) {
-            goto error;
-        }
-    }
-
-    return 0;
-error:
-    return -1;
-}
-#endif  /* Py_DEBUG */
-
-
 /////////////////////////////////// Array Node
 
 
@@ -1876,17 +1658,6 @@ hamt_node_array_without(PyHamtNode_Array *self,
                 }
                 else {
 
-#ifdef Py_DEBUG
-                    if (IS_COLLISION_NODE(node)) {
-                        Py_ssize_t child_count = hamt_node_collision_count(
-                            (PyHamtNode_Collision*)node);
-                        assert(child_count > 1);
-                    }
-                    else if (IS_ARRAY_NODE(node)) {
-                        assert(((PyHamtNode_Array*)node)->a_count >= 16);
-                    }
-#endif
-
                     /* Just copy the node into our new Bitmap */
                     new->b_array[new_i] = NULL;
                     Py_INCREF(node);
@@ -1958,51 +1729,6 @@ hamt_node_array_dealloc(PyHamtNode_Array *self)
     Py_TYPE(self)->tp_free((PyObject *)self);
     Py_TRASHCAN_END
 }
-
-#ifdef Py_DEBUG
-static int
-hamt_node_array_dump(PyHamtNode_Array *node,
-                     _PyUnicodeWriter *writer, int level)
-{
-    /* Debug build: __dump__() method implementation for Array nodes. */
-
-    Py_ssize_t i;
-
-    if (_hamt_dump_ident(writer, level + 1)) {
-        goto error;
-    }
-
-    if (_hamt_dump_format(writer, "ArrayNode(id=%p):\n", node)) {
-        goto error;
-    }
-
-    for (i = 0; i < HAMT_ARRAY_NODE_SIZE; i++) {
-        if (node->a_array[i] == NULL) {
-            continue;
-        }
-
-        if (_hamt_dump_ident(writer, level + 2)) {
-            goto error;
-        }
-
-        if (_hamt_dump_format(writer, "%zd::\n", i)) {
-            goto error;
-        }
-
-        if (hamt_node_dump(node->a_array[i], writer, level + 1)) {
-            goto error;
-        }
-
-        if (_hamt_dump_format(writer, "\n")) {
-            goto error;
-        }
-    }
-
-    return 0;
-error:
-    return -1;
-}
-#endif  /* Py_DEBUG */
 
 
 /////////////////////////////////// Node Dispatch
@@ -2106,36 +1832,6 @@ hamt_node_find(PyHamtNode *node,
     }
 }
 
-#ifdef Py_DEBUG
-static int
-hamt_node_dump(PyHamtNode *node,
-               _PyUnicodeWriter *writer, int level)
-{
-    /* Debug build: __dump__() method implementation for a node.
-
-       This method automatically dispatches to the suitable
-       hamt_node_{nodetype})_dump method.
-    */
-
-    if (IS_BITMAP_NODE(node)) {
-        return hamt_node_bitmap_dump(
-            (PyHamtNode_Bitmap *)node, writer, level);
-    }
-    else if (IS_ARRAY_NODE(node)) {
-        return hamt_node_array_dump(
-            (PyHamtNode_Array *)node, writer, level);
-    }
-    else {
-        assert(IS_COLLISION_NODE(node));
-        return hamt_node_collision_dump(
-            (PyHamtNode_Collision *)node, writer, level);
-    }
-}
-#endif  /* Py_DEBUG */
-
-
-/////////////////////////////////// Iterators: Machinery
-
 
 static hamt_iter_t
 hamt_iterator_next(PyHamtIteratorState *iter, PyObject **key, PyObject **val);
@@ -2165,10 +1861,6 @@ hamt_iterator_bitmap_next(PyHamtIteratorState *iter,
     Py_ssize_t pos = iter->i_pos[level];
 
     if (pos + 1 >= Py_SIZE(node)) {
-#ifdef Py_DEBUG
-        assert(iter->i_level >= 0);
-        iter->i_nodes[iter->i_level] = NULL;
-#endif
         iter->i_level--;
         return hamt_iterator_next(iter, key, val);
     }
@@ -2202,10 +1894,6 @@ hamt_iterator_collision_next(PyHamtIteratorState *iter,
     Py_ssize_t pos = iter->i_pos[level];
 
     if (pos + 1 >= Py_SIZE(node)) {
-#ifdef Py_DEBUG
-        assert(iter->i_level >= 0);
-        iter->i_nodes[iter->i_level] = NULL;
-#endif
         iter->i_level--;
         return hamt_iterator_next(iter, key, val);
     }
@@ -2226,10 +1914,6 @@ hamt_iterator_array_next(PyHamtIteratorState *iter,
     Py_ssize_t pos = iter->i_pos[level];
 
     if (pos >= HAMT_ARRAY_NODE_SIZE) {
-#ifdef Py_DEBUG
-        assert(iter->i_level >= 0);
-        iter->i_nodes[iter->i_level] = NULL;
-#endif
         iter->i_level--;
         return hamt_iterator_next(iter, key, val);
     }
@@ -2247,12 +1931,6 @@ hamt_iterator_array_next(PyHamtIteratorState *iter,
             return hamt_iterator_next(iter, key, val);
         }
     }
-
-#ifdef Py_DEBUG
-        assert(iter->i_level >= 0);
-        iter->i_nodes[iter->i_level] = NULL;
-#endif
-
     iter->i_level--;
     return hamt_iterator_next(iter, key, val);
 }
@@ -2496,31 +2174,6 @@ _PyHamt_New(void)
     return o;
 }
 
-#ifdef Py_DEBUG
-static PyObject *
-hamt_dump(PyHamtObject *self)
-{
-    _PyUnicodeWriter writer;
-
-    _PyUnicodeWriter_Init(&writer);
-
-    if (_hamt_dump_format(&writer, "HAMT(len=%zd):\n", self->h_count)) {
-        goto error;
-    }
-
-    if (hamt_node_dump(self->h_root, &writer, 0)) {
-        goto error;
-    }
-
-    return _PyUnicodeWriter_Finish(&writer);
-
-error:
-    _PyUnicodeWriter_Dealloc(&writer);
-    return NULL;
-}
-#endif  /* Py_DEBUG */
-
-
 /////////////////////////////////// Iterators: Shared Iterator Implementation
 
 
@@ -2680,12 +2333,6 @@ _PyHamt_NewIterValues(PyHamtObject *o)
 
 
 /////////////////////////////////// _PyHamt_Type
-
-
-#ifdef Py_DEBUG
-static PyObject *
-hamt_dump(PyHamtObject *self);
-#endif
 
 
 static PyObject *
@@ -2849,15 +2496,6 @@ hamt_py_keys(PyHamtObject *self, PyObject *args)
     return _PyHamt_NewIterKeys(self);
 }
 
-#ifdef Py_DEBUG
-static PyObject *
-hamt_py_dump(PyHamtObject *self, PyObject *args)
-{
-    return hamt_dump(self);
-}
-#endif
-
-
 static PyMethodDef PyHamt_methods[] = {
     {"set", (PyCFunction)hamt_py_set, METH_VARARGS, NULL},
     {"get", (PyCFunction)hamt_py_get, METH_VARARGS, NULL},
@@ -2865,9 +2503,6 @@ static PyMethodDef PyHamt_methods[] = {
     {"items", (PyCFunction)hamt_py_items, METH_NOARGS, NULL},
     {"keys", (PyCFunction)hamt_py_keys, METH_NOARGS, NULL},
     {"values", (PyCFunction)hamt_py_values, METH_NOARGS, NULL},
-#ifdef Py_DEBUG
-    {"__dump__", (PyCFunction)hamt_py_dump, METH_NOARGS, NULL},
-#endif
     {NULL, NULL}
 };
 

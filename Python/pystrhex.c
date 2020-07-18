@@ -136,12 +136,6 @@ static PyObject *_Py_strhex_impl(const char* argbuf, const Py_ssize_t arglen,
         }
     }
 
-#ifdef Py_DEBUG
-    if (!return_bytes) {
-        assert(_PyUnicode_CheckConsistency(retval, 1));
-    }
-#endif
-
     return retval;
 }
 

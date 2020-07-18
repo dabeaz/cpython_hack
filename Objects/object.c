@@ -46,80 +46,9 @@ _PyObject_CheckConsistency(PyObject *op, int check_content)
 }
 
 
-#ifdef Py_REF_DEBUG
-Py_ssize_t _Py_RefTotal;
-
-Py_ssize_t
-_Py_GetRefTotal(void)
-{
-    PyObject *o;
-    Py_ssize_t total = _Py_RefTotal;
-    o = _PySet_Dummy;
-    if (o != NULL)
-        total -= Py_REFCNT(o);
-    return total;
-}
-
-void
-_PyDebug_PrintTotalRefs(void) {
-    fprintf(stderr,
-            "[%zd refs, %zd blocks]\n",
-            _Py_GetRefTotal(), _Py_GetAllocatedBlocks());
-}
-#endif /* Py_REF_DEBUG */
-
 /* Object allocation routines used by NEWOBJ and NEWVAROBJ macros.
    These are used by the individual routines for object creation.
    Do not call them otherwise, they do not initialize the object! */
-
-#ifdef Py_TRACE_REFS
-/* Head of circular doubly-linked list of all objects.  These are linked
- * together via the _ob_prev and _ob_next members of a PyObject, which
- * exist only in a Py_TRACE_REFS build.
- */
-static PyObject refchain = {&refchain, &refchain};
-
-/* Insert op at the front of the list of all objects.  If force is true,
- * op is added even if _ob_prev and _ob_next are non-NULL already.  If
- * force is false amd _ob_prev or _ob_next are non-NULL, do nothing.
- * force should be true if and only if op points to freshly allocated,
- * uninitialized memory, or you've unlinked op from the list and are
- * relinking it into the front.
- * Note that objects are normally added to the list via _Py_NewReference,
- * which is called by PyObject_Init.  Not all objects are initialized that
- * way, though; exceptions include statically allocated type objects, and
- * statically allocated singletons (like Py_True and Py_None).
- */
-void
-_Py_AddToAllObjects(PyObject *op, int force)
-{
-#ifdef  Py_DEBUG
-    if (!force) {
-        /* If it's initialized memory, op must be in or out of
-         * the list unambiguously.
-         */
-        _PyObject_ASSERT(op, (op->_ob_prev == NULL) == (op->_ob_next == NULL));
-    }
-#endif
-    if (force || op->_ob_prev == NULL) {
-        op->_ob_next = refchain._ob_next;
-        op->_ob_prev = &refchain;
-        refchain._ob_next->_ob_prev = op;
-        refchain._ob_next = op;
-    }
-}
-#endif  /* Py_TRACE_REFS */
-
-#ifdef Py_REF_DEBUG
-/* Log a fatal error; doesn't return. */
-void
-_Py_NegativeRefcount(const char *filename, int lineno, PyObject *op)
-{
-    _PyObject_AssertFailed(op, NULL, "object has negative ref count",
-                           filename, lineno, __func__);
-}
-
-#endif /* Py_REF_DEBUG */
 
 void
 Py_IncRef(PyObject *o)
@@ -228,11 +157,6 @@ PyObject_CallFinalizerFromDealloc(PyObject *self)
     _PyObject_ASSERT(self,
                      (!_PyType_IS_GC(Py_TYPE(self))
                       || _PyObject_GC_IS_TRACKED(self)));
-    /* If Py_REF_DEBUG macro is defined, _Py_NewReference() increased
-       _Py_RefTotal, so we need to undo that. */
-#ifdef Py_REF_DEBUG
-    _Py_RefTotal--;
-#endif
     return -1;
 }
 
@@ -327,14 +251,6 @@ _PyObject_IsFreed(PyObject *op)
     }
     /* ignore op->ob_ref: its value can have be modified
        by Py_INCREF() and Py_DECREF(). */
-#ifdef Py_TRACE_REFS
-    if (op->_ob_next != NULL && _PyMem_IsPtrFreed(op->_ob_next)) {
-        return 1;
-    }
-    if (op->_ob_prev != NULL && _PyMem_IsPtrFreed(op->_ob_prev)) {
-         return 1;
-     }
-#endif
     return 0;
 }
 
@@ -400,12 +316,6 @@ PyObject_Repr(PyObject *v)
                                     Py_TYPE(v)->tp_name, v);
 
     PyThreadState *tstate = _PyThreadState_GET();
-#ifdef Py_DEBUG
-    /* PyObject_Repr() must not be called with an exception set,
-       because it can clear it (directly or indirectly) and so the
-       caller loses its exception */
-    assert(!_PyErr_Occurred(tstate));
-#endif
 
     /* It is possible for a type to have a tp_repr representation that loops
        infinitely. */
@@ -426,11 +336,9 @@ PyObject_Repr(PyObject *v)
         Py_DECREF(res);
         return NULL;
     }
-#ifndef Py_DEBUG
     if (PyUnicode_READY(res) < 0) {
         return NULL;
     }
-#endif
     return res;
 }
 
@@ -449,10 +357,8 @@ PyObject_Str(PyObject *v)
     if (v == NULL)
         return PyUnicode_FromString("<NULL>");
     if (PyUnicode_CheckExact(v)) {
-#ifndef Py_DEBUG
         if (PyUnicode_READY(v) < 0)
             return NULL;
-#endif
         Py_INCREF(v);
         return v;
     }
@@ -460,12 +366,6 @@ PyObject_Str(PyObject *v)
         return PyObject_Repr(v);
 
     PyThreadState *tstate = _PyThreadState_GET();
-#ifdef Py_DEBUG
-    /* PyObject_Str() must not be called with an exception set,
-       because it can clear it (directly or indirectly) and so the
-       caller loses its exception */
-    assert(!_PyErr_Occurred(tstate));
-#endif
 
     /* It is possible for a type to have a tp_str representation that loops
        infinitely. */
@@ -485,11 +385,9 @@ PyObject_Str(PyObject *v)
         Py_DECREF(res);
         return NULL;
     }
-#ifndef Py_DEBUG
     if (PyUnicode_READY(res) < 0) {
         return NULL;
     }
-#endif
     assert(_PyUnicode_CheckConsistency(res, 1));
     return res;
 }
@@ -1805,110 +1703,8 @@ _PyTypes_Init(void)
 void
 _Py_NewReference(PyObject *op)
 {
-#ifdef Py_REF_DEBUG
-    _Py_RefTotal++;
-#endif
     Py_SET_REFCNT(op, 1);
-#ifdef Py_TRACE_REFS
-    _Py_AddToAllObjects(op, 1);
-#endif
 }
-
-
-#ifdef Py_TRACE_REFS
-void
-_Py_ForgetReference(PyObject *op)
-{
-    if (Py_REFCNT(op) < 0) {
-        _PyObject_ASSERT_FAILED_MSG(op, "negative refcnt");
-    }
-
-    if (op == &refchain ||
-        op->_ob_prev->_ob_next != op || op->_ob_next->_ob_prev != op)
-    {
-        _PyObject_ASSERT_FAILED_MSG(op, "invalid object chain");
-    }
-
-#ifdef SLOW_UNREF_CHECK
-    PyObject *p;
-    for (p = refchain._ob_next; p != &refchain; p = p->_ob_next) {
-        if (p == op) {
-            break;
-        }
-    }
-    if (p == &refchain) {
-        /* Not found */
-        _PyObject_ASSERT_FAILED_MSG(op,
-                                    "object not found in the objects list");
-    }
-#endif
-
-    op->_ob_next->_ob_prev = op->_ob_prev;
-    op->_ob_prev->_ob_next = op->_ob_next;
-    op->_ob_next = op->_ob_prev = NULL;
-}
-
-/* Print all live objects.  Because PyObject_Print is called, the
- * interpreter must be in a healthy state.
- */
-void
-_Py_PrintReferences(FILE *fp)
-{
-    PyObject *op;
-    fprintf(fp, "Remaining objects:\n");
-    for (op = refchain._ob_next; op != &refchain; op = op->_ob_next) {
-        fprintf(fp, "%p [%zd] ", (void *)op, Py_REFCNT(op));
-        if (PyObject_Print(op, fp, 0) != 0) {
-            PyErr_Clear();
-        }
-        putc('\n', fp);
-    }
-}
-
-/* Print the addresses of all live objects.  Unlike _Py_PrintReferences, this
- * doesn't make any calls to the Python C API, so is always safe to call.
- */
-void
-_Py_PrintReferenceAddresses(FILE *fp)
-{
-    PyObject *op;
-    fprintf(fp, "Remaining object addresses:\n");
-    for (op = refchain._ob_next; op != &refchain; op = op->_ob_next)
-        fprintf(fp, "%p [%zd] %s\n", (void *)op,
-            Py_REFCNT(op), Py_TYPE(op)->tp_name);
-}
-
-PyObject *
-_Py_GetObjects(PyObject *self, PyObject *args)
-{
-    int i, n;
-    PyObject *t = NULL;
-    PyObject *res, *op;
-
-    if (!PyArg_ParseTuple(args, "i|O", &n, &t))
-        return NULL;
-    op = refchain._ob_next;
-    res = PyList_New(0);
-    if (res == NULL)
-        return NULL;
-    for (i = 0; (n == 0 || i < n) && op != &refchain; i++) {
-        while (op == self || op == args || op == res || op == t ||
-               (t != NULL && !Py_IS_TYPE(op, (PyTypeObject *) t))) {
-            op = op->_ob_next;
-            if (op == &refchain)
-                return res;
-        }
-        if (PyList_Append(res, op) < 0) {
-            Py_DECREF(res);
-            return NULL;
-        }
-        op = op->_ob_next;
-    }
-    return res;
-}
-
-#endif
-
 
 /* Hack to force loading of abstract.o */
 Py_ssize_t (*_Py_abstract_hack)(PyObject *) = PyObject_Size;
@@ -2183,9 +1979,6 @@ void
 _Py_Dealloc(PyObject *op)
 {
     destructor dealloc = Py_TYPE(op)->tp_dealloc;
-#ifdef Py_TRACE_REFS
-    _Py_ForgetReference(op);
-#endif
     (*dealloc)(op);
 }
 

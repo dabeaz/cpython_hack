@@ -982,18 +982,6 @@ _PyThreadState_Swap(struct _gilstate_runtime_state *gilstate, PyThreadState *new
        to be used for a thread.  Check this the best we can in debug
        builds.
     */
-#if defined(Py_DEBUG)
-    if (newts) {
-        /* This can be called from PyEval_RestoreThread(). Similar
-           to it, we need to ensure errno doesn't change.
-        */
-        int err = errno;
-        PyThreadState *check = _PyGILState_GetThisThreadState(gilstate);
-        if (check && check->interp == newts->interp && check != newts)
-            Py_FatalError("Invalid thread state for this thread");
-        errno = err;
-    }
-#endif
 #ifdef EXPERIMENTAL_ISOLATED_SUBINTERPRETERS
     PyThread_tss_set(&gilstate->autoTSSkey, newts);
 #endif

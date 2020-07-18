@@ -57,10 +57,6 @@
    RecursionError exception. In debug mode, Python function calls allocates
    more memory on the stack, so use a stack of 8 MiB. */
 #if defined(__ANDROID__) && defined(THREAD_STACK_SIZE) && THREAD_STACK_SIZE == 0
-#   ifdef Py_DEBUG
-#   undef  THREAD_STACK_SIZE
-#   define THREAD_STACK_SIZE    0x800000
-#   endif
 #endif
 /* for safety, ensure a viable minimum stacksize */
 #define THREAD_STACK_MIN        0x8000  /* 32 KiB */

@@ -1907,15 +1907,3 @@ PyTokenizer_FindEncoding(int fd)
 {
     return PyTokenizer_FindEncodingFilename(fd, NULL);
 }
-
-#ifdef Py_DEBUG
-
-void
-tok_dump(int type, char *start, char *end)
-{
-    printf("%s", _PyParser_TokenNames[type]);
-    if (type == NAME || type == NUMBER || type == STRING || type == OP)
-        printf("(%.*s)", (int)(end - start), start);
-}
-
-#endif
