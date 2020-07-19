@@ -12372,37 +12372,6 @@ exit:
 #endif /* USE_XATTRS */
 
 
-/*[clinic input]
-os.urandom
-
-    size: Py_ssize_t
-    /
-
-Return a bytes object containing random bytes suitable for cryptographic use.
-[clinic start generated code]*/
-
-static PyObject *
-os_urandom_impl(PyObject *module, Py_ssize_t size)
-/*[clinic end generated code: output=42c5cca9d18068e9 input=4067cdb1b6776c29]*/
-{
-    PyObject *bytes;
-    int result;
-
-    if (size < 0)
-        return PyErr_Format(PyExc_ValueError,
-                            "negative argument not allowed");
-    bytes = PyBytes_FromStringAndSize(NULL, size);
-    if (bytes == NULL)
-        return NULL;
-
-    result = _PyOS_URandom(PyBytes_AS_STRING(bytes), PyBytes_GET_SIZE(bytes));
-    if (result == -1) {
-        Py_DECREF(bytes);
-        return NULL;
-    }
-    return bytes;
-}
-
 #ifdef HAVE_MEMFD_CREATE
 /*[clinic input]
 os.memfd_create
@@ -20563,42 +20532,6 @@ exit:
 
 #endif /* defined(USE_XATTRS) */
 
-PyDoc_STRVAR(os_urandom__doc__,
-"urandom($module, size, /)\n"
-"--\n"
-"\n"
-"Return a bytes object containing random bytes suitable for cryptographic use.");
-
-#define OS_URANDOM_METHODDEF    \
-    {"urandom", (PyCFunction)os_urandom, METH_O, os_urandom__doc__},
-
-static PyObject *
-os_urandom_impl(PyObject *module, Py_ssize_t size);
-
-static PyObject *
-os_urandom(PyObject *module, PyObject *arg)
-{
-    PyObject *return_value = NULL;
-    Py_ssize_t size;
-
-    {
-        Py_ssize_t ival = -1;
-        PyObject *iobj = _PyNumber_Index(arg);
-        if (iobj != NULL) {
-            ival = PyLong_AsSsize_t(iobj);
-            Py_DECREF(iobj);
-        }
-        if (ival == -1 && PyErr_Occurred()) {
-            goto exit;
-        }
-        size = ival;
-    }
-    return_value = os_urandom_impl(module, size);
-
-exit:
-    return return_value;
-}
-
 #if defined(HAVE_MEMFD_CREATE)
 
 PyDoc_STRVAR(os_memfd_create__doc__,
@@ -23002,7 +22935,6 @@ static PyMethodDef posix_methods[] = {
     OS__GETFINALPATHNAME_METHODDEF
     OS__GETVOLUMEPATHNAME_METHODDEF
     OS_GETLOADAVG_METHODDEF
-    OS_URANDOM_METHODDEF
     OS_SETRESUID_METHODDEF
     OS_SETRESGID_METHODDEF
     OS_GETRESUID_METHODDEF

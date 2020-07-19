@@ -944,13 +944,6 @@ _PyThreadState_DeleteExcept(_PyRuntimeState *runtime, PyThreadState *tstate)
 }
 
 
-#ifdef EXPERIMENTAL_ISOLATED_SUBINTERPRETERS
-PyThreadState*
-_PyThreadState_GetTSS(void) {
-    return PyThread_tss_get(&_PyRuntime.gilstate.autoTSSkey);
-}
-#endif
-
 
 PyThreadState *
 _PyThreadState_UncheckedGet(void)
@@ -971,20 +964,13 @@ PyThreadState_Get(void)
 PyThreadState *
 _PyThreadState_Swap(struct _gilstate_runtime_state *gilstate, PyThreadState *newts)
 {
-#ifdef EXPERIMENTAL_ISOLATED_SUBINTERPRETERS
-    PyThreadState *oldts = _PyThreadState_GetTSS();
-#else
     PyThreadState *oldts = _PyRuntimeGILState_GetThreadState(gilstate);
-#endif
 
     _PyRuntimeGILState_SetThreadState(gilstate, newts);
     /* It should not be possible for more than one thread state
        to be used for a thread.  Check this the best we can in debug
        builds.
     */
-#ifdef EXPERIMENTAL_ISOLATED_SUBINTERPRETERS
-    PyThread_tss_set(&gilstate->autoTSSkey, newts);
-#endif
     return oldts;
 }
 
@@ -1357,9 +1343,7 @@ PyGILState_Ensure(void)
 
     /* Ensure that _PyEval_InitThreads() and _PyGILState_Init() have been
        called by Py_Initialize() */
-#ifndef EXPERIMENTAL_ISOLATED_SUBINTERPRETERS
     assert(_PyEval_ThreadsInitialized(runtime));
-#endif
     assert(gilstate->autoInterpreterState);
 
     PyThreadState *tcur = (PyThreadState *)PyThread_tss_get(&gilstate->autoTSSkey);

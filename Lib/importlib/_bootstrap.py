@@ -36,186 +36,6 @@ def _new_module(name):
     return type(sys)(name)
 
 
-# Module-level locking ########################################################
-
-# A dict mapping module names to weakrefs of _ModuleLock instances
-# Dictionary protected by the global import lock
-_module_locks = {}
-# A dict mapping thread ids to _ModuleLock instances
-_blocking_on = {}
-
-
-class _DeadlockError(RuntimeError):
-    pass
-
-
-class _ModuleLock:
-    """A recursive lock implementation which is able to detect deadlocks
-    (e.g. thread 1 trying to take locks A then B, and thread 2 trying to
-    take locks B then A).
-    """
-
-    def __init__(self, name):
-        self.lock = _thread.allocate_lock()
-        self.wakeup = _thread.allocate_lock()
-        self.name = name
-        self.owner = None
-        self.count = 0
-        self.waiters = 0
-
-    def has_deadlock(self):
-        # Deadlock avoidance for concurrent circular imports.
-        me = _thread.get_ident()
-        tid = self.owner
-        seen = set()
-        while True:
-            lock = _blocking_on.get(tid)
-            if lock is None:
-                return False
-            tid = lock.owner
-            if tid == me:
-                return True
-            if tid in seen:
-                # bpo 38091: the chain of tid's we encounter here
-                # eventually leads to a fixpoint or a cycle, but
-                # does not reach 'me'.  This means we would not
-                # actually deadlock.  This can happen if other
-                # threads are at the beginning of acquire() below.
-                return False
-            seen.add(tid)
-
-    def acquire(self):
-        """
-        Acquire the module lock.  If a potential deadlock is detected,
-        a _DeadlockError is raised.
-        Otherwise, the lock is always acquired and True is returned.
-        """
-        tid = _thread.get_ident()
-        _blocking_on[tid] = self
-        try:
-            while True:
-                with self.lock:
-                    if self.count == 0 or self.owner == tid:
-                        self.owner = tid
-                        self.count += 1
-                        return True
-                    if self.has_deadlock():
-                        raise _DeadlockError('deadlock detected by %r' % self)
-                    if self.wakeup.acquire(False):
-                        self.waiters += 1
-                # Wait for a release() call
-                self.wakeup.acquire()
-                self.wakeup.release()
-        finally:
-            del _blocking_on[tid]
-
-    def release(self):
-        tid = _thread.get_ident()
-        with self.lock:
-            if self.owner != tid:
-                raise RuntimeError('cannot release un-acquired lock')
-            assert self.count > 0
-            self.count -= 1
-            if self.count == 0:
-                self.owner = None
-                if self.waiters:
-                    self.waiters -= 1
-                    self.wakeup.release()
-
-    def __repr__(self):
-        return '_ModuleLock({!r}) at {}'.format(self.name, id(self))
-
-
-class _DummyModuleLock:
-    """A simple _ModuleLock equivalent for Python builds without
-    multi-threading support."""
-
-    def __init__(self, name):
-        self.name = name
-        self.count = 0
-
-    def acquire(self):
-        self.count += 1
-        return True
-
-    def release(self):
-        if self.count == 0:
-            raise RuntimeError('cannot release un-acquired lock')
-        self.count -= 1
-
-    def __repr__(self):
-        return '_DummyModuleLock({!r}) at {}'.format(self.name, id(self))
-
-
-class _ModuleLockManager:
-
-    def __init__(self, name):
-        self._name = name
-        self._lock = None
-
-    def __enter__(self):
-        self._lock = _get_module_lock(self._name)
-        self._lock.acquire()
-
-    def __exit__(self, *args, **kwargs):
-        self._lock.release()
-
-
-# The following two functions are for consumption by Python/import.c.
-
-def _get_module_lock(name):
-    """Get or create the module lock for a given module name.
-
-    Acquire/release internally the global import lock to protect
-    _module_locks."""
-
-    _imp.acquire_lock()
-    try:
-        try:
-            lock = _module_locks[name]()
-        except KeyError:
-            lock = None
-
-        if lock is None:
-            if _thread is None:
-                lock = _DummyModuleLock(name)
-            else:
-                lock = _ModuleLock(name)
-
-            def cb(ref, name=name):
-                _imp.acquire_lock()
-                try:
-                    # bpo-31070: Check if another thread created a new lock
-                    # after the previous lock was destroyed
-                    # but before the weakref callback was called.
-                    if _module_locks.get(name) is ref:
-                        del _module_locks[name]
-                finally:
-                    _imp.release_lock()
-
-            _module_locks[name] = _weakref.ref(lock, cb)
-    finally:
-        _imp.release_lock()
-
-    return lock
-
-
-def _lock_unlock_module(name):
-    """Acquires then releases the module lock for a given module name.
-
-    This is used to ensure a module is completely initialized, in the
-    event it is being imported by another thread.
-    """
-    lock = _get_module_lock(name)
-    try:
-        lock.acquire()
-    except _DeadlockError:
-        # Concurrent circular import, we'll accept a partially initialized
-        # module object.
-        pass
-    else:
-        lock.release()
-
 # Frame stripping magic ###############################################
 def _call_with_frames_removed(f, *args, **kwds):
     """remove_importlib_frames in import.c will always remove sequences
@@ -592,7 +412,7 @@ def _module_repr_from_spec(spec):
 def _exec(spec, module):
     """Execute the spec's specified module in an existing module's namespace."""
     name = spec.name
-    with _ModuleLockManager(name):
+    if True: # with _ModuleLockManager(name):
         if sys.modules.get(name) is not module:
             msg = 'module {!r} not in sys.modules'.format(name)
             raise ImportError(msg, name=name)
@@ -707,7 +527,7 @@ def _load(spec):
     clobbered.
 
     """
-    with _ModuleLockManager(spec.name):
+    if True: # with _ModuleLockManager(spec.name):
         return _load_unlocked(spec)
 
 
@@ -997,7 +817,7 @@ _NEEDS_LOADING = object()
 
 def _find_and_load(name, import_):
     """Find and load the module."""
-    with _ModuleLockManager(name):
+    if True: # with _ModuleLockManager(name):
         module = sys.modules.get(name, _NEEDS_LOADING)
         if module is _NEEDS_LOADING:
             return _find_and_load_unlocked(name, import_)
@@ -1007,7 +827,6 @@ def _find_and_load(name, import_):
                    'None in sys.modules'.format(name))
         raise ModuleNotFoundError(message, name=name)
 
-    _lock_unlock_module(name)
     return module
 
 
@@ -1154,7 +973,7 @@ def _setup(sys_module, _imp_module):
 
     # Directly load built-in modules needed during bootstrap.
     self_module = sys.modules[__name__]
-    for builtin_name in ('_thread', '_weakref'):
+    for builtin_name in ('_weakref',):
         if builtin_name not in sys.modules:
             builtin_module = _builtin_from_name(builtin_name)
         else:

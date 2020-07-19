@@ -48,8 +48,6 @@ extern PyStatus _PyErr_Init(void);
 extern PyStatus _PyBuiltins_AddExceptions(PyObject * bltinmod);
 extern PyStatus _PyImportHooks_Init(PyThreadState *tstate);
 extern int _PyFloat_Init(void);
-extern PyStatus _Py_HashRandomization_Init(const PyConfig *);
-
 extern PyStatus _PyTypes_Init(void);
 extern PyStatus _PyTypes_InitSlotDefs(void);
 extern PyStatus _PyImportZip_Init(PyThreadState *tstate);
@@ -75,7 +73,6 @@ extern void _PyImport_Fini(void);
 extern void _PyImport_Fini2(void);
 extern void _PyGC_Fini(PyThreadState *tstate);
 extern void _PyType_Fini(void);
-extern void _Py_HashRandomization_Fini(void);
 extern void _PyUnicode_Fini(PyThreadState *tstate);
 extern void _PyLong_Fini(PyThreadState *tstate);
 extern void _PyFaulthandler_Fini(void);

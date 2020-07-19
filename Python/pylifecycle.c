@@ -492,12 +492,7 @@ pycore_init_runtime(_PyRuntimeState *runtime,
      * pair :(
      */
     _PyRuntimeState_SetFinalizing(runtime, NULL);
-
-    status = _Py_HashRandomization_Init(config);
-    if (_PyStatus_EXCEPTION(status)) {
-        return status;
-    }
-
+    
     status = _PyInterpreterState_Enable(runtime);
     if (_PyStatus_EXCEPTION(status)) {
         return status;
@@ -1257,7 +1252,6 @@ finalize_interp_clear(PyThreadState *tstate)
     _PyGC_Fini(tstate);
 
     if (is_main_interp) {
-        _Py_HashRandomization_Fini();
         _PyArg_Fini();
         _Py_ClearFileSystemEncoding();
     }
@@ -1477,12 +1471,10 @@ new_interpreter(PyThreadState **tstate_p, int isolated_subinterpreter)
 
     /* Copy the current interpreter config into the new interpreter */
     const PyConfig *config;
-#ifndef EXPERIMENTAL_ISOLATED_SUBINTERPRETERS
     if (save_tstate != NULL) {
         config = _PyInterpreterState_GetConfig(save_tstate->interp);
     }
     else
-#endif
     {
         /* No current thread state, copy from the main interpreter */
         PyInterpreterState *main_interp = PyInterpreterState_Main();

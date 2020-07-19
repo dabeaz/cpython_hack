@@ -47,6 +47,7 @@ Now what?  Still 75 days to go...
 - Day 36 (7/16/2020). Closed BytesIO and StringIO.
 - Day 37 (7/17/2020). Ceased .imag, .real, .numerator .denominator.
 - Day 38 (7/18/2020). First steps at demacroing. Py_DEBUG, Py_REF_TRACE, Py_REF_DEBUG gone.
+- Day 39 (7/19/2020). Removed _thread, urandom, import locking.
   
 Copyright and License Information
 ---------------------------------

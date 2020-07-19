@@ -772,36 +772,6 @@ import_get_module(PyThreadState *tstate, PyObject *name)
     return m;
 }
 
-
-static int
-import_ensure_initialized(PyThreadState *tstate, PyObject *mod, PyObject *name)
-{
-    PyInterpreterState *interp = tstate->interp;
-    PyObject *spec;
-
-    _Py_IDENTIFIER(_lock_unlock_module);
-
-    /* Optimization: only call _bootstrap._lock_unlock_module() if
-       __spec__._initializing is true.
-       NOTE: because of this, initializing must be set *before*
-       stuffing the new module in sys.modules.
-    */
-    spec = _PyObject_GetAttrId(mod, &PyId___spec__);
-    int busy = _PyModuleSpec_IsInitializing(spec);
-    Py_XDECREF(spec);
-    if (busy) {
-        /* Wait until module is done importing. */
-        PyObject *value = _PyObject_CallMethodIdOneArg(
-            interp->importlib, &PyId__lock_unlock_module, name);
-        if (value == NULL) {
-            return -1;
-        }
-        Py_DECREF(value);
-    }
-    return 0;
-}
-
-
 /* List of names to clear in sys */
 static const char * const sys_deletes[] = {
     "path", "argv", "ps1", "ps2",
@@ -2176,13 +2146,6 @@ PyImport_GetModule(PyObject *name)
     PyObject *mod;
 
     mod = import_get_module(tstate, name);
-    if (mod != NULL && mod != Py_None) {
-        if (import_ensure_initialized(tstate, mod, name) < 0) {
-            Py_DECREF(mod);
-            remove_importlib_frames(tstate);
-            return NULL;
-        }
-    }
     return mod;
 }
 
@@ -2239,18 +2202,10 @@ PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
     if (mod == NULL && _PyErr_Occurred(tstate)) {
         goto error;
     }
-
-    if (mod != NULL && mod != Py_None) {
-        if (import_ensure_initialized(tstate, mod, name) < 0) {
-            goto error;
-        }
-    }
-    else {
-        Py_XDECREF(mod);
-        mod = import_find_and_load(tstate, abs_name);
-        if (mod == NULL) {
-            goto error;
-        }
+    Py_XDECREF(mod);
+    mod = import_find_and_load(tstate, abs_name);
+    if (mod == NULL) {
+      goto error;
     }
 
     has_from = 0;

@@ -195,9 +195,7 @@ extern "C" {
 #endif
 
 /* bpo-40521: Interned strings are shared by all interpreters. */
-#ifndef EXPERIMENTAL_ISOLATED_SUBINTERPRETERS
 #  define INTERNED_STRINGS
-#endif
 
 /* This dictionary holds all interned unicode strings.  Note that references
    to strings in this dictionary are *not* counted in the string's ob_refcnt.
@@ -285,9 +283,7 @@ unicode_decode_utf8(const char *s, Py_ssize_t size,
 static _Py_Identifier *static_strings = NULL;
 
 /* bpo-40521: Latin1 singletons are shared by all interpreters. */
-#ifndef EXPERIMENTAL_ISOLATED_SUBINTERPRETERS
 #  define LATIN1_SINGLETONS
-#endif
 
 #ifdef LATIN1_SINGLETONS
 /* Single character Unicode strings in the Latin-1 range are being
