@@ -1882,8 +1882,8 @@ _bufferedwriter_flush_unlocked(buffered *self)
         /* Partial writes can return successfully when interrupted by a
            signal (see write(2)).  We must run signal handlers before
            blocking another time, possibly indefinitely. */
-        if (PyErr_CheckSignals() < 0)
-            goto error;
+	//        if (PyErr_CheckSignals() < 0)
+	//  goto error;
     }
 
 
@@ -2032,8 +2032,8 @@ _io_BufferedWriter_write_impl(buffered *self, Py_buffer *buffer)
         /* Partial writes can return successfully when interrupted by a
            signal (see write(2)).  We must run signal handlers before
            blocking another time, possibly indefinitely. */
-        if (PyErr_CheckSignals() < 0)
-            goto error;
+	//        if (PyErr_CheckSignals() < 0)
+	// goto error;
     }
     if (self->readable)
         _bufferedreader_reset_buf(self);

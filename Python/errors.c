@@ -676,11 +676,13 @@ PyErr_SetFromErrnoWithFilenameObjects(PyObject *exc, PyObject *filenameObject, P
     WCHAR *s_buf = NULL;
 #endif /* Unix/Windows */
 
+#if 0
 #ifdef EINTR
     if (i == EINTR && PyErr_CheckSignals())
         return NULL;
 #endif
-
+#endif
+    
 #ifndef MS_WINDOWS
     if (i != 0) {
         const char *s = strerror(i);

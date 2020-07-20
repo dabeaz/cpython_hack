@@ -629,9 +629,9 @@ tb_printinternal(PyTracebackObject *tb, PyObject *f, long limit)
         if (err == 0 && cnt <= TB_RECURSIVE_CUTOFF) {
             err = tb_displayline(f, code->co_filename, tb->tb_lineno,
                                  code->co_name);
-            if (err == 0) {
-                err = PyErr_CheckSignals();
-            }
+	    //            if (err == 0) {
+	    //                err = PyErr_CheckSignals();
+	    //            }
         }
         Py_DECREF(code);
         tb = tb->tb_next;

@@ -1342,7 +1342,7 @@ Py_FinalizeEx(void)
     }
 
     /* Disable signal handling */
-    PyOS_FiniInterrupts();
+    // PyOS_FiniInterrupts();
 
     /* Collect garbage.  This may call finalizers; it's nice to call these
      * before all modules are destroyed.
@@ -2349,7 +2349,7 @@ init_signals(PyThreadState *tstate)
 #ifdef SIGXFSZ
     PyOS_setsig(SIGXFSZ, SIG_IGN);
 #endif
-    PyOS_InitInterrupts(); /* May imply init_signals() */
+    // PyOS_InitInterrupts(); /* May imply init_signals() */
     if (_PyErr_Occurred(tstate)) {
         return _PyStatus_ERR("can't import signal");
     }

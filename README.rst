@@ -48,7 +48,8 @@ Now what?  Still 75 days to go...
 - Day 37 (7/17/2020). Ceased .imag, .real, .numerator .denominator.
 - Day 38 (7/18/2020). First steps at demacroing. Py_DEBUG, Py_REF_TRACE, Py_REF_DEBUG gone.
 - Day 39 (7/19/2020). Removed _thread, urandom, import locking.
-  
+- Day 40 (7/20/2020). SIGKILL signal handling.
+
 Copyright and License Information
 ---------------------------------
 

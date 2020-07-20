@@ -572,11 +572,13 @@ handle_signals(PyThreadState *tstate)
     }
 
     UNSIGNAL_PENDING_SIGNALS(tstate->interp);
+    #if 0
     if (_PyErr_CheckSignalsTstate(tstate) < 0) {
         /* On failure, re-schedule a call to handle_signals(). */
         SIGNAL_PENDING_SIGNALS(tstate->interp);
         return -1;
     }
+    #endif
     return 0;
 }
 
@@ -734,27 +736,11 @@ Py_SetRecursionLimit(int new_limit)
 }
 
 /* The function _Py_EnterRecursiveCall() only calls _Py_CheckRecursiveCall()
-   if the recursion_depth reaches _Py_CheckRecursionLimit.
-   If USE_STACKCHECK, the macro decrements _Py_CheckRecursionLimit
-   to guarantee that _Py_CheckRecursiveCall() is regularly called.
-   Without USE_STACKCHECK, there is no need for this. */
+   if the recursion_depth reaches _Py_CheckRecursionLimit. */
 int
 _Py_CheckRecursiveCall(PyThreadState *tstate, const char *where)
 {
     int recursion_limit = tstate->interp->ceval.recursion_limit;
-
-#ifdef USE_STACKCHECK
-    tstate->stackcheck_counter = 0;
-    if (PyOS_CheckStack()) {
-        --tstate->recursion_depth;
-        _PyErr_SetString(tstate, PyExc_MemoryError, "Stack overflow");
-        return -1;
-    }
-    if (_Py_IsMainInterpreter(tstate)) {
-        /* Needed for ABI backwards-compatibility (see bpo-31857) */
-        _Py_CheckRecursionLimit = recursion_limit;
-    }
-#endif
     if (tstate->recursion_critical)
         /* Somebody asked that we don't check for recursion. */
         return 0;

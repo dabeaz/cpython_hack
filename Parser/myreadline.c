@@ -88,7 +88,7 @@ my_fgets(PyThreadState* tstate, char *buf, int len, FILE *fp)
 #ifdef EINTR
         if (err == EINTR) {
             PyEval_RestoreThread(tstate);
-            int s = PyErr_CheckSignals();
+	    int s = 0;  // PyErr_CheckSignals();
             PyEval_SaveThread();
 
             if (s < 0) {
@@ -99,9 +99,9 @@ my_fgets(PyThreadState* tstate, char *buf, int len, FILE *fp)
         }
 #endif
 
-        if (_PyOS_InterruptOccurred(tstate)) {
-            return 1; /* Interrupt */
-        }
+	//        if (_PyOS_InterruptOccurred(tstate)) {
+	//            return 1; /* Interrupt */
+	//        }
         return -2; /* Error */
     }
     /* NOTREACHED */

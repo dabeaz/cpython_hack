@@ -164,13 +164,9 @@ int
 PyObject_Print(PyObject *op, FILE *fp, int flags)
 {
     int ret = 0;
+#if 0
     if (PyErr_CheckSignals())
         return -1;
-#ifdef USE_STACKCHECK
-    if (PyOS_CheckStack()) {
-        PyErr_SetString(PyExc_MemoryError, "stack overflow");
-        return -1;
-    }
 #endif
     clearerr(fp); /* Clear any previous error condition */
     if (op == NULL) {
@@ -301,13 +297,9 @@ PyObject *
 PyObject_Repr(PyObject *v)
 {
     PyObject *res;
+#if 0
     if (PyErr_CheckSignals())
         return NULL;
-#ifdef USE_STACKCHECK
-    if (PyOS_CheckStack()) {
-        PyErr_SetString(PyExc_MemoryError, "stack overflow");
-        return NULL;
-    }
 #endif
     if (v == NULL)
         return PyUnicode_FromString("<NULL>");
@@ -346,13 +338,9 @@ PyObject *
 PyObject_Str(PyObject *v)
 {
     PyObject *res;
+#if 0
     if (PyErr_CheckSignals())
         return NULL;
-#ifdef USE_STACKCHECK
-    if (PyOS_CheckStack()) {
-        PyErr_SetString(PyExc_MemoryError, "stack overflow");
-        return NULL;
-    }
 #endif
     if (v == NULL)
         return PyUnicode_FromString("<NULL>");

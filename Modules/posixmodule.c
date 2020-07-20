@@ -483,7 +483,7 @@ PyOS_AfterFork_Child(void)
         goto fatal_error;
     }
 
-    _PySignal_AfterFork();
+    // _PySignal_AfterFork();
 
     status = _PyRuntimeState_ReInitThreads(runtime);
     if (_PyStatus_EXCEPTION(status)) {
@@ -1606,7 +1606,7 @@ posix_fildes_fd(int fd, int (*func)(int))
         res = (*func)(fd);
         _Py_END_SUPPRESS_IPH
         Py_END_ALLOW_THREADS
-    } while (res != 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+	  } while (res != 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (res != 0)
         return (!async_err) ? posix_error() : NULL;
     Py_RETURN_NONE;
@@ -3131,7 +3131,7 @@ os_fchmod_impl(PyObject *module, int fd, int mode)
         Py_BEGIN_ALLOW_THREADS
         res = fchmod(fd, mode);
         Py_END_ALLOW_THREADS
-    } while (res != 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+	  } while (res != 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (res != 0)
         return (!async_err) ? posix_error() : NULL;
 
@@ -3469,7 +3469,7 @@ os_fchown_impl(PyObject *module, int fd, uid_t uid, gid_t gid)
         Py_BEGIN_ALLOW_THREADS
         res = fchown(fd, uid, gid);
         Py_END_ALLOW_THREADS
-    } while (res != 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+	  } while (res != 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (res != 0)
         return (!async_err) ? posix_error() : NULL;
 
@@ -5904,7 +5904,7 @@ _rtp_spawn(int mode, const char *rtpFileName, const char *argv[],
      if ((rtpid != RTP_ID_ERROR) && (mode == _P_WAIT)) {
          do {
              res = waitpid((pid_t)rtpid, &status, 0);
-         } while (res < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+         } while (res < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
 
          if (res < 0)
              return RTP_ID_ERROR;
@@ -7819,7 +7819,7 @@ os_wait3_impl(PyObject *module, int options)
         Py_BEGIN_ALLOW_THREADS
         pid = wait3(&status, options, &ru);
         Py_END_ALLOW_THREADS
-    } while (pid < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+	  } while (pid < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (pid < 0)
         return (!async_err) ? posix_error() : NULL;
 
@@ -7856,7 +7856,7 @@ os_wait4_impl(PyObject *module, pid_t pid, int options)
         Py_BEGIN_ALLOW_THREADS
         res = wait4(pid, &status, options, &ru);
         Py_END_ALLOW_THREADS
-    } while (res < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+	  } while (res < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (res < 0)
         return (!async_err) ? posix_error() : NULL;
 
@@ -7898,7 +7898,7 @@ os_waitid_impl(PyObject *module, idtype_t idtype, id_t id, int options)
         Py_BEGIN_ALLOW_THREADS
         res = waitid(idtype, id, &si, options);
         Py_END_ALLOW_THREADS
-    } while (res < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+	  } while (res < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (res < 0)
         return (!async_err) ? posix_error() : NULL;
 
@@ -7953,7 +7953,7 @@ os_waitpid_impl(PyObject *module, pid_t pid, int options)
         Py_BEGIN_ALLOW_THREADS
         res = waitpid(pid, &status, options);
         Py_END_ALLOW_THREADS
-    } while (res < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+	  } while (res < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (res < 0)
         return (!async_err) ? posix_error() : NULL;
 
@@ -7989,7 +7989,7 @@ os_waitpid_impl(PyObject *module, intptr_t pid, int options)
         res = _cwait(&status, pid, options);
         _Py_END_SUPPRESS_IPH
         Py_END_ALLOW_THREADS
-    } while (res < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+	  } while (res < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (res < 0)
         return (!async_err) ? posix_error() : NULL;
 
@@ -8024,7 +8024,7 @@ os_wait_impl(PyObject *module)
         Py_BEGIN_ALLOW_THREADS
         pid = wait(&status);
         Py_END_ALLOW_THREADS
-    } while (pid < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+	  } while (pid < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (pid < 0)
         return (!async_err) ? posix_error() : NULL;
 
@@ -8657,7 +8657,7 @@ os_open_impl(PyObject *module, path_t *path, int flags, int mode, int dir_fd)
             fd = open(path->narrow, flags, mode);
 #endif /* !MS_WINDOWS */
         Py_END_ALLOW_THREADS
-    } while (fd < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+	  } while (fd < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     _Py_END_SUPPRESS_IPH
 
     if (fd < 0) {
@@ -9111,7 +9111,7 @@ os_readv_impl(PyObject *module, int fd, PyObject *buffers)
         Py_BEGIN_ALLOW_THREADS
         n = readv(fd, iov, cnt);
         Py_END_ALLOW_THREADS
-    } while (n < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+	  } while (n < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
 
     iov_cleanup(iov, buf, cnt);
     if (n < 0) {
@@ -9162,7 +9162,7 @@ os_pread_impl(PyObject *module, int fd, Py_ssize_t length, Py_off_t offset)
         n = pread(fd, PyBytes_AS_STRING(buffer), length, offset);
         _Py_END_SUPPRESS_IPH
         Py_END_ALLOW_THREADS
-    } while (n < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+	  } while (n < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
 
     if (n < 0) {
         Py_DECREF(buffer);
@@ -9239,7 +9239,7 @@ os_preadv_impl(PyObject *module, int fd, PyObject *buffers, Py_off_t offset,
         n = preadv2(fd, iov, cnt, offset, flags);
         _Py_END_SUPPRESS_IPH
         Py_END_ALLOW_THREADS
-    } while (n < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+	  } while (n < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
 #else
     do {
         Py_BEGIN_ALLOW_THREADS
@@ -9247,7 +9247,7 @@ os_preadv_impl(PyObject *module, int fd, PyObject *buffers, Py_off_t offset,
         n = preadv(fd, iov, cnt, offset);
         _Py_END_SUPPRESS_IPH
         Py_END_ALLOW_THREADS
-    } while (n < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+	  } while (n < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
 #endif
 
     iov_cleanup(iov, buf, cnt);
@@ -9418,7 +9418,7 @@ os_sendfile_impl(PyObject *module, int out_fd, int in_fd, PyObject *offobj,
         ret = sendfile(in_fd, out_fd, offset, count, &sf, &sbytes, flags);
 #endif
         Py_END_ALLOW_THREADS
-    } while (ret < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+	  } while (ret < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     _Py_END_SUPPRESS_IPH
 
     if (sf.headers != NULL)
@@ -9456,7 +9456,7 @@ done:
             Py_BEGIN_ALLOW_THREADS
             ret = sendfile(out_fd, in_fd, NULL, count);
             Py_END_ALLOW_THREADS
-        } while (ret < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+        } while (ret < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
         if (ret < 0)
             return (!async_err) ? posix_error() : NULL;
         return Py_BuildValue("n", ret);
@@ -9470,7 +9470,7 @@ done:
         Py_BEGIN_ALLOW_THREADS
         ret = sendfile(out_fd, in_fd, &offset, count);
         Py_END_ALLOW_THREADS
-    } while (ret < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+    } while (ret < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (ret < 0)
         return (!async_err) ? posix_error() : NULL;
     return Py_BuildValue("n", ret);
@@ -9530,7 +9530,7 @@ os_fstat_impl(PyObject *module, int fd)
         Py_BEGIN_ALLOW_THREADS
         res = FSTAT(fd, &st);
         Py_END_ALLOW_THREADS
-    } while (res != 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+    } while (res != 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (res != 0) {
 #ifdef MS_WINDOWS
         return PyErr_SetFromWindowsErr(0);
@@ -9720,7 +9720,7 @@ os_writev_impl(PyObject *module, int fd, PyObject *buffers)
         Py_BEGIN_ALLOW_THREADS
         result = writev(fd, iov, cnt);
         Py_END_ALLOW_THREADS
-    } while (result < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+    } while (result < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
 
     iov_cleanup(iov, buf, cnt);
     if (result < 0 && !async_err)
@@ -9760,7 +9760,7 @@ os_pwrite_impl(PyObject *module, int fd, Py_buffer *buffer, Py_off_t offset)
         size = pwrite(fd, buffer->buf, (size_t)buffer->len, offset);
         _Py_END_SUPPRESS_IPH
         Py_END_ALLOW_THREADS
-    } while (size < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+    } while (size < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
 
     if (size < 0 && !async_err)
         posix_error();
@@ -9835,7 +9835,7 @@ os_pwritev_impl(PyObject *module, int fd, PyObject *buffers, Py_off_t offset,
         result = pwritev2(fd, iov, cnt, offset, flags);
         _Py_END_SUPPRESS_IPH
         Py_END_ALLOW_THREADS
-    } while (result < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+    } while (result < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
 #else
     do {
         Py_BEGIN_ALLOW_THREADS
@@ -9843,7 +9843,7 @@ os_pwritev_impl(PyObject *module, int fd, PyObject *buffers, Py_off_t offset,
         result = pwritev(fd, iov, cnt, offset);
         _Py_END_SUPPRESS_IPH
         Py_END_ALLOW_THREADS
-    } while (result < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+    } while (result < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
 #endif
 
     iov_cleanup(iov, buf, cnt);
@@ -9917,7 +9917,7 @@ os_copy_file_range_impl(PyObject *module, int src, int dst, Py_ssize_t count,
         Py_BEGIN_ALLOW_THREADS
         ret = copy_file_range(src, p_offset_src, dst, p_offset_dst, count, flags);
         Py_END_ALLOW_THREADS
-    } while (ret < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+    } while (ret < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
 
     if (ret < 0) {
         return (!async_err) ? posix_error() : NULL;
@@ -9960,8 +9960,8 @@ os_mkfifo_impl(PyObject *module, path_t *path, int mode, int dir_fd)
 #endif
             result = mkfifo(path->narrow, mode);
         Py_END_ALLOW_THREADS
-    } while (result != 0 && errno == EINTR &&
-             !(async_err = PyErr_CheckSignals()));
+	  } while (result != 0 && errno == EINTR); // &&
+    //             !(async_err = PyErr_CheckSignals()));
     if (result != 0)
         return (!async_err) ? posix_error() : NULL;
 
@@ -10012,8 +10012,8 @@ os_mknod_impl(PyObject *module, path_t *path, int mode, dev_t device,
 #endif
             result = mknod(path->narrow, mode, device);
         Py_END_ALLOW_THREADS
-    } while (result != 0 && errno == EINTR &&
-             !(async_err = PyErr_CheckSignals()));
+	  } while (result != 0 && errno == EINTR); // &&
+    //!(async_err = PyErr_CheckSignals()));
     if (result != 0)
         return (!async_err) ? posix_error() : NULL;
 
@@ -10108,8 +10108,8 @@ os_ftruncate_impl(PyObject *module, int fd, Py_off_t length)
 #endif
         _Py_END_SUPPRESS_IPH
         Py_END_ALLOW_THREADS
-    } while (result != 0 && errno == EINTR &&
-             !(async_err = PyErr_CheckSignals()));
+	  } while (result != 0 && errno == EINTR); // &&
+    //             !(async_err = PyErr_CheckSignals()));
     if (result != 0)
         return (!async_err) ? posix_error() : NULL;
     Py_RETURN_NONE;
@@ -10206,7 +10206,7 @@ os_posix_fallocate_impl(PyObject *module, int fd, Py_off_t offset,
         Py_BEGIN_ALLOW_THREADS
         result = posix_fallocate(fd, offset, length);
         Py_END_ALLOW_THREADS
-    } while (result == EINTR && !(async_err = PyErr_CheckSignals()));
+    } while (result == EINTR); // && !(async_err = PyErr_CheckSignals()));
 
     if (result == 0)
         Py_RETURN_NONE;
@@ -10253,7 +10253,7 @@ os_posix_fadvise_impl(PyObject *module, int fd, Py_off_t offset,
         Py_BEGIN_ALLOW_THREADS
         result = posix_fadvise(fd, offset, length, advice);
         Py_END_ALLOW_THREADS
-    } while (result == EINTR && !(async_err = PyErr_CheckSignals()));
+    } while (result == EINTR); // && !(async_err = PyErr_CheckSignals()));
 
     if (result == 0)
         Py_RETURN_NONE;
@@ -10699,8 +10699,8 @@ os_fstatvfs_impl(PyObject *module, int fd)
         Py_BEGIN_ALLOW_THREADS
         result = fstatvfs(fd, &st);
         Py_END_ALLOW_THREADS
-    } while (result != 0 && errno == EINTR &&
-             !(async_err = PyErr_CheckSignals()));
+	  } while (result != 0 && errno == EINTR); // &&
+    //             !(async_err = PyErr_CheckSignals()));
     if (result != 0)
         return (!async_err) ? posix_error() : NULL;
 
@@ -22549,9 +22549,9 @@ os_getrandom_impl(PyObject *module, Py_ssize_t size, int flags)
                     PyBytes_GET_SIZE(bytes),
                     flags);
         if (n < 0 && errno == EINTR) {
-            if (PyErr_CheckSignals() < 0) {
-                goto error;
-            }
+	  //if (PyErr_CheckSignals() < 0) {
+          //      goto error;
+          //  }
 
             /* getrandom() was interrupted by a signal: retry */
             continue;

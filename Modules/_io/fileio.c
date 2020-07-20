@@ -374,8 +374,8 @@ _io_FileIO___init___impl(fileio *self, PyObject *nameobj, const char *mode,
                 self->fd = open(name, flags, 0666);
 #endif
                 Py_END_ALLOW_THREADS
-            } while (self->fd < 0 && errno == EINTR &&
-                     !(async_err = PyErr_CheckSignals()));
+		  } while (self->fd < 0 && errno == EINTR); // &&
+	    //                     !(async_err = PyErr_CheckSignals()));
 
             if (async_err)
                 goto error;

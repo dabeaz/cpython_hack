@@ -433,9 +433,15 @@ _PyLong_Negate(PyLongObject **x_p)
  */
 #define FIVEARY_CUTOFF 8
 
+#if 0
 #define SIGCHECK(PyTryBlock)                    \
     do {                                        \
         if (PyErr_CheckSignals()) PyTryBlock    \
+    } while(0)
+#endif
+
+#define SIGCHECK(PyTryBlock)                    \
+    do {                                        \
     } while(0)
 
 /* Normalize (remove leading zeros from) an int object.

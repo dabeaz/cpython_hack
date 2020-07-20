@@ -1283,7 +1283,7 @@ _Py_open_impl(const char *pathname, int flags, int gil_held)
             fd = open(pathname, flags);
             Py_END_ALLOW_THREADS
         } while (fd < 0
-                 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+                 && errno == EINTR); //  && !(async_err = PyErr_CheckSignals()));
         if (async_err)
             return -1;
         if (fd < 0) {
@@ -1449,7 +1449,7 @@ _Py_fopen_obj(PyObject *path, const char *mode)
         f = _wfopen(wpath, wmode);
         Py_END_ALLOW_THREADS
     } while (f == NULL
-             && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+             && errno == EINTR); //  && !(async_err = PyErr_CheckSignals()));
 #else
     PyObject *bytes;
     const char *path_bytes;
@@ -1469,7 +1469,7 @@ _Py_fopen_obj(PyObject *path, const char *mode)
         f = fopen(path_bytes, mode);
         Py_END_ALLOW_THREADS
     } while (f == NULL
-             && errno == EINTR && !(async_err = PyErr_CheckSignals()));
+             && errno == EINTR); //  && !(async_err = PyErr_CheckSignals()));
 
     Py_DECREF(bytes);
 #endif
@@ -1532,8 +1532,8 @@ _Py_read(int fd, void *buf, size_t count)
          * and PyErr_SetFromErrno() can modify it */
         err = errno;
         Py_END_ALLOW_THREADS
-    } while (n < 0 && err == EINTR &&
-            !(async_err = PyErr_CheckSignals()));
+	  } while (n < 0 && err == EINTR); // &&
+    // !(async_err = PyErr_CheckSignals()));
     _Py_END_SUPPRESS_IPH
 
     if (async_err) {
@@ -1586,8 +1586,8 @@ _Py_write_impl(int fd, const void *buf, size_t count, int gil_held)
              * and PyErr_SetFromErrno() can modify it */
             err = errno;
             Py_END_ALLOW_THREADS
-        } while (n < 0 && err == EINTR &&
-                !(async_err = PyErr_CheckSignals()));
+	      } while (n < 0 && err == EINTR); // &&
+	  //                !(async_err = PyErr_CheckSignals()));
     }
     else {
         do {
