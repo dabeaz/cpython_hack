@@ -31,10 +31,7 @@ my_fgets(PyThreadState* tstate, char *buf, int len, FILE *fp)
 {
 #ifdef MS_WINDOWS
     HANDLE handle;
-    _Py_BEGIN_SUPPRESS_IPH
     handle = (HANDLE)_get_osfhandle(fileno(fp));
-    _Py_END_SUPPRESS_IPH
-
     /* bpo-40826: fgets(fp) does crash if fileno(fp) is closed */
     if (handle == INVALID_HANDLE_VALUE) {
         return -1; /* EOF */
@@ -249,10 +246,8 @@ PyOS_StdioReadline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
     if (!Py_LegacyWindowsStdioFlag && sys_stdin == stdin) {
         HANDLE hStdIn, hStdErr;
 
-        _Py_BEGIN_SUPPRESS_IPH
         hStdIn = (HANDLE)_get_osfhandle(fileno(sys_stdin));
         hStdErr = (HANDLE)_get_osfhandle(fileno(stderr));
-        _Py_END_SUPPRESS_IPH
 
         if (_get_console_type(hStdIn) == 'r') {
             fflush(sys_stdout);
@@ -395,7 +390,6 @@ PyOS_Readline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
     }
 
     _PyOS_ReadlineTState = tstate;
-    Py_BEGIN_ALLOW_THREADS
     PyThread_acquire_lock(_PyOS_ReadlineLock, 1);
 
     /* This is needed to handle the unlikely case that the
@@ -408,7 +402,6 @@ PyOS_Readline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
     else
         rv = (*PyOS_ReadlineFunctionPointer)(sys_stdin, sys_stdout,
                                              prompt);
-    Py_END_ALLOW_THREADS
 
     PyThread_release_lock(_PyOS_ReadlineLock);
 

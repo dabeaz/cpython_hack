@@ -1661,12 +1661,10 @@ is_valid_fd(int fd)
     }
     int fd2;
 
-    _Py_BEGIN_SUPPRESS_IPH
     fd2 = dup(fd);
     if (fd2 >= 0) {
         close(fd2);
     }
-    _Py_END_SUPPRESS_IPH
 
     return (fd2 >= 0);
 #else

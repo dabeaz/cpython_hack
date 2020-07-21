@@ -58,9 +58,9 @@ _Py_device_encoding(int fd)
     UINT cp;
 #endif
     int valid;
-    _Py_BEGIN_SUPPRESS_IPH
+    
     valid = isatty(fd);
-    _Py_END_SUPPRESS_IPH
+    
     if (!valid)
         Py_RETURN_NONE;
 
@@ -913,9 +913,9 @@ _Py_fstat_noraise(int fd, struct _Py_stat_struct *status)
     HANDLE h;
     int type;
 
-    _Py_BEGIN_SUPPRESS_IPH
+    
     h = (HANDLE)_get_osfhandle(fd);
-    _Py_END_SUPPRESS_IPH
+    
 
     if (h == INVALID_HANDLE_VALUE) {
         /* errno is already set by _get_osfhandle, but we also set
@@ -981,9 +981,9 @@ _Py_fstat(int fd, struct _Py_stat_struct *status)
 
     assert(PyGILState_Check());
 
-    Py_BEGIN_ALLOW_THREADS
+    
     res = _Py_fstat_noraise(fd, status);
-    Py_END_ALLOW_THREADS
+    
 
     if (res != 0) {
 #ifdef MS_WINDOWS
@@ -1048,9 +1048,9 @@ get_inheritable(int fd, int raise)
     HANDLE handle;
     DWORD flags;
 
-    _Py_BEGIN_SUPPRESS_IPH
+    
     handle = (HANDLE)_get_osfhandle(fd);
-    _Py_END_SUPPRESS_IPH
+    
     if (handle == INVALID_HANDLE_VALUE) {
         if (raise)
             PyErr_SetFromErrno(PyExc_OSError);
@@ -1121,9 +1121,9 @@ set_inheritable(int fd, int inheritable, int raise, int *atomic_flag_works)
     }
 
 #ifdef MS_WINDOWS
-    _Py_BEGIN_SUPPRESS_IPH
+    
     handle = (HANDLE)_get_osfhandle(fd);
-    _Py_END_SUPPRESS_IPH
+    
     if (handle == INVALID_HANDLE_VALUE) {
         if (raise)
             PyErr_SetFromErrno(PyExc_OSError);
@@ -1279,9 +1279,9 @@ _Py_open_impl(const char *pathname, int flags, int gil_held)
         }
 
         do {
-            Py_BEGIN_ALLOW_THREADS
+            
             fd = open(pathname, flags);
-            Py_END_ALLOW_THREADS
+            
         } while (fd < 0
                  && errno == EINTR); //  && !(async_err = PyErr_CheckSignals()));
         if (async_err)
@@ -1445,9 +1445,9 @@ _Py_fopen_obj(PyObject *path, const char *mode)
     }
 
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
         f = _wfopen(wpath, wmode);
-        Py_END_ALLOW_THREADS
+        
     } while (f == NULL
              && errno == EINTR); //  && !(async_err = PyErr_CheckSignals()));
 #else
@@ -1465,9 +1465,9 @@ _Py_fopen_obj(PyObject *path, const char *mode)
     }
 
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
         f = fopen(path_bytes, mode);
-        Py_END_ALLOW_THREADS
+        
     } while (f == NULL
              && errno == EINTR); //  && !(async_err = PyErr_CheckSignals()));
 
@@ -1519,9 +1519,9 @@ _Py_read(int fd, void *buf, size_t count)
         count = _PY_READ_MAX;
     }
 
-    _Py_BEGIN_SUPPRESS_IPH
+    
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
         errno = 0;
 #ifdef MS_WINDOWS
         n = read(fd, buf, (int)count);
@@ -1531,10 +1531,10 @@ _Py_read(int fd, void *buf, size_t count)
         /* save/restore errno because PyErr_CheckSignals()
          * and PyErr_SetFromErrno() can modify it */
         err = errno;
-        Py_END_ALLOW_THREADS
+        
 	  } while (n < 0 && err == EINTR); // &&
     // !(async_err = PyErr_CheckSignals()));
-    _Py_END_SUPPRESS_IPH
+    
 
     if (async_err) {
         /* read() was interrupted by a signal (failed with EINTR)
@@ -1559,7 +1559,7 @@ _Py_write_impl(int fd, const void *buf, size_t count, int gil_held)
     int err;
     int async_err = 0;
 
-    _Py_BEGIN_SUPPRESS_IPH
+    
 #ifdef MS_WINDOWS
     if (count > 32767 && isatty(fd)) {
         /* Issue #11395: the Windows console returns an error (12: not
@@ -1575,7 +1575,7 @@ _Py_write_impl(int fd, const void *buf, size_t count, int gil_held)
 
     if (gil_held) {
         do {
-            Py_BEGIN_ALLOW_THREADS
+            
             errno = 0;
 #ifdef MS_WINDOWS
             n = write(fd, buf, (int)count);
@@ -1585,7 +1585,7 @@ _Py_write_impl(int fd, const void *buf, size_t count, int gil_held)
             /* save/restore errno because PyErr_CheckSignals()
              * and PyErr_SetFromErrno() can modify it */
             err = errno;
-            Py_END_ALLOW_THREADS
+            
 	      } while (n < 0 && err == EINTR); // &&
 	  //                !(async_err = PyErr_CheckSignals()));
     }
@@ -1600,7 +1600,7 @@ _Py_write_impl(int fd, const void *buf, size_t count, int gil_held)
             err = errno;
         } while (n < 0 && err == EINTR);
     }
-    _Py_END_SUPPRESS_IPH
+    
 
     if (async_err) {
         /* write() was interrupted by a signal (failed with EINTR)
@@ -1892,56 +1892,56 @@ _Py_dup(int fd)
     assert(PyGILState_Check());
 
 #ifdef MS_WINDOWS
-    _Py_BEGIN_SUPPRESS_IPH
+    
     handle = (HANDLE)_get_osfhandle(fd);
-    _Py_END_SUPPRESS_IPH
+    
     if (handle == INVALID_HANDLE_VALUE) {
         PyErr_SetFromErrno(PyExc_OSError);
         return -1;
     }
 
-    Py_BEGIN_ALLOW_THREADS
-    _Py_BEGIN_SUPPRESS_IPH
+    
+    
     fd = dup(fd);
-    _Py_END_SUPPRESS_IPH
-    Py_END_ALLOW_THREADS
+    
+    
     if (fd < 0) {
         PyErr_SetFromErrno(PyExc_OSError);
         return -1;
     }
 
     if (_Py_set_inheritable(fd, 0, NULL) < 0) {
-        _Py_BEGIN_SUPPRESS_IPH
+        
         close(fd);
-        _Py_END_SUPPRESS_IPH
+        
         return -1;
     }
 #elif defined(HAVE_FCNTL_H) && defined(F_DUPFD_CLOEXEC)
-    Py_BEGIN_ALLOW_THREADS
-    _Py_BEGIN_SUPPRESS_IPH
+    
+    
     fd = fcntl(fd, F_DUPFD_CLOEXEC, 0);
-    _Py_END_SUPPRESS_IPH
-    Py_END_ALLOW_THREADS
+    
+    
     if (fd < 0) {
         PyErr_SetFromErrno(PyExc_OSError);
         return -1;
     }
 
 #else
-    Py_BEGIN_ALLOW_THREADS
-    _Py_BEGIN_SUPPRESS_IPH
+    
+    
     fd = dup(fd);
-    _Py_END_SUPPRESS_IPH
-    Py_END_ALLOW_THREADS
+    
+    
     if (fd < 0) {
         PyErr_SetFromErrno(PyExc_OSError);
         return -1;
     }
 
     if (_Py_set_inheritable(fd, 0, NULL) < 0) {
-        _Py_BEGIN_SUPPRESS_IPH
+        
         close(fd);
-        _Py_END_SUPPRESS_IPH
+        
         return -1;
     }
 #endif
@@ -1956,9 +1956,9 @@ int
 _Py_get_blocking(int fd)
 {
     int flags;
-    _Py_BEGIN_SUPPRESS_IPH
+    
     flags = fcntl(fd, F_GETFL, 0);
-    _Py_END_SUPPRESS_IPH
+    
     if (flags < 0) {
         PyErr_SetFromErrno(PyExc_OSError);
         return -1;
@@ -1983,7 +1983,7 @@ _Py_set_blocking(int fd, int blocking)
 #else
     int flags, res;
 
-    _Py_BEGIN_SUPPRESS_IPH
+    
     flags = fcntl(fd, F_GETFL, 0);
     if (flags >= 0) {
         if (blocking)
@@ -1995,7 +1995,7 @@ _Py_set_blocking(int fd, int blocking)
     } else {
         res = -1;
     }
-    _Py_END_SUPPRESS_IPH
+    
 
     if (res < 0)
         goto error;

@@ -1601,11 +1601,11 @@ posix_fildes_fd(int fd, int (*func)(int))
     int async_err = 0;
 
     do {
-        Py_BEGIN_ALLOW_THREADS
-        _Py_BEGIN_SUPPRESS_IPH
+        
+        
         res = (*func)(fd);
-        _Py_END_SUPPRESS_IPH
-        Py_END_ALLOW_THREADS
+        
+        
 	  } while (res != 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (res != 0)
         return (!async_err) ? posix_error() : NULL;
@@ -2331,7 +2331,7 @@ posix_do_stat(PyObject *module, const char *function_name, path_t *path,
         fd_and_follow_symlinks_invalid("stat", path->fd, follow_symlinks))
         return NULL;
 
-    Py_BEGIN_ALLOW_THREADS
+    
     if (path->fd != -1)
         result = FSTAT(path->fd, &st);
 #ifdef MS_WINDOWS
@@ -2354,7 +2354,7 @@ posix_do_stat(PyObject *module, const char *function_name, path_t *path,
 #endif /* HAVE_FSTATAT */
         result = STAT(path->narrow, &st);
 #endif /* MS_WINDOWS */
-    Py_END_ALLOW_THREADS
+    
 
     if (result != 0) {
         return path_error(path);
@@ -2784,9 +2784,9 @@ os_access_impl(PyObject *module, path_t *path, int mode, int dir_fd,
 #endif
 
 #ifdef MS_WINDOWS
-    Py_BEGIN_ALLOW_THREADS
+    
     attr = GetFileAttributesW(path->wide);
-    Py_END_ALLOW_THREADS
+    
 
     /*
      * Access is possible if
@@ -2802,7 +2802,7 @@ os_access_impl(PyObject *module, path_t *path, int mode, int dir_fd,
             (attr & FILE_ATTRIBUTE_DIRECTORY));
 #else
 
-    Py_BEGIN_ALLOW_THREADS
+    
 #ifdef HAVE_FACCESSAT
     if ((dir_fd != DEFAULT_DIR_FD) ||
         effective_ids ||
@@ -2817,7 +2817,7 @@ os_access_impl(PyObject *module, path_t *path, int mode, int dir_fd,
     else
 #endif
         result = access(path->narrow, mode);
-    Py_END_ALLOW_THREADS
+    
     return_value = !result;
 #endif
 
@@ -2923,7 +2923,7 @@ os_chdir_impl(PyObject *module, path_t *path)
         return NULL;
     }
 
-    Py_BEGIN_ALLOW_THREADS
+    
 #ifdef MS_WINDOWS
     /* on unix, success = 0, on windows, success = !0 */
     result = !win32_wchdir(path->wide);
@@ -2935,7 +2935,7 @@ os_chdir_impl(PyObject *module, path_t *path)
 #endif
         result = chdir(path->narrow);
 #endif
-    Py_END_ALLOW_THREADS
+    
 
     if (result) {
         return path_error(path);
@@ -3028,7 +3028,7 @@ os_chmod_impl(PyObject *module, path_t *path, int mode, int dir_fd,
     }
 
 #ifdef MS_WINDOWS
-    Py_BEGIN_ALLOW_THREADS
+    
     attr = GetFileAttributesW(path->wide);
     if (attr == INVALID_FILE_ATTRIBUTES)
         result = 0;
@@ -3039,13 +3039,13 @@ os_chmod_impl(PyObject *module, path_t *path, int mode, int dir_fd,
             attr |= FILE_ATTRIBUTE_READONLY;
         result = SetFileAttributesW(path->wide, attr);
     }
-    Py_END_ALLOW_THREADS
+    
 
     if (!result) {
         return path_error(path);
     }
 #else /* MS_WINDOWS */
-    Py_BEGIN_ALLOW_THREADS
+    
 #ifdef HAVE_FCHMOD
     if (path->fd != -1)
         result = fchmod(path->fd, mode);
@@ -3082,7 +3082,7 @@ os_chmod_impl(PyObject *module, path_t *path, int mode, int dir_fd,
     else
 #endif
         result = chmod(path->narrow, mode);
-    Py_END_ALLOW_THREADS
+    
 
     if (result) {
 #ifdef HAVE_FCHMODAT
@@ -3128,9 +3128,9 @@ os_fchmod_impl(PyObject *module, int fd, int mode)
     }
 
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
         res = fchmod(fd, mode);
-        Py_END_ALLOW_THREADS
+        
 	  } while (res != 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (res != 0)
         return (!async_err) ? posix_error() : NULL;
@@ -3161,9 +3161,9 @@ os_lchmod_impl(PyObject *module, path_t *path, int mode)
     if (PySys_Audit("os.chmod", "Oii", path->object, mode, -1) < 0) {
         return NULL;
     }
-    Py_BEGIN_ALLOW_THREADS
+    
     res = lchmod(path->narrow, mode);
-    Py_END_ALLOW_THREADS
+    
     if (res < 0) {
         path_error(path);
         return NULL;
@@ -3207,14 +3207,14 @@ os_chflags_impl(PyObject *module, path_t *path, unsigned long flags,
         return NULL;
     }
 
-    Py_BEGIN_ALLOW_THREADS
+    
 #ifdef HAVE_LCHFLAGS
     if (!follow_symlinks)
         result = lchflags(path->narrow, flags);
     else
 #endif
         result = chflags(path->narrow, flags);
-    Py_END_ALLOW_THREADS
+    
 
     if (result)
         return path_error(path);
@@ -3245,9 +3245,9 @@ os_lchflags_impl(PyObject *module, path_t *path, unsigned long flags)
     if (PySys_Audit("os.chflags", "Ok", path->object, flags) < 0) {
         return NULL;
     }
-    Py_BEGIN_ALLOW_THREADS
+    
     res = lchflags(path->narrow, flags);
-    Py_END_ALLOW_THREADS
+    
     if (res < 0) {
         return path_error(path);
     }
@@ -3270,9 +3270,9 @@ os_chroot_impl(PyObject *module, path_t *path)
 /*[clinic end generated code: output=de80befc763a4475 input=14822965652c3dc3]*/
 {
     int res;
-    Py_BEGIN_ALLOW_THREADS
+    
     res = chroot(path->narrow);
-    Py_END_ALLOW_THREADS
+    
     if (res < 0)
         return path_error(path);
     Py_RETURN_NONE;
@@ -3309,9 +3309,9 @@ static PyObject *
 os_sync_impl(PyObject *module)
 /*[clinic end generated code: output=2796b1f0818cd71c input=84749fe5e9b404ff]*/
 {
-    Py_BEGIN_ALLOW_THREADS
+    
     sync();
-    Py_END_ALLOW_THREADS
+    
     Py_RETURN_NONE;
 }
 #endif /* HAVE_SYNC */
@@ -3412,7 +3412,7 @@ os_chown_impl(PyObject *module, path_t *path, uid_t uid, gid_t gid,
         return NULL;
     }
 
-    Py_BEGIN_ALLOW_THREADS
+    
 #ifdef HAVE_FCHOWN
     if (path->fd != -1)
         result = fchown(path->fd, uid, gid);
@@ -3430,7 +3430,7 @@ os_chown_impl(PyObject *module, path_t *path, uid_t uid, gid_t gid,
     else
 #endif
         result = chown(path->narrow, uid, gid);
-    Py_END_ALLOW_THREADS
+    
 
     if (result)
         return path_error(path);
@@ -3466,9 +3466,9 @@ os_fchown_impl(PyObject *module, int fd, uid_t uid, gid_t gid)
     }
 
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
         res = fchown(fd, uid, gid);
-        Py_END_ALLOW_THREADS
+        
 	  } while (res != 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (res != 0)
         return (!async_err) ? posix_error() : NULL;
@@ -3500,9 +3500,9 @@ os_lchown_impl(PyObject *module, path_t *path, uid_t uid, gid_t gid)
     if (PySys_Audit("os.chown", "OIIi", path->object, uid, gid, -1) < 0) {
         return NULL;
     }
-    Py_BEGIN_ALLOW_THREADS
+    
     res = lchown(path->narrow, uid, gid);
-    Py_END_ALLOW_THREADS
+    
     if (res < 0) {
         return path_error(path);
     }
@@ -3519,7 +3519,7 @@ posix_getcwd(int use_bytes)
     wchar_t *wbuf2 = wbuf;
     DWORD len;
 
-    Py_BEGIN_ALLOW_THREADS
+    
     len = GetCurrentDirectoryW(Py_ARRAY_LENGTH(wbuf), wbuf);
     /* If the buffer is large enough, len does not include the
        terminating \0. If the buffer is too small, len includes
@@ -3535,7 +3535,7 @@ posix_getcwd(int use_bytes)
             len = GetCurrentDirectoryW(len, wbuf2);
         }
     }
-    Py_END_ALLOW_THREADS
+    
 
     if (!wbuf2) {
         PyErr_NoMemory();
@@ -3567,7 +3567,7 @@ posix_getcwd(int use_bytes)
     char *cwd = NULL;
     size_t buflen = 0;
 
-    Py_BEGIN_ALLOW_THREADS
+    
     do {
         char *newbuf;
         if (buflen <= PY_SSIZE_T_MAX - chunk) {
@@ -3586,7 +3586,7 @@ posix_getcwd(int use_bytes)
 
         cwd = getcwd(buf, buflen);
     } while (cwd == NULL && errno == ERANGE);
-    Py_END_ALLOW_THREADS
+    
 
     if (buf == NULL) {
         return PyErr_NoMemory();
@@ -3700,14 +3700,14 @@ os_link_impl(PyObject *module, path_t *src, path_t *dst, int src_dir_fd,
     }
 
 #ifdef MS_WINDOWS
-    Py_BEGIN_ALLOW_THREADS
+    
     result = CreateHardLinkW(dst->wide, src->wide, NULL);
-    Py_END_ALLOW_THREADS
+    
 
     if (!result)
         return path_error2(src, dst);
 #else
-    Py_BEGIN_ALLOW_THREADS
+    
 #ifdef HAVE_LINKAT
     if ((src_dir_fd != DEFAULT_DIR_FD) ||
         (dst_dir_fd != DEFAULT_DIR_FD) ||
@@ -3718,7 +3718,7 @@ os_link_impl(PyObject *module, path_t *src, path_t *dst, int src_dir_fd,
     else
 #endif /* HAVE_LINKAT */
         result = link(src->narrow, dst->narrow);
-    Py_END_ALLOW_THREADS
+    
 
     if (result)
         return path_error2(src, dst);
@@ -3767,9 +3767,9 @@ _listdir_windows_no_opendir(path_t *path, PyObject *list)
     if ((list = PyList_New(0)) == NULL) {
         goto exit;
     }
-    Py_BEGIN_ALLOW_THREADS
+    
     hFindFile = FindFirstFileW(wnamebuf, &wFileData);
-    Py_END_ALLOW_THREADS
+    
     if (hFindFile == INVALID_HANDLE_VALUE) {
         int error = GetLastError();
         if (error == ERROR_FILE_NOT_FOUND)
@@ -3800,9 +3800,9 @@ _listdir_windows_no_opendir(path_t *path, PyObject *list)
             }
             Py_DECREF(v);
         }
-        Py_BEGIN_ALLOW_THREADS
+        
         result = FindNextFileW(hFindFile, &wFileData);
-        Py_END_ALLOW_THREADS
+        
         /* FindNextFile sets error to ERROR_NO_MORE_FILES if
            it got to the end of the directory. */
         if (!result && GetLastError() != ERROR_NO_MORE_FILES) {
@@ -3849,9 +3849,9 @@ _posix_listdir(path_t *path, PyObject *list)
 
         return_str = 1;
 
-        Py_BEGIN_ALLOW_THREADS
+        
         dirp = fdopendir(fd);
-        Py_END_ALLOW_THREADS
+        
     }
     else
 #endif
@@ -3867,18 +3867,18 @@ _posix_listdir(path_t *path, PyObject *list)
             return_str = 1;
         }
 
-        Py_BEGIN_ALLOW_THREADS
+        
         dirp = opendir(name);
-        Py_END_ALLOW_THREADS
+        
     }
 
     if (dirp == NULL) {
         list = path_error(path);
 #ifdef HAVE_FDOPENDIR
         if (fd != -1) {
-            Py_BEGIN_ALLOW_THREADS
+            
             close(fd);
-            Py_END_ALLOW_THREADS
+            
         }
 #endif
         goto exit;
@@ -3888,9 +3888,9 @@ _posix_listdir(path_t *path, PyObject *list)
     }
     for (;;) {
         errno = 0;
-        Py_BEGIN_ALLOW_THREADS
+        
         ep = readdir(dirp);
-        Py_END_ALLOW_THREADS
+        
         if (ep == NULL) {
             if (errno == 0) {
                 break;
@@ -3922,13 +3922,13 @@ _posix_listdir(path_t *path, PyObject *list)
 
 exit:
     if (dirp != NULL) {
-        Py_BEGIN_ALLOW_THREADS
+        
 #ifdef HAVE_FDOPENDIR
         if (fd > -1)
             rewinddir(dirp);
 #endif
         closedir(dirp);
-        Py_END_ALLOW_THREADS
+        
     }
 
     return list;
@@ -4027,7 +4027,7 @@ os__getfinalpathname_impl(PyObject *module, path_t *path)
     int result_length;
     PyObject *result;
 
-    Py_BEGIN_ALLOW_THREADS
+    
     hFile = CreateFileW(
         path->wide,
         0, /* desired access */
@@ -4037,7 +4037,7 @@ os__getfinalpathname_impl(PyObject *module, path_t *path)
         /* FILE_FLAG_BACKUP_SEMANTICS is required to open a directory */
         FILE_FLAG_BACKUP_SEMANTICS,
         NULL);
-    Py_END_ALLOW_THREADS
+    
 
     if (hFile == INVALID_HANDLE_VALUE) {
         return win32_error_object("CreateFileW", path->object);
@@ -4046,10 +4046,10 @@ os__getfinalpathname_impl(PyObject *module, path_t *path)
     /* We have a good handle to the target, use it to determine the
        target path name. */
     while (1) {
-        Py_BEGIN_ALLOW_THREADS
+        
         result_length = GetFinalPathNameByHandleW(hFile, target_path,
                                                   buf_size, VOLUME_NAME_DOS);
-        Py_END_ALLOW_THREADS
+        
 
         if (!result_length) {
             result = win32_error_object("GetFinalPathNameByHandleW",
@@ -4116,10 +4116,10 @@ os__getvolumepathname_impl(PyObject *module, path_t *path)
     if (mountpath == NULL)
         return PyErr_NoMemory();
 
-    Py_BEGIN_ALLOW_THREADS
+    
     ret = GetVolumePathNameW(path->wide, mountpath,
                              Py_SAFE_DOWNCAST(buflen, size_t, DWORD));
-    Py_END_ALLOW_THREADS
+    
 
     if (!ret) {
         result = win32_error_object("_getvolumepathname", path->object);
@@ -4172,14 +4172,14 @@ os_mkdir_impl(PyObject *module, path_t *path, int mode, int dir_fd)
     }
 
 #ifdef MS_WINDOWS
-    Py_BEGIN_ALLOW_THREADS
+    
     result = CreateDirectoryW(path->wide, NULL);
-    Py_END_ALLOW_THREADS
+    
 
     if (!result)
         return path_error(path);
 #else
-    Py_BEGIN_ALLOW_THREADS
+    
 #if HAVE_MKDIRAT
     if (dir_fd != DEFAULT_DIR_FD)
         result = mkdirat(dir_fd, path->narrow, mode);
@@ -4190,7 +4190,7 @@ os_mkdir_impl(PyObject *module, path_t *path, int mode, int dir_fd)
 #else
         result = mkdir(path->narrow, mode);
 #endif
-    Py_END_ALLOW_THREADS
+    
     if (result < 0)
         return path_error(path);
 #endif /* MS_WINDOWS */
@@ -4323,9 +4323,9 @@ internal_rename(path_t *src, path_t *dst, int src_dir_fd, int dst_dir_fd, int is
     }
 
 #ifdef MS_WINDOWS
-    Py_BEGIN_ALLOW_THREADS
+    
     result = MoveFileExW(src->wide, dst->wide, flags);
-    Py_END_ALLOW_THREADS
+    
 
     if (!result)
         return path_error2(src, dst);
@@ -4337,14 +4337,14 @@ internal_rename(path_t *src, path_t *dst, int src_dir_fd, int dst_dir_fd, int is
         return NULL;
     }
 
-    Py_BEGIN_ALLOW_THREADS
+    
 #ifdef HAVE_RENAMEAT
     if (dir_fd_specified)
         result = renameat(src_dir_fd, src->narrow, dst_dir_fd, dst->narrow);
     else
 #endif
     result = rename(src->narrow, dst->narrow);
-    Py_END_ALLOW_THREADS
+    
 
     if (result)
         return path_error2(src, dst);
@@ -4427,7 +4427,7 @@ os_rmdir_impl(PyObject *module, path_t *path, int dir_fd)
         return NULL;
     }
 
-    Py_BEGIN_ALLOW_THREADS
+    
 #ifdef MS_WINDOWS
     /* Windows, success=1, UNIX, success=0 */
     result = !RemoveDirectoryW(path->wide);
@@ -4439,7 +4439,7 @@ os_rmdir_impl(PyObject *module, path_t *path, int dir_fd)
 #endif
         result = rmdir(path->narrow);
 #endif
-    Py_END_ALLOW_THREADS
+    
 
     if (result)
         return path_error(path);
@@ -4468,11 +4468,11 @@ os_system_impl(PyObject *module, const Py_UNICODE *command)
         return -1;
     }
 
-    Py_BEGIN_ALLOW_THREADS
-    _Py_BEGIN_SUPPRESS_IPH
+    
+    
     result = _wsystem(command);
-    _Py_END_SUPPRESS_IPH
-    Py_END_ALLOW_THREADS
+    
+    
     return result;
 }
 #else /* MS_WINDOWS */
@@ -4495,9 +4495,9 @@ os_system_impl(PyObject *module, PyObject *command)
         return -1;
     }
 
-    Py_BEGIN_ALLOW_THREADS
+    
     result = system(bytes);
-    Py_END_ALLOW_THREADS
+    
     return result;
 }
 #endif
@@ -4590,8 +4590,8 @@ os_unlink_impl(PyObject *module, path_t *path, int dir_fd)
         return NULL;
     }
 
-    Py_BEGIN_ALLOW_THREADS
-    _Py_BEGIN_SUPPRESS_IPH
+    
+    
 #ifdef MS_WINDOWS
     /* Windows, success=1, UNIX, success=0 */
     result = !Py_DeleteFileW(path->wide);
@@ -4603,8 +4603,8 @@ os_unlink_impl(PyObject *module, path_t *path, int dir_fd)
 #endif /* HAVE_UNLINKAT */
         result = unlink(path->narrow);
 #endif
-    _Py_END_SUPPRESS_IPH
-    Py_END_ALLOW_THREADS
+    
+    
 
     if (result)
         return path_error(path);
@@ -4675,9 +4675,9 @@ os_uname_impl(PyObject *module)
     int res;
     PyObject *value;
 
-    Py_BEGIN_ALLOW_THREADS
+    
     res = uname(&u);
-    Py_END_ALLOW_THREADS
+    
     if (res < 0)
         return posix_error();
 
@@ -5012,11 +5012,11 @@ os_utime_impl(PyObject *module, path_t *path, PyObject *times, PyObject *ns,
     }
 
 #ifdef MS_WINDOWS
-    Py_BEGIN_ALLOW_THREADS
+    
     hFile = CreateFileW(path->wide, FILE_WRITE_ATTRIBUTES, 0,
                         NULL, OPEN_EXISTING,
                         FILE_FLAG_BACKUP_SEMANTICS, NULL);
-    Py_END_ALLOW_THREADS
+    
     if (hFile == INVALID_HANDLE_VALUE) {
         path_error(path);
         return NULL;
@@ -5041,7 +5041,7 @@ os_utime_impl(PyObject *module, path_t *path, PyObject *times, PyObject *ns,
     }
     CloseHandle(hFile);
 #else /* MS_WINDOWS */
-    Py_BEGIN_ALLOW_THREADS
+    
 
 #ifdef UTIME_HAVE_NOFOLLOW_SYMLINKS
     if ((!follow_symlinks) && (dir_fd == DEFAULT_DIR_FD))
@@ -5063,7 +5063,7 @@ os_utime_impl(PyObject *module, path_t *path, PyObject *times, PyObject *ns,
 
     result = utime_default(&utime, path->narrow);
 
-    Py_END_ALLOW_THREADS
+    
 
     if (result < 0) {
         /* see previous comment about not putting filename in error here */
@@ -5317,13 +5317,13 @@ os_execv_impl(PyObject *module, path_t *path, PyObject *argv)
         return NULL;
     }
 
-    _Py_BEGIN_SUPPRESS_IPH
+    
 #ifdef HAVE_WEXECV
     _wexecv(path->wide, argvlist);
 #else
     execv(path->narrow, argvlist);
 #endif
-    _Py_END_SUPPRESS_IPH
+    
 
     /* If we get here it's definitely an error */
 
@@ -5392,7 +5392,7 @@ os_execve_impl(PyObject *module, path_t *path, PyObject *argv, PyObject *env)
         goto fail_1;
     }
 
-    _Py_BEGIN_SUPPRESS_IPH
+    
 #ifdef HAVE_FEXECVE
     if (path->fd > -1)
         fexecve(path->fd, argvlist, envlist);
@@ -5403,7 +5403,7 @@ os_execve_impl(PyObject *module, path_t *path, PyObject *argv, PyObject *env)
 #else
         execve(path->narrow, argvlist, envlist);
 #endif
-    _Py_END_SUPPRESS_IPH
+    
 
     /* If we get here it's definitely an error */
 
@@ -5749,7 +5749,7 @@ py_posix_spawn(int use_posix_spawnp, PyObject *module, path_t *path, PyObject *a
         goto exit;
     }
 
-    _Py_BEGIN_SUPPRESS_IPH
+    
 #ifdef HAVE_POSIX_SPAWNP
     if (use_posix_spawnp) {
         err_code = posix_spawnp(&pid, path->narrow,
@@ -5761,7 +5761,7 @@ py_posix_spawn(int use_posix_spawnp, PyObject *module, path_t *path, PyObject *a
         err_code = posix_spawn(&pid, path->narrow,
                                file_actionsp, attrp, argvlist, envlist);
     }
-    _Py_END_SUPPRESS_IPH
+    
 
     if (err_code) {
         errno = err_code;
@@ -5995,8 +5995,8 @@ os_spawnv_impl(PyObject *module, int mode, path_t *path, PyObject *argv)
         return NULL;
     }
 
-    Py_BEGIN_ALLOW_THREADS
-    _Py_BEGIN_SUPPRESS_IPH
+    
+    
 #ifdef HAVE_WSPAWNV
     spawnval = _wspawnv(mode, path->wide, argvlist);
 #elif defined(HAVE_RTPSPAWN)
@@ -6004,8 +6004,8 @@ os_spawnv_impl(PyObject *module, int mode, path_t *path, PyObject *argv)
 #else
     spawnval = _spawnv(mode, path->narrow, argvlist);
 #endif
-    _Py_END_SUPPRESS_IPH
-    Py_END_ALLOW_THREADS
+    
+    
 
     free_string_array(argvlist, argc);
 
@@ -6108,8 +6108,8 @@ os_spawnve_impl(PyObject *module, int mode, path_t *path, PyObject *argv,
         goto fail_2;
     }
 
-    Py_BEGIN_ALLOW_THREADS
-    _Py_BEGIN_SUPPRESS_IPH
+    
+    
 #ifdef HAVE_WSPAWNV
     spawnval = _wspawnve(mode, path->wide, argvlist, envlist);
 #elif defined(HAVE_RTPSPAWN)
@@ -6118,8 +6118,8 @@ os_spawnve_impl(PyObject *module, int mode, path_t *path, PyObject *argv,
 #else
     spawnval = _spawnve(mode, path->narrow, argvlist, envlist);
 #endif
-    _Py_END_SUPPRESS_IPH
-    Py_END_ALLOW_THREADS
+    
+    
 
     if (spawnval == -1)
         (void) posix_error();
@@ -7816,9 +7816,9 @@ os_wait3_impl(PyObject *module, int options)
     WAIT_STATUS_INT(status) = 0;
 
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
         pid = wait3(&status, options, &ru);
-        Py_END_ALLOW_THREADS
+        
 	  } while (pid < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (pid < 0)
         return (!async_err) ? posix_error() : NULL;
@@ -7853,9 +7853,9 @@ os_wait4_impl(PyObject *module, pid_t pid, int options)
     WAIT_STATUS_INT(status) = 0;
 
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
         res = wait4(pid, &status, options, &ru);
-        Py_END_ALLOW_THREADS
+        
 	  } while (res < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (res < 0)
         return (!async_err) ? posix_error() : NULL;
@@ -7895,9 +7895,9 @@ os_waitid_impl(PyObject *module, idtype_t idtype, id_t id, int options)
     si.si_pid = 0;
 
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
         res = waitid(idtype, id, &si, options);
-        Py_END_ALLOW_THREADS
+        
 	  } while (res < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (res < 0)
         return (!async_err) ? posix_error() : NULL;
@@ -7950,9 +7950,9 @@ os_waitpid_impl(PyObject *module, pid_t pid, int options)
     WAIT_STATUS_INT(status) = 0;
 
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
         res = waitpid(pid, &status, options);
-        Py_END_ALLOW_THREADS
+        
 	  } while (res < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (res < 0)
         return (!async_err) ? posix_error() : NULL;
@@ -7984,11 +7984,11 @@ os_waitpid_impl(PyObject *module, intptr_t pid, int options)
     int async_err = 0;
 
     do {
-        Py_BEGIN_ALLOW_THREADS
-        _Py_BEGIN_SUPPRESS_IPH
+        
+        
         res = _cwait(&status, pid, options);
-        _Py_END_SUPPRESS_IPH
-        Py_END_ALLOW_THREADS
+        
+        
 	  } while (res < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (res < 0)
         return (!async_err) ? posix_error() : NULL;
@@ -8021,9 +8021,9 @@ os_wait_impl(PyObject *module)
     WAIT_STATUS_INT(status) = 0;
 
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
         pid = wait(&status);
-        Py_END_ALLOW_THREADS
+        
 	  } while (pid < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (pid < 0)
         return (!async_err) ? posix_error() : NULL;
@@ -8082,14 +8082,14 @@ os_readlink_impl(PyObject *module, path_t *path, int dir_fd)
     char buffer[MAXPATHLEN+1];
     ssize_t length;
 
-    Py_BEGIN_ALLOW_THREADS
+    
 #ifdef HAVE_READLINKAT
     if (dir_fd != DEFAULT_DIR_FD)
         length = readlinkat(dir_fd, path->narrow, buffer, MAXPATHLEN);
     else
 #endif
         length = readlink(path->narrow, buffer, MAXPATHLEN);
-    Py_END_ALLOW_THREADS
+    
 
     if (length < 0) {
         return path_error(path);
@@ -8109,7 +8109,7 @@ os_readlink_impl(PyObject *module, path_t *path, int dir_fd)
     PyObject *result = NULL;
 
     /* First get a handle to the reparse point */
-    Py_BEGIN_ALLOW_THREADS
+    
     reparse_point_handle = CreateFileW(
         path->wide,
         0,
@@ -8130,7 +8130,7 @@ os_readlink_impl(PyObject *module, path_t *path, int dir_fd)
             );
         CloseHandle(reparse_point_handle);
     }
-    Py_END_ALLOW_THREADS
+    
 
     if (io_result == 0) {
         return path_error(path);
@@ -8300,22 +8300,22 @@ os_symlink_impl(PyObject *module, path_t *src, path_t *dst,
         flags |= SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE;
     }
 
-    Py_BEGIN_ALLOW_THREADS
-    _Py_BEGIN_SUPPRESS_IPH
+    
+    
     /* if src is a directory, ensure flags==1 (target_is_directory bit) */
     if (target_is_directory || _check_dirW(src->wide, dst->wide)) {
         flags |= SYMBOLIC_LINK_FLAG_DIRECTORY;
     }
 
     result = CreateSymbolicLinkW(dst->wide, src->wide, flags);
-    _Py_END_SUPPRESS_IPH
-    Py_END_ALLOW_THREADS
+    
+    
 
     if (windows_has_symlink_unprivileged_flag && !result &&
         ERROR_INVALID_PARAMETER == GetLastError()) {
 
-        Py_BEGIN_ALLOW_THREADS
-        _Py_BEGIN_SUPPRESS_IPH
+        
+        
         /* This error might be caused by
         SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE not being supported.
         Try again, and update windows_has_symlink_unprivileged_flag if we
@@ -8328,8 +8328,8 @@ os_symlink_impl(PyObject *module, path_t *src, path_t *dst,
         */
         flags &= ~(SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE);
         result = CreateSymbolicLinkW(dst->wide, src->wide, flags);
-        _Py_END_SUPPRESS_IPH
-        Py_END_ALLOW_THREADS
+        
+        
 
         if (result || ERROR_INVALID_PARAMETER != GetLastError()) {
             windows_has_symlink_unprivileged_flag = FALSE;
@@ -8347,14 +8347,14 @@ os_symlink_impl(PyObject *module, path_t *src, path_t *dst,
         return NULL;
     }
 
-    Py_BEGIN_ALLOW_THREADS
+    
 #if HAVE_SYMLINKAT
     if (dir_fd != DEFAULT_DIR_FD)
         result = symlinkat(src->narrow, dir_fd, dst->narrow);
     else
 #endif
         result = symlink(src->narrow, dst->narrow);
-    Py_END_ALLOW_THREADS
+    
 
     if (result)
         return path_error2(src, dst);
@@ -8643,9 +8643,9 @@ os_open_impl(PyObject *module, path_t *path, int flags, int mode, int dir_fd)
         return -1;
     }
 
-    _Py_BEGIN_SUPPRESS_IPH
+    
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
 #ifdef MS_WINDOWS
         fd = _wopen(path->wide, flags, mode);
 #else
@@ -8656,9 +8656,9 @@ os_open_impl(PyObject *module, path_t *path, int flags, int mode, int dir_fd)
 #endif /* HAVE_OPENAT */
             fd = open(path->narrow, flags, mode);
 #endif /* !MS_WINDOWS */
-        Py_END_ALLOW_THREADS
+        
 	  } while (fd < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
-    _Py_END_SUPPRESS_IPH
+    
 
     if (fd < 0) {
         if (!async_err)
@@ -8694,11 +8694,11 @@ os_close_impl(PyObject *module, int fd)
      * and http://linux.derkeiler.com/Mailing-Lists/Kernel/2005-09/3000.html
      * for more details.
      */
-    Py_BEGIN_ALLOW_THREADS
-    _Py_BEGIN_SUPPRESS_IPH
+    
+    
     res = close(fd);
-    _Py_END_SUPPRESS_IPH
-    Py_END_ALLOW_THREADS
+    
+    
     if (res < 0)
         return posix_error();
     Py_RETURN_NONE;
@@ -8740,8 +8740,8 @@ os_closerange_impl(PyObject *module, int fd_low, int fd_high)
 #ifdef HAVE_FDWALK
     int lohi[2];
 #endif
-    Py_BEGIN_ALLOW_THREADS
-    _Py_BEGIN_SUPPRESS_IPH
+    
+    
 #ifdef HAVE_FDWALK
     lohi[0] = Py_MAX(fd_low, 0);
     lohi[1] = fd_high;
@@ -8762,8 +8762,8 @@ os_closerange_impl(PyObject *module, int fd_low, int fd_high)
         }
     }
 #endif
-    _Py_END_SUPPRESS_IPH
-    Py_END_ALLOW_THREADS
+    
+    
     Py_RETURN_NONE;
 }
 
@@ -8815,11 +8815,11 @@ os_dup2_impl(PyObject *module, int fd, int fd2, int inheritable)
      * upon close(), and therefore below.
      */
 #ifdef MS_WINDOWS
-    Py_BEGIN_ALLOW_THREADS
-    _Py_BEGIN_SUPPRESS_IPH
+    
+    
     res = dup2(fd, fd2);
-    _Py_END_SUPPRESS_IPH
-    Py_END_ALLOW_THREADS
+    
+    
     if (res < 0) {
         posix_error();
         return -1;
@@ -8833,12 +8833,12 @@ os_dup2_impl(PyObject *module, int fd, int fd2, int inheritable)
     }
 
 #elif defined(HAVE_FCNTL_H) && defined(F_DUP2FD_CLOEXEC)
-    Py_BEGIN_ALLOW_THREADS
+    
     if (!inheritable)
         res = fcntl(fd, F_DUP2FD_CLOEXEC, fd2);
     else
         res = dup2(fd, fd2);
-    Py_END_ALLOW_THREADS
+    
     if (res < 0) {
         posix_error();
         return -1;
@@ -8848,9 +8848,9 @@ os_dup2_impl(PyObject *module, int fd, int fd2, int inheritable)
 
 #ifdef HAVE_DUP3
     if (!inheritable && dup3_works != 0) {
-        Py_BEGIN_ALLOW_THREADS
+        
         res = dup3(fd, fd2, O_CLOEXEC);
-        Py_END_ALLOW_THREADS
+        
         if (res < 0) {
             if (dup3_works == -1)
                 dup3_works = (errno != ENOSYS);
@@ -8864,9 +8864,9 @@ os_dup2_impl(PyObject *module, int fd, int fd2, int inheritable)
     if (inheritable || dup3_works == 0)
     {
 #endif
-        Py_BEGIN_ALLOW_THREADS
+        
         res = dup2(fd, fd2);
-        Py_END_ALLOW_THREADS
+        
         if (res < 0) {
             posix_error();
             return -1;
@@ -8912,9 +8912,9 @@ os_lockf_impl(PyObject *module, int fd, int command, Py_off_t length)
         return NULL;
     }
 
-    Py_BEGIN_ALLOW_THREADS
+    
     res = lockf(fd, command, length);
-    Py_END_ALLOW_THREADS
+    
 
     if (res < 0)
         return posix_error();
@@ -8953,15 +8953,15 @@ os_lseek_impl(PyObject *module, int fd, Py_off_t position, int how)
     }
 #endif /* SEEK_END */
 
-    Py_BEGIN_ALLOW_THREADS
-    _Py_BEGIN_SUPPRESS_IPH
+    
+    
 #ifdef MS_WINDOWS
     result = _lseeki64(fd, position, how);
 #else
     result = lseek(fd, position, how);
 #endif
-    _Py_END_SUPPRESS_IPH
-    Py_END_ALLOW_THREADS
+    
+    
     if (result < 0)
         posix_error();
 
@@ -9108,9 +9108,9 @@ os_readv_impl(PyObject *module, int fd, PyObject *buffers)
         return -1;
 
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
         n = readv(fd, iov, cnt);
-        Py_END_ALLOW_THREADS
+        
 	  } while (n < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
 
     iov_cleanup(iov, buf, cnt);
@@ -9157,11 +9157,11 @@ os_pread_impl(PyObject *module, int fd, Py_ssize_t length, Py_off_t offset)
         return NULL;
 
     do {
-        Py_BEGIN_ALLOW_THREADS
-        _Py_BEGIN_SUPPRESS_IPH
+        
+        
         n = pread(fd, PyBytes_AS_STRING(buffer), length, offset);
-        _Py_END_SUPPRESS_IPH
-        Py_END_ALLOW_THREADS
+        
+        
 	  } while (n < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
 
     if (n < 0) {
@@ -9234,19 +9234,19 @@ os_preadv_impl(PyObject *module, int fd, PyObject *buffers, Py_off_t offset,
     }
 #ifdef HAVE_PREADV2
     do {
-        Py_BEGIN_ALLOW_THREADS
-        _Py_BEGIN_SUPPRESS_IPH
+        
+        
         n = preadv2(fd, iov, cnt, offset, flags);
-        _Py_END_SUPPRESS_IPH
-        Py_END_ALLOW_THREADS
+        
+        
 	  } while (n < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
 #else
     do {
-        Py_BEGIN_ALLOW_THREADS
-        _Py_BEGIN_SUPPRESS_IPH
+        
+        
         n = preadv(fd, iov, cnt, offset);
-        _Py_END_SUPPRESS_IPH
-        Py_END_ALLOW_THREADS
+        
+        
 	  } while (n < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
 #endif
 
@@ -9409,17 +9409,17 @@ os_sendfile_impl(PyObject *module, int out_fd, int in_fd, PyObject *offobj,
         }
     }
 
-    _Py_BEGIN_SUPPRESS_IPH
+    
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
 #ifdef __APPLE__
         ret = sendfile(in_fd, out_fd, offset, &sbytes, &sf, flags);
 #else
         ret = sendfile(in_fd, out_fd, offset, count, &sf, &sbytes, flags);
 #endif
-        Py_END_ALLOW_THREADS
+        
 	  } while (ret < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
-    _Py_END_SUPPRESS_IPH
+    
 
     if (sf.headers != NULL)
         iov_cleanup(sf.headers, hbuf, sf.hdr_cnt);
@@ -9453,9 +9453,9 @@ done:
 #ifdef __linux__
     if (offobj == Py_None) {
         do {
-            Py_BEGIN_ALLOW_THREADS
+            
             ret = sendfile(out_fd, in_fd, NULL, count);
-            Py_END_ALLOW_THREADS
+            
         } while (ret < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
         if (ret < 0)
             return (!async_err) ? posix_error() : NULL;
@@ -9467,9 +9467,9 @@ done:
         return NULL;
 
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
         ret = sendfile(out_fd, in_fd, &offset, count);
-        Py_END_ALLOW_THREADS
+        
     } while (ret < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (ret < 0)
         return (!async_err) ? posix_error() : NULL;
@@ -9497,9 +9497,9 @@ os__fcopyfile_impl(PyObject *module, int in_fd, int out_fd, int flags)
 {
     int ret;
 
-    Py_BEGIN_ALLOW_THREADS
+    
     ret = fcopyfile(in_fd, out_fd, NULL, flags);
-    Py_END_ALLOW_THREADS
+    
     if (ret < 0)
         return posix_error();
     Py_RETURN_NONE;
@@ -9527,9 +9527,9 @@ os_fstat_impl(PyObject *module, int fd)
     int async_err = 0;
 
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
         res = FSTAT(fd, &st);
-        Py_END_ALLOW_THREADS
+        
     } while (res != 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
     if (res != 0) {
 #ifdef MS_WINDOWS
@@ -9559,9 +9559,9 @@ os_isatty_impl(PyObject *module, int fd)
 /*[clinic end generated code: output=6a48c8b4e644ca00 input=08ce94aa1eaf7b5e]*/
 {
     int return_value;
-    _Py_BEGIN_SUPPRESS_IPH
+    
     return_value = isatty(fd);
-    _Py_END_SUPPRESS_IPH
+    
     return return_value;
 }
 
@@ -9594,8 +9594,8 @@ os_pipe_impl(PyObject *module)
     attr.lpSecurityDescriptor = NULL;
     attr.bInheritHandle = FALSE;
 
-    Py_BEGIN_ALLOW_THREADS
-    _Py_BEGIN_SUPPRESS_IPH
+    
+    
     ok = CreatePipe(&read, &write, &attr, 0);
     if (ok) {
         fds[0] = _open_osfhandle((intptr_t)read, _O_RDONLY);
@@ -9606,24 +9606,24 @@ os_pipe_impl(PyObject *module)
             ok = 0;
         }
     }
-    _Py_END_SUPPRESS_IPH
-    Py_END_ALLOW_THREADS
+    
+    
 
     if (!ok)
         return PyErr_SetFromWindowsErr(0);
 #else
 
 #ifdef HAVE_PIPE2
-    Py_BEGIN_ALLOW_THREADS
+    
     res = pipe2(fds, O_CLOEXEC);
-    Py_END_ALLOW_THREADS
+    
 
     if (res != 0 && errno == ENOSYS)
     {
 #endif
-        Py_BEGIN_ALLOW_THREADS
+        
         res = pipe(fds);
-        Py_END_ALLOW_THREADS
+        
 
         if (res == 0) {
             if (_Py_set_inheritable(fds[0], 0, NULL) < 0) {
@@ -9717,9 +9717,9 @@ os_writev_impl(PyObject *module, int fd, PyObject *buffers)
     }
 
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
         result = writev(fd, iov, cnt);
-        Py_END_ALLOW_THREADS
+        
     } while (result < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
 
     iov_cleanup(iov, buf, cnt);
@@ -9755,11 +9755,11 @@ os_pwrite_impl(PyObject *module, int fd, Py_buffer *buffer, Py_off_t offset)
     int async_err = 0;
 
     do {
-        Py_BEGIN_ALLOW_THREADS
-        _Py_BEGIN_SUPPRESS_IPH
+        
+        
         size = pwrite(fd, buffer->buf, (size_t)buffer->len, offset);
-        _Py_END_SUPPRESS_IPH
-        Py_END_ALLOW_THREADS
+        
+        
     } while (size < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
 
     if (size < 0 && !async_err)
@@ -9830,19 +9830,19 @@ os_pwritev_impl(PyObject *module, int fd, PyObject *buffers, Py_off_t offset,
     }
 #ifdef HAVE_PWRITEV2
     do {
-        Py_BEGIN_ALLOW_THREADS
-        _Py_BEGIN_SUPPRESS_IPH
+        
+        
         result = pwritev2(fd, iov, cnt, offset, flags);
-        _Py_END_SUPPRESS_IPH
-        Py_END_ALLOW_THREADS
+        
+        
     } while (result < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
 #else
     do {
-        Py_BEGIN_ALLOW_THREADS
-        _Py_BEGIN_SUPPRESS_IPH
+        
+        
         result = pwritev(fd, iov, cnt, offset);
-        _Py_END_SUPPRESS_IPH
-        Py_END_ALLOW_THREADS
+        
+        
     } while (result < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
 #endif
 
@@ -9914,9 +9914,9 @@ os_copy_file_range_impl(PyObject *module, int src, int dst, Py_ssize_t count,
     }
 
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
         ret = copy_file_range(src, p_offset_src, dst, p_offset_dst, count, flags);
-        Py_END_ALLOW_THREADS
+        
     } while (ret < 0 && errno == EINTR); // && !(async_err = PyErr_CheckSignals()));
 
     if (ret < 0) {
@@ -9952,14 +9952,14 @@ os_mkfifo_impl(PyObject *module, path_t *path, int mode, int dir_fd)
     int async_err = 0;
 
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
 #ifdef HAVE_MKFIFOAT
         if (dir_fd != DEFAULT_DIR_FD)
             result = mkfifoat(dir_fd, path->narrow, mode);
         else
 #endif
             result = mkfifo(path->narrow, mode);
-        Py_END_ALLOW_THREADS
+        
 	  } while (result != 0 && errno == EINTR); // &&
     //             !(async_err = PyErr_CheckSignals()));
     if (result != 0)
@@ -10004,14 +10004,14 @@ os_mknod_impl(PyObject *module, path_t *path, int mode, dev_t device,
     int async_err = 0;
 
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
 #ifdef HAVE_MKNODAT
         if (dir_fd != DEFAULT_DIR_FD)
             result = mknodat(dir_fd, path->narrow, mode, device);
         else
 #endif
             result = mknod(path->narrow, mode, device);
-        Py_END_ALLOW_THREADS
+        
 	  } while (result != 0 && errno == EINTR); // &&
     //!(async_err = PyErr_CheckSignals()));
     if (result != 0)
@@ -10099,15 +10099,15 @@ os_ftruncate_impl(PyObject *module, int fd, Py_off_t length)
     }
 
     do {
-        Py_BEGIN_ALLOW_THREADS
-        _Py_BEGIN_SUPPRESS_IPH
+        
+        
 #ifdef MS_WINDOWS
         result = _chsize_s(fd, length);
 #else
         result = ftruncate(fd, length);
 #endif
-        _Py_END_SUPPRESS_IPH
-        Py_END_ALLOW_THREADS
+        
+        
 	  } while (result != 0 && errno == EINTR); // &&
     //             !(async_err = PyErr_CheckSignals()));
     if (result != 0)
@@ -10145,8 +10145,8 @@ os_truncate_impl(PyObject *module, path_t *path, Py_off_t length)
         return NULL;
     }
 
-    Py_BEGIN_ALLOW_THREADS
-    _Py_BEGIN_SUPPRESS_IPH
+    
+    
 #ifdef MS_WINDOWS
     fd = _wopen(path->wide, _O_WRONLY | _O_BINARY | _O_NOINHERIT);
     if (fd < 0)
@@ -10160,8 +10160,8 @@ os_truncate_impl(PyObject *module, path_t *path, Py_off_t length)
 #else
     result = truncate(path->narrow, length);
 #endif
-    _Py_END_SUPPRESS_IPH
-    Py_END_ALLOW_THREADS
+    
+    
     if (result < 0)
         return posix_path_error(path);
 
@@ -10203,9 +10203,9 @@ os_posix_fallocate_impl(PyObject *module, int fd, Py_off_t offset,
     int async_err = 0;
 
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
         result = posix_fallocate(fd, offset, length);
-        Py_END_ALLOW_THREADS
+        
     } while (result == EINTR); // && !(async_err = PyErr_CheckSignals()));
 
     if (result == 0)
@@ -10250,9 +10250,9 @@ os_posix_fadvise_impl(PyObject *module, int fd, Py_off_t offset,
     int async_err = 0;
 
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
         result = posix_fadvise(fd, offset, length, advice);
-        Py_END_ALLOW_THREADS
+        
     } while (result == EINTR); // && !(async_err = PyErr_CheckSignals()));
 
     if (result == 0)
@@ -10696,9 +10696,9 @@ os_fstatvfs_impl(PyObject *module, int fd)
     struct statvfs st;
 
     do {
-        Py_BEGIN_ALLOW_THREADS
+        
         result = fstatvfs(fd, &st);
-        Py_END_ALLOW_THREADS
+        
 	  } while (result != 0 && errno == EINTR); // &&
     //             !(async_err = PyErr_CheckSignals()));
     if (result != 0)
@@ -10730,7 +10730,7 @@ os_statvfs_impl(PyObject *module, path_t *path)
     int result;
     struct statvfs st;
 
-    Py_BEGIN_ALLOW_THREADS
+    
 #ifdef HAVE_FSTATVFS
     if (path->fd != -1) {
 #ifdef __APPLE__
@@ -10745,7 +10745,7 @@ os_statvfs_impl(PyObject *module, path_t *path)
     else
 #endif
         result = statvfs(path->narrow, &st);
-    Py_END_ALLOW_THREADS
+    
 
     if (result) {
         return path_error(path);
@@ -10773,9 +10773,9 @@ os__getdiskusage_impl(PyObject *module, path_t *path)
     ULARGE_INTEGER _, total, free;
     DWORD err = 0;
 
-    Py_BEGIN_ALLOW_THREADS
+    
     retval = GetDiskFreeSpaceExW(path->wide, &_, &total, &free);
-    Py_END_ALLOW_THREADS
+    
     if (retval == 0) {
         if (GetLastError() == ERROR_DIRECTORY) {
             wchar_t *dir_path = NULL;
@@ -10788,9 +10788,9 @@ os__getdiskusage_impl(PyObject *module, path_t *path)
             wcscpy_s(dir_path, path->length + 1, path->wide);
 
             if (_dirnameW(dir_path) != -1) {
-                Py_BEGIN_ALLOW_THREADS
+                
                 retval = GetDiskFreeSpaceExW(dir_path, &_, &total, &free);
-                Py_END_ALLOW_THREADS
+                
             }
             /* Record the last error in case it's modified by PyMem_Free. */
             err = GetLastError();
@@ -11883,7 +11883,7 @@ check_ShellExecute()
 
     /* only recheck */
     if (-1 == has_ShellExecute) {
-        Py_BEGIN_ALLOW_THREADS
+        
         /* Security note: this call is not vulnerable to "DLL hijacking".
            SHELL32 is part of "KnownDLLs" and so Windows always load
            the system SHELL32.DLL, even if there is another SHELL32.DLL
@@ -11896,7 +11896,7 @@ check_ShellExecute()
         } else {
             has_ShellExecute = 0;
         }
-        Py_END_ALLOW_THREADS
+        
     }
     return has_ShellExecute;
 }
@@ -11943,10 +11943,10 @@ os_startfile_impl(PyObject *module, path_t *filepath,
         return NULL;
     }
 
-    Py_BEGIN_ALLOW_THREADS
+    
     rc = Py_ShellExecuteW((HWND)0, operation, filepath->wide,
                           NULL, NULL, SW_SHOWNORMAL);
-    Py_END_ALLOW_THREADS
+    
 
     if (rc <= (HINSTANCE)32) {
         win32_error_object("startfile", filepath->object);
@@ -12135,14 +12135,14 @@ os_getxattr_impl(PyObject *module, path_t *path, path_t *attribute,
             return NULL;
         ptr = PyBytes_AS_STRING(buffer);
 
-        Py_BEGIN_ALLOW_THREADS;
+        ;
         if (path->fd >= 0)
             result = fgetxattr(path->fd, attribute->narrow, ptr, buffer_size);
         else if (follow_symlinks)
             result = getxattr(path->narrow, attribute->narrow, ptr, buffer_size);
         else
             result = lgetxattr(path->narrow, attribute->narrow, ptr, buffer_size);
-        Py_END_ALLOW_THREADS;
+        ;
 
         if (result < 0) {
             Py_DECREF(buffer);
@@ -12197,7 +12197,7 @@ os_setxattr_impl(PyObject *module, path_t *path, path_t *attribute,
         return NULL;
     }
 
-    Py_BEGIN_ALLOW_THREADS;
+    ;
     if (path->fd > -1)
         result = fsetxattr(path->fd, attribute->narrow,
                            value->buf, value->len, flags);
@@ -12207,7 +12207,7 @@ os_setxattr_impl(PyObject *module, path_t *path, path_t *attribute,
     else
         result = lsetxattr(path->narrow, attribute->narrow,
                            value->buf, value->len, flags);
-    Py_END_ALLOW_THREADS;
+    ;
 
     if (result) {
         path_error(path);
@@ -12249,14 +12249,14 @@ os_removexattr_impl(PyObject *module, path_t *path, path_t *attribute,
         return NULL;
     }
 
-    Py_BEGIN_ALLOW_THREADS;
+    ;
     if (path->fd > -1)
         result = fremovexattr(path->fd, attribute->narrow);
     else if (follow_symlinks)
         result = removexattr(path->narrow, attribute->narrow);
     else
         result = lremovexattr(path->narrow, attribute->narrow);
-    Py_END_ALLOW_THREADS;
+    ;
 
     if (result) {
         return path_error(path);
@@ -12317,14 +12317,14 @@ os_listxattr_impl(PyObject *module, path_t *path, int follow_symlinks)
             break;
         }
 
-        Py_BEGIN_ALLOW_THREADS;
+        ;
         if (path->fd > -1)
             length = flistxattr(path->fd, buffer, buffer_size);
         else if (follow_symlinks)
             length = listxattr(name, buffer, buffer_size);
         else
             length = llistxattr(name, buffer, buffer_size);
-        Py_END_ALLOW_THREADS;
+        ;
 
         if (length < 0) {
             if (errno == ERANGE) {
@@ -12387,9 +12387,9 @@ os_memfd_create_impl(PyObject *module, PyObject *name, unsigned int flags)
 {
     int fd;
     const char *bytes = PyBytes_AS_STRING(name);
-    Py_BEGIN_ALLOW_THREADS
+    
     fd = memfd_create(bytes, flags);
-    Py_END_ALLOW_THREADS
+    
     if (fd == -1) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
@@ -12560,9 +12560,9 @@ os_get_inheritable_impl(PyObject *module, int fd)
 /*[clinic end generated code: output=0445e20e149aa5b8 input=89ac008dc9ab6b95]*/
 {
     int return_value;
-    _Py_BEGIN_SUPPRESS_IPH
+    
     return_value = _Py_get_inheritable(fd);
-    _Py_END_SUPPRESS_IPH
+    
     return return_value;
 }
 
@@ -12582,9 +12582,9 @@ os_set_inheritable_impl(PyObject *module, int fd, int inheritable)
 {
     int result;
 
-    _Py_BEGIN_SUPPRESS_IPH
+    
     result = _Py_set_inheritable(fd, inheritable, NULL);
-    _Py_END_SUPPRESS_IPH
+    
     if (result < 0)
         return NULL;
     Py_RETURN_NONE;
@@ -12655,9 +12655,9 @@ os_get_blocking_impl(PyObject *module, int fd)
 {
     int blocking;
 
-    _Py_BEGIN_SUPPRESS_IPH
+    
     blocking = _Py_get_blocking(fd);
-    _Py_END_SUPPRESS_IPH
+    
     return blocking;
 }
 
@@ -12679,9 +12679,9 @@ os_set_blocking_impl(PyObject *module, int fd, int blocking)
 {
     int result;
 
-    _Py_BEGIN_SUPPRESS_IPH
+    
     result = _Py_set_blocking(fd, blocking);
-    _Py_END_SUPPRESS_IPH
+    
     if (result < 0)
         return NULL;
     Py_RETURN_NONE;
@@ -22131,9 +22131,9 @@ ScandirIterator_closedir(ScandirIterator *iterator)
         return;
 
     iterator->handle = INVALID_HANDLE_VALUE;
-    Py_BEGIN_ALLOW_THREADS
+    
     FindClose(handle);
-    Py_END_ALLOW_THREADS
+    
 }
 
 static PyObject *
@@ -22149,9 +22149,9 @@ ScandirIterator_iternext(ScandirIterator *iterator)
 
     while (1) {
         if (!iterator->first_time) {
-            Py_BEGIN_ALLOW_THREADS
+            
             success = FindNextFileW(iterator->handle, file_data);
-            Py_END_ALLOW_THREADS
+            
             if (!success) {
                 /* Error or no more files */
                 if (GetLastError() != ERROR_NO_MORE_FILES)
@@ -22197,13 +22197,13 @@ ScandirIterator_closedir(ScandirIterator *iterator)
         return;
 
     iterator->dirp = NULL;
-    Py_BEGIN_ALLOW_THREADS
+    
 #ifdef HAVE_FDOPENDIR
     if (iterator->path.fd != -1)
         rewinddir(dirp);
 #endif
     closedir(dirp);
-    Py_END_ALLOW_THREADS
+    
     return;
 }
 
@@ -22221,9 +22221,9 @@ ScandirIterator_iternext(ScandirIterator *iterator)
 
     while (1) {
         errno = 0;
-        Py_BEGIN_ALLOW_THREADS
+        
         direntp = readdir(iterator->dirp);
-        Py_END_ALLOW_THREADS
+        
 
         if (!direntp) {
             /* Error or no more files */
@@ -22394,9 +22394,9 @@ os_scandir_impl(PyObject *module, path_t *path)
     if (!path_strW)
         goto error;
 
-    Py_BEGIN_ALLOW_THREADS
+    
     iterator->handle = FindFirstFileW(path_strW, &iterator->file_data);
-    Py_END_ALLOW_THREADS
+    
 
     PyMem_Free(path_strW);
 
@@ -22413,9 +22413,9 @@ os_scandir_impl(PyObject *module, path_t *path)
         if (fd == -1)
             goto error;
 
-        Py_BEGIN_ALLOW_THREADS
+        
         iterator->dirp = fdopendir(fd);
-        Py_END_ALLOW_THREADS
+        
     }
     else
 #endif
@@ -22425,18 +22425,18 @@ os_scandir_impl(PyObject *module, path_t *path)
         else
             path_str = ".";
 
-        Py_BEGIN_ALLOW_THREADS
+        
         iterator->dirp = opendir(path_str);
-        Py_END_ALLOW_THREADS
+        
     }
 
     if (!iterator->dirp) {
         path_error(&iterator->path);
 #ifdef HAVE_FDOPENDIR
         if (fd != -1) {
-            Py_BEGIN_ALLOW_THREADS
+            
             close(fd);
-            Py_END_ALLOW_THREADS
+            
         }
 #endif
         goto error;
@@ -22615,14 +22615,14 @@ os__add_dll_directory_impl(PyObject *module, path_t *path)
     /* For Windows 7, we have to load this. As this will be a fairly
        infrequent operation, just do it each time. Kernel32 is always
        loaded. */
-    Py_BEGIN_ALLOW_THREADS
+    
     if (!(hKernel32 = GetModuleHandleW(L"kernel32")) ||
         !(AddDllDirectory = (PAddDllDirectory)GetProcAddress(
             hKernel32, "AddDllDirectory")) ||
         !(cookie = (*AddDllDirectory)(path->wide))) {
         err = GetLastError();
     }
-    Py_END_ALLOW_THREADS
+    
 
     if (err) {
         return win32_error_object_err("add_dll_directory",
@@ -22665,14 +22665,14 @@ os__remove_dll_directory_impl(PyObject *module, PyObject *cookie)
     /* For Windows 7, we have to load this. As this will be a fairly
        infrequent operation, just do it each time. Kernel32 is always
        loaded. */
-    Py_BEGIN_ALLOW_THREADS
+    
     if (!(hKernel32 = GetModuleHandleW(L"kernel32")) ||
         !(RemoveDllDirectory = (PRemoveDllDirectory)GetProcAddress(
             hKernel32, "RemoveDllDirectory")) ||
         !(*RemoveDllDirectory)(cookieValue)) {
         err = GetLastError();
     }
-    Py_END_ALLOW_THREADS
+    
 
     if (err) {
         return win32_error_object_err("remove_dll_directory",

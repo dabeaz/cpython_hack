@@ -170,18 +170,14 @@ PyObject_Print(PyObject *op, FILE *fp, int flags)
 #endif
     clearerr(fp); /* Clear any previous error condition */
     if (op == NULL) {
-        Py_BEGIN_ALLOW_THREADS
         fprintf(fp, "<nil>");
-        Py_END_ALLOW_THREADS
     }
     else {
         if (Py_REFCNT(op) <= 0) {
             /* XXX(twouters) cast refcount to long until %zd is
                universally available */
-            Py_BEGIN_ALLOW_THREADS
             fprintf(fp, "<refcnt %ld at %p>",
                 (long)Py_REFCNT(op), (void *)op);
-            Py_END_ALLOW_THREADS
         }
         else {
             PyObject *s;

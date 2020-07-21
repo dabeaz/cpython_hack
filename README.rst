@@ -49,7 +49,8 @@ Now what?  Still 75 days to go...
 - Day 38 (7/18/2020). First steps at demacroing. Py_DEBUG, Py_REF_TRACE, Py_REF_DEBUG gone.
 - Day 39 (7/19/2020). Removed _thread, urandom, import locking.
 - Day 40 (7/20/2020). SIGKILL signal handling.
-
+- Day 41 (7/21/2020). If you never release the GIL, does it exist?
+  
 Copyright and License Information
 ---------------------------------
 

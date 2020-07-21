@@ -189,11 +189,9 @@ dl_funcptr _PyImport_FindSharedFuncptrWindows(const char *prefix,
            to avoid DLL preloading attacks and enable use of the
            AddDllDirectory function. We add SEARCH_DLL_LOAD_DIR to
            ensure DLLs adjacent to the PYD are preferred. */
-        Py_BEGIN_ALLOW_THREADS
         hDLL = LoadLibraryExW(wpathname, NULL,
                               LOAD_LIBRARY_SEARCH_DEFAULT_DIRS |
                               LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR);
-        Py_END_ALLOW_THREADS
 
         /* restore old error mode settings */
         SetErrorMode(old_mode);
@@ -269,15 +267,11 @@ dl_funcptr _PyImport_FindSharedFuncptrWindows(const char *prefix,
                              "Module use of %.150s conflicts "
                              "with this version of Python.",
                              import_python);
-                Py_BEGIN_ALLOW_THREADS
                 FreeLibrary(hDLL);
-                Py_END_ALLOW_THREADS
                 return NULL;
             }
         }
-        Py_BEGIN_ALLOW_THREADS
         p = GetProcAddress(hDLL, funcname);
-        Py_END_ALLOW_THREADS
     }
 
     return p;

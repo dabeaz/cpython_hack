@@ -276,7 +276,6 @@ _enter_buffered_busy(buffered *self)
         return 0;
     }
     relax_locking = _Py_IsFinalizing();
-    Py_BEGIN_ALLOW_THREADS
     if (!relax_locking)
         st = PyThread_acquire_lock(self->lock, 1);
     else {
@@ -288,7 +287,7 @@ _enter_buffered_busy(buffered *self)
          */
         st = PyThread_acquire_lock_timed(self->lock, (PY_TIMEOUT_T)1e6, 0);
     }
-    Py_END_ALLOW_THREADS
+    
     if (relax_locking && st != PY_LOCK_ACQUIRED) {
         PyObject *ascii = PyObject_ASCII((PyObject*)self);
         _Py_FatalErrorFormat(__func__,
