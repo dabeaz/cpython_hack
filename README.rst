@@ -51,7 +51,8 @@ Now what?  Still 75 days to go...
 - Day 40 (7/20/2020). SIGKILL signal handling.
 - Day 41 (7/21/2020). If you never release the GIL, does it exist?
 - Day 42 (7/22/2020). Fork that!  fork, wait, spawn, exec, etc. gone.
-
+- Day 43 (7/23/2020). Pruned posix.  Many functions eliminated.
+  
 Copyright and License Information
 ---------------------------------
 
