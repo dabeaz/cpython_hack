@@ -53,7 +53,8 @@ Now what?  Still 75 days to go...
 - Day 42 (7/22/2020). Fork that!  fork, wait, spawn, exec, etc. gone.
 - Day 43 (7/23/2020). Pruned posix.  Many functions eliminated.
 - Day 44 (7/24/2020). Get! Out!  More posix pruning.
-
+- Day 45 (7/25/2020). Continued posix pruning.
+  
 Copyright and License Information
 ---------------------------------
 
