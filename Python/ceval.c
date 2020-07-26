@@ -4650,13 +4650,7 @@ _PyEval_SetProfile(PyThreadState *tstate, Py_tracefunc func, PyObject *arg)
     /* The caller must hold the GIL */
     assert(PyGILState_Check());
 
-    /* Call _PySys_Audit() in the context of the current thread state,
-       even if tstate is not the current thread state. */
     PyThreadState *current_tstate = _PyThreadState_GET();
-    if (_PySys_Audit(current_tstate, "sys.setprofile", NULL) < 0) {
-        return -1;
-    }
-
     PyObject *profileobj = tstate->c_profileobj;
 
     tstate->c_profilefunc = NULL;
@@ -4679,7 +4673,6 @@ PyEval_SetProfile(Py_tracefunc func, PyObject *arg)
 {
     PyThreadState *tstate = _PyThreadState_GET();
     if (_PyEval_SetProfile(tstate, func, arg) < 0) {
-        /* Log _PySys_Audit() error */
         _PyErr_WriteUnraisableMsg("in PyEval_SetProfile", NULL);
     }
 }
@@ -4691,13 +4684,7 @@ _PyEval_SetTrace(PyThreadState *tstate, Py_tracefunc func, PyObject *arg)
     /* The caller must hold the GIL */
     assert(PyGILState_Check());
 
-    /* Call _PySys_Audit() in the context of the current thread state,
-       even if tstate is not the current thread state. */
     PyThreadState *current_tstate = _PyThreadState_GET();
-    if (_PySys_Audit(current_tstate, "sys.settrace", NULL) < 0) {
-        return -1;
-    }
-
     struct _ceval_state *ceval2 = &tstate->interp->ceval;
     PyObject *traceobj = tstate->c_traceobj;
     ceval2->tracing_possible += (func != NULL) - (tstate->c_tracefunc != NULL);
@@ -4724,7 +4711,6 @@ PyEval_SetTrace(Py_tracefunc func, PyObject *arg)
 {
     PyThreadState *tstate = _PyThreadState_GET();
     if (_PyEval_SetTrace(tstate, func, arg) < 0) {
-        /* Log _PySys_Audit() error */
         _PyErr_WriteUnraisableMsg("in PyEval_SetTrace", NULL);
     }
 }
@@ -4749,10 +4735,6 @@ _PyEval_SetAsyncGenFirstiter(PyObject *firstiter)
 {
     PyThreadState *tstate = _PyThreadState_GET();
 
-    if (_PySys_Audit(tstate, "sys.set_asyncgen_hook_firstiter", NULL) < 0) {
-        return -1;
-    }
-
     Py_XINCREF(firstiter);
     Py_XSETREF(tstate->async_gen_firstiter, firstiter);
     return 0;
@@ -4769,10 +4751,6 @@ int
 _PyEval_SetAsyncGenFinalizer(PyObject *finalizer)
 {
     PyThreadState *tstate = _PyThreadState_GET();
-
-    if (_PySys_Audit(tstate, "sys.set_asyncgen_hook_finalizer", NULL) < 0) {
-        return -1;
-    }
 
     Py_XINCREF(finalizer);
     Py_XSETREF(tstate->async_gen_finalizer, finalizer);

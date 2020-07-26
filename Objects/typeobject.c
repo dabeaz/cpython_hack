@@ -680,11 +680,6 @@ check_set_special_type_attr(PyTypeObject *type, PyObject *value, const char *nam
         return 0;
     }
 
-    if (PySys_Audit("object.__setattr__", "OsO",
-                    type, name, value) < 0) {
-        return 0;
-    }
-
     return 1;
 }
 
@@ -4357,10 +4352,6 @@ object_set_class(PyObject *self, PyObject *value, void *closure)
         PyErr_Format(PyExc_TypeError,
           "__class__ must be set to a class, not '%s' object",
           Py_TYPE(value)->tp_name);
-        return -1;
-    }
-    if (PySys_Audit("object.__setattr__", "OsO",
-                    self, "__class__", value) < 0) {
         return -1;
     }
 

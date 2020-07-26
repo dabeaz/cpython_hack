@@ -1317,10 +1317,6 @@ builtin_breakpoint(PyObject *self, PyObject *const *args, Py_ssize_t nargs, PyOb
         return NULL;
     }
 
-    if (PySys_Audit("builtins.breakpoint", "O", hook) < 0) {
-        return NULL;
-    }
-
     Py_INCREF(hook);
     PyObject *retval = PyObject_Vectorcall(hook, args, nargs, keywords);
     Py_DECREF(hook);
@@ -1767,9 +1763,6 @@ builtin_eval_impl(PyObject *module, PyObject *source, PyObject *globals,
     }
 
     if (PyCode_Check(source)) {
-        if (PySys_Audit("exec", "O", source) < 0) {
-            return NULL;
-        }
 
         if (PyCode_GetNumFree((PyCodeObject *)source) > 0) {
             PyErr_SetString(PyExc_TypeError,
@@ -1855,9 +1848,6 @@ builtin_exec_impl(PyObject *module, PyObject *source, PyObject *globals,
     }
 
     if (PyCode_Check(source)) {
-        if (PySys_Audit("exec", "O", source) < 0) {
-            return NULL;
-        }
 
         if (PyCode_GetNumFree((PyCodeObject *)source) > 0) {
             PyErr_SetString(PyExc_TypeError,
@@ -2005,12 +1995,6 @@ builtin_id(PyModuleDef *self, PyObject *v)
 /*[clinic end generated code: output=0aa640785f697f65 input=5a534136419631f4]*/
 {
     PyObject *id = PyLong_FromVoidPtr(v);
-
-    if (id && PySys_Audit("builtins.id", "O", id) < 0) {
-        Py_DECREF(id);
-        return NULL;
-    }
-
     return id;
 }
 
@@ -2789,10 +2773,6 @@ builtin_input_impl(PyObject *module, PyObject *prompt)
         return NULL;
     }
 
-    if (PySys_Audit("builtins.input", "O", prompt ? prompt : Py_None) < 0) {
-        return NULL;
-    }
-
     /* First of all, flush stderr */
     tmp = _PyObject_CallMethodIdNoArgs(ferr, &PyId_flush);
     if (tmp == NULL)
@@ -2923,12 +2903,6 @@ builtin_input_impl(PyObject *module, PyObject *prompt)
         Py_DECREF(stdin_errors);
         Py_XDECREF(po);
         PyMem_FREE(s);
-
-        if (result != NULL) {
-            if (PySys_Audit("builtins.input/result", "O", result) < 0) {
-                return NULL;
-            }
-        }
 
         return result;
 

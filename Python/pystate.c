@@ -163,9 +163,6 @@ PyInterpreterState_New(void)
     PyThreadState *tstate = _PyThreadState_GET();
     /* tstate is NULL when Py_InitializeFromConfig() calls
        PyInterpreterState_New() to create the main interpreter. */
-    if (_PySys_Audit(tstate, "cpython.PyInterpreterState_New", NULL) < 0) {
-        return NULL;
-    }
 
     PyInterpreterState *interp = PyMem_RawCalloc(1, sizeof(PyInterpreterState));
     if (interp == NULL) {
@@ -245,9 +242,6 @@ PyInterpreterState_Clear(PyInterpreterState *interp)
     /* Use the current Python thread state to call audit hooks,
        not the current Python thread state of 'interp'. */
     PyThreadState *tstate = _PyThreadState_GET();
-    if (_PySys_Audit(tstate, "cpython.PyInterpreterState_Clear", NULL) < 0) {
-        _PyErr_Clear(tstate);
-    }
 
     HEAD_LOCK(runtime);
     for (PyThreadState *p = interp->tstate_head; p != NULL; p = p->next) {
@@ -1040,9 +1034,6 @@ PyObject *
 _PyThread_CurrentFrames(void)
 {
     PyThreadState *tstate = _PyThreadState_GET();
-    if (_PySys_Audit(tstate, "sys._current_frames", NULL) < 0) {
-        return NULL;
-    }
 
     PyObject *result = PyDict_New();
     if (result == NULL) {

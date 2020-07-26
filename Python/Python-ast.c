@@ -10426,10 +10426,6 @@ mod_ty PyAST_obj2mod(PyObject* ast, PyArena* arena, int mode)
     const char * const req_name[] = {"Module", "Expression", "Interactive"};
     int isinstance;
 
-    if (PySys_Audit("compile", "OO", ast, Py_None) < 0) {
-        return NULL;
-    }
-
     req_type[0] = astmodulestate_global->Module_type;
     req_type[1] = astmodulestate_global->Expression_type;
     req_type[2] = astmodulestate_global->Interactive_type;

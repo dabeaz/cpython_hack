@@ -2059,13 +2059,6 @@ import_find_and_load(PyThreadState *tstate, PyObject *abs_name)
     PyObject *sys_path = PySys_GetObject("path");
     PyObject *sys_meta_path = PySys_GetObject("meta_path");
     PyObject *sys_path_hooks = PySys_GetObject("path_hooks");
-    if (_PySys_Audit(tstate, "import", "OOOOO",
-                     abs_name, Py_None, sys_path ? sys_path : Py_None,
-                     sys_meta_path ? sys_meta_path : Py_None,
-                     sys_path_hooks ? sys_path_hooks : Py_None) < 0) {
-        return NULL;
-    }
-
 
     /* XOptions is initialized after first some imports.
      * So we can't have negative cache before completed initialization.

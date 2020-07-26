@@ -524,10 +524,6 @@ PyTypeObject PyStdPrinter_Type = {
 
 int
 PyFile_SetOpenCodeHook(Py_OpenCodeHookFunction hook, void *userData) {
-    if (Py_IsInitialized() &&
-        PySys_Audit("setopencodehook", NULL) < 0) {
-        return -1;
-    }
 
     if (_PyRuntime.open_code_hook) {
         if (Py_IsInitialized()) {

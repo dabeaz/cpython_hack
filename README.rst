@@ -54,7 +54,8 @@ Now what?  Still 75 days to go...
 - Day 43 (7/23/2020). Pruned posix.  Many functions eliminated.
 - Day 44 (7/24/2020). Get! Out!  More posix pruning.
 - Day 45 (7/25/2020). Continued posix pruning.
-  
+- Day 46 (7/26/2020). No, you can't audit it.
+
 Copyright and License Information
 ---------------------------------
 

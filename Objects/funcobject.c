@@ -247,10 +247,6 @@ static PyMemberDef func_memberlist[] = {
 static PyObject *
 func_get_code(PyFunctionObject *op, void *Py_UNUSED(ignored))
 {
-    if (PySys_Audit("object.__getattr__", "Os", op, "__code__") < 0) {
-        return NULL;
-    }
-
     Py_INCREF(op->func_code);
     return op->func_code;
 }
@@ -267,12 +263,6 @@ func_set_code(PyFunctionObject *op, PyObject *value, void *Py_UNUSED(ignored))
                         "__code__ must be set to a code object");
         return -1;
     }
-
-    if (PySys_Audit("object.__setattr__", "OsO",
-                    op, "__code__", value) < 0) {
-        return -1;
-    }
-
     nfree = PyCode_GetNumFree((PyCodeObject *)value);
     nclosure = (op->func_closure == NULL ? 0 :
             PyTuple_GET_SIZE(op->func_closure));
@@ -336,9 +326,6 @@ func_set_qualname(PyFunctionObject *op, PyObject *value, void *Py_UNUSED(ignored
 static PyObject *
 func_get_defaults(PyFunctionObject *op, void *Py_UNUSED(ignored))
 {
-    if (PySys_Audit("object.__getattr__", "Os", op, "__defaults__") < 0) {
-        return NULL;
-    }
     if (op->func_defaults == NULL) {
         Py_RETURN_NONE;
     }
@@ -358,15 +345,6 @@ func_set_defaults(PyFunctionObject *op, PyObject *value, void *Py_UNUSED(ignored
                         "__defaults__ must be set to a tuple object");
         return -1;
     }
-    if (value) {
-        if (PySys_Audit("object.__setattr__", "OsO",
-                        op, "__defaults__", value) < 0) {
-            return -1;
-        }
-    } else if (PySys_Audit("object.__delattr__", "Os",
-                           op, "__defaults__") < 0) {
-        return -1;
-    }
 
     Py_XINCREF(value);
     Py_XSETREF(op->func_defaults, value);
@@ -376,10 +354,6 @@ func_set_defaults(PyFunctionObject *op, PyObject *value, void *Py_UNUSED(ignored
 static PyObject *
 func_get_kwdefaults(PyFunctionObject *op, void *Py_UNUSED(ignored))
 {
-    if (PySys_Audit("object.__getattr__", "Os",
-                    op, "__kwdefaults__") < 0) {
-        return NULL;
-    }
     if (op->func_kwdefaults == NULL) {
         Py_RETURN_NONE;
     }
@@ -397,15 +371,6 @@ func_set_kwdefaults(PyFunctionObject *op, PyObject *value, void *Py_UNUSED(ignor
     if (value != NULL && !PyDict_Check(value)) {
         PyErr_SetString(PyExc_TypeError,
             "__kwdefaults__ must be set to a dict object");
-        return -1;
-    }
-    if (value) {
-        if (PySys_Audit("object.__setattr__", "OsO",
-                        op, "__kwdefaults__", value) < 0) {
-            return -1;
-        }
-    } else if (PySys_Audit("object.__delattr__", "Os",
-                           op, "__kwdefaults__") < 0) {
         return -1;
     }
 
@@ -619,10 +584,6 @@ func_new_impl(PyTypeObject *type, PyCodeObject *code, PyObject *globals,
             }
         }
     }
-    if (PySys_Audit("function.__new__", "O", code) < 0) {
-        return NULL;
-    }
-
     newfunc = (PyFunctionObject *)PyFunction_New((PyObject *)code,
                                                  globals);
     if (newfunc == NULL)

@@ -18,7 +18,6 @@
 #include "pycore_pyerrors.h"      // _PyErr_Fetch
 #include "pycore_pylifecycle.h"   // _Py_UnhandledKeyboardInterrupt
 #include "pycore_pystate.h"       // _PyInterpreterState_GET()
-#include "pycore_sysmodule.h"     // _PySys_Audit()
 
 #include "node.h"                 // node
 #include "token.h"                // INDENT
@@ -687,14 +686,6 @@ _PyErr_PrintEx(PyThreadState *tstate, int set_sys_last_vars)
         }
     }
     hook = _PySys_GetObjectId(&PyId_excepthook);
-    if (_PySys_Audit(tstate, "sys.excepthook", "OOOO", hook ? hook : Py_None,
-                     exception, v, tb) < 0) {
-        if (PyErr_ExceptionMatches(PyExc_RuntimeError)) {
-            PyErr_Clear();
-            goto done;
-        }
-        _PyErr_WriteUnraisableMsg("in audit hook", NULL);
-    }
     if (hook) {
         PyObject* stack[3];
         PyObject *result;
@@ -1131,11 +1122,6 @@ run_mod(mod_ty mod, PyObject *filename, PyObject *globals, PyObject *locals,
     PyCodeObject *co = PyAST_CompileObject(mod, filename, flags, -1, arena);
     if (co == NULL)
         return NULL;
-
-    if (_PySys_Audit(tstate, "exec", "O", co) < 0) {
-        Py_DECREF(co);
-        return NULL;
-    }
 
     PyObject *v = run_eval_code_obj(tstate, co, globals, locals);
     Py_DECREF(co);

@@ -7,23 +7,9 @@
    of the compiler used.  Different compilers define their own feature
    test macro, e.g. '_MSC_VER'. */
 
-#ifdef __APPLE__
-   /*
-    * Step 1 of support for weak-linking a number of symbols existing on
-    * OSX 10.4 and later, see the comment in the #ifdef __APPLE__ block
-    * at the end of this file for more information.
-    */
-#  pragma weak lchown
-#  pragma weak statvfs
-#  pragma weak fstatvfs
-
-#endif /* __APPLE__ */
-
 #define PY_SSIZE_T_CLEAN
 
 #include "Python.h"
-#include "pycore_ceval.h"         // _PyEval_ReInitThreads()
-#include "pycore_import.h"        // _PyImport_ReInitLock()
 #include "pycore_initconfig.h"    // _PyStatus_EXCEPTION()
 #include "pycore_pystate.h"       // _PyInterpreterState_GET()
 #include "structmember.h"         // PyMemberDef
@@ -42,15 +28,6 @@ disguised Unix interface).  Refer to the library manual and\n\
 corresponding Unix manual entries for more information on calls.");
 
 
-#ifdef HAVE_SYS_UIO_H
-#  include <sys/uio.h>
-#endif
-
-#ifdef HAVE_SYS_SYSMACROS_H
-/* GNU C Library: major(), minor(), makedev() */
-#  include <sys/sysmacros.h>
-#endif
-
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif /* HAVE_SYS_TYPES_H */
@@ -58,13 +35,6 @@ corresponding Unix manual entries for more information on calls.");
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif /* HAVE_SYS_STAT_H */
-
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>           // WNOHANG
-#endif
-#ifdef HAVE_LINUX_WAIT_H
-#  include <linux/wait.h>         // P_PIDFD
-#endif
 
 #ifdef HAVE_SIGNAL_H
 #  include <signal.h>
@@ -74,116 +44,10 @@ corresponding Unix manual entries for more information on calls.");
 #  include <fcntl.h>
 #endif
 
-#ifdef HAVE_GRP_H
-#  include <grp.h>
-#endif
-
-#ifdef HAVE_SYSEXITS_H
-#  include <sysexits.h>
-#endif
-
-#ifdef HAVE_SYS_LOADAVG_H
-#  include <sys/loadavg.h>
-#endif
-
-#ifdef HAVE_SYS_SENDFILE_H
-#  include <sys/sendfile.h>
-#endif
-
-#if defined(__APPLE__)
-#  include <copyfile.h>
-#endif
-
-
-#if defined(HAVE_SYS_XATTR_H) && defined(__GLIBC__) && !defined(__FreeBSD_kernel__) && !defined(__GNU__)
-#  define USE_XATTRS
-#endif
-
-#ifdef USE_XATTRS
-#  include <sys/xattr.h>
-#endif
-
-#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__APPLE__)
-#  ifdef HAVE_SYS_SOCKET_H
-#    include <sys/socket.h>
-#  endif
-#endif
 
 #ifdef HAVE_DLFCN_H
 #  include <dlfcn.h>
 #endif
-
-#ifdef __hpux
-#  include <sys/mpctl.h>
-#endif
-
-#if defined(__DragonFly__) || \
-    defined(__OpenBSD__)   || \
-    defined(__FreeBSD__)   || \
-    defined(__NetBSD__)    || \
-    defined(__APPLE__)
-#  include <sys/sysctl.h>
-#endif
-
-#ifdef HAVE_LINUX_RANDOM_H
-#  include <linux/random.h>
-#endif
-#ifdef HAVE_GETRANDOM_SYSCALL
-#  include <sys/syscall.h>
-#endif
-
-#if defined(HAVE_SYS_IOCTL_H)
-#  include <sys/ioctl.h>
-#  if defined(HAVE_TERMIOS_H)
-#    include <termios.h>
-#  endif
-#  if defined(TIOCGWINSZ)
-#    define TERMSIZE_USE_IOCTL
-#  endif
-#endif
-
-/* Various compilers have only certain posix functions */
-/* XXX Gosh I wish these were all moved into pyconfig.h */
-#if defined(__WATCOMC__) && !defined(__QNX__)           /* Watcom compiler */
-#  define HAVE_OPENDIR    1
-#  define HAVE_SYSTEM     1
-#  include <process.h>
-#else
-#  ifdef _MSC_VER
-     /* Microsoft compiler */
-#    define HAVE_GETPPID    1
-#    define HAVE_GETLOGIN   1
-#    define HAVE_SPAWNV     1
-#    define HAVE_EXECV      1
-#    define HAVE_WSPAWNV    1
-#    define HAVE_WEXECV     1
-#    define HAVE_PIPE       1
-#    define HAVE_SYSTEM     1
-#    define HAVE_CWAIT      1
-#    define HAVE_FSYNC      1
-#    define fsync _commit
-#  else
-     /* Unix functions that the configure script doesn't check for */
-#    ifndef __VXWORKS__
-#      define HAVE_EXECV      1
-#      define HAVE_FORK       1
-#      if defined(__USLC__) && defined(__SCO_VERSION__)       /* SCO UDK Compiler */
-#        define HAVE_FORK1      1
-#      endif
-#    endif
-#    define HAVE_GETEGID    1
-#    define HAVE_GETEUID    1
-#    define HAVE_GETGID     1
-#    define HAVE_GETPPID    1
-#    define HAVE_GETUID     1
-#    define HAVE_KILL       1
-#    define HAVE_OPENDIR    1
-#    define HAVE_PIPE       1
-#    define HAVE_SYSTEM     1
-#    define HAVE_WAIT       1
-#    define HAVE_TTYNAME    1
-#  endif  /* _MSC_VER */
-#endif  /* ! __WATCOMC__ || __QNX__ */
 
 _Py_IDENTIFIER(__fspath__);
 
@@ -634,7 +498,6 @@ dir_fd_converter(PyObject *o, void *p)
 typedef struct {
     PyObject *billion;
     PyObject *StatResultType;
-    PyObject *StatVFSResultType;
     PyObject *st_mode;
 } _posixstate;
 
@@ -1333,13 +1196,6 @@ static PyStructSequence_Field statvfs_result_fields[] = {
     {0}
 };
 
-static PyStructSequence_Desc statvfs_result_desc = {
-    "statvfs_result", /* name */
-    statvfs_result__doc__, /* doc */
-    statvfs_result_fields,
-    10
-};
-
 static newfunc structseq_new;
 
 static PyObject *
@@ -1370,7 +1226,6 @@ _posix_clear(PyObject *module)
     _posixstate *state = get_posix_state(module);
     Py_CLEAR(state->billion);
     Py_CLEAR(state->StatResultType);
-    Py_CLEAR(state->StatVFSResultType);
     Py_CLEAR(state->st_mode);
     return 0;
 }
@@ -1381,7 +1236,6 @@ _posix_traverse(PyObject *module, visitproc visit, void *arg)
     _posixstate *state = get_posix_state(module);
     Py_VISIT(state->billion);
     Py_VISIT(state->StatResultType);
-    Py_VISIT(state->StatVFSResultType);
     Py_VISIT(state->st_mode);
     return 0;
 }
@@ -1722,12 +1576,6 @@ FTRUNCATE
     #define PATH_HAVE_FEXECVE 0
 #endif
 
-#ifdef HAVE_FSTATVFS
-    #define PATH_HAVE_FSTATVFS 1
-#else
-    #define PATH_HAVE_FSTATVFS 0
-#endif
-
 #ifdef HAVE_FTRUNCATE
     #define PATH_HAVE_FTRUNCATE 1
 #else
@@ -1934,10 +1782,6 @@ os_chdir_impl(PyObject *module, path_t *path)
 /*[clinic end generated code: output=3be6400eee26eaae input=1a4a15b4d12cb15d]*/
 {
     int result;
-
-    if (PySys_Audit("os.chdir", "(O)", path->object) < 0) {
-        return NULL;
-    }
 
 #ifdef HAVE_FCHDIR
     if (path->fd != -1)
@@ -2165,10 +2009,6 @@ static PyObject *
 os_listdir_impl(PyObject *module, path_t *path)
 /*[clinic end generated code: output=293045673fcd1a75 input=e3f58030f538295d]*/
 {
-    if (PySys_Audit("os.listdir", "O",
-                    path->object ? path->object : Py_None) < 0) {
-        return NULL;
-    }
     return _posix_listdir(path, NULL);
 }
 
@@ -2200,11 +2040,6 @@ os_mkdir_impl(PyObject *module, path_t *path, int mode, int dir_fd)
 /*[clinic end generated code: output=a70446903abe821f input=e965f68377e9b1ce]*/
 {
     int result;
-
-    if (PySys_Audit("os.mkdir", "Oii", path->object, mode,
-                    dir_fd == DEFAULT_DIR_FD ? -1 : dir_fd) < 0) {
-        return NULL;
-    }
     
 #if HAVE_MKDIRAT
     if (dir_fd != DEFAULT_DIR_FD)
@@ -2243,12 +2078,6 @@ internal_rename(path_t *src, path_t *dst, int src_dir_fd, int dst_dir_fd, int is
         return NULL;
     }
 #endif
-
-    if (PySys_Audit("os.rename", "OOii", src->object, dst->object,
-                    src_dir_fd == DEFAULT_DIR_FD ? -1 : src_dir_fd,
-                    dst_dir_fd == DEFAULT_DIR_FD ? -1 : dst_dir_fd) < 0) {
-        return NULL;
-    }
     if ((src->narrow && dst->wide) || (src->wide && dst->narrow)) {
         PyErr_Format(PyExc_ValueError,
                      "%s: src and dst must be the same type", function_name);
@@ -2337,11 +2166,6 @@ os_rmdir_impl(PyObject *module, path_t *path, int dir_fd)
 /*[clinic end generated code: output=080eb54f506e8301 input=38c8b375ca34a7e2]*/
 {
     int result;
-
-    if (PySys_Audit("os.rmdir", "Oi", path->object,
-                    dir_fd == DEFAULT_DIR_FD ? -1 : dir_fd) < 0) {
-        return NULL;
-    }
 #ifdef HAVE_UNLINKAT
     if (dir_fd != DEFAULT_DIR_FD)
         result = unlinkat(dir_fd, path->narrow, AT_REMOVEDIR);
@@ -2371,11 +2195,6 @@ os_system_impl(PyObject *module, PyObject *command)
 {
     long result;
     const char *bytes = PyBytes_AsString(command);
-
-    if (PySys_Audit("os.system", "(O)", command) < 0) {
-        return -1;
-    }
-
     
     result = system(bytes);
     
@@ -2405,13 +2224,6 @@ os_unlink_impl(PyObject *module, path_t *path, int dir_fd)
 /*[clinic end generated code: output=621797807b9963b1 input=d7bcde2b1b2a2552]*/
 {
     int result;
-
-    if (PySys_Audit("os.remove", "Oi", path->object,
-                    dir_fd == DEFAULT_DIR_FD ? -1 : dir_fd) < 0) {
-        return NULL;
-    }
-
-    
     
 #ifdef HAVE_UNLINKAT
     if (dir_fd != DEFAULT_DIR_FD)
@@ -2499,31 +2311,6 @@ os__exit_impl(PyObject *module, int status)
 #endif
 #endif /* defined(HAVE_OPENPTY) || defined(HAVE_FORKPTY) || defined(HAVE_DEV_PTMX) */
 
-#ifdef HAVE_PLOCK
-#ifdef HAVE_SYS_LOCK_H
-#include <sys/lock.h>
-#endif
-
-/*[clinic input]
-os.plock
-    op: int
-    /
-
-Lock program segments into memory.");
-[clinic start generated code]*/
-
-static PyObject *
-os_plock_impl(PyObject *module, int op)
-/*[clinic end generated code: output=81424167033b168e input=e6e5e348e1525f60]*/
-{
-    if (plock(op) == -1)
-        return posix_error();
-    Py_RETURN_NONE;
-}
-#endif /* HAVE_PLOCK */
-
-
-
 /* Functions acting on file descriptors */
 
 #ifdef O_CLOEXEC
@@ -2565,11 +2352,6 @@ os_open_impl(PyObject *module, path_t *path, int flags, int mode, int dir_fd)
 #if defined(O_CLOEXEC)
     flags |= O_CLOEXEC;
 #endif
-
-    if (PySys_Audit("open", "OOi", path->object, Py_None, flags) < 0) {
-        return -1;
-    }
-
     
     do {
         
@@ -2801,10 +2583,6 @@ os_putenv_impl(PyObject *module, PyObject *name, PyObject *value)
         return NULL;
     }
 
-    if (PySys_Audit("os.putenv", "OO", name, value) < 0) {
-        return NULL;
-    }
-
     if (setenv(name_string, value_string, 1)) {
         return posix_error();
     }
@@ -2822,9 +2600,6 @@ static PyObject *
 os_unsetenv_impl(PyObject *module, PyObject *name)
 /*[clinic end generated code: output=54c4137ab1834f02 input=2bb5288a599c7107]*/
 {
-    if (PySys_Audit("os.unsetenv", "(O)", name) < 0) {
-        return NULL;
-    }
 #ifdef HAVE_BROKEN_UNSETENV
     unsetenv(PyBytes_AS_STRING(name));
 #else
@@ -2857,159 +2632,6 @@ os_strerror_impl(PyObject *module, int code)
         return NULL;
     }
     return PyUnicode_DecodeLocale(message, "surrogateescape");
-}
-
-
-#if defined(HAVE_FSTATVFS) && defined(HAVE_SYS_STATVFS_H)
-#ifdef _SCO_DS
-/* SCO OpenServer 5.0 and later requires _SVID3 before it reveals the
-   needed definitions in sys/statvfs.h */
-#define _SVID3
-#endif
-#include <sys/statvfs.h>
-
-static PyObject*
-_pystatvfs_fromstructstatvfs(PyObject *module, struct statvfs st) {
-    PyObject *StatVFSResultType = get_posix_state(module)->StatVFSResultType;
-    PyObject *v = PyStructSequence_New((PyTypeObject *)StatVFSResultType);
-    if (v == NULL)
-        return NULL;
-
-#if !defined(HAVE_LARGEFILE_SUPPORT)
-    PyStructSequence_SET_ITEM(v, 0, PyLong_FromLong((long) st.f_bsize));
-    PyStructSequence_SET_ITEM(v, 1, PyLong_FromLong((long) st.f_frsize));
-    PyStructSequence_SET_ITEM(v, 2, PyLong_FromLong((long) st.f_blocks));
-    PyStructSequence_SET_ITEM(v, 3, PyLong_FromLong((long) st.f_bfree));
-    PyStructSequence_SET_ITEM(v, 4, PyLong_FromLong((long) st.f_bavail));
-    PyStructSequence_SET_ITEM(v, 5, PyLong_FromLong((long) st.f_files));
-    PyStructSequence_SET_ITEM(v, 6, PyLong_FromLong((long) st.f_ffree));
-    PyStructSequence_SET_ITEM(v, 7, PyLong_FromLong((long) st.f_favail));
-    PyStructSequence_SET_ITEM(v, 8, PyLong_FromLong((long) st.f_flag));
-    PyStructSequence_SET_ITEM(v, 9, PyLong_FromLong((long) st.f_namemax));
-#else
-    PyStructSequence_SET_ITEM(v, 0, PyLong_FromLong((long) st.f_bsize));
-    PyStructSequence_SET_ITEM(v, 1, PyLong_FromLong((long) st.f_frsize));
-    PyStructSequence_SET_ITEM(v, 2,
-                              PyLong_FromLongLong((long long) st.f_blocks));
-    PyStructSequence_SET_ITEM(v, 3,
-                              PyLong_FromLongLong((long long) st.f_bfree));
-    PyStructSequence_SET_ITEM(v, 4,
-                              PyLong_FromLongLong((long long) st.f_bavail));
-    PyStructSequence_SET_ITEM(v, 5,
-                              PyLong_FromLongLong((long long) st.f_files));
-    PyStructSequence_SET_ITEM(v, 6,
-                              PyLong_FromLongLong((long long) st.f_ffree));
-    PyStructSequence_SET_ITEM(v, 7,
-                              PyLong_FromLongLong((long long) st.f_favail));
-    PyStructSequence_SET_ITEM(v, 8, PyLong_FromLong((long) st.f_flag));
-    PyStructSequence_SET_ITEM(v, 9, PyLong_FromLong((long) st.f_namemax));
-#endif
-    PyStructSequence_SET_ITEM(v, 10, PyLong_FromUnsignedLong(st.f_fsid));
-    if (PyErr_Occurred()) {
-        Py_DECREF(v);
-        return NULL;
-    }
-
-    return v;
-}
-
-
-/*[clinic input]
-os.fstatvfs
-    fd: int
-    /
-
-Perform an fstatvfs system call on the given fd.
-
-Equivalent to statvfs(fd).
-[clinic start generated code]*/
-
-static PyObject *
-os_fstatvfs_impl(PyObject *module, int fd)
-/*[clinic end generated code: output=53547cf0cc55e6c5 input=d8122243ac50975e]*/
-{
-    int result;
-    int async_err = 0;
-    struct statvfs st;
-
-    do {
-        
-        result = fstatvfs(fd, &st);
-        
-	  } while (result != 0 && errno == EINTR); // &&
-    //             !(async_err = PyErr_CheckSignals()));
-    if (result != 0)
-        return (!async_err) ? posix_error() : NULL;
-
-    return _pystatvfs_fromstructstatvfs(module, st);
-}
-#endif /* defined(HAVE_FSTATVFS) && defined(HAVE_SYS_STATVFS_H) */
-
-
-#if defined(HAVE_STATVFS) && defined(HAVE_SYS_STATVFS_H)
-#include <sys/statvfs.h>
-/*[clinic input]
-os.statvfs
-
-    path: path_t(allow_fd='PATH_HAVE_FSTATVFS')
-
-Perform a statvfs system call on the given path.
-
-path may always be specified as a string.
-On some platforms, path may also be specified as an open file descriptor.
-  If this functionality is unavailable, using it raises an exception.
-[clinic start generated code]*/
-
-static PyObject *
-os_statvfs_impl(PyObject *module, path_t *path)
-/*[clinic end generated code: output=87106dd1beb8556e input=3f5c35791c669bd9]*/
-{
-    int result;
-    struct statvfs st;
-
-    
-#ifdef HAVE_FSTATVFS
-    if (path->fd != -1) {
-#ifdef __APPLE__
-        /* handle weak-linking on Mac OS X 10.3 */
-        if (fstatvfs == NULL) {
-            fd_specified("statvfs", path->fd);
-            return NULL;
-        }
-#endif
-        result = fstatvfs(path->fd, &st);
-    }
-    else
-#endif
-        result = statvfs(path->narrow, &st);
-    
-
-    if (result) {
-        return path_error(path);
-    }
-
-    return _pystatvfs_fromstructstatvfs(module, st);
-}
-#endif /* defined(HAVE_STATVFS) && defined(HAVE_SYS_STATVFS_H) */
-
-
-/* This is used for fpathconf(), pathconf(), confstr() and sysconf().
- * It maps strings representing configuration variable names to
- * integer values, allowing those functions to be called with the
- * magic names instead of polluting the module's namespace with tons of
- * rarely-used constants.  There are three separate tables that use
- * these definitions.
- *
- * This code is always included, even if none of the interfaces that
- * need it are included.  The #if hackery needed to avoid it would be
- * sufficiently pervasive that it's not worth the loss of readability.
- */
-
-/* Return -1 on failure, 0 on success. */
-static int
-setup_confname_tables(PyObject *module)
-{
-    return 0;
 }
 
 
@@ -3732,39 +3354,6 @@ exit:
     return return_value;
 }
 
-#if defined(HAVE_PLOCK)
-
-PyDoc_STRVAR(os_plock__doc__,
-"plock($module, op, /)\n"
-"--\n"
-"\n"
-"Lock program segments into memory.\");");
-
-#define OS_PLOCK_METHODDEF    \
-    {"plock", (PyCFunction)os_plock, METH_O, os_plock__doc__},
-
-static PyObject *
-os_plock_impl(PyObject *module, int op);
-
-static PyObject *
-os_plock(PyObject *module, PyObject *arg)
-{
-    PyObject *return_value = NULL;
-    int op;
-
-    op = _PyLong_AsInt(arg);
-    if (op == -1 && PyErr_Occurred()) {
-        goto exit;
-    }
-    return_value = os_plock_impl(module, op);
-
-exit:
-    return return_value;
-}
-
-#endif /* defined(HAVE_PLOCK) */
-
-
 PyDoc_STRVAR(os_open__doc__,
 "open($module, /, path, flags, mode=511, *, dir_fd=None)\n"
 "--\n"
@@ -4231,85 +3820,6 @@ exit:
     return return_value;
 }
 
-#if (defined(HAVE_FSTATVFS) && defined(HAVE_SYS_STATVFS_H))
-
-PyDoc_STRVAR(os_fstatvfs__doc__,
-"fstatvfs($module, fd, /)\n"
-"--\n"
-"\n"
-"Perform an fstatvfs system call on the given fd.\n"
-"\n"
-"Equivalent to statvfs(fd).");
-
-#define OS_FSTATVFS_METHODDEF    \
-    {"fstatvfs", (PyCFunction)os_fstatvfs, METH_O, os_fstatvfs__doc__},
-
-static PyObject *
-os_fstatvfs_impl(PyObject *module, int fd);
-
-static PyObject *
-os_fstatvfs(PyObject *module, PyObject *arg)
-{
-    PyObject *return_value = NULL;
-    int fd;
-
-    fd = _PyLong_AsInt(arg);
-    if (fd == -1 && PyErr_Occurred()) {
-        goto exit;
-    }
-    return_value = os_fstatvfs_impl(module, fd);
-
-exit:
-    return return_value;
-}
-
-#endif /* (defined(HAVE_FSTATVFS) && defined(HAVE_SYS_STATVFS_H)) */
-
-#if (defined(HAVE_STATVFS) && defined(HAVE_SYS_STATVFS_H))
-
-PyDoc_STRVAR(os_statvfs__doc__,
-"statvfs($module, /, path)\n"
-"--\n"
-"\n"
-"Perform a statvfs system call on the given path.\n"
-"\n"
-"path may always be specified as a string.\n"
-"On some platforms, path may also be specified as an open file descriptor.\n"
-"  If this functionality is unavailable, using it raises an exception.");
-
-#define OS_STATVFS_METHODDEF    \
-    {"statvfs", (PyCFunction)(void(*)(void))os_statvfs, METH_FASTCALL|METH_KEYWORDS, os_statvfs__doc__},
-
-static PyObject *
-os_statvfs_impl(PyObject *module, path_t *path);
-
-static PyObject *
-os_statvfs(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *kwnames)
-{
-    PyObject *return_value = NULL;
-    static const char * const _keywords[] = {"path", NULL};
-    static _PyArg_Parser _parser = {NULL, _keywords, "statvfs", 0};
-    PyObject *argsbuf[1];
-    path_t path = PATH_T_INITIALIZE("statvfs", "path", 0, PATH_HAVE_FSTATVFS);
-
-    args = _PyArg_UnpackKeywords(args, nargs, NULL, kwnames, &_parser, 1, 1, 0, argsbuf);
-    if (!args) {
-        goto exit;
-    }
-    if (!path_converter(args[0], &path)) {
-        goto exit;
-    }
-    return_value = os_statvfs_impl(module, &path);
-
-exit:
-    /* Cleanup for path */
-    path_cleanup(&path);
-
-    return return_value;
-}
-
-#endif /* (defined(HAVE_STATVFS) && defined(HAVE_SYS_STATVFS_H)) */
-
 PyDoc_STRVAR(os_abort__doc__,
 "abort($module, /)\n"
 "--\n"
@@ -4378,14 +3888,6 @@ exit:
 #ifndef OS_UNSETENV_METHODDEF
     #define OS_UNSETENV_METHODDEF
 #endif /* !defined(OS_UNSETENV_METHODDEF) */
-
-#ifndef OS_FSTATVFS_METHODDEF
-    #define OS_FSTATVFS_METHODDEF
-#endif /* !defined(OS_FSTATVFS_METHODDEF) */
-
-#ifndef OS_STATVFS_METHODDEF
-    #define OS_STATVFS_METHODDEF
-#endif /* !defined(OS_STATVFS_METHODDEF) */
 
 #ifndef OS_GET_HANDLE_INHERITABLE_METHODDEF
     #define OS_GET_HANDLE_INHERITABLE_METHODDEF
@@ -4487,8 +3989,6 @@ static PyMethodDef posix_methods[] = {
     OS_PUTENV_METHODDEF
     OS_UNSETENV_METHODDEF
     OS_STRERROR_METHODDEF
-    OS_FSTATVFS_METHODDEF
-    OS_STATVFS_METHODDEF
     OS_ABORT_METHODDEF
     OS_FSPATH_METHODDEF
     {NULL,              NULL}            /* Sentinel */
@@ -4715,9 +4215,6 @@ posixmodule_exec(PyObject *m)
     if (all_ins(m))
         return -1;
 
-    if (setup_confname_tables(m))
-        return -1;
-
     Py_INCREF(PyExc_OSError);
     PyModule_AddObject(m, "error", PyExc_OSError);
 
@@ -4735,14 +4232,6 @@ posixmodule_exec(PyObject *m)
     structseq_new = ((PyTypeObject *)StatResultType)->tp_new;
     ((PyTypeObject *)StatResultType)->tp_new = statresult_new;
 
-    statvfs_result_desc.name = "os.statvfs_result"; /* see issue #19209 */
-    PyObject *StatVFSResultType = (PyObject *)PyStructSequence_NewType(&statvfs_result_desc);
-    if (StatVFSResultType == NULL) {
-        return -1;
-    }
-    Py_INCREF(StatVFSResultType);
-    PyModule_AddObject(m, "statvfs_result", StatVFSResultType);
-    state->StatVFSResultType = StatVFSResultType;
 #ifdef NEED_TICKS_PER_SECOND
 #  if defined(HZ)
     ticks_per_second = HZ;
@@ -4750,45 +4239,6 @@ posixmodule_exec(PyObject *m)
     ticks_per_second = 60; /* magic fallback value; may be bogus */
 #  endif
 #endif
-
-
-#ifdef __APPLE__
-    /*
-     * Step 2 of weak-linking support on Mac OS X.
-     *
-     * The code below removes functions that are not available on the
-     * currently active platform.
-     *
-     * This block allow one to use a python binary that was build on
-     * OSX 10.4 on OSX 10.3, without losing access to new APIs on
-     * OSX 10.4.
-     */
-#ifdef HAVE_FSTATVFS
-    if (fstatvfs == NULL) {
-        if (PyObject_DelAttrString(m, "fstatvfs") == -1) {
-            return -1;
-        }
-    }
-#endif /* HAVE_FSTATVFS */
-
-#ifdef HAVE_STATVFS
-    if (statvfs == NULL) {
-        if (PyObject_DelAttrString(m, "statvfs") == -1) {
-            return -1;
-        }
-    }
-#endif /* HAVE_STATVFS */
-
-# ifdef HAVE_LCHOWN
-    if (lchown == NULL) {
-        if (PyObject_DelAttrString(m, "lchown") == -1) {
-            return -1;
-        }
-    }
-#endif /* HAVE_LCHOWN */
-
-
-#endif /* __APPLE__ */
 
     if ((state->billion = PyLong_FromLong(1000000000)) == NULL)
         return -1;

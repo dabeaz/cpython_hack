@@ -346,10 +346,6 @@ _io_FileIO___init___impl(fileio *self, PyObject *nameobj, const char *mode,
     flags |= O_CLOEXEC;
 #endif
 
-    if (PySys_Audit("open", "Osi", nameobj, mode, flags) < 0) {
-        goto error;
-    }
-
     if (fd >= 0) {
         self->fd = fd;
         self->closefd = closefd;

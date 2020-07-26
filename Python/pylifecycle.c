@@ -14,7 +14,6 @@
 #include "pycore_pyerrors.h"      // _PyErr_Occurred()
 #include "pycore_pylifecycle.h"   // _PyErr_Print()
 #include "pycore_pystate.h"       // _PyThreadState_GET()
-#include "pycore_sysmodule.h"     // _PySys_ClearAuditHooks()
 #include "pycore_traceback.h"     // _Py_DumpTracebackThreads()
 
 #include <locale.h>               // setlocale()
@@ -1357,9 +1356,6 @@ Py_FinalizeEx(void)
      * XXX I haven't seen a real-life report of either of these.
      */
     _PyGC_CollectIfEnabled();
-
-    /* Clear all loghooks */
-    _PySys_ClearAuditHooks(tstate);
 
     /* Destroy all modules */
     _PyImport_Cleanup(tstate);

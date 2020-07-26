@@ -1481,13 +1481,6 @@ _PyErr_WriteUnraisableMsg(const char *err_msg_str, PyObject *obj)
         goto default_hook;
     }
 
-    if (_PySys_Audit(tstate, "sys.unraisablehook", "OO", hook, hook_args) < 0) {
-        Py_DECREF(hook_args);
-        err_msg_str = "Exception ignored in audit hook";
-        obj = NULL;
-        goto error;
-    }
-
     if (hook == Py_None) {
         Py_DECREF(hook_args);
         goto default_hook;

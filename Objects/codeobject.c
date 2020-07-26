@@ -704,12 +704,6 @@ code_new(PyTypeObject *type, PyObject *args, PyObject *kw)
                           &PyTuple_Type, &cellvars))
         return NULL;
 
-    if (PySys_Audit("code.__new__", "OOOiiiiii",
-                    code, filename, name, argcount, posonlyargcount,
-                    kwonlyargcount, nlocals, stacksize, flags) < 0) {
-        goto cleanup;
-    }
-
     if (argcount < 0) {
         PyErr_SetString(
             PyExc_ValueError,
@@ -890,13 +884,6 @@ code_replace_impl(PyCodeObject *self, int co_argcount,
     CHECK_INT_ARG(co_firstlineno);
 
 #undef CHECK_INT_ARG
-
-    if (PySys_Audit("code.__new__", "OOOiiiiii",
-                    co_code, co_filename, co_name, co_argcount,
-                    co_posonlyargcount, co_kwonlyargcount, co_nlocals,
-                    co_stacksize, co_flags) < 0) {
-        return NULL;
-    }
 
     return (PyObject *)PyCode_NewWithPosOnlyArgs(
         co_argcount, co_posonlyargcount, co_kwonlyargcount, co_nlocals,
