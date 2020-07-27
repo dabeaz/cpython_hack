@@ -61,8 +61,6 @@ extern "C" {
 static void flush_io(void);
 static PyObject *run_mod(mod_ty, PyObject *, PyObject *, PyObject *,
                           PyCompilerFlags *, PyArena *);
-static PyObject *run_pyc_file(FILE *, const char *, PyObject *, PyObject *,
-                              PyCompilerFlags *);
 static int PyRun_InteractiveOneObjectEx(FILE *, PyObject *, PyCompilerFlags *);
 
 /* Parse input from a file and execute it */
@@ -258,47 +256,6 @@ PyRun_InteractiveOneFlags(FILE *fp, const char *filename_str, PyCompilerFlags *f
     return res;
 }
 
-
-/* Check whether a file maybe a pyc file: Look at the extension,
-   the file type, and, if we may close it, at the first few bytes. */
-
-static int
-maybe_pyc_file(FILE *fp, const char* filename, const char* ext, int closeit)
-{
-    if (strcmp(ext, ".pyc") == 0)
-        return 1;
-
-    /* Only look into the file if we are allowed to close it, since
-       it then should also be seekable. */
-    if (closeit) {
-        /* Read only two bytes of the magic. If the file was opened in
-           text mode, the bytes 3 and 4 of the magic (\r\n) might not
-           be read as they are on disk. */
-        unsigned int halfmagic = PyImport_GetMagicNumber() & 0xFFFF;
-        unsigned char buf[2];
-        /* Mess:  In case of -x, the stream is NOT at its start now,
-           and ungetc() was used to push back the first newline,
-           which makes the current stream position formally undefined,
-           and a x-platform nightmare.
-           Unfortunately, we have no direct way to know whether -x
-           was specified.  So we use a terrible hack:  if the current
-           stream position is not 0, we assume -x was specified, and
-           give up.  Bug 132850 on SourceForge spells out the
-           hopelessness of trying anything else (fseek and ftell
-           don't work predictably x-platform for text-mode files).
-        */
-        int ispyc = 0;
-        if (ftell(fp) == 0) {
-            if (fread(buf, 1, 2, fp) == 2 &&
-                ((unsigned int)buf[1]<<8 | buf[0]) == halfmagic)
-                ispyc = 1;
-            rewind(fp);
-        }
-        return ispyc;
-    }
-    return 0;
-}
-
 static int
 set_main_loader(PyObject *d, const char *filename, const char *loader_name)
 {
@@ -363,34 +320,15 @@ PyRun_SimpleFileExFlags(FILE *fp, const char *filename, int closeit,
     }
     len = strlen(filename);
     ext = filename + len - (len > 4 ? 4 : 0);
-    if (maybe_pyc_file(fp, filename, ext, closeit)) {
-        FILE *pyc_fp;
-        /* Try to run a pyc file. First, re-open in binary */
-        if (closeit)
-            fclose(fp);
-        if ((pyc_fp = _Py_fopen(filename, "rb")) == NULL) {
-            fprintf(stderr, "python: Can't reopen .pyc file\n");
-            goto done;
-        }
-
-        if (set_main_loader(d, filename, "SourcelessFileLoader") < 0) {
-            fprintf(stderr, "python: failed to set __main__.__loader__\n");
-            ret = -1;
-            fclose(pyc_fp);
-            goto done;
-        }
-        v = run_pyc_file(pyc_fp, filename, d, d, flags);
-    } else {
-        /* When running from stdin, leave __main__.__loader__ alone */
-        if (strcmp(filename, "<stdin>") != 0 &&
-            set_main_loader(d, filename, "SourceFileLoader") < 0) {
-            fprintf(stderr, "python: failed to set __main__.__loader__\n");
-            ret = -1;
-            goto done;
-        }
-        v = PyRun_FileExFlags(fp, filename, Py_file_input, d, d,
-                              closeit, flags);
+    /* When running from stdin, leave __main__.__loader__ alone */
+    if (strcmp(filename, "<stdin>") != 0 &&
+	set_main_loader(d, filename, "SourceFileLoader") < 0) {
+      fprintf(stderr, "python: failed to set __main__.__loader__\n");
+      ret = -1;
+      goto done;
     }
+    v = PyRun_FileExFlags(fp, filename, Py_file_input, d, d,
+                              closeit, flags);
     flush_io();
     if (v == NULL) {
         Py_CLEAR(m);
@@ -1126,49 +1064,6 @@ run_mod(mod_ty mod, PyObject *filename, PyObject *globals, PyObject *locals,
     PyObject *v = run_eval_code_obj(tstate, co, globals, locals);
     Py_DECREF(co);
     return v;
-}
-
-static PyObject *
-run_pyc_file(FILE *fp, const char *filename, PyObject *globals,
-             PyObject *locals, PyCompilerFlags *flags)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    PyCodeObject *co;
-    PyObject *v;
-    long magic;
-    long PyImport_GetMagicNumber(void);
-
-    magic = PyMarshal_ReadLongFromFile(fp);
-    if (magic != PyImport_GetMagicNumber()) {
-        if (!PyErr_Occurred())
-            PyErr_SetString(PyExc_RuntimeError,
-                       "Bad magic number in .pyc file");
-        goto error;
-    }
-    /* Skip the rest of the header. */
-    (void) PyMarshal_ReadLongFromFile(fp);
-    (void) PyMarshal_ReadLongFromFile(fp);
-    (void) PyMarshal_ReadLongFromFile(fp);
-    if (PyErr_Occurred()) {
-        goto error;
-    }
-    v = PyMarshal_ReadLastObjectFromFile(fp);
-    if (v == NULL || !PyCode_Check(v)) {
-        Py_XDECREF(v);
-        PyErr_SetString(PyExc_RuntimeError,
-                   "Bad code object in .pyc file");
-        goto error;
-    }
-    fclose(fp);
-    co = (PyCodeObject *)v;
-    v = run_eval_code_obj(tstate, co, globals, locals);
-    if (v && flags)
-        flags->cf_flags |= (co->co_flags & PyCF_MASK);
-    Py_DECREF(co);
-    return v;
-error:
-    fclose(fp);
-    return NULL;
 }
 
 PyObject *

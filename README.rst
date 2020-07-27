@@ -55,7 +55,8 @@ Now what?  Still 75 days to go...
 - Day 44 (7/24/2020). Get! Out!  More posix pruning.
 - Day 45 (7/25/2020). Continued posix pruning.
 - Day 46 (7/26/2020). No, you can't audit it.
-
+- Day 47 (7/27/2020). pyc files and __pycache__.  Gone.
+  
 Copyright and License Information
 ---------------------------------
 

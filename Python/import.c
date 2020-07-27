@@ -973,35 +973,6 @@ _PyImport_Cleanup(PyThreadState *tstate)
 
 /* Helper for pythonrun.c -- return magic number and tag. */
 
-long
-PyImport_GetMagicNumber(void)
-{
-    long res;
-    PyInterpreterState *interp = _PyInterpreterState_GET();
-    PyObject *external, *pyc_magic;
-
-    external = PyObject_GetAttrString(interp->importlib, "_bootstrap_external");
-    if (external == NULL)
-        return -1;
-    pyc_magic = PyObject_GetAttrString(external, "_RAW_MAGIC_NUMBER");
-    Py_DECREF(external);
-    if (pyc_magic == NULL)
-        return -1;
-    res = PyLong_AsLong(pyc_magic);
-    Py_DECREF(pyc_magic);
-    return res;
-}
-
-
-extern const char * _PySys_ImplCacheTag;
-
-const char *
-PyImport_GetMagicTag(void)
-{
-    return _PySys_ImplCacheTag;
-}
-
-
 /* Magic for extension modules (built-in as well as dynamically
    loaded).  To prevent initializing an extension module more than
    once, we keep a static dictionary 'extensions' keyed by the tuple
