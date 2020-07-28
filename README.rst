@@ -56,6 +56,7 @@ Now what?  Still 75 days to go...
 - Day 45 (7/25/2020). Continued posix pruning.
 - Day 46 (7/26/2020). No, you can't audit it.
 - Day 47 (7/27/2020). pyc files and __pycache__.  Gone.
+- Day 48 (7/28/2020). DLL hell to hell!  No more dynamic loading.
   
 Copyright and License Information
 ---------------------------------

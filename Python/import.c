@@ -15,7 +15,6 @@
 #include "errcode.h"
 #include "marshal.h"
 #include "code.h"
-#include "importdl.h"
 #include "pydtrace.h"
 
 #ifdef HAVE_FCNTL_H
@@ -346,76 +345,6 @@ exit:
     return return_value;
 }
 
-#if defined(HAVE_DYNAMIC_LOADING)
-
-PyDoc_STRVAR(_imp_create_dynamic__doc__,
-"create_dynamic($module, spec, file=<unrepresentable>, /)\n"
-"--\n"
-"\n"
-"Create an extension module.");
-
-#define _IMP_CREATE_DYNAMIC_METHODDEF    \
-    {"create_dynamic", (PyCFunction)(void(*)(void))_imp_create_dynamic, METH_FASTCALL, _imp_create_dynamic__doc__},
-
-static PyObject *
-_imp_create_dynamic_impl(PyObject *module, PyObject *spec, PyObject *file);
-
-static PyObject *
-_imp_create_dynamic(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
-{
-    PyObject *return_value = NULL;
-    PyObject *spec;
-    PyObject *file = NULL;
-
-    if (!_PyArg_CheckPositional("create_dynamic", nargs, 1, 2)) {
-        goto exit;
-    }
-    spec = args[0];
-    if (nargs < 2) {
-        goto skip_optional;
-    }
-    file = args[1];
-skip_optional:
-    return_value = _imp_create_dynamic_impl(module, spec, file);
-
-exit:
-    return return_value;
-}
-
-#endif /* defined(HAVE_DYNAMIC_LOADING) */
-
-#if defined(HAVE_DYNAMIC_LOADING)
-
-PyDoc_STRVAR(_imp_exec_dynamic__doc__,
-"exec_dynamic($module, mod, /)\n"
-"--\n"
-"\n"
-"Initialize an extension module.");
-
-#define _IMP_EXEC_DYNAMIC_METHODDEF    \
-    {"exec_dynamic", (PyCFunction)_imp_exec_dynamic, METH_O, _imp_exec_dynamic__doc__},
-
-static int
-_imp_exec_dynamic_impl(PyObject *module, PyObject *mod);
-
-static PyObject *
-_imp_exec_dynamic(PyObject *module, PyObject *mod)
-{
-    PyObject *return_value = NULL;
-    int _return_value;
-
-    _return_value = _imp_exec_dynamic_impl(module, mod);
-    if ((_return_value == -1) && PyErr_Occurred()) {
-        goto exit;
-    }
-    return_value = PyLong_FromLong((long)_return_value);
-
-exit:
-    return return_value;
-}
-
-#endif /* defined(HAVE_DYNAMIC_LOADING) */
-
 PyDoc_STRVAR(_imp_exec_builtin__doc__,
 "exec_builtin($module, mod, /)\n"
 "--\n"
@@ -490,16 +419,6 @@ exit:
 
     return return_value;
 }
-
-#ifndef _IMP_CREATE_DYNAMIC_METHODDEF
-    #define _IMP_CREATE_DYNAMIC_METHODDEF
-#endif /* !defined(_IMP_CREATE_DYNAMIC_METHODDEF) */
-
-#ifndef _IMP_EXEC_DYNAMIC_METHODDEF
-    #define _IMP_EXEC_DYNAMIC_METHODDEF
-#endif /* !defined(_IMP_EXEC_DYNAMIC_METHODDEF) */
-/*[clinic end generated code: output=7c31c433af88af6b input=a9049054013a1b77]*/
-
 
 /* Initialize things */
 
@@ -2373,25 +2292,6 @@ _imp_extension_suffixes_impl(PyObject *module)
     list = PyList_New(0);
     if (list == NULL)
         return NULL;
-#ifdef HAVE_DYNAMIC_LOADING
-    const char *suffix;
-    unsigned int index = 0;
-
-    while ((suffix = _PyImport_DynLoadFiletab[index])) {
-        PyObject *item = PyUnicode_FromString(suffix);
-        if (item == NULL) {
-            Py_DECREF(list);
-            return NULL;
-        }
-        if (PyList_Append(list, item) < 0) {
-            Py_DECREF(list);
-            Py_DECREF(item);
-            return NULL;
-        }
-        Py_DECREF(item);
-        index += 1;
-    }
-#endif
     return list;
 }
 
@@ -2514,83 +2414,6 @@ exec_builtin_or_dynamic(PyObject *mod) {
     return PyModule_ExecDef(mod, def);
 }
 
-#ifdef HAVE_DYNAMIC_LOADING
-
-/*[clinic input]
-_imp.create_dynamic
-
-    spec: object
-    file: object = NULL
-    /
-
-Create an extension module.
-[clinic start generated code]*/
-
-static PyObject *
-_imp_create_dynamic_impl(PyObject *module, PyObject *spec, PyObject *file)
-/*[clinic end generated code: output=83249b827a4fde77 input=c31b954f4cf4e09d]*/
-{
-    PyObject *mod, *name, *path;
-    FILE *fp;
-
-    name = PyObject_GetAttrString(spec, "name");
-    if (name == NULL) {
-        return NULL;
-    }
-
-    path = PyObject_GetAttrString(spec, "origin");
-    if (path == NULL) {
-        Py_DECREF(name);
-        return NULL;
-    }
-
-    mod = _PyImport_FindExtensionObject(name, path);
-    if (mod != NULL || PyErr_Occurred()) {
-        Py_DECREF(name);
-        Py_DECREF(path);
-        Py_XINCREF(mod);
-        return mod;
-    }
-
-    if (file != NULL) {
-        fp = _Py_fopen_obj(path, "r");
-        if (fp == NULL) {
-            Py_DECREF(name);
-            Py_DECREF(path);
-            return NULL;
-        }
-    }
-    else
-        fp = NULL;
-
-    mod = _PyImport_LoadDynamicModuleWithSpec(spec, fp);
-
-    Py_DECREF(name);
-    Py_DECREF(path);
-    if (fp)
-        fclose(fp);
-    return mod;
-}
-
-/*[clinic input]
-_imp.exec_dynamic -> int
-
-    mod: object
-    /
-
-Initialize an extension module.
-[clinic start generated code]*/
-
-static int
-_imp_exec_dynamic_impl(PyObject *module, PyObject *mod)
-/*[clinic end generated code: output=f5720ac7b465877d input=9fdbfcb250280d3a]*/
-{
-    return exec_builtin_or_dynamic(mod);
-}
-
-
-#endif /* HAVE_DYNAMIC_LOADING */
-
 /*[clinic input]
 _imp.exec_builtin -> int
 
@@ -2650,8 +2473,6 @@ static PyMethodDef imp_methods[] = {
     _IMP_INIT_FROZEN_METHODDEF
     _IMP_IS_BUILTIN_METHODDEF
     _IMP_IS_FROZEN_METHODDEF
-    _IMP_CREATE_DYNAMIC_METHODDEF
-    _IMP_EXEC_DYNAMIC_METHODDEF
     _IMP_EXEC_BUILTIN_METHODDEF
     _IMP__FIX_CO_FILENAME_METHODDEF
     _IMP_SOURCE_HASH_METHODDEF

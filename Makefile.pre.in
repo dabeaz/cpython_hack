@@ -340,7 +340,6 @@ PYTHON_OBJS=	\
 		Python/graminit.o \
 		Python/hashtable.o \
 		Python/import.o \
-		Python/importdl.o \
 		Python/initconfig.o \
 		Python/marshal.o \
 		Python/modsupport.o \
@@ -369,7 +368,6 @@ PYTHON_OBJS=	\
 		Python/dtoa.o \
 		Python/formatter_unicode.o \
 		Python/fileutils.o \
-		Python/$(DYNLOADFILE) \
 		$(LIBOBJS) \
 		$(MACHDEP_OBJS) \
 		$(DTRACE_OBJS)
@@ -744,16 +742,6 @@ Modules/posixmodule.o: $(srcdir)/Modules/posixmodule.c $(srcdir)/Modules/posixmo
 
 Modules/signalmodule.o: $(srcdir)/Modules/signalmodule.c $(srcdir)/Modules/posixmodule.h
 
-Python/dynload_shlib.o: $(srcdir)/Python/dynload_shlib.c Makefile
-	$(CC) -c $(PY_CORE_CFLAGS) \
-		-DSOABI='"$(SOABI)"' \
-		-o $@ $(srcdir)/Python/dynload_shlib.c
-
-Python/dynload_hpux.o: $(srcdir)/Python/dynload_hpux.c Makefile
-	$(CC) -c $(PY_CORE_CFLAGS) \
-		-DSHLIB_EXT='"$(EXT_SUFFIX)"' \
-		-o $@ $(srcdir)/Python/dynload_hpux.c
-
 Python/sysmodule.o: $(srcdir)/Python/sysmodule.c Makefile $(srcdir)/Include/pydtrace.h
 	$(CC) -c $(PY_CORE_CFLAGS) \
 		-DABIFLAGS='"$(ABIFLAGS)"' \
@@ -852,9 +840,6 @@ Python/compile.o Python/symtable.o Python/ast_unparse.o Python/ast.o Python/futu
 
 Python/getplatform.o: $(srcdir)/Python/getplatform.c
 		$(CC) -c $(PY_CORE_CFLAGS) -DPLATFORM='"$(MACHDEP)"' -o $@ $(srcdir)/Python/getplatform.c
-
-Python/importdl.o: $(srcdir)/Python/importdl.c
-		$(CC) -c $(PY_CORE_CFLAGS) -I$(DLINCLDIR) -o $@ $(srcdir)/Python/importdl.c
 
 Objects/unicodectype.o:	$(srcdir)/Objects/unicodectype.c \
 				$(srcdir)/Objects/unicodetype_db.h
