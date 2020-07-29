@@ -84,10 +84,7 @@ my_fgets(PyThreadState* tstate, char *buf, int len, FILE *fp)
 
 #ifdef EINTR
         if (err == EINTR) {
-            PyEval_RestoreThread(tstate);
 	    int s = 0;  // PyErr_CheckSignals();
-            PyEval_SaveThread();
-
             if (s < 0) {
                 return 1;
             }
@@ -145,9 +142,7 @@ _PyOS_WindowsConsoleReadline(PyThreadState *tstate, HANDLE hStdIn)
             if (WaitForSingleObjectEx(hInterruptEvent, 100, FALSE)
                     == WAIT_OBJECT_0) {
                 ResetEvent(hInterruptEvent);
-                PyEval_RestoreThread(tstate);
                 s = PyErr_CheckSignals();
-                PyEval_SaveThread();
                 if (s < 0) {
                     goto exit;
                 }
@@ -167,18 +162,14 @@ _PyOS_WindowsConsoleReadline(PyThreadState *tstate, HANDLE hStdIn)
                 wcscpy_s(wbuf, wbuflen, wbuf_local);
             }
             else {
-                PyEval_RestoreThread(tstate);
                 PyErr_NoMemory();
-                PyEval_SaveThread();
                 goto exit;
             }
         }
         else {
             wchar_t *tmp = PyMem_RawRealloc(wbuf, wbuflen * sizeof(wchar_t));
             if (tmp == NULL) {
-                PyEval_RestoreThread(tstate);
                 PyErr_NoMemory();
-                PyEval_SaveThread();
                 goto exit;
             }
             wbuf = tmp;
@@ -191,9 +182,7 @@ _PyOS_WindowsConsoleReadline(PyThreadState *tstate, HANDLE hStdIn)
             buf[0] = '\0';
         }
         else {
-            PyEval_RestoreThread(tstate);
             PyErr_NoMemory();
-            PyEval_SaveThread();
         }
         goto exit;
     }
@@ -204,9 +193,7 @@ _PyOS_WindowsConsoleReadline(PyThreadState *tstate, HANDLE hStdIn)
                                 NULL, NULL);
     buf = PyMem_RawMalloc(u8len + 1);
     if (buf == NULL) {
-        PyEval_RestoreThread(tstate);
         PyErr_NoMemory();
-        PyEval_SaveThread();
         goto exit;
     }
 
@@ -222,9 +209,7 @@ exit:
     }
 
     if (err) {
-        PyEval_RestoreThread(tstate);
         PyErr_SetFromWindowsErr(err);
-        PyEval_SaveThread();
     }
     return buf;
 }
@@ -260,9 +245,7 @@ PyOS_StdioReadline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
                     if (wlen) {
                         wbuf = PyMem_RawMalloc(wlen * sizeof(wchar_t));
                         if (wbuf == NULL) {
-                            PyEval_RestoreThread(tstate);
                             PyErr_NoMemory();
-                            PyEval_SaveThread();
                             return NULL;
                         }
                         wlen = MultiByteToWideChar(CP_UTF8, 0, prompt, -1,
@@ -289,9 +272,7 @@ PyOS_StdioReadline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
     n = 100;
     p = (char *)PyMem_RawMalloc(n);
     if (p == NULL) {
-        PyEval_RestoreThread(tstate);
         PyErr_NoMemory();
-        PyEval_SaveThread();
         return NULL;
     }
 
@@ -319,18 +300,14 @@ PyOS_StdioReadline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
         size_t incr = n+2;
         if (incr > INT_MAX) {
             PyMem_RawFree(p);
-            PyEval_RestoreThread(tstate);
             PyErr_SetString(PyExc_OverflowError, "input line too long");
-            PyEval_SaveThread();
             return NULL;
         }
 
         pr = (char *)PyMem_RawRealloc(p, n + incr);
         if (pr == NULL) {
             PyMem_RawFree(p);
-            PyEval_RestoreThread(tstate);
             PyErr_NoMemory();
-            PyEval_SaveThread();
             return NULL;
         }
         p = pr;
@@ -344,9 +321,7 @@ PyOS_StdioReadline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
     pr = (char *)PyMem_RawRealloc(p, n+1);
     if (pr == NULL) {
         PyMem_RawFree(p);
-        PyEval_RestoreThread(tstate);
         PyErr_NoMemory();
-        PyEval_SaveThread();
         return NULL;
     }
     return pr;

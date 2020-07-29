@@ -9,8 +9,9 @@ extern "C" {
 #endif
 
 #include "pycore_atomic.h"    /* _Py_atomic_address */
-#include "pycore_gil.h"       // struct _gil_runtime_state
-
+  // #include "pycore_gil.h"       // struct _gil_runtime_state
+#include "pycore_condvar.h"   /* PyCOND_T */
+  
 /* ceval state */
 
 struct _ceval_runtime_state {
@@ -19,9 +20,6 @@ struct _ceval_runtime_state {
        the main thread of the main interpreter can handle signals: see
        _Py_ThreadCanHandleSignals(). */
     _Py_atomic_int signals_pending;
-#ifndef EXPERIMENTAL_ISOLATED_SUBINTERPRETERS
-    struct _gil_runtime_state gil;
-#endif
 };
 
 /* GIL state */

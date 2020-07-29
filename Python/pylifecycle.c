@@ -500,30 +500,6 @@ pycore_init_runtime(_PyRuntimeState *runtime,
 }
 
 
-static PyStatus
-init_interp_create_gil(PyThreadState *tstate)
-{
-    PyStatus status;
-
-    /* finalize_interp_delete() comment explains why _PyEval_FiniGIL() is
-       only called here. */
-    _PyEval_FiniGIL(tstate);
-
-    /* Auto-thread-state API */
-    status = _PyGILState_Init(tstate);
-    if (_PyStatus_EXCEPTION(status)) {
-        return status;
-    }
-
-    /* Create the GIL and take it */
-    status = _PyEval_InitGIL(tstate);
-    if (_PyStatus_EXCEPTION(status)) {
-        return status;
-    }
-
-    return _PyStatus_OK();
-}
-
 
 static PyStatus
 pycore_create_interpreter(_PyRuntimeState *runtime,
@@ -545,11 +521,6 @@ pycore_create_interpreter(_PyRuntimeState *runtime,
         return _PyStatus_ERR("can't make first thread");
     }
     (void) PyThreadState_Swap(tstate);
-
-    status = init_interp_create_gil(tstate);
-    if (_PyStatus_EXCEPTION(status)) {
-        return status;
-    }
 
     *tstate_p = tstate;
     return _PyStatus_OK();
@@ -1266,17 +1237,6 @@ finalize_interp_clear(PyThreadState *tstate)
 static void
 finalize_interp_delete(PyThreadState *tstate)
 {
-    if (_Py_IsMainInterpreter(tstate)) {
-        /* Cleanup auto-thread-state */
-        _PyGILState_Fini(tstate);
-    }
-
-    /* We can't call _PyEval_FiniGIL() here because destroying the GIL lock can
-       fail when it is being awaited by another running daemon thread (see
-       bpo-9901). Instead pycore_create_interpreter() destroys the previously
-       created GIL, which ensures that Py_Initialize / Py_FinalizeEx can be
-       called multiple times. */
-
     PyInterpreterState_Delete(tstate->interp);
 }
 
@@ -1482,11 +1442,6 @@ new_interpreter(PyThreadState **tstate_p, int isolated_subinterpreter)
         goto error;
     }
     interp->config._isolated_interpreter = isolated_subinterpreter;
-
-    status = init_interp_create_gil(tstate);
-    if (_PyStatus_EXCEPTION(status)) {
-        goto error;
-    }
 
     status = pycore_interp_init(tstate);
     if (_PyStatus_EXCEPTION(status)) {
@@ -2153,29 +2108,12 @@ fatal_error(FILE *stream, int header, const char *prefix, const char *msg,
 
        tss_tstate != tstate if the current Python thread does not hold the GIL.
        */
-    PyThreadState *tss_tstate = PyGILState_GetThisThreadState();
-    int has_tstate_and_gil = (tss_tstate != NULL && tss_tstate == tstate);
-    if (has_tstate_and_gil) {
-        /* If an exception is set, print the exception with its traceback */
-        if (!_Py_FatalError_PrintExc(tss_tstate)) {
-            /* No exception is set, or an exception is set without traceback */
-            _Py_FatalError_DumpTracebacks(fd, interp, tss_tstate);
-        }
+    /* If an exception is set, print the exception with its traceback */
+    if (!_Py_FatalError_PrintExc(tstate)) {
+      /* No exception is set, or an exception is set without traceback */
+      _Py_FatalError_DumpTracebacks(fd, interp, tstate);
     }
-    else {
-        _Py_FatalError_DumpTracebacks(fd, interp, tss_tstate);
-    }
-
-    /* Check if the current Python thread hold the GIL */
-    if (has_tstate_and_gil) {
-        /* Flush sys.stdout and sys.stderr */
-        flush_std_files();
-    }
-
-#ifdef MS_WINDOWS
-    fatal_output_debug(msg);
-#endif /* MS_WINDOWS */
-
+    flush_std_files();
     fatal_error_exit(status);
 }
 

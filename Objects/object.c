@@ -275,7 +275,6 @@ _PyObject_Dump(PyObject* op)
     fprintf(stderr, "object repr     : ");
     fflush(stderr);
 
-    PyGILState_STATE gil = PyGILState_Ensure();
     PyObject *error_type, *error_value, *error_traceback;
     PyErr_Fetch(&error_type, &error_value, &error_traceback);
 
@@ -283,7 +282,6 @@ _PyObject_Dump(PyObject* op)
     fflush(stderr);
 
     PyErr_Restore(error_type, error_value, error_traceback);
-    PyGILState_Release(gil);
 
     fprintf(stderr, "\n");
     fflush(stderr);

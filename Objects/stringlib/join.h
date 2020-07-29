@@ -18,9 +18,6 @@ STRINGLIB(bytes_join)(PyObject *sep, PyObject *iterable)
     Py_buffer *buffers = NULL;
 #define NB_STATIC_BUFFERS 10
     Py_buffer static_buffers[NB_STATIC_BUFFERS];
-#define GIL_THRESHOLD 1048576
-    int drop_gil = 1;
-    PyThreadState *save = NULL;
 
     seq = PySequence_Fast(iterable, "can only join an iterable");
     if (seq == NULL) {
@@ -76,13 +73,6 @@ STRINGLIB(bytes_join)(PyObject *sep, PyObject *iterable)
                              i, Py_TYPE(item)->tp_name);
                 goto error;
             }
-            /* If the backing objects are mutable, then dropping the GIL
-             * opens up race conditions where another thread tries to modify
-             * the object which we hold a buffer on it. Such code has data
-             * races anyway, but this is a conservative approach that avoids
-             * changing the behaviour of that data race.
-             */
-            drop_gil = 0;
         }
         nbufs = i + 1;  /* for error cleanup */
         itemlen = buffers[i].len;
@@ -114,12 +104,6 @@ STRINGLIB(bytes_join)(PyObject *sep, PyObject *iterable)
 
     /* Catenate everything. */
     p = STRINGLIB_STR(res);
-    if (sz < GIL_THRESHOLD) {
-        drop_gil = 0;   /* Benefits are likely outweighed by the overheads */
-    }
-    if (drop_gil) {
-        save = PyEval_SaveThread();
-    }
     if (!seplen) {
         /* fast path */
         for (i = 0; i < nbufs; i++) {
@@ -143,9 +127,6 @@ STRINGLIB(bytes_join)(PyObject *sep, PyObject *iterable)
             p += n;
         }
     }
-    if (drop_gil) {
-        PyEval_RestoreThread(save);
-    }
     goto done;
 
 error:
@@ -160,4 +141,3 @@ done:
 }
 
 #undef NB_STATIC_BUFFERS
-#undef GIL_THRESHOLD

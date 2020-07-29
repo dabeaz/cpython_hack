@@ -898,9 +898,7 @@ on_startup_hook()
 #endif
 {
     int r;
-    PyGILState_STATE gilstate = PyGILState_Ensure();
     r = on_hook(readlinestate_global->startup_hook);
-    PyGILState_Release(gilstate);
     return r;
 }
 
@@ -913,9 +911,7 @@ on_pre_input_hook()
 #endif
 {
     int r;
-    PyGILState_STATE gilstate = PyGILState_Ensure();
     r = on_hook(readlinestate_global->pre_input_hook);
-    PyGILState_Release(gilstate);
     return r;
 }
 #endif
@@ -930,7 +926,6 @@ on_completion_display_matches_hook(char **matches,
 {
     int i;
     PyObject *sub, *m=NULL, *s=NULL, *r=NULL;
-    PyGILState_STATE gilstate = PyGILState_Ensure();
     m = PyList_New(num_matches);
     if (m == NULL)
         goto error;
@@ -958,7 +953,6 @@ on_completion_display_matches_hook(char **matches,
         Py_XDECREF(m);
         Py_XDECREF(r);
     }
-    PyGILState_Release(gilstate);
 }
 
 #endif
@@ -991,7 +985,6 @@ on_completion(const char *text, int state)
     char *result = NULL;
     if (readlinestate_global->completer != NULL) {
         PyObject *r = NULL, *t;
-        PyGILState_STATE gilstate = PyGILState_Ensure();
         rl_attempted_completion_over = 1;
         t = decode(text);
         r = PyObject_CallFunction(readlinestate_global->completer, "Ni", t, state);
@@ -1013,7 +1006,6 @@ on_completion(const char *text, int state)
         PyErr_Clear();
         Py_XDECREF(r);
       done:
-        PyGILState_Release(gilstate);
         return result;
     }
     return result;
@@ -1030,7 +1022,6 @@ flex_complete(const char *text, int start, int end)
     char saved;
     size_t start_size, end_size;
     wchar_t *s;
-    PyGILState_STATE gilstate = PyGILState_Ensure();
 #ifdef HAVE_RL_COMPLETION_APPEND_CHARACTER
     rl_completion_append_character ='\0';
 #endif
@@ -1063,7 +1054,6 @@ done:
     readlinestate_global->begidx = PyLong_FromLong((long) start);
     readlinestate_global->endidx = PyLong_FromLong((long) end);
     result = completion_matches((char *)text, *on_completion);
-    PyGILState_Release(gilstate);
     return result;
 }
 
@@ -1213,9 +1203,7 @@ readline_until_enter_or_signal(const char *prompt, int *signal)
         }
         else if (err == EINTR) {
             int s;
-            PyEval_RestoreThread(_PyOS_ReadlineTState);
             s = 0; // PyErr_CheckSignals();
-            PyEval_SaveThread();
             if (s < 0) {
                 rl_free_line_state();
 #if defined(RL_READLINE_VERSION) && RL_READLINE_VERSION >= 0x0700

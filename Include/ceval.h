@@ -80,59 +80,7 @@ PyAPI_FUNC(const char *) PyEval_GetFuncDesc(PyObject *);
 
 PyAPI_FUNC(PyObject *) PyEval_EvalFrame(PyFrameObject *);
 PyAPI_FUNC(PyObject *) PyEval_EvalFrameEx(PyFrameObject *f, int exc);
-
-/* Interface for threads.
-
-   A module that plans to do a blocking system call (or something else
-   that lasts a long time and doesn't touch Python data) can allow other
-   threads to run as follows:
-
-    ...preparations here...
-    Py_BEGIN_ALLOW_THREADS
-    ...blocking system call here...
-    Py_END_ALLOW_THREADS
-    ...interpret result here...
-
-   The Py_BEGIN_ALLOW_THREADS/Py_END_ALLOW_THREADS pair expands to a
-   {}-surrounded block.
-   To leave the block in the middle (e.g., with return), you must insert
-   a line containing Py_BLOCK_THREADS before the return, e.g.
-
-    if (...premature_exit...) {
-        Py_BLOCK_THREADS
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-   An alternative is:
-
-    Py_BLOCK_THREADS
-    if (...premature_exit...) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-    Py_UNBLOCK_THREADS
-
-   For convenience, that the value of 'errno' is restored across
-   Py_END_ALLOW_THREADS and Py_BLOCK_THREADS.
-
-   WARNING: NEVER NEST CALLS TO Py_BEGIN_ALLOW_THREADS AND
-   Py_END_ALLOW_THREADS!!!
-
-   Note that not yet all candidates have been converted to use this
-   mechanism!
-*/
-
-PyAPI_FUNC(PyThreadState *) PyEval_SaveThread(void);
-PyAPI_FUNC(void) PyEval_RestoreThread(PyThreadState *);
-
-Py_DEPRECATED(3.9) PyAPI_FUNC(int) PyEval_ThreadsInitialized(void);
-Py_DEPRECATED(3.9) PyAPI_FUNC(void) PyEval_InitThreads(void);
-Py_DEPRECATED(3.2) PyAPI_FUNC(void) PyEval_AcquireLock(void);
-/* Py_DEPRECATED(3.2) */ PyAPI_FUNC(void) PyEval_ReleaseLock(void);
-PyAPI_FUNC(void) PyEval_AcquireThread(PyThreadState *tstate);
-PyAPI_FUNC(void) PyEval_ReleaseThread(PyThreadState *tstate);
-
+  
 /* Masks and values used by FORMAT_VALUE opcode. */
 #define FVC_MASK      0x3
 #define FVC_NONE      0x0

@@ -921,34 +921,6 @@ _Py_DumpTracebackThreads(int fd, PyInterpreterState *interp,
 {
     PyThreadState *tstate;
     unsigned int nthreads;
-
-    if (current_tstate == NULL) {
-        /* _Py_DumpTracebackThreads() is called from signal handlers by
-           faulthandler.
-
-           SIGSEGV, SIGFPE, SIGABRT, SIGBUS and SIGILL are synchronous signals
-           and are thus delivered to the thread that caused the fault. Get the
-           Python thread state of the current thread.
-
-           PyThreadState_Get() doesn't give the state of the thread that caused
-           the fault if the thread released the GIL, and so
-           _PyThreadState_GET() cannot be used. Read the thread specific
-           storage (TSS) instead: call PyGILState_GetThisThreadState(). */
-        current_tstate = PyGILState_GetThisThreadState();
-    }
-
-    if (interp == NULL) {
-        if (current_tstate == NULL) {
-            interp = _PyGILState_GetInterpreterStateUnsafe();
-            if (interp == NULL) {
-                /* We need the interpreter state to get Python threads */
-                return "unable to get the interpreter state";
-            }
-        }
-        else {
-            interp = current_tstate->interp;
-        }
-    }
     assert(interp != NULL);
 
     /* Get the current interpreter from the current thread */

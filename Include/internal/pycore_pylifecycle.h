@@ -80,9 +80,6 @@ extern void _PyHash_Fini(void);
 extern void _PyTraceMalloc_Fini(void);
 extern void _PyWarnings_Fini(PyInterpreterState *interp);
 
-extern PyStatus _PyGILState_Init(PyThreadState *tstate);
-extern void _PyGILState_Fini(PyThreadState *tstate);
-
 PyAPI_FUNC(void) _PyGC_DumpShutdownStats(PyThreadState *tstate);
 
 PyAPI_FUNC(PyStatus) _Py_PreInitializeFromPyArgv(

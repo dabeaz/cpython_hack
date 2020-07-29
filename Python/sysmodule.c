@@ -298,75 +298,6 @@ sys_getprofile(PyObject *module, PyObject *Py_UNUSED(ignored))
     return sys_getprofile_impl(module);
 }
 
-PyDoc_STRVAR(sys_setswitchinterval__doc__,
-"setswitchinterval($module, interval, /)\n"
-"--\n"
-"\n"
-"Set the ideal thread switching delay inside the Python interpreter.\n"
-"\n"
-"The actual frequency of switching threads can be lower if the\n"
-"interpreter executes long sequences of uninterruptible code\n"
-"(this is implementation-specific and workload-dependent).\n"
-"\n"
-"The parameter must represent the desired switching delay in seconds\n"
-"A typical value is 0.005 (5 milliseconds).");
-
-#define SYS_SETSWITCHINTERVAL_METHODDEF    \
-    {"setswitchinterval", (PyCFunction)sys_setswitchinterval, METH_O, sys_setswitchinterval__doc__},
-
-static PyObject *
-sys_setswitchinterval_impl(PyObject *module, double interval);
-
-static PyObject *
-sys_setswitchinterval(PyObject *module, PyObject *arg)
-{
-    PyObject *return_value = NULL;
-    double interval;
-
-    if (PyFloat_CheckExact(arg)) {
-        interval = PyFloat_AS_DOUBLE(arg);
-    }
-    else
-    {
-        interval = PyFloat_AsDouble(arg);
-        if (interval == -1.0 && PyErr_Occurred()) {
-            goto exit;
-        }
-    }
-    return_value = sys_setswitchinterval_impl(module, interval);
-
-exit:
-    return return_value;
-}
-
-PyDoc_STRVAR(sys_getswitchinterval__doc__,
-"getswitchinterval($module, /)\n"
-"--\n"
-"\n"
-"Return the current thread switch interval; see sys.setswitchinterval().");
-
-#define SYS_GETSWITCHINTERVAL_METHODDEF    \
-    {"getswitchinterval", (PyCFunction)sys_getswitchinterval, METH_NOARGS, sys_getswitchinterval__doc__},
-
-static double
-sys_getswitchinterval_impl(PyObject *module);
-
-static PyObject *
-sys_getswitchinterval(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    PyObject *return_value = NULL;
-    double _return_value;
-
-    _return_value = sys_getswitchinterval_impl(module);
-    if ((_return_value == -1.0) && PyErr_Occurred()) {
-        goto exit;
-    }
-    return_value = PyFloat_FromDouble(_return_value);
-
-exit:
-    return return_value;
-}
-
 PyDoc_STRVAR(sys_setrecursionlimit__doc__,
 "setrecursionlimit($module, limit, /)\n"
 "--\n"
@@ -1611,50 +1542,6 @@ sys_getprofile_impl(PyObject *module)
 
 
 /*[clinic input]
-sys.setswitchinterval
-
-    interval: double
-    /
-
-Set the ideal thread switching delay inside the Python interpreter.
-
-The actual frequency of switching threads can be lower if the
-interpreter executes long sequences of uninterruptible code
-(this is implementation-specific and workload-dependent).
-
-The parameter must represent the desired switching delay in seconds
-A typical value is 0.005 (5 milliseconds).
-[clinic start generated code]*/
-
-static PyObject *
-sys_setswitchinterval_impl(PyObject *module, double interval)
-/*[clinic end generated code: output=65a19629e5153983 input=561b477134df91d9]*/
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    if (interval <= 0.0) {
-        _PyErr_SetString(tstate, PyExc_ValueError,
-                         "switch interval must be strictly positive");
-        return NULL;
-    }
-    _PyEval_SetSwitchInterval((unsigned long) (1e6 * interval));
-    Py_RETURN_NONE;
-}
-
-
-/*[clinic input]
-sys.getswitchinterval -> double
-
-Return the current thread switch interval; see sys.setswitchinterval().
-[clinic start generated code]*/
-
-static double
-sys_getswitchinterval_impl(PyObject *module)
-/*[clinic end generated code: output=a38c277c85b5096d input=bdf9d39c0ebbbb6f]*/
-{
-    return 1e-6 * _PyEval_GetSwitchInterval();
-}
-
-/*[clinic input]
 sys.setrecursionlimit
 
     limit as new_limit: int
@@ -2446,8 +2333,6 @@ static PyMethodDef sys_methods[] = {
     SYS_INTERN_METHODDEF
     SYS_IS_FINALIZING_METHODDEF
     SYS_MDEBUG_METHODDEF
-    SYS_SETSWITCHINTERVAL_METHODDEF
-    SYS_GETSWITCHINTERVAL_METHODDEF
     SYS_SETDLOPENFLAGS_METHODDEF
     {"setprofile",      sys_setprofile, METH_O, setprofile_doc},
     SYS_GETPROFILE_METHODDEF
