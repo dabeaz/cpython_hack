@@ -531,7 +531,7 @@ static PyStatus
 pycore_init_types(PyThreadState *tstate)
 {
     PyStatus status;
-    int is_main_interp = _Py_IsMainInterpreter(tstate);
+    int is_main_interp = 1;
 
     status = _PyGC_Init(tstate);
     if (_PyStatus_EXCEPTION(status)) {
@@ -635,7 +635,7 @@ pycore_init_import_warnings(PyThreadState *tstate, PyObject *sysmod)
     }
 
     const PyConfig *config = _PyInterpreterState_GetConfig(tstate->interp);
-    if (_Py_IsMainInterpreter(tstate)) {
+    if (1) {
 
         if (config->_install_importlib) {
             status = _PyConfig_WritePathConfig(config);
@@ -910,7 +910,7 @@ init_interp_main(PyThreadState *tstate)
     assert(!_PyErr_Occurred(tstate));
 
     PyStatus status;
-    int is_main_interp = _Py_IsMainInterpreter(tstate);
+    int is_main_interp = 1;
     PyInterpreterState *interp = tstate->interp;
     const PyConfig *config = _PyInterpreterState_GetConfig(interp);
 
@@ -1209,7 +1209,7 @@ finalize_interp_types(PyThreadState *tstate, int is_main_interp)
 static void
 finalize_interp_clear(PyThreadState *tstate)
 {
-    int is_main_interp = _Py_IsMainInterpreter(tstate);
+  int is_main_interp = 1;
 
     /* Clear interpreter state and all thread states */
     PyInterpreterState_Clear(tstate->interp);

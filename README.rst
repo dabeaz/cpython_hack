@@ -58,6 +58,10 @@ Now what?  Still 75 days to go...
 - Day 47 (7/27/2020). pyc files and __pycache__.  Gone.
 - Day 48 (7/28/2020). DLL hell to hell!  No more dynamic loading.
 - Day 49 (7/29/2020). GIL Gone.
+- Day 50 (7/30/2020). Ransacked some runtime state.
+
+Halfway there.  It all gets more difficult from here...
+
 
 Copyright and License Information
 ---------------------------------

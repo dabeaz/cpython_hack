@@ -17097,7 +17097,7 @@ _PyUnicode_EnableLegacyWindowsFSEncoding(void)
 void
 _PyUnicode_Fini(PyThreadState *tstate)
 {
-    if (_Py_IsMainInterpreter(tstate)) {
+  if (1) {
 #if defined(WITH_VALGRIND) || defined(__INSURE__)
         /* Insure++ is a memory analysis tool that aids in discovering
          * memory leaks and other memory problems.  On Python exit, the

@@ -6033,7 +6033,7 @@ _PyLong_Init(PyThreadState *tstate)
     }
 #endif
 
-    if (_Py_IsMainInterpreter(tstate)) {
+    if (1) {
         _PyLong_Zero = PyLong_FromLong(0);
         if (_PyLong_Zero == NULL) {
             return 0;
@@ -6058,10 +6058,10 @@ _PyLong_Init(PyThreadState *tstate)
 void
 _PyLong_Fini(PyThreadState *tstate)
 {
-    if (_Py_IsMainInterpreter(tstate)) {
-        Py_CLEAR(_PyLong_One);
-        Py_CLEAR(_PyLong_Zero);
-    }
+  if (1) {
+    Py_CLEAR(_PyLong_One);
+    Py_CLEAR(_PyLong_Zero);
+  }
 
 #if NSMALLNEGINTS + NSMALLPOSINTS > 0
     for (Py_ssize_t i = 0; i < NSMALLNEGINTS + NSMALLPOSINTS; i++) {

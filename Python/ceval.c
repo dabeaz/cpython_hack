@@ -135,10 +135,8 @@ COMPUTE_EVAL_BREAKER(PyInterpreterState *interp,
 {
     _Py_atomic_store_relaxed(&ceval2->eval_breaker,
         _Py_atomic_load_relaxed(&ceval2->gil_drop_request)
-        | (_Py_atomic_load_relaxed(&ceval->signals_pending)
-           && _Py_ThreadCanHandleSignals(interp))
-        | (_Py_atomic_load_relaxed(&ceval2->pending.calls_to_do)
-           && _Py_ThreadCanHandlePendingCalls())
+	| (_Py_atomic_load_relaxed(&ceval->signals_pending))
+			     | (_Py_atomic_load_relaxed(&ceval2->pending.calls_to_do))
         | ceval2->pending.async_exc);
 }
 
@@ -171,17 +169,6 @@ SIGNAL_PENDING_SIGNALS(PyInterpreterState *interp)
     /* eval_breaker is not set to 1 if thread_can_handle_signals() is false */
     COMPUTE_EVAL_BREAKER(interp, ceval, ceval2);
 }
-
-
-static inline void
-UNSIGNAL_PENDING_SIGNALS(PyInterpreterState *interp)
-{
-    struct _ceval_runtime_state *ceval = &interp->runtime->ceval;
-    struct _ceval_state *ceval2 = &interp->ceval;
-    _Py_atomic_store_relaxed(&ceval->signals_pending, 0);
-    COMPUTE_EVAL_BREAKER(interp, ceval, ceval2);
-}
-
 
 static inline void
 SIGNAL_ASYNC_EXC(PyInterpreterState *interp)
@@ -401,19 +388,6 @@ Py_AddPendingCall(int (*func)(void *), void *arg)
 static int
 handle_signals(PyThreadState *tstate)
 {
-    assert(is_tstate_valid(tstate));
-    if (!_Py_ThreadCanHandleSignals(tstate->interp)) {
-        return 0;
-    }
-
-    UNSIGNAL_PENDING_SIGNALS(tstate->interp);
-    #if 0
-    if (_PyErr_CheckSignalsTstate(tstate) < 0) {
-        /* On failure, re-schedule a call to handle_signals(). */
-        SIGNAL_PENDING_SIGNALS(tstate->interp);
-        return -1;
-    }
-    #endif
     return 0;
 }
 
@@ -421,11 +395,6 @@ static int
 make_pending_calls(PyThreadState *tstate)
 {
     assert(is_tstate_valid(tstate));
-
-    /* only execute pending calls on main thread */
-    if (!_Py_ThreadCanHandlePendingCalls()) {
-        return 0;
-    }
 
     /* don't perform recursive pending calls */
     static int busy = 0;
@@ -561,9 +530,7 @@ Py_SetRecursionLimit(int new_limit)
 {
     PyThreadState *tstate = _PyThreadState_GET();
     tstate->interp->ceval.recursion_limit = new_limit;
-    if (_Py_IsMainInterpreter(tstate)) {
-        _Py_CheckRecursionLimit = new_limit;
-    }
+    _Py_CheckRecursionLimit = new_limit;
 }
 
 /* The function _Py_EnterRecursiveCall() only calls _Py_CheckRecursiveCall()

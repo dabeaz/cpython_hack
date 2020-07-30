@@ -38,15 +38,7 @@ struct _gilstate_runtime_state {
     PyInterpreterState *autoInterpreterState;
     Py_tss_t autoTSSkey;
 };
-
-/* Runtime audit hook state */
-
-typedef struct _Py_AuditHookEntry {
-    struct _Py_AuditHookEntry *next;
-    Py_AuditHookFunction hookCFunction;
-    void *userData;
-} _Py_AuditHookEntry;
-
+  
 /* Full Python runtime state */
 
 typedef struct pyruntimestate {
@@ -83,13 +75,6 @@ typedef struct pyruntimestate {
            using a Python int. */
         int64_t next_id;
     } interpreters;
-    // XXX Remove this field once we have a tp_* slot.
-    struct _xidregistry {
-        PyThread_type_lock mutex;
-        struct _xidregitem *head;
-    } xidregistry;
-
-    unsigned long main_thread;
 
 #define NEXITFUNCS 32
     void (*exitfuncs[NEXITFUNCS])(void);
@@ -99,11 +84,6 @@ typedef struct pyruntimestate {
     struct _gilstate_runtime_state gilstate;
 
     PyPreConfig preconfig;
-
-    Py_OpenCodeHookFunction open_code_hook;
-    void *open_code_userdata;
-    _Py_AuditHookEntry *audit_hook_head;
-
     // XXX Consolidate globals found via the check-c-globals script.
 } _PyRuntimeState;
 
@@ -117,16 +97,10 @@ PyAPI_DATA(_PyRuntimeState) _PyRuntime;
 PyAPI_FUNC(PyStatus) _PyRuntimeState_Init(_PyRuntimeState *runtime);
 PyAPI_FUNC(void) _PyRuntimeState_Fini(_PyRuntimeState *runtime);
 
-#ifdef HAVE_FORK
-extern PyStatus _PyRuntimeState_ReInitThreads(_PyRuntimeState *runtime);
-#endif
-
 /* Initialize _PyRuntimeState.
    Return NULL on success, or return an error message on failure. */
 PyAPI_FUNC(PyStatus) _PyRuntime_Initialize(void);
-
 PyAPI_FUNC(void) _PyRuntime_Finalize(void);
-
 
 static inline PyThreadState*
 _PyRuntimeState_GetFinalizing(_PyRuntimeState *runtime) {

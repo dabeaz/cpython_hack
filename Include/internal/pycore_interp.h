@@ -199,8 +199,6 @@ struct _is {
 
   /* struct _warnings_runtime_state warnings;*/
 
-    PyObject *audit_hooks;
-
     struct _Py_parser_state parser;
 
 #if _PY_NSMALLNEGINTS + _PY_NSMALLPOSINTS > 0
@@ -228,22 +226,6 @@ extern void _PyInterpreterState_ClearModules(PyInterpreterState *interp);
 extern PyStatus _PyInterpreterState_SetConfig(
     PyInterpreterState *interp,
     const PyConfig *config);
-
-
-
-/* cross-interpreter data registry */
-
-/* For now we use a global registry of shareable classes.  An
-   alternative would be to add a tp_* slot for a class's
-   crossinterpdatafunc. It would be simpler and more efficient. */
-
-struct _xidregitem;
-
-struct _xidregitem {
-    PyTypeObject *cls;
-    crossinterpdatafunc getdata;
-    struct _xidregitem *next;
-};
 
 PyAPI_FUNC(struct _is*) _PyInterpreterState_LookUpID(int64_t);
 

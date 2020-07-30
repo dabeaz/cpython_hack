@@ -11,6 +11,7 @@ extern "C" {
 #include "pycore_runtime.h"   /* PyRuntimeState */
 
 
+  #if 0
 /* Check if the current thread is the main thread.
    Use _Py_IsMainInterpreter() to check if it's the main interpreter. */
 static inline int
@@ -45,6 +46,8 @@ _Py_ThreadCanHandlePendingCalls(void)
     return _Py_IsMainThread();
 }
 
+  #endif
+  
 
 /* Variable and macro for in-line access to current thread
    and interpreter state */

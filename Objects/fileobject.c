@@ -516,28 +516,6 @@ PyTypeObject PyStdPrinter_Type = {
     PyObject_Del,                               /* tp_free */
 };
 
-
-/* ************************** open_code hook ***************************
- * The open_code hook allows embedders to override the method used to
- * open files that are going to be used by the runtime to execute code
- */
-
-int
-PyFile_SetOpenCodeHook(Py_OpenCodeHookFunction hook, void *userData) {
-
-    if (_PyRuntime.open_code_hook) {
-        if (Py_IsInitialized()) {
-            PyErr_SetString(PyExc_SystemError,
-                "failed to change existing open_code hook");
-        }
-        return -1;
-    }
-
-    _PyRuntime.open_code_hook = hook;
-    _PyRuntime.open_code_userdata = userData;
-    return 0;
-}
-
 PyObject *
 PyFile_OpenCodeObject(PyObject *path)
 {
@@ -548,19 +526,12 @@ PyFile_OpenCodeObject(PyObject *path)
                      Py_TYPE(path)->tp_name);
         return NULL;
     }
-
-    Py_OpenCodeHookFunction hook = _PyRuntime.open_code_hook;
-    if (hook) {
-        f = hook(path, _PyRuntime.open_code_userdata);
-    } else {
-        iomod = PyImport_ImportModule("_io");
-        if (iomod) {
-            f = _PyObject_CallMethodId(iomod, &PyId_open, "Os",
-                                       path, "rb");
-            Py_DECREF(iomod);
-        }
+    iomod = PyImport_ImportModule("_io");
+    if (iomod) {
+      f = _PyObject_CallMethodId(iomod, &PyId_open, "Os",
+				 path, "rb");
+      Py_DECREF(iomod);
     }
-
     return f;
 }
 
