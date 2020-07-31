@@ -693,11 +693,11 @@ class _ImportLockContext:
 
     def __enter__(self):
         """Acquire the import lock."""
-        _imp.acquire_lock()
+        pass
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         """Release the import lock regardless of any raised exceptions."""
-        _imp.release_lock()
+        pass
 
 
 def _resolve_name(name, package, level):

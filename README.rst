@@ -62,6 +62,7 @@ Now what?  Still 75 days to go...
 
 Halfway there.  It all gets more difficult from here...
 
+- Day 51 (7/31/2020). Lost all locks.
 
 Copyright and License Information
 ---------------------------------

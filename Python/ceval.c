@@ -347,11 +347,8 @@ _PyEval_AddPendingCall(PyInterpreterState *interp,
 
     /* Ensure that _PyEval_InitPendingCalls() was called
        and that _PyEval_FiniPendingCalls() is not called yet. */
-    assert(pending->lock != NULL);
 
-    PyThread_acquire_lock(pending->lock, WAIT_LOCK);
     int result = _push_pending_call(pending, func, arg);
-    PyThread_release_lock(pending->lock);
 
     /* signal main loop */
     SIGNAL_PENDING_CALLS(interp);
@@ -415,9 +412,7 @@ make_pending_calls(PyThreadState *tstate)
         void *arg = NULL;
 
         /* pop one item off the queue while holding the lock */
-        PyThread_acquire_lock(pending->lock, WAIT_LOCK);
         _pop_pending_call(pending, &func, &arg);
-        PyThread_release_lock(pending->lock);
 
         /* having released the lock, perform the callback */
         if (func == NULL) {
@@ -497,25 +492,12 @@ int
 _PyEval_InitState(struct _ceval_state *ceval)
 {
     ceval->recursion_limit = Py_DEFAULT_RECURSION_LIMIT;
-
-    struct _pending_calls *pending = &ceval->pending;
-    assert(pending->lock == NULL);
-
-    pending->lock = PyThread_allocate_lock();
-    if (pending->lock == NULL) {
-        return -1;
-    }
     return 0;
 }
 
 void
 _PyEval_FiniState(struct _ceval_state *ceval)
 {
-    struct _pending_calls *pending = &ceval->pending;
-    if (pending->lock != NULL) {
-        PyThread_free_lock(pending->lock);
-        pending->lock = NULL;
-    }
 }
 
 int

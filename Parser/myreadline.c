@@ -19,8 +19,6 @@
 
 PyThreadState* _PyOS_ReadlineTState = NULL;
 
-static PyThread_type_lock _PyOS_ReadlineLock = NULL;
-
 int (*PyOS_InputHook)(void) = NULL;
 
 /* This function restarts a fgets() after an EINTR error occurred
@@ -356,16 +354,7 @@ PyOS_Readline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
         PyOS_ReadlineFunctionPointer = PyOS_StdioReadline;
     }
 
-    if (_PyOS_ReadlineLock == NULL) {
-        _PyOS_ReadlineLock = PyThread_allocate_lock();
-        if (_PyOS_ReadlineLock == NULL) {
-            PyErr_SetString(PyExc_MemoryError, "can't allocate lock");
-            return NULL;
-        }
-    }
-
     _PyOS_ReadlineTState = tstate;
-    PyThread_acquire_lock(_PyOS_ReadlineLock, 1);
 
     /* This is needed to handle the unlikely case that the
      * interpreter is in interactive mode *and* stdin/out are not
@@ -377,8 +366,6 @@ PyOS_Readline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
     else
         rv = (*PyOS_ReadlineFunctionPointer)(sys_stdin, sys_stdout,
                                              prompt);
-
-    PyThread_release_lock(_PyOS_ReadlineLock);
 
     _PyOS_ReadlineTState = NULL;
 

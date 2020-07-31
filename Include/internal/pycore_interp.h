@@ -19,7 +19,6 @@ struct _Py_parser_state {
 };
 
 struct _pending_calls {
-    PyThread_type_lock lock;
     /* Request for running pending calls. */
     _Py_atomic_int calls_to_do;
     /* Request for looking at the `async_exc` field of the current
@@ -143,7 +142,6 @@ struct _is {
     int64_t id;
     int64_t id_refcount;
     int requires_idref;
-    PyThread_type_lock id_mutex;
 
     int finalizing;
 

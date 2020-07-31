@@ -41,76 +41,6 @@ static struct _inittab *inittab_copy = NULL;
 _Py_IDENTIFIER(__path__);
 _Py_IDENTIFIER(__spec__);
 
-/*[clinic input]
-module _imp
-[clinic start generated code]*/
-/*[clinic end generated code: output=da39a3ee5e6b4b0d input=9c332475d8686284]*/
-
-/*[clinic input]
-preserve
-[clinic start generated code]*/
-
-PyDoc_STRVAR(_imp_lock_held__doc__,
-"lock_held($module, /)\n"
-"--\n"
-"\n"
-"Return True if the import lock is currently held, else False.\n"
-"\n"
-"On platforms without threads, return False.");
-
-#define _IMP_LOCK_HELD_METHODDEF    \
-    {"lock_held", (PyCFunction)_imp_lock_held, METH_NOARGS, _imp_lock_held__doc__},
-
-static PyObject *
-_imp_lock_held_impl(PyObject *module);
-
-static PyObject *
-_imp_lock_held(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    return _imp_lock_held_impl(module);
-}
-
-PyDoc_STRVAR(_imp_acquire_lock__doc__,
-"acquire_lock($module, /)\n"
-"--\n"
-"\n"
-"Acquires the interpreter\'s import lock for the current thread.\n"
-"\n"
-"This lock should be used by import hooks to ensure thread-safety when importing\n"
-"modules. On platforms without threads, this function does nothing.");
-
-#define _IMP_ACQUIRE_LOCK_METHODDEF    \
-    {"acquire_lock", (PyCFunction)_imp_acquire_lock, METH_NOARGS, _imp_acquire_lock__doc__},
-
-static PyObject *
-_imp_acquire_lock_impl(PyObject *module);
-
-static PyObject *
-_imp_acquire_lock(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    return _imp_acquire_lock_impl(module);
-}
-
-PyDoc_STRVAR(_imp_release_lock__doc__,
-"release_lock($module, /)\n"
-"--\n"
-"\n"
-"Release the interpreter\'s import lock.\n"
-"\n"
-"On platforms without threads, this function does nothing.");
-
-#define _IMP_RELEASE_LOCK_METHODDEF    \
-    {"release_lock", (PyCFunction)_imp_release_lock, METH_NOARGS, _imp_release_lock__doc__},
-
-static PyObject *
-_imp_release_lock_impl(PyObject *module);
-
-static PyObject *
-_imp_release_lock(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    return _imp_release_lock_impl(module);
-}
-
 PyDoc_STRVAR(_imp__fix_co_filename__doc__,
 "_fix_co_filename($module, code, path, /)\n"
 "--\n"
@@ -459,116 +389,10 @@ _PyImportHooks_Init(PyThreadState *tstate)
                         "or path_importer_cache failed");
 }
 
-/* Locking primitives to prevent parallel imports of the same module
-   in different threads to return with a partially loaded module.
-   These calls are serialized by the global interpreter lock. */
-
-static PyThread_type_lock import_lock = NULL;
-static unsigned long import_lock_thread = PYTHREAD_INVALID_THREAD_ID;
-static int import_lock_level = 0;
-
-void
-_PyImport_AcquireLock(void)
-{
-    unsigned long me = PyThread_get_thread_ident();
-    if (me == PYTHREAD_INVALID_THREAD_ID)
-        return; /* Too bad */
-    if (import_lock == NULL) {
-        import_lock = PyThread_allocate_lock();
-        if (import_lock == NULL)
-            return;  /* Nothing much we can do. */
-    }
-    if (import_lock_thread == me) {
-        import_lock_level++;
-        return;
-    }
-    if (import_lock_thread != PYTHREAD_INVALID_THREAD_ID ||
-        !PyThread_acquire_lock(import_lock, 0))
-    {
-        PyThread_acquire_lock(import_lock, WAIT_LOCK);
-    }
-    assert(import_lock_level == 0);
-    import_lock_thread = me;
-    import_lock_level = 1;
-}
-
-int
-_PyImport_ReleaseLock(void)
-{
-    unsigned long me = PyThread_get_thread_ident();
-    if (me == PYTHREAD_INVALID_THREAD_ID || import_lock == NULL)
-        return 0; /* Too bad */
-    if (import_lock_thread != me)
-        return -1;
-    import_lock_level--;
-    assert(import_lock_level >= 0);
-    if (import_lock_level == 0) {
-        import_lock_thread = PYTHREAD_INVALID_THREAD_ID;
-        PyThread_release_lock(import_lock);
-    }
-    return 1;
-}
-
-/*[clinic input]
-_imp.lock_held
-
-Return True if the import lock is currently held, else False.
-
-On platforms without threads, return False.
-[clinic start generated code]*/
-
-static PyObject *
-_imp_lock_held_impl(PyObject *module)
-/*[clinic end generated code: output=8b89384b5e1963fc input=9b088f9b217d9bdf]*/
-{
-    return PyBool_FromLong(import_lock_thread != PYTHREAD_INVALID_THREAD_ID);
-}
-
-/*[clinic input]
-_imp.acquire_lock
-
-Acquires the interpreter's import lock for the current thread.
-
-This lock should be used by import hooks to ensure thread-safety when importing
-modules. On platforms without threads, this function does nothing.
-[clinic start generated code]*/
-
-static PyObject *
-_imp_acquire_lock_impl(PyObject *module)
-/*[clinic end generated code: output=1aff58cb0ee1b026 input=4a2d4381866d5fdc]*/
-{
-    _PyImport_AcquireLock();
-    Py_RETURN_NONE;
-}
-
-/*[clinic input]
-_imp.release_lock
-
-Release the interpreter's import lock.
-
-On platforms without threads, this function does nothing.
-[clinic start generated code]*/
-
-static PyObject *
-_imp_release_lock_impl(PyObject *module)
-/*[clinic end generated code: output=7faab6d0be178b0a input=934fb11516dd778b]*/
-{
-    if (_PyImport_ReleaseLock() < 0) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "not holding the import lock");
-        return NULL;
-    }
-    Py_RETURN_NONE;
-}
-
 void
 _PyImport_Fini(void)
 {
     Py_CLEAR(extensions);
-    if (import_lock != NULL) {
-        PyThread_free_lock(import_lock);
-        import_lock = NULL;
-    }
 }
 
 void
@@ -2462,9 +2286,6 @@ PyDoc_STRVAR(doc_imp,
 
 static PyMethodDef imp_methods[] = {
     _IMP_EXTENSION_SUFFIXES_METHODDEF
-    _IMP_LOCK_HELD_METHODDEF
-    _IMP_ACQUIRE_LOCK_METHODDEF
-    _IMP_RELEASE_LOCK_METHODDEF
     _IMP_GET_FROZEN_OBJECT_METHODDEF
     _IMP_IS_FROZEN_PACKAGE_METHODDEF
     _IMP_CREATE_BUILTIN_METHODDEF

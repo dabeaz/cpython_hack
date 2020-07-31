@@ -62,7 +62,6 @@ typedef struct pyruntimestate {
     _Py_atomic_address _finalizing;
 
     struct pyinterpreters {
-        PyThread_type_lock mutex;
         PyInterpreterState *head;
         PyInterpreterState *main;
         /* _next_interp_id is an auto-numbered sequence of small

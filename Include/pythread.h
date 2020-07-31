@@ -2,20 +2,10 @@
 #ifndef Py_PYTHREAD_H
 #define Py_PYTHREAD_H
 
-typedef void *PyThread_type_lock;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* Return status codes for Python lock acquisition.  Chosen for maximum
- * backwards compatibility, ie failure -> 0, success -> 1.  */
-typedef enum PyLockStatus {
-    PY_LOCK_FAILURE = 0,
-    PY_LOCK_ACQUIRED = 1,
-    PY_LOCK_INTR
-} PyLockStatus;
-
+  
 #ifndef Py_LIMITED_API
 #define PYTHREAD_INVALID_THREAD_ID ((unsigned long)-1)
 #endif
@@ -30,9 +20,6 @@ PyAPI_FUNC(unsigned long) PyThread_get_thread_ident(void);
 PyAPI_FUNC(unsigned long) PyThread_get_thread_native_id(void);
 #endif
 
-PyAPI_FUNC(PyThread_type_lock) PyThread_allocate_lock(void);
-PyAPI_FUNC(void) PyThread_free_lock(PyThread_type_lock);
-PyAPI_FUNC(int) PyThread_acquire_lock(PyThread_type_lock, int);
 #define WAIT_LOCK       1
 #define NOWAIT_LOCK     0
 
@@ -63,25 +50,7 @@ PyAPI_FUNC(int) PyThread_acquire_lock(PyThread_type_lock, int);
 #  define PY_TIMEOUT_MAX LLONG_MAX
 #endif
 
-
-/* If microseconds == 0, the call is non-blocking: it returns immediately
-   even when the lock can't be acquired.
-   If microseconds > 0, the call waits up to the specified duration.
-   If microseconds < 0, the call waits until success (or abnormal failure)
-
-   microseconds must be less than PY_TIMEOUT_MAX. Behaviour otherwise is
-   undefined.
-
-   If intr_flag is true and the acquire is interrupted by a signal, then the
-   call will return PY_LOCK_INTR.  The caller may reattempt to acquire the
-   lock.
-*/
-PyAPI_FUNC(PyLockStatus) PyThread_acquire_lock_timed(PyThread_type_lock,
-                                                     PY_TIMEOUT_T microseconds,
-                                                     int intr_flag);
-
-PyAPI_FUNC(void) PyThread_release_lock(PyThread_type_lock);
-
+  
 PyAPI_FUNC(size_t) PyThread_get_stacksize(void);
 PyAPI_FUNC(int) PyThread_set_stacksize(size_t);
 
