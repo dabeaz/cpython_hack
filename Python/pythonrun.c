@@ -30,16 +30,6 @@
 
 #include "pegen_interface.h"      // PyPegen_ASTFrom*
 
-#ifdef MS_WINDOWS
-#  include "malloc.h"             // alloca()
-#endif
-
-#ifdef MS_WINDOWS
-#  undef BYTE
-#  include "windows.h"
-#endif
-
-
 _Py_IDENTIFIER(builtins);
 _Py_IDENTIFIER(excepthook);
 _Py_IDENTIFIER(flush);

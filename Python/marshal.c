@@ -190,11 +190,7 @@ exit:
  * releases to protect against this.
  * #if defined(MS_WINDOWS) && defined(_DEBUG)
  */
-#if defined(MS_WINDOWS)
-#define MAX_MARSHAL_STACK_DEPTH 1000
-#else
 #define MAX_MARSHAL_STACK_DEPTH 2000
-#endif
 
 #define TYPE_NULL               '0'
 #define TYPE_NONE               'N'

@@ -8,7 +8,6 @@ extern "C" {
 #  error "this header requires Py_BUILD_CORE define"
 #endif
 
-#include "pycore_atomic.h"    /* _Py_atomic_address */
 #include "pycore_gc.h"        /* struct _gc_runtime_state */
 
 struct _Py_parser_state {
@@ -20,7 +19,7 @@ struct _Py_parser_state {
 
 struct _pending_calls {
     /* Request for running pending calls. */
-    _Py_atomic_int calls_to_do;
+    int calls_to_do;
     /* Request for looking at the `async_exc` field of the current
        thread state.
        Guarded by the GIL. */
@@ -44,9 +43,9 @@ struct _ceval_state {
     int tracing_possible;
     /* This single variable consolidates all requests to break out of
        the fast path in the eval loop. */
-    _Py_atomic_int eval_breaker;
+    int eval_breaker;
     /* Request for dropping the GIL */
-    _Py_atomic_int gil_drop_request;
+    int gil_drop_request;
     struct _pending_calls pending;
 };
 

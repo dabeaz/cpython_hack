@@ -63,7 +63,8 @@ Now what?  Still 75 days to go...
 Halfway there.  It all gets more difficult from here...
 
 - Day 51 (7/31/2020). Lost all locks.
-
+- Day 52 (8/01/2020). Atom smasher.
+  
 Copyright and License Information
 ---------------------------------
 

@@ -707,13 +707,6 @@ PyObject_Free(void *ptr)
 
 #ifdef WITH_PYMALLOC
 
-#ifdef WITH_VALGRIND
-#include <valgrind/valgrind.h>
-
-/* -1 indicates that we haven't checked that we're running on valgrind yet. */
-static int running_on_valgrind = -1;
-#endif
-
 
 /* An object allocator for Python.
 
@@ -1574,15 +1567,6 @@ allocate_from_new_pool(uint size)
 static inline void*
 pymalloc_alloc(void *ctx, size_t nbytes)
 {
-#ifdef WITH_VALGRIND
-    if (UNLIKELY(running_on_valgrind == -1)) {
-        running_on_valgrind = RUNNING_ON_VALGRIND;
-    }
-    if (UNLIKELY(running_on_valgrind)) {
-        return NULL;
-    }
-#endif
-
     if (UNLIKELY(nbytes == 0)) {
         return NULL;
     }
@@ -1840,13 +1824,6 @@ static inline int
 pymalloc_free(void *ctx, void *p)
 {
     assert(p != NULL);
-
-#ifdef WITH_VALGRIND
-    if (UNLIKELY(running_on_valgrind > 0)) {
-        return 0;
-    }
-#endif
-
     poolp pool = POOL_ADDR(p);
     if (UNLIKELY(!address_in_range(p, pool))) {
         return 0;
@@ -1927,14 +1904,6 @@ pymalloc_realloc(void *ctx, void **newptr_p, void *p, size_t nbytes)
     size_t size;
 
     assert(p != NULL);
-
-#ifdef WITH_VALGRIND
-    /* Treat running_on_valgrind == -1 the same as 0 */
-    if (UNLIKELY(running_on_valgrind > 0)) {
-        return 0;
-    }
-#endif
-
     pool = POOL_ADDR(p);
     if (!address_in_range(p, pool)) {
         /* pymalloc is not managing this block.

@@ -34,10 +34,9 @@ extern "C" {
 #endif
 
 #define _PyRuntimeGILState_GetThreadState(gilstate) \
-    ((PyThreadState*)_Py_atomic_load_relaxed(&(gilstate)->tstate_current))
+    ((PyThreadState*) gilstate->tstate_current)
 #define _PyRuntimeGILState_SetThreadState(gilstate, value) \
-    _Py_atomic_store_relaxed(&(gilstate)->tstate_current, \
-                             (uintptr_t)(value))
+    gilstate->tstate_current = (uintptr_t)(value)
 
 /* Forward declarations */
 static void _PyThreadState_Delete(PyThreadState *tstate, int check_current);
@@ -177,9 +176,6 @@ void
 PyInterpreterState_Clear(PyInterpreterState *interp)
 {
     _PyRuntimeState *runtime = interp->runtime;
-
-    /* Use the current Python thread state to call audit hooks,
-       not the current Python thread state of 'interp'. */
     PyThreadState *tstate = _PyThreadState_GET();
 
     for (PyThreadState *p = interp->tstate_head; p != NULL; p = p->next) {
@@ -843,51 +839,6 @@ PyThreadState_GetID(PyThreadState *tstate)
     assert(tstate != NULL);
     return tstate->id;
 }
-
-
-/* Asynchronously raise an exception in a thread.
-   Requested by Just van Rossum and Alex Martelli.
-   To prevent naive misuse, you must write your own extension
-   to call this, or use ctypes.  Must be called with the GIL held.
-   Returns the number of tstates modified (normally 1, but 0 if `id` didn't
-   match any known thread id).  Can be called with exc=NULL to clear an
-   existing async exception.  This raises no exceptions. */
-
-int
-PyThreadState_SetAsyncExc(unsigned long id, PyObject *exc)
-{
-    _PyRuntimeState *runtime = &_PyRuntime;
-    PyInterpreterState *interp = _PyRuntimeState_GetThreadState(runtime)->interp;
-
-    /* Although the GIL is held, a few C API functions can be called
-     * without the GIL held, and in particular some that create and
-     * destroy thread and interpreter states.  Those can mutate the
-     * list of thread states we're traversing, so to prevent that we lock
-     * head_mutex for the duration.
-     */
-    for (PyThreadState *tstate = interp->tstate_head; tstate != NULL; tstate = tstate->next) {
-        if (tstate->thread_id != id) {
-            continue;
-        }
-
-        /* Tricky:  we need to decref the current value
-         * (if any) in tstate->async_exc, but that can in turn
-         * allow arbitrary Python code to run, including
-         * perhaps calls to this function.  To prevent
-         * deadlock, we need to release head_mutex before
-         * the decref.
-         */
-        PyObject *old_exc = tstate->async_exc;
-        Py_XINCREF(exc);
-        tstate->async_exc = exc;
-
-        Py_XDECREF(old_exc);
-        _PyEval_SignalAsyncExc(tstate);
-        return 1;
-    }
-    return 0;
-}
-
 
 /* Routines for advanced debuggers, requested by David Beazley.
    Don't use unless you know what you are doing! */

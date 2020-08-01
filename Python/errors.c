@@ -9,14 +9,7 @@
 #include "pycore_traceback.h"
 
 #ifndef __STDC__
-#ifndef MS_WINDOWS
 extern char *strerror(int);
-#endif
-#endif
-
-#ifdef MS_WINDOWS
-#include <windows.h>
-#include <winbase.h>
 #endif
 
 #include <ctype.h>
@@ -672,9 +665,6 @@ PyErr_SetFromErrnoWithFilenameObjects(PyObject *exc, PyObject *filenameObject, P
     PyObject *message;
     PyObject *v, *args;
     int i = errno;
-#ifdef MS_WINDOWS
-    WCHAR *s_buf = NULL;
-#endif /* Unix/Windows */
 
 #if 0
 #ifdef EINTR
@@ -683,7 +673,6 @@ PyErr_SetFromErrnoWithFilenameObjects(PyObject *exc, PyObject *filenameObject, P
 #endif
 #endif
     
-#ifndef MS_WINDOWS
     if (i != 0) {
         const char *s = strerror(i);
         message = PyUnicode_DecodeLocale(s, "surrogateescape");
@@ -692,52 +681,9 @@ PyErr_SetFromErrnoWithFilenameObjects(PyObject *exc, PyObject *filenameObject, P
         /* Sometimes errno didn't get set */
         message = PyUnicode_FromString("Error");
     }
-#else
-    if (i == 0)
-        message = PyUnicode_FromString("Error"); /* Sometimes errno didn't get set */
-    else
-    {
-        /* Note that the Win32 errors do not lineup with the
-           errno error.  So if the error is in the MSVC error
-           table, we use it, otherwise we assume it really _is_
-           a Win32 error code
-        */
-        if (i > 0 && i < _sys_nerr) {
-            message = PyUnicode_FromString(_sys_errlist[i]);
-        }
-        else {
-            int len = FormatMessageW(
-                FORMAT_MESSAGE_ALLOCATE_BUFFER |
-                FORMAT_MESSAGE_FROM_SYSTEM |
-                FORMAT_MESSAGE_IGNORE_INSERTS,
-                NULL,                   /* no message source */
-                i,
-                MAKELANGID(LANG_NEUTRAL,
-                           SUBLANG_DEFAULT),
-                           /* Default language */
-                (LPWSTR) &s_buf,
-                0,                      /* size not used */
-                NULL);                  /* no args */
-            if (len==0) {
-                /* Only ever seen this in out-of-mem
-                   situations */
-                s_buf = NULL;
-                message = PyUnicode_FromFormat("Windows Error 0x%x", i);
-            } else {
-                /* remove trailing cr/lf and dots */
-                while (len > 0 && (s_buf[len-1] <= L' ' || s_buf[len-1] == L'.'))
-                    s_buf[--len] = L'\0';
-                message = PyUnicode_FromWideChar(s_buf, len);
-            }
-        }
-    }
-#endif /* Unix/Windows */
 
     if (message == NULL)
     {
-#ifdef MS_WINDOWS
-        LocalFree(s_buf);
-#endif
         return NULL;
     }
 
@@ -760,9 +706,6 @@ PyErr_SetFromErrnoWithFilenameObjects(PyObject *exc, PyObject *filenameObject, P
             Py_DECREF(v);
         }
     }
-#ifdef MS_WINDOWS
-    LocalFree(s_buf);
-#endif
     return NULL;
 }
 
@@ -775,166 +718,11 @@ PyErr_SetFromErrnoWithFilename(PyObject *exc, const char *filename)
     return result;
 }
 
-#ifdef MS_WINDOWS
-PyObject *
-PyErr_SetFromErrnoWithUnicodeFilename(PyObject *exc, const Py_UNICODE *filename)
-{
-    PyObject *name = filename ? PyUnicode_FromWideChar(filename, -1) : NULL;
-    PyObject *result = PyErr_SetFromErrnoWithFilenameObjects(exc, name, NULL);
-    Py_XDECREF(name);
-    return result;
-}
-#endif /* MS_WINDOWS */
-
 PyObject *
 PyErr_SetFromErrno(PyObject *exc)
 {
     return PyErr_SetFromErrnoWithFilenameObjects(exc, NULL, NULL);
 }
-
-#ifdef MS_WINDOWS
-/* Windows specific error code handling */
-PyObject *PyErr_SetExcFromWindowsErrWithFilenameObject(
-    PyObject *exc,
-    int ierr,
-    PyObject *filenameObject)
-{
-    return PyErr_SetExcFromWindowsErrWithFilenameObjects(exc, ierr,
-        filenameObject, NULL);
-}
-
-PyObject *PyErr_SetExcFromWindowsErrWithFilenameObjects(
-    PyObject *exc,
-    int ierr,
-    PyObject *filenameObject,
-    PyObject *filenameObject2)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    int len;
-    WCHAR *s_buf = NULL; /* Free via LocalFree */
-    PyObject *message;
-    PyObject *args, *v;
-
-    DWORD err = (DWORD)ierr;
-    if (err==0) {
-        err = GetLastError();
-    }
-
-    len = FormatMessageW(
-        /* Error API error */
-        FORMAT_MESSAGE_ALLOCATE_BUFFER |
-        FORMAT_MESSAGE_FROM_SYSTEM |
-        FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL,           /* no message source */
-        err,
-        MAKELANGID(LANG_NEUTRAL,
-        SUBLANG_DEFAULT), /* Default language */
-        (LPWSTR) &s_buf,
-        0,              /* size not used */
-        NULL);          /* no args */
-    if (len==0) {
-        /* Only seen this in out of mem situations */
-        message = PyUnicode_FromFormat("Windows Error 0x%x", err);
-        s_buf = NULL;
-    } else {
-        /* remove trailing cr/lf and dots */
-        while (len > 0 && (s_buf[len-1] <= L' ' || s_buf[len-1] == L'.'))
-            s_buf[--len] = L'\0';
-        message = PyUnicode_FromWideChar(s_buf, len);
-    }
-
-    if (message == NULL)
-    {
-        LocalFree(s_buf);
-        return NULL;
-    }
-
-    if (filenameObject == NULL) {
-        assert(filenameObject2 == NULL);
-        filenameObject = filenameObject2 = Py_None;
-    }
-    else if (filenameObject2 == NULL)
-        filenameObject2 = Py_None;
-    /* This is the constructor signature for OSError.
-       The POSIX translation will be figured out by the constructor. */
-    args = Py_BuildValue("(iOOiO)", 0, message, filenameObject, err, filenameObject2);
-    Py_DECREF(message);
-
-    if (args != NULL) {
-        v = PyObject_Call(exc, args, NULL);
-        Py_DECREF(args);
-        if (v != NULL) {
-            _PyErr_SetObject(tstate, (PyObject *) Py_TYPE(v), v);
-            Py_DECREF(v);
-        }
-    }
-    LocalFree(s_buf);
-    return NULL;
-}
-
-PyObject *PyErr_SetExcFromWindowsErrWithFilename(
-    PyObject *exc,
-    int ierr,
-    const char *filename)
-{
-    PyObject *name = filename ? PyUnicode_DecodeFSDefault(filename) : NULL;
-    PyObject *ret = PyErr_SetExcFromWindowsErrWithFilenameObjects(exc,
-                                                                 ierr,
-                                                                 name,
-                                                                 NULL);
-    Py_XDECREF(name);
-    return ret;
-}
-
-PyObject *PyErr_SetExcFromWindowsErrWithUnicodeFilename(
-    PyObject *exc,
-    int ierr,
-    const Py_UNICODE *filename)
-{
-    PyObject *name = filename ? PyUnicode_FromWideChar(filename, -1) : NULL;
-    PyObject *ret = PyErr_SetExcFromWindowsErrWithFilenameObjects(exc,
-                                                                 ierr,
-                                                                 name,
-                                                                 NULL);
-    Py_XDECREF(name);
-    return ret;
-}
-
-PyObject *PyErr_SetExcFromWindowsErr(PyObject *exc, int ierr)
-{
-    return PyErr_SetExcFromWindowsErrWithFilename(exc, ierr, NULL);
-}
-
-PyObject *PyErr_SetFromWindowsErr(int ierr)
-{
-    return PyErr_SetExcFromWindowsErrWithFilename(PyExc_OSError,
-                                                  ierr, NULL);
-}
-
-PyObject *PyErr_SetFromWindowsErrWithFilename(
-    int ierr,
-    const char *filename)
-{
-    PyObject *name = filename ? PyUnicode_DecodeFSDefault(filename) : NULL;
-    PyObject *result = PyErr_SetExcFromWindowsErrWithFilenameObjects(
-                                                  PyExc_OSError,
-                                                  ierr, name, NULL);
-    Py_XDECREF(name);
-    return result;
-}
-
-PyObject *PyErr_SetFromWindowsErrWithUnicodeFilename(
-    int ierr,
-    const Py_UNICODE *filename)
-{
-    PyObject *name = filename ? PyUnicode_FromWideChar(filename, -1) : NULL;
-    PyObject *result = PyErr_SetExcFromWindowsErrWithFilenameObjects(
-                                                  PyExc_OSError,
-                                                  ierr, name, NULL);
-    Py_XDECREF(name);
-    return result;
-}
-#endif /* MS_WINDOWS */
 
 PyObject *
 PyErr_SetImportErrorSubclass(PyObject *exception, PyObject *msg,

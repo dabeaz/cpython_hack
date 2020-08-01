@@ -1,7 +1,4 @@
 #include "Python.h"
-#ifdef MS_WINDOWS
-#include <winsock2.h>         /* struct timeval */
-#endif
 
 #if defined(__APPLE__)
 #include <mach/mach_time.h>   /* mach_absolute_time(), mach_timebase_info() */
@@ -331,7 +328,6 @@ _PyTime_FromTimespec(_PyTime_t *tp, struct timespec *ts)
 }
 #endif
 
-#if !defined(MS_WINDOWS)
 static int
 pytime_fromtimeval(_PyTime_t *tp, struct timeval *tv, int raise)
 {
@@ -375,7 +371,6 @@ _PyTime_FromTimeval(_PyTime_t *tp, struct timeval *tv)
 {
     return pytime_fromtimeval(tp, tv, 1);
 }
-#endif
 
 static int
 _PyTime_FromDouble(_PyTime_t *t, double value, _PyTime_round_t round,
@@ -576,12 +571,7 @@ _PyTime_AsTimevalStruct_impl(_PyTime_t t, struct timeval *tv,
     int res;
 
     res = _PyTime_AsTimeval_impl(t, &secs, &us, round);
-
-#ifdef MS_WINDOWS
-    tv->tv_sec = (long)secs;
-#else
     tv->tv_sec = secs;
-#endif
     tv->tv_usec = us;
 
     secs2 = (_PyTime_t)tv->tv_sec;
@@ -652,36 +642,6 @@ _PyTime_AsTimespec(_PyTime_t t, struct timespec *ts)
 static int
 pygettimeofday(_PyTime_t *tp, _Py_clock_info_t *info, int raise)
 {
-#ifdef MS_WINDOWS
-    FILETIME system_time;
-    ULARGE_INTEGER large;
-
-    assert(info == NULL || raise);
-
-    GetSystemTimeAsFileTime(&system_time);
-    large.u.LowPart = system_time.dwLowDateTime;
-    large.u.HighPart = system_time.dwHighDateTime;
-    /* 11,644,473,600,000,000,000: number of nanoseconds between
-       the 1st january 1601 and the 1st january 1970 (369 years + 89 leap
-       days). */
-    *tp = large.QuadPart * 100 - 11644473600000000000;
-    if (info) {
-        DWORD timeAdjustment, timeIncrement;
-        BOOL isTimeAdjustmentDisabled, ok;
-
-        info->implementation = "GetSystemTimeAsFileTime()";
-        info->monotonic = 0;
-        ok = GetSystemTimeAdjustment(&timeAdjustment, &timeIncrement,
-                                     &isTimeAdjustmentDisabled);
-        if (!ok) {
-            PyErr_SetFromWindowsErr(0);
-            return -1;
-        }
-        info->resolution = timeIncrement * 1e-7;
-        info->adjustable = 1;
-    }
-
-#else   /* MS_WINDOWS */
     int err;
 #ifdef HAVE_CLOCK_GETTIME
     struct timespec ts;
@@ -736,7 +696,6 @@ pygettimeofday(_PyTime_t *tp, _Py_clock_info_t *info, int raise)
         info->adjustable = 1;
     }
 #endif   /* !HAVE_CLOCK_GETTIME */
-#endif   /* !MS_WINDOWS */
     return 0;
 }
 
@@ -760,42 +719,8 @@ _PyTime_GetSystemClockWithInfo(_PyTime_t *t, _Py_clock_info_t *info)
 static int
 pymonotonic(_PyTime_t *tp, _Py_clock_info_t *info, int raise)
 {
-#if defined(MS_WINDOWS)
-    ULONGLONG ticks;
-    _PyTime_t t;
 
-    assert(info == NULL || raise);
-
-    ticks = GetTickCount64();
-    Py_BUILD_ASSERT(sizeof(ticks) <= sizeof(_PyTime_t));
-    t = (_PyTime_t)ticks;
-
-    if (_PyTime_check_mul_overflow(t, MS_TO_NS)) {
-        if (raise) {
-            _PyTime_overflow();
-            return -1;
-        }
-        /* Hello, time traveler! */
-        Py_FatalError("pymonotonic: integer overflow");
-    }
-    *tp = t * MS_TO_NS;
-
-    if (info) {
-        DWORD timeAdjustment, timeIncrement;
-        BOOL isTimeAdjustmentDisabled, ok;
-        info->implementation = "GetTickCount64()";
-        info->monotonic = 1;
-        ok = GetSystemTimeAdjustment(&timeAdjustment, &timeIncrement,
-                                     &isTimeAdjustmentDisabled);
-        if (!ok) {
-            PyErr_SetFromWindowsErr(0);
-            return -1;
-        }
-        info->resolution = timeIncrement * 1e-7;
-        info->adjustable = 0;
-    }
-
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
     static mach_timebase_info_data_t timebase;
     static uint64_t t0 = 0;
     uint64_t ticks;
@@ -852,26 +777,6 @@ pymonotonic(_PyTime_t *tp, _Py_clock_info_t *info, int raise)
     *tp = _PyTime_MulDiv(ticks,
                          (_PyTime_t)timebase.numer,
                          (_PyTime_t)timebase.denom);
-
-#elif defined(__hpux)
-    hrtime_t time;
-
-    time = gethrtime();
-    if (time == -1) {
-        if (raise) {
-            PyErr_SetFromErrno(PyExc_OSError);
-        }
-        return -1;
-    }
-
-    *tp = time;
-
-    if (info) {
-        info->implementation = "gethrtime()";
-        info->resolution = 1e-9;
-        info->monotonic = 1;
-        info->adjustable = 0;
-    }
 
 #else
     struct timespec ts;
@@ -930,87 +835,10 @@ _PyTime_GetMonotonicClockWithInfo(_PyTime_t *tp, _Py_clock_info_t *info)
 }
 
 
-#ifdef MS_WINDOWS
-static int
-win_perf_counter(_PyTime_t *tp, _Py_clock_info_t *info)
-{
-    static LONGLONG frequency = 0;
-    static LONGLONG t0 = 0;
-    LARGE_INTEGER now;
-    LONGLONG ticksll;
-    _PyTime_t ticks;
-
-    if (frequency == 0) {
-        LARGE_INTEGER freq;
-        if (!QueryPerformanceFrequency(&freq)) {
-            PyErr_SetFromWindowsErr(0);
-            return -1;
-        }
-        frequency = freq.QuadPart;
-
-        /* Sanity check: should never occur in practice */
-        if (frequency < 1) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "invalid QueryPerformanceFrequency");
-            return -1;
-        }
-
-        /* Check that frequency can be casted to _PyTime_t.
-
-           Make also sure that (ticks * SEC_TO_NS) cannot overflow in
-           _PyTime_MulDiv(), with ticks < frequency.
-
-           Known QueryPerformanceFrequency() values:
-
-           * 10,000,000 (10 MHz): 100 ns resolution
-           * 3,579,545 Hz (3.6 MHz): 279 ns resolution
-
-           None of these frequencies can overflow with 64-bit _PyTime_t, but
-           check for overflow, just in case. */
-        if (frequency > _PyTime_MAX
-            || frequency > (LONGLONG)_PyTime_MAX / (LONGLONG)SEC_TO_NS) {
-            PyErr_SetString(PyExc_OverflowError,
-                            "QueryPerformanceFrequency is too large");
-            return -1;
-        }
-
-        QueryPerformanceCounter(&now);
-        t0 = now.QuadPart;
-    }
-
-    if (info) {
-        info->implementation = "QueryPerformanceCounter()";
-        info->resolution = 1.0 / (double)frequency;
-        info->monotonic = 1;
-        info->adjustable = 0;
-    }
-
-    QueryPerformanceCounter(&now);
-    ticksll = now.QuadPart;
-
-    /* Use a "time zero" to reduce precision loss when converting time
-       to floatting point number, as in time.perf_counter(). */
-    ticksll -= t0;
-
-    /* Make sure that casting LONGLONG to _PyTime_t cannot overflow,
-       both types are signed */
-    Py_BUILD_ASSERT(sizeof(ticksll) <= sizeof(ticks));
-    ticks = (_PyTime_t)ticksll;
-
-    *tp = _PyTime_MulDiv(ticks, SEC_TO_NS, (_PyTime_t)frequency);
-    return 0;
-}
-#endif
-
-
 int
 _PyTime_GetPerfCounterWithInfo(_PyTime_t *t, _Py_clock_info_t *info)
 {
-#ifdef MS_WINDOWS
-    return win_perf_counter(t, info);
-#else
     return _PyTime_GetMonotonicClockWithInfo(t, info);
-#endif
 }
 
 
@@ -1047,29 +875,6 @@ _PyTime_Init(void)
 int
 _PyTime_localtime(time_t t, struct tm *tm)
 {
-#ifdef MS_WINDOWS
-    int error;
-
-    error = localtime_s(tm, &t);
-    if (error != 0) {
-        errno = error;
-        PyErr_SetFromErrno(PyExc_OSError);
-        return -1;
-    }
-    return 0;
-#else /* !MS_WINDOWS */
-
-#if defined(_AIX) && (SIZEOF_TIME_T < 8)
-    /* bpo-34373: AIX does not return NULL if t is too small or too large */
-    if (t < -2145916800 /* 1902-01-01 */
-       || t > 2145916800 /* 2038-01-01 */) {
-        errno = EINVAL;
-        PyErr_SetString(PyExc_OverflowError,
-                        "localtime argument out of range");
-        return -1;
-    }
-#endif
-
     errno = 0;
     if (localtime_r(&t, tm) == NULL) {
         if (errno == 0) {
@@ -1079,23 +884,11 @@ _PyTime_localtime(time_t t, struct tm *tm)
         return -1;
     }
     return 0;
-#endif /* MS_WINDOWS */
 }
 
 int
 _PyTime_gmtime(time_t t, struct tm *tm)
 {
-#ifdef MS_WINDOWS
-    int error;
-
-    error = gmtime_s(tm, &t);
-    if (error != 0) {
-        errno = error;
-        PyErr_SetFromErrno(PyExc_OSError);
-        return -1;
-    }
-    return 0;
-#else /* !MS_WINDOWS */
     if (gmtime_r(&t, tm) == NULL) {
 #ifdef EINVAL
         if (errno == 0) {
@@ -1106,5 +899,4 @@ _PyTime_gmtime(time_t t, struct tm *tm)
         return -1;
     }
     return 0;
-#endif /* MS_WINDOWS */
 }

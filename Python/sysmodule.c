@@ -27,20 +27,8 @@ Data members:
 #include "pycore_pystate.h"       // _PyThreadState_GET()
 #include "pycore_tupleobject.h"
 
-#include "pydtrace.h"
 #include "osdefs.h"               // DELIM
 #include <locale.h>
-
-#ifdef MS_WINDOWS
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif /* MS_WINDOWS */
-
-#ifdef MS_COREDLL
-extern void *PyWin_DLLhModule;
-/* A string loaded from the DLL at startup: */
-extern const char *PyWin_DLLVersionString;
-#endif
 
 /*[clinic input]
 module sys
@@ -440,66 +428,6 @@ sys_getrecursionlimit(PyObject *module, PyObject *Py_UNUSED(ignored))
     return sys_getrecursionlimit_impl(module);
 }
 
-#if defined(MS_WINDOWS)
-
-PyDoc_STRVAR(sys_getwindowsversion__doc__,
-"getwindowsversion($module, /)\n"
-"--\n"
-"\n"
-"Return info about the running version of Windows as a named tuple.\n"
-"\n"
-"The members are named: major, minor, build, platform, service_pack,\n"
-"service_pack_major, service_pack_minor, suite_mask, product_type and\n"
-"platform_version. For backward compatibility, only the first 5 items\n"
-"are available by indexing. All elements are numbers, except\n"
-"service_pack and platform_type which are strings, and platform_version\n"
-"which is a 3-tuple. Platform is always 2. Product_type may be 1 for a\n"
-"workstation, 2 for a domain controller, 3 for a server.\n"
-"Platform_version is a 3-tuple containing a version number that is\n"
-"intended for identifying the OS rather than feature detection.");
-
-#define SYS_GETWINDOWSVERSION_METHODDEF    \
-    {"getwindowsversion", (PyCFunction)sys_getwindowsversion, METH_NOARGS, sys_getwindowsversion__doc__},
-
-static PyObject *
-sys_getwindowsversion_impl(PyObject *module);
-
-static PyObject *
-sys_getwindowsversion(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    return sys_getwindowsversion_impl(module);
-}
-
-#endif /* defined(MS_WINDOWS) */
-
-#if defined(MS_WINDOWS)
-
-PyDoc_STRVAR(sys__enablelegacywindowsfsencoding__doc__,
-"_enablelegacywindowsfsencoding($module, /)\n"
-"--\n"
-"\n"
-"Changes the default filesystem encoding to mbcs:replace.\n"
-"\n"
-"This is done for consistency with earlier versions of Python. See PEP\n"
-"529 for more information.\n"
-"\n"
-"This is equivalent to defining the PYTHONLEGACYWINDOWSFSENCODING\n"
-"environment variable before launching Python.");
-
-#define SYS__ENABLELEGACYWINDOWSFSENCODING_METHODDEF    \
-    {"_enablelegacywindowsfsencoding", (PyCFunction)sys__enablelegacywindowsfsencoding, METH_NOARGS, sys__enablelegacywindowsfsencoding__doc__},
-
-static PyObject *
-sys__enablelegacywindowsfsencoding_impl(PyObject *module);
-
-static PyObject *
-sys__enablelegacywindowsfsencoding(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    return sys__enablelegacywindowsfsencoding_impl(module);
-}
-
-#endif /* defined(MS_WINDOWS) */
-
 #if defined(HAVE_DLOPEN)
 
 PyDoc_STRVAR(sys_setdlopenflags__doc__,
@@ -834,14 +762,6 @@ sys_getandroidapilevel(PyObject *module, PyObject *Py_UNUSED(ignored))
 }
 
 #endif /* defined(ANDROID_API_LEVEL) */
-
-#ifndef SYS_GETWINDOWSVERSION_METHODDEF
-    #define SYS_GETWINDOWSVERSION_METHODDEF
-#endif /* !defined(SYS_GETWINDOWSVERSION_METHODDEF) */
-
-#ifndef SYS__ENABLELEGACYWINDOWSFSENCODING_METHODDEF
-    #define SYS__ENABLELEGACYWINDOWSFSENCODING_METHODDEF
-#endif /* !defined(SYS__ENABLELEGACYWINDOWSFSENCODING_METHODDEF) */
 
 #ifndef SYS_SETDLOPENFLAGS_METHODDEF
     #define SYS_SETDLOPENFLAGS_METHODDEF
@@ -1822,150 +1742,6 @@ sys_getrecursionlimit_impl(PyObject *module)
     return PyLong_FromLong(Py_GetRecursionLimit());
 }
 
-#ifdef MS_WINDOWS
-
-static PyTypeObject WindowsVersionType = {0, 0, 0, 0, 0, 0};
-
-static PyStructSequence_Field windows_version_fields[] = {
-    {"major", "Major version number"},
-    {"minor", "Minor version number"},
-    {"build", "Build number"},
-    {"platform", "Operating system platform"},
-    {"service_pack", "Latest Service Pack installed on the system"},
-    {"service_pack_major", "Service Pack major version number"},
-    {"service_pack_minor", "Service Pack minor version number"},
-    {"suite_mask", "Bit mask identifying available product suites"},
-    {"product_type", "System product type"},
-    {"platform_version", "Diagnostic version number"},
-    {0}
-};
-
-static PyStructSequence_Desc windows_version_desc = {
-    "sys.getwindowsversion",       /* name */
-    sys_getwindowsversion__doc__,  /* doc */
-    windows_version_fields,        /* fields */
-    5                              /* For backward compatibility,
-                                      only the first 5 items are accessible
-                                      via indexing, the rest are name only */
-};
-
-/* Disable deprecation warnings about GetVersionEx as the result is
-   being passed straight through to the caller, who is responsible for
-   using it correctly. */
-#pragma warning(push)
-#pragma warning(disable:4996)
-
-/*[clinic input]
-sys.getwindowsversion
-
-Return info about the running version of Windows as a named tuple.
-
-The members are named: major, minor, build, platform, service_pack,
-service_pack_major, service_pack_minor, suite_mask, product_type and
-platform_version. For backward compatibility, only the first 5 items
-are available by indexing. All elements are numbers, except
-service_pack and platform_type which are strings, and platform_version
-which is a 3-tuple. Platform is always 2. Product_type may be 1 for a
-workstation, 2 for a domain controller, 3 for a server.
-Platform_version is a 3-tuple containing a version number that is
-intended for identifying the OS rather than feature detection.
-[clinic start generated code]*/
-
-static PyObject *
-sys_getwindowsversion_impl(PyObject *module)
-/*[clinic end generated code: output=1ec063280b932857 input=73a228a328fee63a]*/
-{
-    PyObject *version;
-    int pos = 0;
-    OSVERSIONINFOEXW ver;
-    DWORD realMajor, realMinor, realBuild;
-    HANDLE hKernel32;
-    wchar_t kernel32_path[MAX_PATH];
-    LPVOID verblock;
-    DWORD verblock_size;
-    PyThreadState *tstate = _PyThreadState_GET();
-
-    ver.dwOSVersionInfoSize = sizeof(ver);
-    if (!GetVersionExW((OSVERSIONINFOW*) &ver))
-        return PyErr_SetFromWindowsErr(0);
-
-    version = PyStructSequence_New(&WindowsVersionType);
-    if (version == NULL)
-        return NULL;
-
-    PyStructSequence_SET_ITEM(version, pos++, PyLong_FromLong(ver.dwMajorVersion));
-    PyStructSequence_SET_ITEM(version, pos++, PyLong_FromLong(ver.dwMinorVersion));
-    PyStructSequence_SET_ITEM(version, pos++, PyLong_FromLong(ver.dwBuildNumber));
-    PyStructSequence_SET_ITEM(version, pos++, PyLong_FromLong(ver.dwPlatformId));
-    PyStructSequence_SET_ITEM(version, pos++, PyUnicode_FromWideChar(ver.szCSDVersion, -1));
-    PyStructSequence_SET_ITEM(version, pos++, PyLong_FromLong(ver.wServicePackMajor));
-    PyStructSequence_SET_ITEM(version, pos++, PyLong_FromLong(ver.wServicePackMinor));
-    PyStructSequence_SET_ITEM(version, pos++, PyLong_FromLong(ver.wSuiteMask));
-    PyStructSequence_SET_ITEM(version, pos++, PyLong_FromLong(ver.wProductType));
-
-    realMajor = ver.dwMajorVersion;
-    realMinor = ver.dwMinorVersion;
-    realBuild = ver.dwBuildNumber;
-
-    // GetVersion will lie if we are running in a compatibility mode.
-    // We need to read the version info from a system file resource
-    // to accurately identify the OS version. If we fail for any reason,
-    // just return whatever GetVersion said.
-    hKernel32 = GetModuleHandleW(L"kernel32.dll");
-    if (hKernel32 && GetModuleFileNameW(hKernel32, kernel32_path, MAX_PATH) &&
-        (verblock_size = GetFileVersionInfoSizeW(kernel32_path, NULL)) &&
-        (verblock = PyMem_RawMalloc(verblock_size))) {
-        VS_FIXEDFILEINFO *ffi;
-        UINT ffi_len;
-
-        if (GetFileVersionInfoW(kernel32_path, 0, verblock_size, verblock) &&
-            VerQueryValueW(verblock, L"", (LPVOID)&ffi, &ffi_len)) {
-            realMajor = HIWORD(ffi->dwProductVersionMS);
-            realMinor = LOWORD(ffi->dwProductVersionMS);
-            realBuild = HIWORD(ffi->dwProductVersionLS);
-        }
-        PyMem_RawFree(verblock);
-    }
-    PyStructSequence_SET_ITEM(version, pos++, Py_BuildValue("(kkk)",
-        realMajor,
-        realMinor,
-        realBuild
-    ));
-
-    if (_PyErr_Occurred(tstate)) {
-        Py_DECREF(version);
-        return NULL;
-    }
-
-    return version;
-}
-
-#pragma warning(pop)
-
-/*[clinic input]
-sys._enablelegacywindowsfsencoding
-
-Changes the default filesystem encoding to mbcs:replace.
-
-This is done for consistency with earlier versions of Python. See PEP
-529 for more information.
-
-This is equivalent to defining the PYTHONLEGACYWINDOWSFSENCODING
-environment variable before launching Python.
-[clinic start generated code]*/
-
-static PyObject *
-sys__enablelegacywindowsfsencoding_impl(PyObject *module)
-/*[clinic end generated code: output=f5c3855b45e24fe9 input=2bfa931a20704492]*/
-{
-    if (_PyUnicode_EnableLegacyWindowsFSEncoding() < 0) {
-        return NULL;
-    }
-    Py_RETURN_NONE;
-}
-
-#endif /* MS_WINDOWS */
-
 #ifdef HAVE_DLOPEN
 
 /*[clinic input]
@@ -2328,8 +2104,6 @@ static PyMethodDef sys_methods[] = {
     {"getsizeof",   (PyCFunction)(void(*)(void))sys_getsizeof,
      METH_VARARGS | METH_KEYWORDS, getsizeof_doc},
     SYS__GETFRAME_METHODDEF
-    SYS_GETWINDOWSVERSION_METHODDEF
-    SYS__ENABLELEGACYWINDOWSFSENCODING_METHODDEF
     SYS_INTERN_METHODDEF
     SYS_IS_FINALIZING_METHODDEF
     SYS_MDEBUG_METHODDEF
@@ -2740,21 +2514,6 @@ version -- the version of this interpreter as a string\n\
 version_info -- version information as a named tuple\n\
 "
 )
-#ifdef MS_COREDLL
-/* concatenating string here */
-PyDoc_STR(
-"dllhandle -- [Windows only] integer handle of the Python DLL\n\
-winver -- [Windows only] version number of the Python DLL\n\
-"
-)
-#endif /* MS_COREDLL */
-#ifdef MS_WINDOWS
-/* concatenating string here */
-PyDoc_STR(
-"_enablelegacywindowsfsencoding -- [Windows only]\n\
-"
-)
-#endif
 PyDoc_STR(
 "__stdin__ -- the original stdin; don't touch!\n\
 __stdout__ -- the original stdout; don't touch!\n\
@@ -3141,23 +2900,6 @@ _PySys_InitCore(PyThreadState *tstate, PyObject *sysdict)
     }
     /* Set flags to their default values (updated by _PySys_InitMain()) */
     SET_SYS_FROM_STRING("flags", make_flags(tstate));
-
-#if defined(MS_WINDOWS)
-    /* getwindowsversion */
-    if (WindowsVersionType.tp_name == 0)
-        if (PyStructSequence_InitType2(&WindowsVersionType,
-                                       &windows_version_desc) < 0) {
-            goto type_init_failed;
-        }
-    /* prevent user from creating new instances */
-    WindowsVersionType.tp_init = NULL;
-    WindowsVersionType.tp_new = NULL;
-    assert(!_PyErr_Occurred(tstate));
-    res = PyDict_DelItemString(WindowsVersionType.tp_dict, "__new__");
-    if (res < 0 && _PyErr_ExceptionMatches(tstate, PyExc_KeyError)) {
-        _PyErr_Clear(tstate);
-    }
-#endif
 
     /* float repr style: 0.03 (short) vs 0.029999999999999999 (legacy) */
 #ifndef PY_NO_SHORT_FLOAT_REPR

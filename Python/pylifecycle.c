@@ -26,15 +26,6 @@
 #  include <langinfo.h>           // nl_langinfo(CODESET)
 #endif
 
-#ifdef MS_WINDOWS
-#  undef BYTE
-#  include "windows.h"
-
-   extern PyTypeObject PyWindowsConsoleIO_Type;
-#  define PyWindowsConsoleIO_Check(op) \
-       (PyObject_TypeCheck((op), &PyWindowsConsoleIO_Type))
-#endif
-
 
 _Py_IDENTIFIER(flush);
 _Py_IDENTIFIER(name);
@@ -215,7 +206,6 @@ init_importlib_external(PyThreadState *tstate)
 int
 _Py_LegacyLocaleDetected(int warn)
 {
-#ifndef MS_WINDOWS
     if (!warn) {
         const char *locale_override = getenv("LC_ALL");
         if (locale_override != NULL && *locale_override != '\0') {
@@ -232,13 +222,8 @@ _Py_LegacyLocaleDetected(int warn)
      */
     const char *ctype_loc = setlocale(LC_CTYPE, NULL);
     return ctype_loc != NULL && strcmp(ctype_loc, "C") == 0;
-#else
-    /* Windows uses code pages instead of locales, so no locale is legacy */
-    return 0;
-#endif
 }
 
-#ifndef MS_WINDOWS
 static const char *_C_LOCALE_WARNING =
     "Python runtime initialized with LC_CTYPE=C (a locale with default ASCII "
     "encoding), which may cause Unicode compatibility problems. Using C.UTF-8, "
@@ -253,7 +238,6 @@ emit_stderr_warning_for_legacy_locale(_PyRuntimeState *runtime)
         PySys_FormatStderr("%s", _C_LOCALE_WARNING);
     }
 }
-#endif   /* !defined(MS_WINDOWS) */
 
 typedef struct _CandidateLocale {
     const char *locale_name; /* The locale to try as a coercion target */
@@ -994,9 +978,7 @@ init_interp_main(PyThreadState *tstate)
     }
 
     if (is_main_interp) {
-#ifndef MS_WINDOWS
         emit_stderr_warning_for_legacy_locale(interp->runtime);
-#endif
     }
 
     assert(!_PyErr_Occurred(tstate));
@@ -1606,7 +1588,7 @@ is_valid_fd(int fd)
 
    Only use dup() on platforms where dup() is enough to detect invalid FD in
    corner cases: on Linux and Windows (bpo-32849). */
-#if defined(__linux__) || defined(MS_WINDOWS)
+#if defined(__linux__)
     if (fd < 0) {
         return 0;
     }
@@ -1675,11 +1657,6 @@ create_stdio(const PyConfig *config, PyObject* io,
         Py_INCREF(raw);
     }
 
-#ifdef MS_WINDOWS
-    /* Windows console IO is always UTF-8 encoded */
-    if (PyWindowsConsoleIO_Check(raw))
-        encoding = L"utf-8";
-#endif
 
     text = PyUnicode_FromString(name);
     if (text == NULL || _PyObject_SetAttrId(raw, &PyId_name, text) < 0)
@@ -1702,17 +1679,9 @@ create_stdio(const PyConfig *config, PyObject* io,
 
     Py_CLEAR(raw);
     Py_CLEAR(text);
-
-#ifdef MS_WINDOWS
-    /* sys.stdin: enable universal newline mode, translate "\r\n" and "\r"
-       newlines to "\n".
-       sys.stdout and sys.stderr: translate "\n" to "\r\n". */
-    newline = NULL;
-#else
     /* sys.stdin: split lines at "\n".
        sys.stdout and sys.stderr: don't translate newlines (use "\n"). */
     newline = "\n";
-#endif
 
     PyObject *encoding_str = PyUnicode_FromWideChar(encoding, -1);
     if (encoding_str == NULL) {
@@ -1817,13 +1786,11 @@ init_sys_streams(PyThreadState *tstate)
        crashing the Python interpreter. Catch this common mistake here
        and output a useful error message. Note that under MS Windows,
        the shell already prevents that. */
-#ifndef MS_WINDOWS
     struct _Py_stat_struct sb;
     if (_Py_fstat_noraise(fileno(stdin), &sb) == 0 &&
         S_ISDIR(sb.st_mode)) {
         return _PyStatus_ERR("<stdin> is a directory, cannot continue");
     }
-#endif
 
     /* Hack to avoid a nasty recursion issue when Python is invoked
        in verbose mode: pre-import the Latin-1 and UTF-8 codecs */
@@ -1982,42 +1949,6 @@ _Py_FatalError_PrintExc(PyThreadState *tstate)
 
 /* Print fatal error message and abort */
 
-#ifdef MS_WINDOWS
-static void
-fatal_output_debug(const char *msg)
-{
-    /* buffer of 256 bytes allocated on the stack */
-    WCHAR buffer[256 / sizeof(WCHAR)];
-    size_t buflen = Py_ARRAY_LENGTH(buffer) - 1;
-    size_t msglen;
-
-    OutputDebugStringW(L"Fatal Python error: ");
-
-    msglen = strlen(msg);
-    while (msglen) {
-        size_t i;
-
-        if (buflen > msglen) {
-            buflen = msglen;
-        }
-
-        /* Convert the message to wchar_t. This uses a simple one-to-one
-           conversion, assuming that the this error message actually uses
-           ASCII only. If this ceases to be true, we will have to convert. */
-        for (i=0; i < buflen; ++i) {
-            buffer[i] = msg[i];
-        }
-        buffer[i] = L'\0';
-        OutputDebugStringW(buffer);
-
-        msg += buflen;
-        msglen -= buflen;
-    }
-    OutputDebugStringW(L"\n");
-}
-#endif
-
-
 static void
 fatal_error_dump_runtime(FILE *stream, _PyRuntimeState *runtime)
 {
@@ -2050,9 +1981,6 @@ static inline void _Py_NO_RETURN
 fatal_error_exit(int status)
 {
     if (status < 0) {
-#if defined(MS_WINDOWS) && defined(_DEBUG)
-        DebugBreak();
-#endif
         abort();
     }
     else {

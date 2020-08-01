@@ -8,8 +8,6 @@ extern "C" {
 #  error "this header requires Py_BUILD_CORE define"
 #endif
 
-#include "pycore_atomic.h"    /* _Py_atomic_address */
-  // #include "pycore_gil.h"       // struct _gil_runtime_state
 #include "pycore_condvar.h"   /* PyCOND_T */
   
 /* ceval state */
@@ -19,7 +17,7 @@ struct _ceval_runtime_state {
        bpo-40513). Any thread of any interpreter can receive a signal, but only
        the main thread of the main interpreter can handle signals: see
        _Py_ThreadCanHandleSignals(). */
-    _Py_atomic_int signals_pending;
+    int signals_pending;
 };
 
 /* GIL state */
@@ -30,7 +28,7 @@ struct _gilstate_runtime_state {
     int check_enabled;
     /* Assuming the current thread holds the GIL, this is the
        PyThreadState for the current thread. */
-    _Py_atomic_address tstate_current;
+    uintptr_t tstate_current;
     /* The single PyInterpreterState used by this process'
        GILState implementation
     */
@@ -59,7 +57,7 @@ typedef struct pyruntimestate {
 
        Use _PyRuntimeState_GetFinalizing() and _PyRuntimeState_SetFinalizing()
        to access it, don't access it directly. */
-    _Py_atomic_address _finalizing;
+    uintptr_t _finalizing;
 
     struct pyinterpreters {
         PyInterpreterState *head;
@@ -103,12 +101,12 @@ PyAPI_FUNC(void) _PyRuntime_Finalize(void);
 
 static inline PyThreadState*
 _PyRuntimeState_GetFinalizing(_PyRuntimeState *runtime) {
-    return (PyThreadState*)_Py_atomic_load_relaxed(&runtime->_finalizing);
+  return (PyThreadState*) runtime->_finalizing;
 }
 
 static inline void
 _PyRuntimeState_SetFinalizing(_PyRuntimeState *runtime, PyThreadState *tstate) {
-    _Py_atomic_store_relaxed(&runtime->_finalizing, (uintptr_t)tstate);
+  runtime->_finalizing = (uintptr_t) tstate;
 }
 
 #ifdef __cplusplus

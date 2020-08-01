@@ -50,10 +50,7 @@ PGO_PROF_USE_FLAG=@PGO_PROF_USE_FLAG@
 LLVM_PROF_MERGER=@LLVM_PROF_MERGER@
 LLVM_PROF_FILE=@LLVM_PROF_FILE@
 LLVM_PROF_ERR=@LLVM_PROF_ERR@
-DTRACE=         @DTRACE@
 DFLAGS=         @DFLAGS@
-DTRACE_HEADERS= @DTRACE_HEADERS@
-DTRACE_OBJS=    @DTRACE_OBJS@
 
 GNULD=		@GNULD@
 
@@ -328,7 +325,6 @@ PYTHON_OBJS=	\
 		Python/ceval.o \
 		Python/codecs.o \
 		Python/compile.o \
-		Python/dynamic_annotations.o \
 		Python/errors.o \
 		Python/frozenmain.o \
 		Python/future.o \
@@ -369,8 +365,7 @@ PYTHON_OBJS=	\
 		Python/formatter_unicode.o \
 		Python/fileutils.o \
 		$(LIBOBJS) \
-		$(MACHDEP_OBJS) \
-		$(DTRACE_OBJS)
+		$(MACHDEP_OBJS)
 
 
 ##########################################################################
@@ -429,14 +424,6 @@ LIBRARY_OBJS_OMIT_FROZEN=	\
 LIBRARY_OBJS=	\
 		$(LIBRARY_OBJS_OMIT_FROZEN) \
 		Python/frozen.o
-
-##########################################################################
-# DTrace
-
-# On some systems, object files that reference DTrace probes need to be modified
-# in-place by dtrace(1).
-DTRACE_DEPS = \
-	Python/ceval.o Python/import.o Python/sysmodule.o Modules/gcmodule.o
 
 #########################################################################
 # Rules
@@ -600,7 +587,7 @@ $(LIBRARY): $(LIBRARY_OBJS)
 	-rm -f $@
 	$(AR) $(ARFLAGS) $@ $(LIBRARY_OBJS)
 
-libpython$(LDVERSION).so: $(LIBRARY_OBJS) $(DTRACE_OBJS)
+libpython$(LDVERSION).so: $(LIBRARY_OBJS) 
 	if test $(INSTSONAME) != $(LDLIBRARY); then \
 		$(BLDSHARED) -Wl,-h$(INSTSONAME) -o $(INSTSONAME) $(LIBRARY_OBJS) $(MODLIBS) $(SHLIBS) $(LIBC) $(LIBM); \
 		$(LN) -f $(INSTSONAME) $@; \
@@ -612,7 +599,7 @@ libpython3.so:	libpython$(LDVERSION).so
 	$(BLDSHARED) $(NO_AS_NEEDED) -o $@ -Wl,-h$@ $^
 
 libpython$(LDVERSION).dylib: $(LIBRARY_OBJS)
-	 $(CC) -dynamiclib -Wl,-single_module $(PY_CORE_LDFLAGS) -undefined dynamic_lookup -Wl,-install_name,$(prefix)/lib/libpython$(LDVERSION).dylib -Wl,-compatibility_version,$(VERSION) -Wl,-current_version,$(VERSION) -o $@ $(LIBRARY_OBJS) $(DTRACE_OBJS) $(SHLIBS) $(LIBC) $(LIBM); \
+	 $(CC) -dynamiclib -Wl,-single_module $(PY_CORE_LDFLAGS) -undefined dynamic_lookup -Wl,-install_name,$(prefix)/lib/libpython$(LDVERSION).dylib -Wl,-compatibility_version,$(VERSION) -Wl,-current_version,$(VERSION) -o $@ $(LIBRARY_OBJS) $(SHLIBS) $(LIBC) $(LIBM); \
 
 
 libpython$(VERSION).sl: $(LIBRARY_OBJS)
@@ -714,7 +701,6 @@ Modules/getbuildinfo.o: $(PARSER_OBJS) \
 		$(PYTHON_OBJS) \
 		$(MODULE_OBJS) \
 		$(MODOBJS) \
-		$(DTRACE_OBJS) \
 		$(srcdir)/Modules/getbuildinfo.c
 	$(CC) -c $(PY_CORE_CFLAGS) \
 	      -DGITVERSION="\"`LC_ALL=C $(GITVERSION)`\"" \
@@ -742,7 +728,7 @@ Modules/posixmodule.o: $(srcdir)/Modules/posixmodule.c $(srcdir)/Modules/posixmo
 
 Modules/signalmodule.o: $(srcdir)/Modules/signalmodule.c $(srcdir)/Modules/posixmodule.h
 
-Python/sysmodule.o: $(srcdir)/Python/sysmodule.c Makefile $(srcdir)/Include/pydtrace.h
+Python/sysmodule.o: $(srcdir)/Python/sysmodule.c Makefile 
 	$(CC) -c $(PY_CORE_CFLAGS) \
 		-DABIFLAGS='"$(ABIFLAGS)"' \
 		$(MULTIARCH_CPPFLAGS) \
@@ -892,23 +878,6 @@ regen-opcode-targets:
 
 Python/frozen.o: $(srcdir)/Python/importlib.h $(srcdir)/Python/importlib_external.h
 
-# Generate DTrace probe macros, then rename them (PYTHON_ -> PyDTrace_) to
-# follow our naming conventions. dtrace(1) uses the output filename to generate
-# an include guard, so we can't use a pipeline to transform its output.
-Include/pydtrace_probes.h: $(srcdir)/Include/pydtrace.d
-	$(MKDIR_P) Include
-	$(DTRACE) $(DFLAGS) -o $@ -h -s $<
-	: sed in-place edit with POSIX-only tools
-	sed 's/PYTHON_/PyDTrace_/' $@ > $@.tmp
-	mv $@.tmp $@
-
-Python/ceval.o: $(srcdir)/Include/pydtrace.h
-Python/import.o: $(srcdir)/Include/pydtrace.h
-Modules/gcmodule.o: $(srcdir)/Include/pydtrace.h
-
-Python/pydtrace.o: $(srcdir)/Include/pydtrace.d $(DTRACE_DEPS)
-	$(DTRACE) $(DFLAGS) -o $@ -G -s $< $(DTRACE_DEPS)
-
 Objects/typeobject.o: Objects/typeslots.inc
 
 .PHONY: regen-typeslots
@@ -942,7 +911,6 @@ PYTHON_HEADERS= \
 		$(srcdir)/Include/complexobject.h \
 		$(srcdir)/Include/descrobject.h \
 		$(srcdir)/Include/dictobject.h \
-		$(srcdir)/Include/dynamic_annotations.h \
 		$(srcdir)/Include/enumobject.h \
 		$(srcdir)/Include/errcode.h \
 		$(srcdir)/Include/eval.h \
@@ -975,7 +943,6 @@ PYTHON_HEADERS= \
 		$(srcdir)/Include/pycapsule.h \
 		$(srcdir)/Include/pyctype.h \
 		$(srcdir)/Include/pydebug.h \
-		$(srcdir)/Include/pydtrace.h \
 		$(srcdir)/Include/pyerrors.h \
 		$(srcdir)/Include/pyfpe.h \
 		$(srcdir)/Include/pyframe.h \
@@ -1038,7 +1005,6 @@ PYTHON_HEADERS= \
 		\
 		$(srcdir)/Include/internal/pycore_abstract.h \
 		$(srcdir)/Include/internal/pycore_accu.h \
-		$(srcdir)/Include/internal/pycore_atomic.h \
 		$(srcdir)/Include/internal/pycore_bitutils.h \
 		$(srcdir)/Include/internal/pycore_bytes_methods.h \
 		$(srcdir)/Include/internal/pycore_call.h \
@@ -1062,8 +1028,7 @@ PYTHON_HEADERS= \
 		$(srcdir)/Include/internal/pycore_runtime.h \
 		$(srcdir)/Include/internal/pycore_sysmodule.h \
 		$(srcdir)/Include/internal/pycore_traceback.h \
-		$(srcdir)/Include/internal/pycore_tupleobject.h \
-		$(DTRACE_HEADERS)
+		$(srcdir)/Include/internal/pycore_tupleobject.h
 
 $(LIBRARY_OBJS) $(MODOBJS) Programs/python.o: $(PYTHON_HEADERS)
 
@@ -1590,7 +1555,6 @@ clean-retain-profile: pycremoval
 	-rm -f pybuilddir.txt
 	-rm -f Programs/_testembed Programs/_freeze_importlib
 	-find build -type f -a ! -name '*.gc??' -exec rm -f {} ';'
-	-rm -f Include/pydtrace_probes.h
 	-rm -f profile-gen-stamp
 
 profile-removal:

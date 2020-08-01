@@ -29,7 +29,6 @@
 #include "pycore_object.h"
 #include "pycore_pyerrors.h"
 #include "pycore_pystate.h"     // _PyThreadState_GET()
-#include "pydtrace.h"
 #include "pytime.h"             // _PyTime_GetMonotonicClock()
 
 typedef struct _gc_runtime_state GCState;
@@ -1126,9 +1125,6 @@ collect(PyThreadState *tstate, int generation,
         t1 = _PyTime_GetMonotonicClock();
     }
 
-    if (PyDTrace_GC_START_ENABLED())
-        PyDTrace_GC_START(generation);
-
     /* update collection and allocation counters */
     if (generation+1 < NUM_GENERATIONS)
         gcstate->generations[generation+1].count += 1;
@@ -1251,10 +1247,6 @@ collect(PyThreadState *tstate, int generation,
     stats->collections++;
     stats->collected += m;
     stats->uncollectable += n;
-
-    if (PyDTrace_GC_DONE_ENABLED()) {
-        PyDTrace_GC_DONE(n + m);
-    }
 
     assert(!_PyErr_Occurred(tstate));
     return n + m;

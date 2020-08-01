@@ -15,7 +15,6 @@
 #include "errcode.h"
 #include "marshal.h"
 #include "code.h"
-#include "pydtrace.h"
 
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
@@ -1790,16 +1789,9 @@ import_find_and_load(PyThreadState *tstate, PyObject *abs_name)
         accumulated = 0;
     }
 
-    if (PyDTrace_IMPORT_FIND_LOAD_START_ENABLED())
-        PyDTrace_IMPORT_FIND_LOAD_START(PyUnicode_AsUTF8(abs_name));
-
     mod = _PyObject_CallMethodIdObjArgs(interp->importlib,
                                         &PyId__find_and_load, abs_name,
                                         interp->import_func, NULL);
-
-    if (PyDTrace_IMPORT_FIND_LOAD_DONE_ENABLED())
-        PyDTrace_IMPORT_FIND_LOAD_DONE(PyUnicode_AsUTF8(abs_name),
-                                       mod != NULL);
 
     if (import_time) {
         _PyTime_t cum = _PyTime_GetPerfCounter() - t1;

@@ -27,7 +27,6 @@
 #include "dictobject.h"
 #include "frameobject.h"
 #include "opcode.h"
-#include "pydtrace.h"
 #include "setobject.h"
 
 #include <ctype.h>
@@ -61,9 +60,6 @@ static void call_exc_trace(Py_tracefunc, PyObject *,
 static int maybe_call_line_trace(Py_tracefunc, PyObject *,
                                  PyThreadState *, PyFrameObject *,
                                  int *, int *, int *);
-static void maybe_dtrace_line(PyFrameObject *, int *, int *, int *);
-static void dtrace_function_entry(PyFrameObject *);
-static void dtrace_function_return(PyFrameObject *);
 
 static PyObject * import_name(PyThreadState *, PyFrameObject *,
                               PyObject *, PyObject *, PyObject *);
@@ -133,11 +129,7 @@ COMPUTE_EVAL_BREAKER(PyInterpreterState *interp,
                      struct _ceval_runtime_state *ceval,
                      struct _ceval_state *ceval2)
 {
-    _Py_atomic_store_relaxed(&ceval2->eval_breaker,
-        _Py_atomic_load_relaxed(&ceval2->gil_drop_request)
-	| (_Py_atomic_load_relaxed(&ceval->signals_pending))
-			     | (_Py_atomic_load_relaxed(&ceval2->pending.calls_to_do))
-        | ceval2->pending.async_exc);
+    ceval2->eval_breaker = ceval2->gil_drop_request | ceval->signals_pending | ceval2->pending.calls_to_do | ceval2->pending.async_exc;
 }
 
 static inline void
@@ -145,7 +137,7 @@ SIGNAL_PENDING_CALLS(PyInterpreterState *interp)
 {
     struct _ceval_runtime_state *ceval = &interp->runtime->ceval;
     struct _ceval_state *ceval2 = &interp->ceval;
-    _Py_atomic_store_relaxed(&ceval2->pending.calls_to_do, 1);
+    ceval2->pending.calls_to_do = 1;
     COMPUTE_EVAL_BREAKER(interp, ceval, ceval2);
 }
 
@@ -155,7 +147,7 @@ UNSIGNAL_PENDING_CALLS(PyInterpreterState *interp)
 {
     struct _ceval_runtime_state *ceval = &interp->runtime->ceval;
     struct _ceval_state *ceval2 = &interp->ceval;
-    _Py_atomic_store_relaxed(&ceval2->pending.calls_to_do, 0);
+    ceval2->pending.calls_to_do = 0;    
     COMPUTE_EVAL_BREAKER(interp, ceval, ceval2);
 }
 
@@ -165,7 +157,7 @@ SIGNAL_PENDING_SIGNALS(PyInterpreterState *interp)
 {
     struct _ceval_runtime_state *ceval = &interp->runtime->ceval;
     struct _ceval_state *ceval2 = &interp->ceval;
-    _Py_atomic_store_relaxed(&ceval->signals_pending, 1);
+    ceval->signals_pending = 1;
     /* eval_breaker is not set to 1 if thread_can_handle_signals() is false */
     COMPUTE_EVAL_BREAKER(interp, ceval, ceval2);
 }
@@ -175,7 +167,7 @@ SIGNAL_ASYNC_EXC(PyInterpreterState *interp)
 {
     struct _ceval_state *ceval2 = &interp->ceval;
     ceval2->pending.async_exc = 1;
-    _Py_atomic_store_relaxed(&ceval2->eval_breaker, 1);
+    ceval2->eval_breaker = 1;
 }
 
 
@@ -439,7 +431,7 @@ _Py_FinishPendingCalls(PyThreadState *tstate)
 
     struct _pending_calls *pending = &tstate->interp->ceval.pending;
 
-    if (!_Py_atomic_load_relaxed(&(pending->calls_to_do))) {
+    if (!pending->calls_to_do) {
         return;
     }
 
@@ -587,7 +579,7 @@ eval_frame_handle_pending(PyThreadState *tstate)
     struct _ceval_runtime_state *ceval = &runtime->ceval;
 
     /* Pending signals */
-    if (_Py_atomic_load_relaxed(&ceval->signals_pending)) {
+    if (ceval->signals_pending) {
         if (handle_signals(tstate) != 0) {
             return -1;
         }
@@ -595,7 +587,7 @@ eval_frame_handle_pending(PyThreadState *tstate)
 
     /* Pending calls */
     struct _ceval_state *ceval2 = &tstate->interp->ceval;
-    if (_Py_atomic_load_relaxed(&ceval2->pending.calls_to_do)) {
+    if (ceval2->pending.calls_to_do) {
         if (make_pending_calls(tstate) != 0) {
             return -1;
         }
@@ -629,7 +621,7 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
     PyObject **fastlocals, **freevars;
     PyObject *retval = NULL;            /* Return value */
     struct _ceval_state * const ceval2 = &tstate->interp->ceval;
-    _Py_atomic_int * const eval_breaker = &ceval2->eval_breaker;
+    int * const eval_breaker = &ceval2->eval_breaker;
     PyCodeObject *co;
 
     /* when tracing we set things up so that
@@ -717,7 +709,7 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
 #ifdef LLTRACE
 #define FAST_DISPATCH() \
     { \
-        if (!lltrace && !_Py_TracingPossible(ceval2) && !PyDTrace_LINE_ENABLED()) { \
+        if (!lltrace && !_Py_TracingPossible(ceval2)) { \
             f->f_lasti = INSTR_OFFSET(); \
             NEXTOPARG(); \
             goto *opcode_targets[opcode]; \
@@ -727,7 +719,7 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
 #else
 #define FAST_DISPATCH() \
     { \
-        if (!_Py_TracingPossible(ceval2) && !PyDTrace_LINE_ENABLED()) { \
+        if (!_Py_TracingPossible(ceval2)) { \
             f->f_lasti = INSTR_OFFSET(); \
             NEXTOPARG(); \
             goto *opcode_targets[opcode]; \
@@ -738,7 +730,7 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
 
 #define DISPATCH() \
     { \
-        if (!_Py_atomic_load_relaxed(eval_breaker)) { \
+        if (!eval_breaker) { \
             FAST_DISPATCH(); \
         } \
         continue; \
@@ -986,10 +978,6 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
             }
         }
     }
-
-    if (PyDTrace_FUNCTION_ENTRY_ENABLED())
-        dtrace_function_entry(f);
-
     co = f->f_code;
     names = co->co_names;
     consts = co->co_consts;
@@ -1062,7 +1050,7 @@ main_loop:
            async I/O handler); see Py_AddPendingCall() and
            Py_MakePendingCalls() above. */
 
-        if (_Py_atomic_load_relaxed(eval_breaker)) {
+        if (eval_breaker) {
             opcode = _Py_OPCODE(*next_instr);
             if (opcode == SETUP_FINALLY ||
                 opcode == SETUP_WITH ||
@@ -1094,9 +1082,6 @@ main_loop:
 
     fast_next_opcode:
         f->f_lasti = INSTR_OFFSET();
-
-        if (PyDTrace_LINE_ENABLED())
-            maybe_dtrace_line(f, &instr_lb, &instr_ub, &instr_prev);
 
         /* line-by-line tracing support */
 
@@ -3525,8 +3510,6 @@ exiting:
 
     /* pop frame */
 exit_eval_frame:
-    if (PyDTrace_FUNCTION_RETURN_ENABLED())
-        dtrace_function_return(f);
     _Py_LeaveRecursiveCall(tstate);
     f->f_executing = 0;
     tstate->frame = f->f_back;
@@ -5283,71 +5266,6 @@ _PyEval_RequestCodeExtraIndex(freefunc free)
     interp->co_extra_freefuncs[new_index] = free;
     return new_index;
 }
-
-static void
-dtrace_function_entry(PyFrameObject *f)
-{
-    const char *filename;
-    const char *funcname;
-    int lineno;
-
-    PyCodeObject *code = f->f_code;
-    filename = PyUnicode_AsUTF8(code->co_filename);
-    funcname = PyUnicode_AsUTF8(code->co_name);
-    lineno = PyCode_Addr2Line(code, f->f_lasti);
-
-    PyDTrace_FUNCTION_ENTRY(filename, funcname, lineno);
-}
-
-static void
-dtrace_function_return(PyFrameObject *f)
-{
-    const char *filename;
-    const char *funcname;
-    int lineno;
-
-    PyCodeObject *code = f->f_code;
-    filename = PyUnicode_AsUTF8(code->co_filename);
-    funcname = PyUnicode_AsUTF8(code->co_name);
-    lineno = PyCode_Addr2Line(code, f->f_lasti);
-
-    PyDTrace_FUNCTION_RETURN(filename, funcname, lineno);
-}
-
-/* DTrace equivalent of maybe_call_line_trace. */
-static void
-maybe_dtrace_line(PyFrameObject *frame,
-                  int *instr_lb, int *instr_ub, int *instr_prev)
-{
-    int line = frame->f_lineno;
-    const char *co_filename, *co_name;
-
-    /* If the last instruction executed isn't in the current
-       instruction window, reset the window.
-    */
-    if (frame->f_lasti < *instr_lb || frame->f_lasti >= *instr_ub) {
-        PyAddrPair bounds;
-        line = _PyCode_CheckLineNumber(frame->f_code, frame->f_lasti,
-                                       &bounds);
-        *instr_lb = bounds.ap_lower;
-        *instr_ub = bounds.ap_upper;
-    }
-    /* If the last instruction falls at the start of a line or if
-       it represents a jump backwards, update the frame's line
-       number and call the trace function. */
-    if (frame->f_lasti == *instr_lb || frame->f_lasti < *instr_prev) {
-        frame->f_lineno = line;
-        co_filename = PyUnicode_AsUTF8(frame->f_code->co_filename);
-        if (!co_filename)
-            co_filename = "?";
-        co_name = PyUnicode_AsUTF8(frame->f_code->co_name);
-        if (!co_name)
-            co_name = "?";
-        PyDTrace_LINE(co_filename, co_name, line);
-    }
-    *instr_prev = frame->f_lasti;
-}
-
 
 /* Implement Py_EnterRecursiveCall() and Py_LeaveRecursiveCall() as functions
    for the limited API. */
