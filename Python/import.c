@@ -1761,11 +1761,7 @@ import_find_and_load(PyThreadState *tstate, PyObject *abs_name)
     _Py_IDENTIFIER(_find_and_load);
     PyObject *mod = NULL;
     PyInterpreterState *interp = tstate->interp;
-    int import_time = _PyInterpreterState_GetConfig(interp)->import_time;
     static int import_level;
-    static _PyTime_t accumulated;
-
-    _PyTime_t t1 = 0, accumulated_copy = accumulated;
 
     PyObject *sys_path = PySys_GetObject("path");
     PyObject *sys_meta_path = PySys_GetObject("meta_path");
@@ -1776,35 +1772,10 @@ import_find_and_load(PyThreadState *tstate, PyObject *abs_name)
      * Anyway, importlib._find_and_load is much slower than
      * _PyDict_GetItemIdWithError().
      */
-    if (import_time) {
-        static int header = 1;
-        if (header) {
-            fputs("import time: self [us] | cumulative | imported package\n",
-                  stderr);
-            header = 0;
-        }
-
-        import_level++;
-        t1 = _PyTime_GetPerfCounter();
-        accumulated = 0;
-    }
 
     mod = _PyObject_CallMethodIdObjArgs(interp->importlib,
                                         &PyId__find_and_load, abs_name,
                                         interp->import_func, NULL);
-
-    if (import_time) {
-        _PyTime_t cum = _PyTime_GetPerfCounter() - t1;
-
-        import_level--;
-        fprintf(stderr, "import time: %9ld | %10ld | %*s%s\n",
-                (long)_PyTime_AsMicroseconds(cum - accumulated, _PyTime_ROUND_CEILING),
-                (long)_PyTime_AsMicroseconds(cum, _PyTime_ROUND_CEILING),
-                import_level*2, "", PyUnicode_AsUTF8(abs_name));
-
-        accumulated = accumulated_copy + cum;
-    }
-
     return mod;
 }
 

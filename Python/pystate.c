@@ -964,7 +964,6 @@ _PyInterpreterState_SetConfig(PyInterpreterState *interp,
 const PyConfig*
 _Py_GetConfig(void)
 {
-    assert(PyGILState_Check());
     PyThreadState *tstate = _PyThreadState_GET();
     return _PyInterpreterState_GetConfig(tstate->interp);
 }

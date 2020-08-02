@@ -15,9 +15,6 @@
 #if defined(HAVE_GETPID) && defined(HAVE_UNISTD_H)
 #  include <unistd.h>             // getpid()
 #endif
-#ifdef MS_WINDOWS
-#  include <windows.h>            // STATUS_CONTROL_C_EXIT
-#endif
 /* End of includes for exit_sigint() */
 
 #define COPYRIGHT \
@@ -577,13 +574,7 @@ exit_sigint(void)
     /* If setting SIG_DFL failed, or kill failed to terminate us,
      * there isn't much else we can do aside from an error code. */
 #endif  /* HAVE_GETPID && !MS_WINDOWS */
-#ifdef MS_WINDOWS
-    /* cmd.exe detects this, prints ^C, and offers to terminate. */
-    /* https://msdn.microsoft.com/en-us/library/cc704588.aspx */
-    return STATUS_CONTROL_C_EXIT;
-#else
     return SIGINT + 128;
-#endif  /* !MS_WINDOWS */
 }
 
 

@@ -147,13 +147,6 @@ PyAPI_FUNC(PyThreadState *) _PyThreadState_UncheckedGet(void);
 
 PyAPI_FUNC(PyObject *) _PyThreadState_GetDict(PyThreadState *tstate);
 
-/* PyGILState */
-
-/* Helper/diagnostic function - return 1 if the current thread
-   currently holds the GIL, 0 otherwise.
-
-   The function returns 1 if _PyGILState_check_enabled is non-zero. */
-PyAPI_FUNC(int) PyGILState_Check(void);
 
 /* Get the single PyInterpreterState used by this process' GILState
    implementation.

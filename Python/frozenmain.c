@@ -5,12 +5,6 @@
 #include "pycore_runtime.h"  // _PyRuntime_Initialize()
 #include <locale.h>
 
-#ifdef MS_WINDOWS
-extern void PyWinFreeze_ExeInit(void);
-extern void PyWinFreeze_ExeTerm(void);
-extern int PyInitFrozenExtensions(void);
-#endif
-
 /* Main program */
 
 int
@@ -74,10 +68,6 @@ Py_FrozenMain(int argc, char **argv)
     setlocale(LC_ALL, oldloc);
     PyMem_RawFree(oldloc);
     oldloc = NULL;
-
-#ifdef MS_WINDOWS
-    PyInitFrozenExtensions();
-#endif /* MS_WINDOWS */
     if (argc >= 1)
         Py_SetProgramName(argv_copy[0]);
 
@@ -86,10 +76,6 @@ Py_FrozenMain(int argc, char **argv)
     if (PyStatus_Exception(status)) {
         Py_ExitStatusException(status);
     }
-
-#ifdef MS_WINDOWS
-    PyWinFreeze_ExeInit();
-#endif
 
     if (Py_VerboseFlag)
         fprintf(stderr, "Python %s\n%s\n",
@@ -109,10 +95,6 @@ Py_FrozenMain(int argc, char **argv)
 
     if (inspect && isatty((int)fileno(stdin)))
         sts = PyRun_AnyFile(stdin, "<stdin>") != 0;
-
-#ifdef MS_WINDOWS
-    PyWinFreeze_ExeTerm();
-#endif
     if (Py_FinalizeEx() < 0) {
         sts = 120;
     }

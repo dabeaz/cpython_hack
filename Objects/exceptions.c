@@ -15,9 +15,6 @@
 /* Compatibility aliases */
 PyObject *PyExc_EnvironmentError = NULL;
 PyObject *PyExc_IOError = NULL;
-#ifdef MS_WINDOWS
-PyObject *PyExc_WindowsError = NULL;
-#endif
 
 /* The dict map from errno codes to OSError subclasses */
 static PyObject *errnomap = NULL;
@@ -787,10 +784,6 @@ MiddlingExtendsException(PyExc_ImportError, ModuleNotFoundError, ImportError,
  *    OSError extends Exception
  */
 
-#ifdef MS_WINDOWS
-#include "errmap.h"
-#endif
-
 /* Where a function has a single filename, such as open() or some
  * of the os module functions, PyErr_SetFromErrnoWithFilename() is
  * called, giving a third argument which is the filename.  But, so
@@ -812,21 +805,16 @@ static int
 oserror_parse_args(PyObject **p_args,
                    PyObject **myerrno, PyObject **strerror,
                    PyObject **filename, PyObject **filename2
-#ifdef MS_WINDOWS
-                   , PyObject **winerror
-#endif
                   )
 {
     Py_ssize_t nargs;
     PyObject *args = *p_args;
-#ifndef MS_WINDOWS
     /*
      * ignored on non-Windows platforms,
      * but parsed so OSError has a consistent signature
      */
     PyObject *_winerror = NULL;
     PyObject **winerror = &_winerror;
-#endif /* MS_WINDOWS */
 
     nargs = PyTuple_GET_SIZE(args);
 
@@ -835,39 +823,6 @@ oserror_parse_args(PyObject **p_args,
                                myerrno, strerror,
                                filename, winerror, filename2))
             return -1;
-#ifdef MS_WINDOWS
-        if (*winerror && PyLong_Check(*winerror)) {
-            long errcode, winerrcode;
-            PyObject *newargs;
-            Py_ssize_t i;
-
-            winerrcode = PyLong_AsLong(*winerror);
-            if (winerrcode == -1 && PyErr_Occurred())
-                return -1;
-            /* Set errno to the corresponding POSIX errno (overriding
-               first argument).  Windows Socket error codes (>= 10000)
-               have the same value as their POSIX counterparts.
-            */
-            if (winerrcode < 10000)
-                errcode = winerror_to_errno(winerrcode);
-            else
-                errcode = winerrcode;
-            *myerrno = PyLong_FromLong(errcode);
-            if (!*myerrno)
-                return -1;
-            newargs = PyTuple_New(nargs);
-            if (!newargs)
-                return -1;
-            PyTuple_SET_ITEM(newargs, 0, *myerrno);
-            for (i = 1; i < nargs; i++) {
-                PyObject *val = PyTuple_GET_ITEM(args, i);
-                Py_INCREF(val);
-                PyTuple_SET_ITEM(newargs, i, val);
-            }
-            Py_DECREF(args);
-            args = *p_args = newargs;
-        }
-#endif /* MS_WINDOWS */
     }
 
     return 0;
@@ -877,9 +832,6 @@ static int
 oserror_init(PyOSErrorObject *self, PyObject **p_args,
              PyObject *myerrno, PyObject *strerror,
              PyObject *filename, PyObject *filename2
-#ifdef MS_WINDOWS
-             , PyObject *winerror
-#endif
              )
 {
     PyObject *args = *p_args;
@@ -923,11 +875,6 @@ oserror_init(PyOSErrorObject *self, PyObject **p_args,
     Py_XINCREF(strerror);
     self->strerror = strerror;
 
-#ifdef MS_WINDOWS
-    Py_XINCREF(winerror);
-    self->winerror = winerror;
-#endif
-
     /* Steals the reference to args */
     Py_XSETREF(self->args, args);
     *p_args = args = NULL;
@@ -967,9 +914,6 @@ OSError_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     PyOSErrorObject *self = NULL;
     PyObject *myerrno = NULL, *strerror = NULL;
     PyObject *filename = NULL, *filename2 = NULL;
-#ifdef MS_WINDOWS
-    PyObject *winerror = NULL;
-#endif
 
     Py_INCREF(args);
 
@@ -979,9 +923,6 @@ OSError_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
         if (oserror_parse_args(&args, &myerrno, &strerror,
                                &filename, &filename2
-#ifdef MS_WINDOWS
-                               , &winerror
-#endif
             ))
             goto error;
 
@@ -1008,9 +949,6 @@ OSError_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
     if (!oserror_use_init(type)) {
         if (oserror_init(self, &args, myerrno, strerror, filename, filename2
-#ifdef MS_WINDOWS
-                         , winerror
-#endif
             ))
             goto error;
     }
@@ -1034,9 +972,6 @@ OSError_init(PyOSErrorObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *myerrno = NULL, *strerror = NULL;
     PyObject *filename = NULL, *filename2 = NULL;
-#ifdef MS_WINDOWS
-    PyObject *winerror = NULL;
-#endif
 
     if (!oserror_use_init(Py_TYPE(self)))
         /* Everything already done in OSError_new */
@@ -1047,16 +982,10 @@ OSError_init(PyOSErrorObject *self, PyObject *args, PyObject *kwds)
 
     Py_INCREF(args);
     if (oserror_parse_args(&args, &myerrno, &strerror, &filename, &filename2
-#ifdef MS_WINDOWS
-                           , &winerror
-#endif
         ))
         goto error;
 
     if (oserror_init(self, &args, myerrno, strerror, filename, filename2
-#ifdef MS_WINDOWS
-                     , winerror
-#endif
         ))
         goto error;
 
@@ -1074,9 +1003,6 @@ OSError_clear(PyOSErrorObject *self)
     Py_CLEAR(self->strerror);
     Py_CLEAR(self->filename);
     Py_CLEAR(self->filename2);
-#ifdef MS_WINDOWS
-    Py_CLEAR(self->winerror);
-#endif
     return BaseException_clear((PyBaseExceptionObject *)self);
 }
 
@@ -1096,9 +1022,6 @@ OSError_traverse(PyOSErrorObject *self, visitproc visit,
     Py_VISIT(self->strerror);
     Py_VISIT(self->filename);
     Py_VISIT(self->filename2);
-#ifdef MS_WINDOWS
-    Py_VISIT(self->winerror);
-#endif
     return BaseException_traverse((PyBaseExceptionObject *)self, visit, arg);
 }
 
@@ -1106,27 +1029,6 @@ static PyObject *
 OSError_str(PyOSErrorObject *self)
 {
 #define OR_NONE(x) ((x)?(x):Py_None)
-#ifdef MS_WINDOWS
-    /* If available, winerror has the priority over myerrno */
-    if (self->winerror && self->filename) {
-        if (self->filename2) {
-            return PyUnicode_FromFormat("[WinError %S] %S: %R -> %R",
-                                        OR_NONE(self->winerror),
-                                        OR_NONE(self->strerror),
-                                        self->filename,
-                                        self->filename2);
-        } else {
-            return PyUnicode_FromFormat("[WinError %S] %S: %R",
-                                        OR_NONE(self->winerror),
-                                        OR_NONE(self->strerror),
-                                        self->filename);
-        }
-    }
-    if (self->winerror && self->strerror)
-        return PyUnicode_FromFormat("[WinError %S] %S",
-                                    self->winerror ? self->winerror: Py_None,
-                                    self->strerror ? self->strerror: Py_None);
-#endif
     if (self->filename) {
         if (self->filename2) {
             return PyUnicode_FromFormat("[Errno %S] %S: %R -> %R",
@@ -1234,10 +1136,6 @@ static PyMemberDef OSError_members[] = {
         PyDoc_STR("exception filename")},
     {"filename2", T_OBJECT, offsetof(PyOSErrorObject, filename2), 0,
         PyDoc_STR("second exception filename")},
-#ifdef MS_WINDOWS
-    {"winerror", T_OBJECT, offsetof(PyOSErrorObject, winerror), 0,
-        PyDoc_STR("Win32 exception code")},
-#endif
     {NULL}  /* Sentinel */
 };
 
@@ -2470,63 +2368,6 @@ SimpleExtendsException(PyExc_Warning, ResourceWarning,
     "Base class for warnings about resource usage.");
 */
 
-
-#ifdef MS_WINDOWS
-#include <winsock2.h>
-/* The following constants were added to errno.h in VS2010 but have
-   preferred WSA equivalents. */
-#undef EADDRINUSE
-#undef EADDRNOTAVAIL
-#undef EAFNOSUPPORT
-#undef EALREADY
-#undef ECONNABORTED
-#undef ECONNREFUSED
-#undef ECONNRESET
-#undef EDESTADDRREQ
-#undef EHOSTUNREACH
-#undef EINPROGRESS
-#undef EISCONN
-#undef ELOOP
-#undef EMSGSIZE
-#undef ENETDOWN
-#undef ENETRESET
-#undef ENETUNREACH
-#undef ENOBUFS
-#undef ENOPROTOOPT
-#undef ENOTCONN
-#undef ENOTSOCK
-#undef EOPNOTSUPP
-#undef EPROTONOSUPPORT
-#undef EPROTOTYPE
-#undef ETIMEDOUT
-#undef EWOULDBLOCK
-
-#if defined(WSAEALREADY) && !defined(EALREADY)
-#define EALREADY WSAEALREADY
-#endif
-#if defined(WSAECONNABORTED) && !defined(ECONNABORTED)
-#define ECONNABORTED WSAECONNABORTED
-#endif
-#if defined(WSAECONNREFUSED) && !defined(ECONNREFUSED)
-#define ECONNREFUSED WSAECONNREFUSED
-#endif
-#if defined(WSAECONNRESET) && !defined(ECONNRESET)
-#define ECONNRESET WSAECONNRESET
-#endif
-#if defined(WSAEINPROGRESS) && !defined(EINPROGRESS)
-#define EINPROGRESS WSAEINPROGRESS
-#endif
-#if defined(WSAESHUTDOWN) && !defined(ESHUTDOWN)
-#define ESHUTDOWN WSAESHUTDOWN
-#endif
-#if defined(WSAETIMEDOUT) && !defined(ETIMEDOUT)
-#define ETIMEDOUT WSAETIMEDOUT
-#endif
-#if defined(WSAEWOULDBLOCK) && !defined(EWOULDBLOCK)
-#define EWOULDBLOCK WSAEWOULDBLOCK
-#endif
-#endif /* MS_WINDOWS */
-
 PyStatus
 _PyExc_Init(void)
 {
@@ -2697,9 +2538,6 @@ _PyBuiltins_AddExceptions(PyObject *bltinmod)
     POST_INIT(OSError);
     INIT_ALIAS(EnvironmentError, OSError);
     INIT_ALIAS(IOError, OSError);
-#ifdef MS_WINDOWS
-    INIT_ALIAS(WindowsError, OSError);
-#endif
     POST_INIT(EOFError);
     POST_INIT(RuntimeError);
     POST_INIT(RecursionError);
@@ -2727,19 +2565,6 @@ _PyBuiltins_AddExceptions(PyObject *bltinmod)
     POST_INIT(ReferenceError);
     POST_INIT(MemoryError);
     POST_INIT(BufferError);
-    /*
-    POST_INIT(Warning);
-    POST_INIT(UserWarning);
-    POST_INIT(DeprecationWarning);
-    POST_INIT(PendingDeprecationWarning);
-    POST_INIT(SyntaxWarning);
-    POST_INIT(RuntimeWarning);
-    POST_INIT(FutureWarning);
-    POST_INIT(ImportWarning);
-    POST_INIT(UnicodeWarning);
-    POST_INIT(BytesWarning);
-    POST_INIT(ResourceWarning);
-    */
     /* OSError subclasses */
     POST_INIT(ConnectionError);
 

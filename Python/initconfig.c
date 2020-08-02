@@ -14,15 +14,6 @@
 #ifdef HAVE_LANGINFO_H
 #  include <langinfo.h>           // nl_langinfo(CODESET)
 #endif
-#if defined(MS_WINDOWS) || defined(__CYGWIN__)
-#  include <windows.h>            // GetACP()
-#  ifdef HAVE_IO_H
-#    include <io.h>
-#  endif
-#  ifdef HAVE_FCNTL_H
-#    include <fcntl.h>            // O_BINARY
-#  endif
-#endif
 
 #ifndef PLATLIBDIR
 #  error "PLATLIBDIR macro must be defined"
@@ -134,12 +125,7 @@ static const char usage_6[] =
 "PYTHONDEVMODE: enable the development mode.\n"
 "PYTHONPYCACHEPREFIX: root directory for bytecode cache (pyc) files.\n";
 
-#if defined(MS_WINDOWS)
-#  define PYTHONHOMEHELP "<prefix>\\python{major}{minor}"
-#else
-#  define PYTHONHOMEHELP "<prefix>/lib/pythonX.X"
-#endif
-
+#define PYTHONHOMEHELP "<prefix>/lib/pythonX.X"
 
 /* --- Global configuration variables ----------------------------- */
 
@@ -161,10 +147,6 @@ int Py_NoUserSiteDirectory = 0; /* for -s and site.py */
 int Py_UnbufferedStdioFlag = 0; /* Unbuffered binary std{in,out,err} */
 int Py_HashRandomizationFlag = 0; /* for -R and PYTHONHASHSEED */
 int Py_IsolatedFlag = 0; /* for -I, isolate from user's env */
-#ifdef MS_WINDOWS
-int Py_LegacyWindowsFSEncodingFlag = 0; /* Uses mbcs instead of utf-8 */
-int Py_LegacyWindowsStdioFlag = 0; /* Uses FileIO instead of WindowsConsoleIO */
-#endif
 
 
 static PyObject *
@@ -220,11 +202,6 @@ _Py_GetGlobalVariablesAsDict(void)
     SET_ITEM_INT(Py_UnbufferedStdioFlag);
     SET_ITEM_INT(Py_HashRandomizationFlag);
     SET_ITEM_INT(Py_IsolatedFlag);
-
-#ifdef MS_WINDOWS
-    SET_ITEM_INT(Py_LegacyWindowsFSEncodingFlag);
-    SET_ITEM_INT(Py_LegacyWindowsStdioFlag);
-#endif
 
     return dict;
 
@@ -478,12 +455,6 @@ Py_SetStandardStreamEncoding(const char *encoding, const char *errors)
             goto done;
         }
     }
-#ifdef MS_WINDOWS
-    if (_Py_StandardStreamEncoding) {
-        /* Overriding the stream encoding implies legacy streams */
-        Py_LegacyWindowsStdioFlag = 1;
-    }
-#endif
 
 done:
     PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
@@ -635,9 +606,6 @@ _PyConfig_InitCompatConfig(PyConfig *config)
     config->pathconfig_warnings = -1;
     config->_init_main = 1;
     config->_isolated_interpreter = 0;
-#ifdef MS_WINDOWS
-    config->legacy_windows_stdio = -1;
-#endif
 }
 
 
@@ -659,9 +627,6 @@ config_init_defaults(PyConfig *config)
     config->user_site_directory = 1;
     config->buffered_stdio = 1;
     config->pathconfig_warnings = 1;
-#ifdef MS_WINDOWS
-    config->legacy_windows_stdio = 0;
-#endif
 }
 
 
@@ -691,9 +656,6 @@ PyConfig_InitIsolatedConfig(PyConfig *config)
     config->faulthandler = 0;
     config->tracemalloc = 0;
     config->pathconfig_warnings = 0;
-#ifdef MS_WINDOWS
-    config->legacy_windows_stdio = 0;
-#endif
 }
 
 
@@ -840,9 +802,6 @@ _PyConfig_Copy(PyConfig *config, const PyConfig *config2)
     COPY_WSTR_ATTR(filesystem_errors);
     COPY_WSTR_ATTR(stdio_encoding);
     COPY_WSTR_ATTR(stdio_errors);
-#ifdef MS_WINDOWS
-    COPY_ATTR(legacy_windows_stdio);
-#endif
     COPY_ATTR(skip_source_first_line);
     COPY_WSTR_ATTR(run_command);
     COPY_WSTR_ATTR(run_module);
@@ -939,9 +898,6 @@ config_as_dict(const PyConfig *config)
     SET_ITEM_INT(buffered_stdio);
     SET_ITEM_WSTR(stdio_encoding);
     SET_ITEM_WSTR(stdio_errors);
-#ifdef MS_WINDOWS
-    SET_ITEM_INT(legacy_windows_stdio);
-#endif
     SET_ITEM_INT(skip_source_first_line);
     SET_ITEM_WSTR(run_command);
     SET_ITEM_WSTR(run_module);
@@ -992,15 +948,6 @@ config_get_env_dup(PyConfig *config,
         return _PyStatus_OK();
     }
 
-#ifdef MS_WINDOWS
-    const wchar_t *var = _wgetenv(wname);
-    if (!var || var[0] == '\0') {
-        *dest = NULL;
-        return _PyStatus_OK();
-    }
-
-    return PyConfig_SetString(config, dest, var);
-#else
     const char *var = getenv(name);
     if (!var || var[0] == '\0') {
         *dest = NULL;
@@ -1008,7 +955,6 @@ config_get_env_dup(PyConfig *config,
     }
 
     return config_set_bytes_string(config, dest, var, decode_err_msg);
-#endif
 }
 
 
@@ -1041,9 +987,6 @@ config_get_global_vars(PyConfig *config)
     COPY_FLAG(parser_debug, Py_DebugFlag);
     COPY_FLAG(verbose, Py_VerboseFlag);
     COPY_FLAG(quiet, Py_QuietFlag);
-#ifdef MS_WINDOWS
-    COPY_FLAG(legacy_windows_stdio, Py_LegacyWindowsStdioFlag);
-#endif
     COPY_NOT_FLAG(pathconfig_warnings, Py_FrozenFlag);
 
     COPY_NOT_FLAG(buffered_stdio, Py_UnbufferedStdioFlag);
@@ -1077,9 +1020,6 @@ config_set_global_vars(const PyConfig *config)
     COPY_FLAG(parser_debug, Py_DebugFlag);
     COPY_FLAG(verbose, Py_VerboseFlag);
     COPY_FLAG(quiet, Py_QuietFlag);
-#ifdef MS_WINDOWS
-    COPY_FLAG(legacy_windows_stdio, Py_LegacyWindowsStdioFlag);
-#endif
     COPY_NOT_FLAG(pathconfig_warnings, Py_FrozenFlag);
 
     COPY_NOT_FLAG(buffered_stdio, Py_UnbufferedStdioFlag);
@@ -1174,11 +1114,7 @@ config_init_program_name(PyConfig *config)
     }
 
     /* Last fall back: hardcoded name */
-#ifdef MS_WINDOWS
-    const wchar_t *default_program_name = L"python";
-#else
     const wchar_t *default_program_name = L"python3";
-#endif
     status = PyConfig_SetString(config, &config->program_name,
                                 default_program_name);
     if (_PyStatus_EXCEPTION(status)) {
@@ -1313,10 +1249,6 @@ config_read_env_vars(PyConfig *config)
         config->buffered_stdio = 0;
     }
 
-#ifdef MS_WINDOWS
-    _Py_get_env_flag(use_env, &config->legacy_windows_stdio,
-                 "PYTHONLEGACYWINDOWSSTDIO");
-#endif
 
     if (config_get_env(config, "PYTHONDUMPREFS")) {
         config->dump_refs = 1;
@@ -1461,7 +1393,6 @@ config_read_complex_options(PyConfig *config)
 static const wchar_t *
 config_get_stdio_errors(void)
 {
-#ifndef MS_WINDOWS
     const char *loc = setlocale(LC_CTYPE, NULL);
     if (loc != NULL) {
         /* surrogateescape is the default in the legacy C and POSIX locales */
@@ -1478,21 +1409,13 @@ config_get_stdio_errors(void)
     }
 
     return L"strict";
-#else
-    /* On Windows, always use surrogateescape by default */
-    return L"surrogateescape";
-#endif
 }
 
 
 static PyStatus
 config_get_locale_encoding(PyConfig *config, wchar_t **locale_encoding)
 {
-#ifdef MS_WINDOWS
-    char encoding[20];
-    PyOS_snprintf(encoding, sizeof(encoding), "cp%u", GetACP());
-    return PyConfig_SetBytesString(config, locale_encoding, encoding);
-#elif defined(_Py_FORCE_UTF8_LOCALE)
+#if defined(_Py_FORCE_UTF8_LOCALE)
     return PyConfig_SetString(config, locale_encoding, L"utf-8");
 #else
     const char *encoding = nl_langinfo(CODESET);
@@ -1638,33 +1561,17 @@ config_init_fs_encoding(PyConfig *config, const PyPreConfig *preconfig)
         status = PyConfig_SetString(config, &config->filesystem_encoding, L"utf-8");
 #else
 
-#ifdef MS_WINDOWS
-        if (preconfig->legacy_windows_fs_encoding) {
-            /* Legacy Windows filesystem encoding: mbcs/replace */
-            status = PyConfig_SetString(config, &config->filesystem_encoding,
-                                        L"mbcs");
-        }
-        else
-#endif
         if (preconfig->utf8_mode) {
             status = PyConfig_SetString(config, &config->filesystem_encoding,
                                         L"utf-8");
         }
-#ifndef MS_WINDOWS
         else if (_Py_GetForceASCII()) {
             status = PyConfig_SetString(config, &config->filesystem_encoding,
                                         L"ascii");
         }
-#endif
         else {
-#ifdef MS_WINDOWS
-            /* Windows defaults to utf-8/surrogatepass (PEP 529). */
-            status = PyConfig_SetString(config, &config->filesystem_encoding,
-                                        L"utf-8");
-#else
             status = config_get_locale_encoding(config,
                                                 &config->filesystem_encoding);
-#endif
         }
 #endif   /* !_Py_FORCE_UTF8_FS_ENCODING */
 
@@ -1675,16 +1582,7 @@ config_init_fs_encoding(PyConfig *config, const PyPreConfig *preconfig)
 
     if (config->filesystem_errors == NULL) {
         const wchar_t *errors;
-#ifdef MS_WINDOWS
-        if (preconfig->legacy_windows_fs_encoding) {
-            errors = L"replace";
-        }
-        else {
-            errors = L"surrogatepass";
-        }
-#else
         errors = L"surrogateescape";
-#endif
         status = PyConfig_SetString(config, &config->filesystem_errors, errors);
         if (_PyStatus_EXCEPTION(status)) {
             return status;
@@ -1802,12 +1700,6 @@ config_read(PyConfig *config)
 static void
 config_init_stdio(const PyConfig *config)
 {
-#if defined(MS_WINDOWS) || defined(__CYGWIN__)
-    /* don't translate newlines (\r\n <=> \n) */
-    _setmode(fileno(stdin), O_BINARY);
-    _setmode(fileno(stdout), O_BINARY);
-    _setmode(fileno(stderr), O_BINARY);
-#endif
 
     if (!config->buffered_stdio) {
 #ifdef HAVE_SETVBUF
@@ -1821,17 +1713,10 @@ config_init_stdio(const PyConfig *config)
 #endif /* !HAVE_SETVBUF */
     }
     else if (config->interactive) {
-#ifdef MS_WINDOWS
-        /* Doesn't have to have line-buffered -- use unbuffered */
-        /* Any set[v]buf(stdin, ...) screws up Tkinter :-( */
-        setvbuf(stdout, (char *)NULL, _IONBF, BUFSIZ);
-#else /* !MS_WINDOWS */
 #ifdef HAVE_SETVBUF
         setvbuf(stdin,  (char *)NULL, _IOLBF, BUFSIZ);
         setvbuf(stdout, (char *)NULL, _IOLBF, BUFSIZ);
 #endif /* HAVE_SETVBUF */
-#endif /* !MS_WINDOWS */
-        /* Leave stderr alone - it should be unbuffered anyway. */
     }
 }
 
@@ -2065,11 +1950,7 @@ config_parse_cmdline(PyConfig *config, PyWideStringList *warnoptions,
 }
 
 
-#ifdef MS_WINDOWS
-#  define WCSTOK wcstok_s
-#else
 #  define WCSTOK wcstok
-#endif
 
 /* Get warning options from PYTHONWARNINGS environment variable. */
 static PyStatus
@@ -2317,12 +2198,10 @@ config_run_filename_abspath(PyConfig *config)
         return _PyStatus_OK();
     }
 
-#ifndef MS_WINDOWS
     if (_Py_isabs(config->run_filename)) {
         /* path is already absolute */
         return _PyStatus_OK();
     }
-#endif
 
     wchar_t *abs_filename;
     if (_Py_abspath(config->run_filename, &abs_filename) < 0) {
@@ -2567,9 +2446,6 @@ PyConfig_Read(PyConfig *config)
     assert(config->filesystem_errors != NULL);
     assert(config->stdio_encoding != NULL);
     assert(config->stdio_errors != NULL);
-#ifdef MS_WINDOWS
-    assert(config->legacy_windows_stdio >= 0);
-#endif
     /* -c and -m options are exclusive */
     assert(!(config->run_command != NULL && config->run_module != NULL));
     assert(config->check_hash_pycs_mode != NULL);

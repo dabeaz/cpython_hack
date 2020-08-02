@@ -94,16 +94,6 @@ static long dxp[256];
 
 /* per opcode cache */
 #define OPCACHE_MIN_RUNS 1024  /* create opcache when code executed this time */
-#define OPCACHE_STATS 0  /* Enable stats */
-
-#if OPCACHE_STATS
-static size_t opcache_code_objects = 0;
-static size_t opcache_code_objects_extra_mem = 0;
-
-static size_t opcache_global_opts = 0;
-static size_t opcache_global_hits = 0;
-static size_t opcache_global_misses = 0;
-#endif
 
 
 #ifndef NDEBUG
@@ -208,50 +198,10 @@ PyEval_ThreadsInitialized(void)
     return _PyEval_ThreadsInitialized(runtime);
 }
 
-PyStatus
-_PyEval_InitGIL(PyThreadState *tstate)
-{
-  return _PyStatus_OK();
-}
-
-void
-_PyEval_FiniGIL(PyThreadState *tstate)
-{
-}
-
 void
 PyEval_InitThreads(void)
 {
     /* Do nothing: kept for backward compatibility */
-}
-
-void
-_PyEval_Fini(void)
-{
-#if OPCACHE_STATS
-    fprintf(stderr, "-- Opcode cache number of objects  = %zd\n",
-            opcache_code_objects);
-
-    fprintf(stderr, "-- Opcode cache total extra mem    = %zd\n",
-            opcache_code_objects_extra_mem);
-
-    fprintf(stderr, "\n");
-
-    fprintf(stderr, "-- Opcode cache LOAD_GLOBAL hits   = %zd (%d%%)\n",
-            opcache_global_hits,
-            (int) (100.0 * opcache_global_hits /
-                (opcache_global_hits + opcache_global_misses)));
-
-    fprintf(stderr, "-- Opcode cache LOAD_GLOBAL misses = %zd (%d%%)\n",
-            opcache_global_misses,
-            (int) (100.0 * opcache_global_misses /
-                (opcache_global_hits + opcache_global_misses)));
-
-    fprintf(stderr, "-- Opcode cache LOAD_GLOBAL opts   = %zd\n",
-            opcache_global_opts);
-
-    fprintf(stderr, "\n");
-#endif
 }
 
 /* This function is used to signal that async exceptions are waiting to be
@@ -911,31 +861,6 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
         } \
     } while (0)
 
-#if OPCACHE_STATS
-
-#define OPCACHE_STAT_GLOBAL_HIT() \
-    do { \
-        if (co->co_opcache != NULL) opcache_global_hits++; \
-    } while (0)
-
-#define OPCACHE_STAT_GLOBAL_MISS() \
-    do { \
-        if (co->co_opcache != NULL) opcache_global_misses++; \
-    } while (0)
-
-#define OPCACHE_STAT_GLOBAL_OPT() \
-    do { \
-        if (co->co_opcache != NULL) opcache_global_opts++; \
-    } while (0)
-
-#else /* OPCACHE_STATS */
-
-#define OPCACHE_STAT_GLOBAL_HIT()
-#define OPCACHE_STAT_GLOBAL_MISS()
-#define OPCACHE_STAT_GLOBAL_OPT()
-
-#endif
-
 /* Start of code */
 
     /* push frame */
@@ -1020,12 +945,6 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
             if (_PyCode_InitOpcache(co) < 0) {
                 goto exit_eval_frame;
             }
-#if OPCACHE_STATS
-            opcache_code_objects_extra_mem +=
-                PyBytes_Size(co->co_code) / sizeof(_Py_CODEUNIT) +
-                sizeof(_PyOpcache) * co->co_opcache_size;
-            opcache_code_objects++;
-#endif
         }
     }
 
@@ -2229,7 +2148,6 @@ main_loop:
                            ((PyDictObject *)f->f_builtins)->ma_version_tag)
                     {
                         PyObject *ptr = lg->ptr;
-                        OPCACHE_STAT_GLOBAL_HIT();
                         assert(ptr != NULL);
                         Py_INCREF(ptr);
                         PUSH(ptr);
@@ -2253,13 +2171,6 @@ main_loop:
 
                 if (co_opcache != NULL) {
                     _PyOpcache_LoadGlobal *lg = &co_opcache->u.lg;
-
-                    if (co_opcache->optimized == 0) {
-                        /* Wasn't optimized before. */
-                        OPCACHE_STAT_GLOBAL_OPT();
-                    } else {
-                        OPCACHE_STAT_GLOBAL_MISS();
-                    }
 
                     co_opcache->optimized = 1;
                     lg->globals_ver =

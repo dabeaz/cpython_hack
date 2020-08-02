@@ -26,26 +26,6 @@ extern "C" {
 #include <sys/stat.h>
 #endif /* HAVE_SYS_STAT_H */
 
-#ifdef MS_WINDOWS
-#include <windows.h>
-typedef unsigned short mode_t;
-
-/* FILE_ATTRIBUTE_INTEGRITY_STREAM and FILE_ATTRIBUTE_NO_SCRUB_DATA
-   are not present in VC2010, so define them manually */
-#ifndef FILE_ATTRIBUTE_INTEGRITY_STREAM
-#  define FILE_ATTRIBUTE_INTEGRITY_STREAM 0x8000
-#endif
-
-#ifndef FILE_ATTRIBUTE_NO_SCRUB_DATA
-#  define FILE_ATTRIBUTE_NO_SCRUB_DATA 0x20000
-#endif
-
-#ifndef IO_REPARSE_TAG_APPEXECLINK
-#  define IO_REPARSE_TAG_APPEXECLINK 0x8000001BL
-#endif
-
-#endif /* MS_WINDOWS */
-
 /* From Python's stat.py */
 #ifndef S_IMODE
 #  define S_IMODE 07777
@@ -572,40 +552,6 @@ stat_exec(PyObject *module)
             return -1;
         }
     }
-
-#ifdef MS_WINDOWS
-    ADD_INT_MACRO(module, FILE_ATTRIBUTE_ARCHIVE);
-    ADD_INT_MACRO(module, FILE_ATTRIBUTE_COMPRESSED);
-    ADD_INT_MACRO(module, FILE_ATTRIBUTE_DEVICE);
-    ADD_INT_MACRO(module, FILE_ATTRIBUTE_DIRECTORY);
-    ADD_INT_MACRO(module, FILE_ATTRIBUTE_ENCRYPTED);
-    ADD_INT_MACRO(module, FILE_ATTRIBUTE_HIDDEN);
-    ADD_INT_MACRO(module, FILE_ATTRIBUTE_INTEGRITY_STREAM);
-    ADD_INT_MACRO(module, FILE_ATTRIBUTE_NORMAL);
-    ADD_INT_MACRO(module, FILE_ATTRIBUTE_NOT_CONTENT_INDEXED);
-    ADD_INT_MACRO(module, FILE_ATTRIBUTE_NO_SCRUB_DATA);
-    ADD_INT_MACRO(module, FILE_ATTRIBUTE_OFFLINE);
-    ADD_INT_MACRO(module, FILE_ATTRIBUTE_READONLY);
-    ADD_INT_MACRO(module, FILE_ATTRIBUTE_REPARSE_POINT);
-    ADD_INT_MACRO(module, FILE_ATTRIBUTE_SPARSE_FILE);
-    ADD_INT_MACRO(module, FILE_ATTRIBUTE_SYSTEM);
-    ADD_INT_MACRO(module, FILE_ATTRIBUTE_TEMPORARY);
-    ADD_INT_MACRO(module, FILE_ATTRIBUTE_VIRTUAL);
-
-    if (PyModule_AddObject(module, "IO_REPARSE_TAG_SYMLINK",
-                           PyLong_FromUnsignedLong(IO_REPARSE_TAG_SYMLINK)) < 0) {
-            return -1;
-    }
-    if (PyModule_AddObject(module, "IO_REPARSE_TAG_MOUNT_POINT",
-                           PyLong_FromUnsignedLong(IO_REPARSE_TAG_MOUNT_POINT)) < 0) {
-            return -1;
-    }
-    if (PyModule_AddObject(module, "IO_REPARSE_TAG_APPEXECLINK",
-                           PyLong_FromUnsignedLong(IO_REPARSE_TAG_APPEXECLINK)) < 0) {
-            return -1;
-    }
-#endif
-
     return 0;
 }
 

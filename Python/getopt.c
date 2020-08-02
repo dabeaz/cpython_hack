@@ -66,12 +66,6 @@ int _PyOS_GetOpt(Py_ssize_t argc, wchar_t * const *argv, int *longindex)
 
         if (_PyOS_optind >= argc)
             return -1;
-#ifdef MS_WINDOWS
-        else if (wcscmp(argv[_PyOS_optind], L"/?") == 0) {
-            ++_PyOS_optind;
-            return 'h';
-        }
-#endif
 
         else if (argv[_PyOS_optind][0] != L'-' ||
                  argv[_PyOS_optind][1] == L'\0' /* lone dash */ )

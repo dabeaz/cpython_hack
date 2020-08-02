@@ -7,9 +7,6 @@
 #include "pycore_pathconfig.h"
 #include "pycore_pymem.h"         // _PyMem_SetDefaultAllocator()
 #include <wchar.h>
-#ifdef MS_WINDOWS
-#  include <windows.h>            // GetFullPathNameW(), MAX_PATH
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,9 +14,6 @@ extern "C" {
 
 
 _PyPathConfig _Py_path_config = _PyPathConfig_INIT;
-#ifdef MS_WINDOWS
-wchar_t *_Py_dll_path = NULL;
-#endif
 
 
 static int
@@ -60,9 +54,6 @@ pathconfig_clear(_PyPathConfig *config)
     CLEAR(config->module_search_path);
     CLEAR(config->program_name);
     CLEAR(config->home);
-#ifdef MS_WINDOWS
-    CLEAR(config->base_executable);
-#endif
 
 #undef CLEAR
 
@@ -88,11 +79,6 @@ pathconfig_copy(_PyPathConfig *config, const _PyPathConfig *config2)
     COPY_ATTR(module_search_path);
     COPY_ATTR(program_name);
     COPY_ATTR(home);
-#ifdef MS_WINDOWS
-    config->isolated = config2->isolated;
-    config->site_import = config2->site_import;
-    COPY_ATTR(base_executable);
-#endif
 
 #undef COPY_ATTR
 
@@ -107,10 +93,6 @@ _PyPathConfig_ClearGlobal(void)
     _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
 
     pathconfig_clear(&_Py_path_config);
-#ifdef MS_WINDOWS
-    PyMem_RawFree(_Py_dll_path);
-    _Py_dll_path = NULL;
-#endif
 
     PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
 }
@@ -146,32 +128,6 @@ _PyWideStringList_Join(const PyWideStringList *list, wchar_t sep)
     return text;
 }
 
-
-#ifdef MS_WINDOWS
-/* Initialize _Py_dll_path on Windows. Do nothing on other platforms. */
-static PyStatus
-_PyPathConfig_InitDLLPath(void)
-{
-    if (_Py_dll_path != NULL) {
-        /* Already set: nothing to do */
-        return _PyStatus_OK();
-    }
-
-    PyMemAllocatorEx old_alloc;
-    _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-
-    _Py_dll_path = _Py_GetDLLPath();
-
-    PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-
-    if (_Py_dll_path == NULL) {
-        return _PyStatus_NO_MEMORY();
-    }
-    return _PyStatus_OK();
-}
-#endif
-
-
 static PyStatus
 pathconfig_set_from_config(_PyPathConfig *pathconfig, const PyConfig *config)
 {
@@ -201,9 +157,6 @@ pathconfig_set_from_config(_PyPathConfig *pathconfig, const PyConfig *config)
     COPY_CONFIG(exec_prefix, exec_prefix);
     COPY_CONFIG(program_name, program_name);
     COPY_CONFIG(home, home);
-#ifdef MS_WINDOWS
-    COPY_CONFIG(base_executable, base_executable);
-#endif
 
 #undef COPY_CONFIG
 
@@ -222,13 +175,6 @@ done:
 PyStatus
 _PyConfig_WritePathConfig(const PyConfig *config)
 {
-#ifdef MS_WINDOWS
-    PyStatus status = _PyPathConfig_InitDLLPath();
-    if (_PyStatus_EXCEPTION(status)) {
-        return status;
-    }
-#endif
-
     return pathconfig_set_from_config(&_Py_path_config, config);
 }
 
@@ -352,16 +298,6 @@ config_calculate_pathconfig(PyConfig *config)
             } \
         }
 
-#ifdef MS_WINDOWS
-    if (config->executable != NULL && config->base_executable == NULL) {
-        /* If executable is set explicitly in the configuration,
-           ignore calculated base_executable: _PyConfig_InitPathConfig()
-           will copy executable to base_executable */
-    }
-    else {
-        COPY_ATTR(base_executable, base_executable);
-    }
-#endif
 
     COPY_ATTR(program_full_path, executable);
     COPY_ATTR(prefix, prefix);
@@ -369,15 +305,6 @@ config_calculate_pathconfig(PyConfig *config)
 
 #undef COPY_ATTR
 
-#ifdef MS_WINDOWS
-    /* If a ._pth file is found: isolated and site_import are overriden */
-    if (pathconfig.isolated != -1) {
-        config->isolated = pathconfig.isolated;
-    }
-    if (pathconfig.site_import != -1) {
-        config->site_import = pathconfig.site_import;
-    }
-#endif
 
     status = _PyStatus_OK();
     goto done;
@@ -455,12 +382,6 @@ pathconfig_global_init(void)
 {
     PyStatus status;
 
-#ifdef MS_WINDOWS
-    status = _PyPathConfig_InitDLLPath();
-    if (_PyStatus_EXCEPTION(status)) {
-        Py_ExitStatusException(status);
-    }
-#endif
 
     if (_Py_path_config.module_search_path == NULL) {
         status = pathconfig_global_read(&_Py_path_config);
@@ -478,9 +399,6 @@ pathconfig_global_init(void)
     assert(_Py_path_config.module_search_path != NULL);
     assert(_Py_path_config.program_name != NULL);
     /* home can be NULL */
-#ifdef MS_WINDOWS
-    assert(_Py_path_config.base_executable != NULL);
-#endif
 }
 
 
@@ -667,12 +585,10 @@ _PyPathConfig_ComputeSysPath0(const PyWideStringList *argv, PyObject **path0_p)
 
 #ifdef HAVE_REALPATH
     wchar_t fullpath[MAXPATHLEN];
-#elif defined(MS_WINDOWS)
-    wchar_t fullpath[MAX_PATH];
 #endif
 
     if (have_module_arg) {
-#if defined(HAVE_REALPATH) || defined(MS_WINDOWS)
+#if defined(HAVE_REALPATH)
         if (!_Py_wgetcwd(fullpath, Py_ARRAY_LENGTH(fullpath))) {
             return 0;
         }
@@ -725,16 +641,6 @@ _PyPathConfig_ComputeSysPath0(const PyWideStringList *argv, PyObject **path0_p)
     /* Special case for Microsoft filename syntax */
     if (have_script_arg) {
         wchar_t *q;
-#if defined(MS_WINDOWS)
-        /* Replace the first element in argv with the full path. */
-        wchar_t *ptemp;
-        if (GetFullPathNameW(path0,
-                           Py_ARRAY_LENGTH(fullpath),
-                           fullpath,
-                           &ptemp)) {
-            path0 = fullpath;
-        }
-#endif
         p = wcsrchr(path0, SEP);
         /* Test for alternate separator */
         q = wcsrchr(p ? p : path0, '/');
@@ -777,11 +683,7 @@ _PyPathConfig_ComputeSysPath0(const PyWideStringList *argv, PyObject **path0_p)
 }
 
 
-#ifdef MS_WINDOWS
-#define WCSTOK wcstok_s
-#else
 #define WCSTOK wcstok
-#endif
 
 /* Search for a prefix value in an environment file (pyvenv.cfg).
 

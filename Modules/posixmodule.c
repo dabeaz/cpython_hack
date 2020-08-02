@@ -151,17 +151,10 @@ extern char        *ctermid_r(char *);
 #undef STAT
 #undef FSTAT
 #undef STRUCT_STAT
-#ifdef MS_WINDOWS
-#  define STAT win32_stat
-#  define LSTAT win32_lstat
-#  define FSTAT _Py_fstat_noraise
-#  define STRUCT_STAT struct _Py_stat_struct
-#else
 #  define STAT stat
 #  define LSTAT lstat
 #  define FSTAT fstat
 #  define STRUCT_STAT struct stat
-#endif
 
 #if defined(MAJOR_IN_MKDEV)
 #  include <sys/mkdev.h>
@@ -859,11 +852,7 @@ dir_fd_and_follow_symlinks_invalid(const char *function_name, int dir_fd,
     return 0;
 }
 
-#ifdef MS_WINDOWS
-    typedef long long Py_off_t;
-#else
     typedef off_t Py_off_t;
-#endif
 
 static int
 Py_off_t_converter(PyObject *arg, void *addr)
@@ -958,21 +947,12 @@ static PyObject *
 convertenviron(void)
 {
     PyObject *d;
-#ifdef MS_WINDOWS
-    wchar_t **e;
-#else
     char **e;
-#endif
 
     d = PyDict_New();
     if (d == NULL)
         return NULL;
-#ifdef MS_WINDOWS
-    /* _wenviron must be initialized in this way if the program is started
-       through main() instead of wmain(). */
-    _wgetenv(L"");
-    e = _wenviron;
-#elif defined(WITH_NEXT_FRAMEWORK) || (defined(__APPLE__) && defined(Py_ENABLE_SHARED))
+#if defined(WITH_NEXT_FRAMEWORK) || (defined(__APPLE__) && defined(Py_ENABLE_SHARED))
     /* environ is not accessible as an extern in a shared object on OSX; use
        _NSGetEnviron to resolve it. The value changes if you add environment
        variables between calls to Py_Initialize, so don't cache the value. */
@@ -1173,29 +1153,6 @@ static PyStructSequence_Desc stat_result_desc = {
     10
 };
 
-PyDoc_STRVAR(statvfs_result__doc__,
-"statvfs_result: Result from statvfs or fstatvfs.\n\n\
-This object may be accessed either as a tuple of\n\
-  (bsize, frsize, blocks, bfree, bavail, files, ffree, favail, flag, namemax),\n\
-or via the attributes f_bsize, f_frsize, f_blocks, f_bfree, and so on.\n\
-\n\
-See os.statvfs for more information.");
-
-static PyStructSequence_Field statvfs_result_fields[] = {
-    {"f_bsize",  },
-    {"f_frsize", },
-    {"f_blocks", },
-    {"f_bfree",  },
-    {"f_bavail", },
-    {"f_files",  },
-    {"f_ffree",  },
-    {"f_favail", },
-    {"f_flag",   },
-    {"f_namemax",},
-    {"f_fsid",   },
-    {0}
-};
-
 static newfunc structseq_new;
 
 static PyObject *
@@ -1249,8 +1206,8 @@ _posix_free(void *module)
 static void
 fill_time(PyObject *module, PyObject *v, int index, time_t sec, unsigned long nsec)
 {
-    PyObject *s = _PyLong_FromTime_t(sec);
-    PyObject *ns_fractional = PyLong_FromUnsignedLong(nsec);
+  PyObject *s = PyLong_FromLongLong((long long) sec);
+  PyObject *ns_fractional = PyLong_FromUnsignedLong(nsec);
     PyObject *s_in_ns = NULL;
     PyObject *ns_total = NULL;
     PyObject *float_s = NULL;
@@ -1391,7 +1348,7 @@ posix_do_stat(PyObject *module, const char *function_name, path_t *path,
     STRUCT_STAT st;
     int result;
 
-#if !defined(MS_WINDOWS) && !defined(HAVE_FSTATAT) && !defined(HAVE_LSTAT)
+#if !defined(HAVE_FSTATAT) && !defined(HAVE_LSTAT)
     if (follow_symlinks_specified(function_name, follow_symlinks))
         return NULL;
 #endif
@@ -2345,7 +2302,7 @@ os_open_impl(PyObject *module, path_t *path, int flags, int mode, int dir_fd)
 
 #ifdef O_CLOEXEC
     int *atomic_flag_works = &_Py_open_cloexec_works;
-#elif !defined(MS_WINDOWS)
+#else
     int *atomic_flag_works = NULL;
 #endif
 
@@ -2435,14 +2392,7 @@ os_lseek_impl(PyObject *module, int fd, Py_off_t position, int how)
 #endif /* SEEK_END */
 
     
-    
-#ifdef MS_WINDOWS
-    result = _lseeki64(fd, position, how);
-#else
     result = lseek(fd, position, how);
-#endif
-    
-    
     if (result < 0)
         posix_error();
 
@@ -3171,7 +3121,7 @@ exit:
     return return_value;
 }
 
-#if defined(HAVE_SYSTEM) && !defined(MS_WINDOWS)
+#if defined(HAVE_SYSTEM)
 
 PyDoc_STRVAR(os_system__doc__,
 "system($module, /, command)\n"
@@ -3215,7 +3165,7 @@ exit:
     return return_value;
 }
 
-#endif /* defined(HAVE_SYSTEM) && !defined(MS_WINDOWS) */
+#endif /* defined(HAVE_SYSTEM) */
 
 PyDoc_STRVAR(os_unlink__doc__,
 "unlink($module, /, path, *, dir_fd=None)\n"
@@ -3679,8 +3629,6 @@ exit:
     return return_value;
 }
 
-#if !defined(MS_WINDOWS)
-
 PyDoc_STRVAR(os_putenv__doc__,
 "putenv($module, name, value, /)\n"
 "--\n"
@@ -3720,46 +3668,6 @@ exit:
     return return_value;
 }
 
-#endif /* !defined(MS_WINDOWS) */
-
-#if defined(MS_WINDOWS)
-
-PyDoc_STRVAR(os_unsetenv__doc__,
-"unsetenv($module, name, /)\n"
-"--\n"
-"\n"
-"Delete an environment variable.");
-
-#define OS_UNSETENV_METHODDEF    \
-    {"unsetenv", (PyCFunction)os_unsetenv, METH_O, os_unsetenv__doc__},
-
-static PyObject *
-os_unsetenv_impl(PyObject *module, PyObject *name);
-
-static PyObject *
-os_unsetenv(PyObject *module, PyObject *arg)
-{
-    PyObject *return_value = NULL;
-    PyObject *name;
-
-    if (!PyUnicode_Check(arg)) {
-        _PyArg_BadArgument("unsetenv", "argument", "str", arg);
-        goto exit;
-    }
-    if (PyUnicode_READY(arg) == -1) {
-        goto exit;
-    }
-    name = arg;
-    return_value = os_unsetenv_impl(module, name);
-
-exit:
-    return return_value;
-}
-
-#endif /* defined(MS_WINDOWS) */
-
-#if !defined(MS_WINDOWS)
-
 PyDoc_STRVAR(os_unsetenv__doc__,
 "unsetenv($module, name, /)\n"
 "--\n"
@@ -3789,8 +3697,6 @@ exit:
 
     return return_value;
 }
-
-#endif /* !defined(MS_WINDOWS) */
 
 PyDoc_STRVAR(os_strerror__doc__,
 "strerror($module, code, /)\n"

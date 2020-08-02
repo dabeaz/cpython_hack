@@ -910,12 +910,6 @@ init_interp_main(PyThreadState *tstate)
         return _PyStatus_OK();
     }
 
-    if (is_main_interp) {
-        if (_PyTime_Init() < 0) {
-            return _PyStatus_ERR("can't initialize time");
-        }
-    }
-
     if (_PySys_InitMain(tstate) < 0) {
         return _PyStatus_ERR("can't finish initializing sys");
     }
@@ -1301,9 +1295,6 @@ Py_FinalizeEx(void)
 
     /* Destroy all modules */
     _PyImport_Cleanup(tstate);
-
-    /* Print debug stats if any */
-    _PyEval_Fini();
 
     /* Flush sys.stdout and sys.stderr (again, in case more was printed) */
     if (flush_std_files() < 0) {

@@ -4001,14 +4001,7 @@ bytes_iter(PyObject *seq)
 
 
 /* _PyBytesWriter API */
-
-#ifdef MS_WINDOWS
-   /* On Windows, overallocate by 50% is the best factor */
-#  define OVERALLOCATE_FACTOR 2
-#else
-   /* On Linux, overallocate by 25% is the best factor */
-#  define OVERALLOCATE_FACTOR 4
-#endif
+#define OVERALLOCATE_FACTOR 4
 
 void
 _PyBytesWriter_Init(_PyBytesWriter *writer)

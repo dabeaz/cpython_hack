@@ -64,7 +64,8 @@ Halfway there.  It all gets more difficult from here...
 
 - Day 51 (7/31/2020). Lost all locks.
 - Day 52 (8/01/2020). Atom smasher.
-  
+- Day 53 (8/02/2020). What time is it?!?!? Remove pytime.c. Other cleanup.
+
 Copyright and License Information
 ---------------------------------
 

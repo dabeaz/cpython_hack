@@ -68,7 +68,6 @@ PyThread_init_thread(void)
 #   error "Require native threads. See https://bugs.python.org/issue31370"
 #endif
 
-
 /* return the current thread stack size */
 size_t
 PyThread_get_stacksize(void)

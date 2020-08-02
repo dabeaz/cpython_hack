@@ -59,9 +59,7 @@ static void _PyMem_SetupDebugHooksDomain(PyMemAllocatorDomain domain);
 
 #ifdef WITH_PYMALLOC
 
-#ifdef MS_WINDOWS
-#  include <windows.h>
-#elif defined(HAVE_MMAP)
+#if defined(HAVE_MMAP)
 #  include <sys/mman.h>
 #  ifdef MAP_ANONYMOUS
 #    define ARENAS_USE_MMAP
@@ -123,21 +121,7 @@ _PyMem_RawFree(void *ctx, void *ptr)
 }
 
 
-#ifdef MS_WINDOWS
-static void *
-_PyObject_ArenaVirtualAlloc(void *ctx, size_t size)
-{
-    return VirtualAlloc(NULL, size,
-                        MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-}
-
-static void
-_PyObject_ArenaVirtualFree(void *ctx, void *ptr, size_t size)
-{
-    VirtualFree(ptr, 0, MEM_RELEASE);
-}
-
-#elif defined(ARENAS_USE_MMAP)
+#if defined(ARENAS_USE_MMAP)
 static void *
 _PyObject_ArenaMmap(void *ctx, size_t size)
 {
@@ -417,9 +401,7 @@ _PyMem_GetCurrentAllocatorName(void)
 
 
 static PyObjectArenaAllocator _PyObject_Arena = {NULL,
-#ifdef MS_WINDOWS
-    _PyObject_ArenaVirtualAlloc, _PyObject_ArenaVirtualFree
-#elif defined(ARENAS_USE_MMAP)
+#if defined(ARENAS_USE_MMAP)
     _PyObject_ArenaMmap, _PyObject_ArenaMunmap
 #else
     _PyObject_ArenaMalloc, _PyObject_ArenaFree
