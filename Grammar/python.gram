@@ -28,9 +28,9 @@ _PyPegen_parse(Parser *p)
 // The end
 '''
 file[mod_ty]: a=[statements] ENDMARKER { _PyPegen_make_module(p, a) }
-interactive[mod_ty]: a=statement_newline { Interactive(a, p->arena) }
-eval[mod_ty]: a=expressions NEWLINE* ENDMARKER { Expression(a, p->arena) }
-func_type[mod_ty]: '(' a=[type_expressions] ')' '->' b=expression NEWLINE* ENDMARKER { FunctionType(a, b, p->arena) }
+interactive[mod_ty]: a=statement_newline { Interactive(a) }
+eval[mod_ty]: a=expressions NEWLINE* ENDMARKER { Expression(a) }
+func_type[mod_ty]: '(' a=[type_expressions] ')' '->' b=expression NEWLINE* ENDMARKER { FunctionType(a, b) }
 fstring[expr_ty]: star_expressions
 
 # type_expressions allow */** but ignore them
@@ -140,14 +140,12 @@ import_from_as_names[asdl_seq*]:
     | a=','.import_from_as_name+ { a }
 import_from_as_name[alias_ty]:
     | a=NAME b=['as' z=NAME { z }] { _Py_alias(a->v.Name.id,
-                                               (b) ? ((expr_ty) b)->v.Name.id : NULL,
-                                               p->arena) }
+                                               (b) ? ((expr_ty) b)->v.Name.id : NULL) }
 dotted_as_names[asdl_seq*]:
     | a=','.dotted_as_name+ { a }
 dotted_as_name[alias_ty]:
     | a=dotted_name b=['as' z=NAME { z }] { _Py_alias(a->v.Name.id,
-                                                      (b) ? ((expr_ty) b)->v.Name.id : NULL,
-                                                      p->arena) }
+                                                      (b) ? ((expr_ty) b)->v.Name.id : NULL) }
 dotted_name[expr_ty]:
     | a=dotted_name '.' b=NAME { _PyPegen_join_names_with_dot(p, a, b) }
     | NAME
@@ -179,7 +177,7 @@ with_stmt[stmt_ty]:
     | ASYNC 'with' a=','.with_item+ ':' tc=[TYPE_COMMENT] b=block {
        CHECK_VERSION(5, "Async with statements are", _Py_AsyncWith(a, b, NEW_TYPE_COMMENT(p, tc), EXTRA)) }
 with_item[withitem_ty]:
-    | e=expression o=['as' t=target { t }] { _Py_withitem(e, o, p->arena) }
+    | e=expression o=['as' t=target { t }] { _Py_withitem(e, o) }
 
 try_stmt[stmt_ty]:
     | 'try' ':' b=block f=finally_block { _Py_Try(b, NULL, NULL, f, EXTRA) }
@@ -515,9 +513,9 @@ for_if_clauses[asdl_seq*]:
     | for_if_clause+
 for_if_clause[comprehension_ty]:
     | ASYNC 'for' a=star_targets 'in' b=disjunction c=('if' z=disjunction { z })* {
-        CHECK_VERSION(6, "Async comprehensions are", _Py_comprehension(a, b, c, 1, p->arena)) }
+        CHECK_VERSION(6, "Async comprehensions are", _Py_comprehension(a, b, c, 1)) }
     | 'for' a=star_targets 'in' b=disjunction c=('if' z=disjunction { z })* {
-        _Py_comprehension(a, b, c, 0, p->arena) }
+        _Py_comprehension(a, b, c, 0) }
 
 yield_expr[expr_ty]:
     | 'yield' 'from' a=expression { _Py_YieldFrom(a, EXTRA) }

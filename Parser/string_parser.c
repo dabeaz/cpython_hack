@@ -598,7 +598,7 @@ fstring_compile_expr(Parser *p, const char *expr_start, const char *expr_end,
     tok->filename = p->tok->filename;
 
     Parser *p2 = _PyPegen_Parser_New(tok, Py_fstring_input, p->flags, p->feature_version,
-                                     NULL, p->arena);
+                                     NULL);
     p2->starting_lineno = p->starting_lineno + p->tok->first_lineno - 1;
     p2->starting_col_offset = p->tok->first_lineno == p->tok->lineno
                               ? p->starting_col_offset + t->col_offset : 0;
@@ -992,7 +992,7 @@ fstring_find_expr(Parser *p, const char **str, const char *end, int raw, int rec
     *expression = FormattedValue(simple_expression, conversion,
                                  format_spec, first_token->lineno,
                                  first_token->col_offset, last_token->end_lineno,
-                                 last_token->end_col_offset, p->arena);
+                                 last_token->end_col_offset);
     if (!*expression)
         goto error;
 
@@ -1158,14 +1158,14 @@ ExprList_Dealloc(ExprList *l)
 }
 
 static asdl_seq *
-ExprList_Finish(ExprList *l, PyArena *arena)
+ExprList_Finish(ExprList *l)
 {
     asdl_seq *seq;
 
     ExprList_check_invariants(l);
 
     /* Allocate the asdl_seq and copy the expressions in to it. */
-    seq = _Py_asdl_seq_new(l->size, arena);
+    seq = _Py_asdl_seq_new(l->size);
     if (seq) {
         Py_ssize_t i;
         for (i = 0; i < l->size; i++)
@@ -1213,10 +1213,6 @@ make_str_node_and_del(Parser *p, PyObject **str, Token* first_token, Token *last
     PyObject *kind = NULL;
     *str = NULL;
     assert(PyUnicode_CheckExact(s));
-    if (PyArena_AddPyObject(p->arena, s) < 0) {
-        Py_DECREF(s);
-        return NULL;
-    }
     const char* the_str = PyBytes_AsString(first_token->bytes);
     if (the_str && the_str[0] == 'u') {
         kind = _PyPegen_new_identifier(p, "u");
@@ -1227,7 +1223,7 @@ make_str_node_and_del(Parser *p, PyObject **str, Token* first_token, Token *last
     }
 
     return Constant(s, kind, first_token->lineno, first_token->col_offset,
-                    last_token->end_lineno, last_token->end_col_offset, p->arena);
+                    last_token->end_lineno, last_token->end_col_offset);
 
 }
 
@@ -1373,12 +1369,12 @@ _PyPegen_FstringParser_Finish(Parser *p, FstringParser *state, Token* first_toke
     /* This has already been freed. */
     assert(state->last_str == NULL);
 
-    seq = ExprList_Finish(&state->expr_list, p->arena);
+    seq = ExprList_Finish(&state->expr_list);
     if (!seq)
         goto error;
 
     return _Py_JoinedStr(seq, first_token->lineno, first_token->col_offset,
-                         last_token->end_lineno, last_token->end_col_offset, p->arena);
+                         last_token->end_lineno, last_token->end_col_offset);
 
 error:
     _PyPegen_FstringParser_Dealloc(state);

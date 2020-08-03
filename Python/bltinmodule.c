@@ -1619,24 +1619,16 @@ builtin_compile_impl(PyObject *module, PyObject *source, PyObject *filename,
             result = source;
         }
         else {
-            PyArena *arena;
             mod_ty mod;
-
-            arena = PyArena_New();
-            if (arena == NULL)
-                goto error;
-            mod = PyAST_obj2mod(source, arena, compile_mode);
+            mod = PyAST_obj2mod(source, compile_mode);
             if (mod == NULL) {
-                PyArena_Free(arena);
                 goto error;
             }
             if (!PyAST_Validate(mod)) {
-                PyArena_Free(arena);
                 goto error;
             }
             result = (PyObject*)PyAST_CompileObject(mod, filename,
-                                                    &cf, optimize, arena);
-            PyArena_Free(arena);
+                                                    &cf, optimize);
         }
         goto finally;
     }

@@ -64,14 +64,12 @@ PyAPI_FUNC(PyCodeObject *) PyAST_CompileEx(
     struct _mod *mod,
     const char *filename,       /* decoded from the filesystem encoding */
     PyCompilerFlags *flags,
-    int optimize,
-    PyArena *arena);
+    int optimize);
 PyAPI_FUNC(PyCodeObject *) PyAST_CompileObject(
     struct _mod *mod,
     PyObject *filename,
     PyCompilerFlags *flags,
-    int optimize,
-    PyArena *arena);
+    int optimize);
 PyAPI_FUNC(PyFutureFeatures *) PyFuture_FromAST(
     struct _mod * mod,
     const char *filename        /* decoded from the filesystem encoding */
@@ -93,7 +91,7 @@ typedef struct {
     int ff_features;
 } _PyASTOptimizeState;
 
-PyAPI_FUNC(int) _PyAST_Optimize(struct _mod *, PyArena *arena, _PyASTOptimizeState *state);
+PyAPI_FUNC(int) _PyAST_Optimize(struct _mod *, _PyASTOptimizeState *state);
 
 #ifdef __cplusplus
 }

@@ -566,7 +566,7 @@ class CParserGenerator(ParserGenerator, GrammarVisitor):
                     self.print("PyMem_Free(_children);")
                     self.add_return("NULL")
                 self.print("}")
-            self.print("asdl_seq *_seq = _Py_asdl_seq_new(_n, p->arena);")
+            self.print("asdl_seq *_seq = _Py_asdl_seq_new(_n);")
             self.out_of_memory_return(f"!_seq", cleanup_code="PyMem_Free(_children);")
             self.print("for (int i = 0; i < _n; i++) asdl_seq_SET(_seq, i, _children[i]);")
             self.print("PyMem_Free(_children);")

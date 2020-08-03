@@ -15,14 +15,12 @@ PyAPI_FUNC(mod_ty) PyPegen_ASTFromString(
     const char *str,
     const char *filename,
     int mode,
-    PyCompilerFlags *flags,
-    PyArena *arena);
+    PyCompilerFlags *flags);
 PyAPI_FUNC(mod_ty) PyPegen_ASTFromStringObject(
     const char *str,
     PyObject* filename,
     int mode,
-    PyCompilerFlags *flags,
-    PyArena *arena);
+    PyCompilerFlags *flags);
 PyAPI_FUNC(mod_ty) PyPegen_ASTFromFileObject(
     FILE *fp,
     PyObject *filename_ob,
@@ -31,13 +29,11 @@ PyAPI_FUNC(mod_ty) PyPegen_ASTFromFileObject(
     const char *ps1,
     const char *ps2,
     PyCompilerFlags *flags,
-    int *errcode,
-    PyArena *arena);
+    int *errcode);
 PyAPI_FUNC(mod_ty) PyPegen_ASTFromFilename(
     const char *filename,
     int mode,
-    PyCompilerFlags *flags,
-    PyArena *arena);
+    PyCompilerFlags *flags);
 
 
 #ifdef __cplusplus

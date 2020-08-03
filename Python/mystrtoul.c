@@ -1,10 +1,6 @@
 
 #include "Python.h"
 
-#if defined(__sgi) && !defined(_SGI_MP_SOURCE)
-#define _SGI_MP_SOURCE
-#endif
-
 /* strtol and strtoul, renamed to avoid conflicts */
 
 

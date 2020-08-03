@@ -2,7 +2,7 @@
 #include "asdl.h"
 
 asdl_seq *
-_Py_asdl_seq_new(Py_ssize_t size, PyArena *arena)
+_Py_asdl_seq_new(Py_ssize_t size)
 {
     asdl_seq *seq = NULL;
     size_t n;
@@ -22,7 +22,7 @@ _Py_asdl_seq_new(Py_ssize_t size, PyArena *arena)
     }
     n += sizeof(asdl_seq);
 
-    seq = (asdl_seq *)PyArena_Malloc(arena, n);
+    seq = (asdl_seq *)malloc(n);
     if (!seq) {
         PyErr_NoMemory();
         return NULL;
@@ -33,7 +33,7 @@ _Py_asdl_seq_new(Py_ssize_t size, PyArena *arena)
 }
 
 asdl_int_seq *
-_Py_asdl_int_seq_new(Py_ssize_t size, PyArena *arena)
+_Py_asdl_int_seq_new(Py_ssize_t size)
 {
     asdl_int_seq *seq = NULL;
     size_t n;
@@ -53,7 +53,7 @@ _Py_asdl_int_seq_new(Py_ssize_t size, PyArena *arena)
     }
     n += sizeof(asdl_seq);
 
-    seq = (asdl_int_seq *)PyArena_Malloc(arena, n);
+    seq = (asdl_int_seq *)malloc(n);
     if (!seq) {
         PyErr_NoMemory();
         return NULL;

@@ -50,7 +50,7 @@ extern "C" {
 /* Forward */
 static void flush_io(void);
 static PyObject *run_mod(mod_ty, PyObject *, PyObject *, PyObject *,
-                          PyCompilerFlags *, PyArena *);
+			 PyCompilerFlags *);
 static int PyRun_InteractiveOneObjectEx(FILE *, PyObject *, PyCompilerFlags *);
 
 /* Parse input from a file and execute it */
@@ -131,7 +131,6 @@ PyRun_InteractiveOneObjectEx(FILE *fp, PyObject *filename,
 {
     PyObject *m, *d, *v, *w, *oenc = NULL, *mod_name;
     mod_ty mod;
-    PyArena *arena;
     const char *ps1 = "", *ps2 = "", *enc = NULL;
     int errcode = 0;
     _Py_IDENTIFIER(encoding);
@@ -179,22 +178,13 @@ PyRun_InteractiveOneObjectEx(FILE *fp, PyObject *filename,
             }
         }
     }
-    arena = PyArena_New();
-    if (arena == NULL) {
-        Py_XDECREF(v);
-        Py_XDECREF(w);
-        Py_XDECREF(oenc);
-        return -1;
-    }
-
     mod = PyPegen_ASTFromFileObject(fp, filename, Py_single_input,
-                                    enc, ps1, ps2, flags, &errcode, arena);
+                                    enc, ps1, ps2, flags, &errcode);
 
     Py_XDECREF(v);
     Py_XDECREF(w);
     Py_XDECREF(oenc);
     if (mod == NULL) {
-        PyArena_Free(arena);
         if (errcode == E_EOF) {
             PyErr_Clear();
             return E_EOF;
@@ -203,12 +193,10 @@ PyRun_InteractiveOneObjectEx(FILE *fp, PyObject *filename,
     }
     m = PyImport_AddModuleObject(mod_name);
     if (m == NULL) {
-        PyArena_Free(arena);
         return -1;
     }
     d = PyModule_GetDict(m);
-    v = run_mod(mod, filename, d, d, flags, arena);
-    PyArena_Free(arena);
+    v = run_mod(mod, filename, d, d, flags);
     if (v == NULL) {
         return -1;
     }
@@ -929,22 +917,16 @@ PyRun_StringFlags(const char *str, int start, PyObject *globals,
 {
     PyObject *ret = NULL;
     mod_ty mod;
-    PyArena *arena;
     PyObject *filename;
 
     filename = _PyUnicode_FromId(&PyId_string); /* borrowed */
     if (filename == NULL)
         return NULL;
 
-    arena = PyArena_New();
-    if (arena == NULL)
-        return NULL;
-
-    mod = PyPegen_ASTFromStringObject(str, filename, start, flags, arena);
+    mod = PyPegen_ASTFromStringObject(str, filename, start, flags);
 
     if (mod != NULL)
-        ret = run_mod(mod, filename, globals, locals, flags, arena);
-    PyArena_Free(arena);
+        ret = run_mod(mod, filename, globals, locals, flags);
     return ret;
 }
 
@@ -954,31 +936,25 @@ PyRun_FileExFlags(FILE *fp, const char *filename_str, int start, PyObject *globa
 {
     PyObject *ret = NULL;
     mod_ty mod;
-    PyArena *arena = NULL;
     PyObject *filename;
 
     filename = PyUnicode_DecodeFSDefault(filename_str);
     if (filename == NULL)
         goto exit;
 
-    arena = PyArena_New();
-    if (arena == NULL)
-        goto exit;
 
     mod = PyPegen_ASTFromFileObject(fp, filename, start, NULL, NULL, NULL,
-                                        flags, NULL, arena);
+                                        flags, NULL);
 
     if (closeit)
         fclose(fp);
     if (mod == NULL) {
         goto exit;
     }
-    ret = run_mod(mod, filename, globals, locals, flags, arena);
+    ret = run_mod(mod, filename, globals, locals, flags);
 
 exit:
     Py_XDECREF(filename);
-    if (arena != NULL)
-        PyArena_Free(arena);
     return ret;
 }
 
@@ -1044,10 +1020,10 @@ run_eval_code_obj(PyThreadState *tstate, PyCodeObject *co, PyObject *globals, Py
 
 static PyObject *
 run_mod(mod_ty mod, PyObject *filename, PyObject *globals, PyObject *locals,
-            PyCompilerFlags *flags, PyArena *arena)
+            PyCompilerFlags *flags)
 {
     PyThreadState *tstate = _PyThreadState_GET();
-    PyCodeObject *co = PyAST_CompileObject(mod, filename, flags, -1, arena);
+    PyCodeObject *co = PyAST_CompileObject(mod, filename, flags, -1);
     if (co == NULL)
         return NULL;
 
@@ -1062,22 +1038,16 @@ Py_CompileStringObject(const char *str, PyObject *filename, int start,
 {
     PyCodeObject *co;
     mod_ty mod;
-    PyArena *arena = PyArena_New();
-    if (arena == NULL)
-        return NULL;
 
-    mod = PyPegen_ASTFromStringObject(str, filename, start, flags, arena);
+    mod = PyPegen_ASTFromStringObject(str, filename, start, flags);
     if (mod == NULL) {
-        PyArena_Free(arena);
         return NULL;
     }
     if (flags && (flags->cf_flags & PyCF_ONLY_AST)) {
         PyObject *result = PyAST_mod2obj(mod);
-        PyArena_Free(arena);
         return result;
     }
-    co = PyAST_CompileObject(mod, filename, flags, optimize, arena);
-    PyArena_Free(arena);
+    co = PyAST_CompileObject(mod, filename, flags, optimize);
     return (PyObject *)co;
 }
 
@@ -1163,19 +1133,11 @@ _Py_SymtableStringObjectFlags(const char *str, PyObject *filename, int start, Py
 {
     struct symtable *st;
     mod_ty mod;
-    PyArena *arena;
-
-    arena = PyArena_New();
-    if (arena == NULL)
-        return NULL;
-
-    mod = PyPegen_ASTFromStringObject(str, filename, start, flags, arena);
+    mod = PyPegen_ASTFromStringObject(str, filename, start, flags);
     if (mod == NULL) {
-        PyArena_Free(arena);
         return NULL;
     }
     st = PySymtable_BuildObject(mod, filename, 0);
-    PyArena_Free(arena);
     return st;
 }
 

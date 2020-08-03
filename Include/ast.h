@@ -12,13 +12,11 @@ PyAPI_FUNC(int) PyAST_Validate(mod_ty);
 PyAPI_FUNC(mod_ty) PyAST_FromNode(
     const node *n,
     PyCompilerFlags *flags,
-    const char *filename,       /* decoded from the filesystem encoding */
-    PyArena *arena);
+    const char *filename);
 PyAPI_FUNC(mod_ty) PyAST_FromNodeObject(
     const node *n,
     PyCompilerFlags *flags,
-    PyObject *filename,
-    PyArena *arena);
+    PyObject *filename);
 
 /* _PyAST_ExprAsUnicode is defined in ast_unparse.c */
 PyAPI_FUNC(PyObject *) _PyAST_ExprAsUnicode(expr_ty);

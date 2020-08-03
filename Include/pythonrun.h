@@ -36,14 +36,13 @@ PyAPI_FUNC(struct _mod *) PyParser_ASTFromString(
     const char *s,
     const char *filename,       /* decoded from the filesystem encoding */
     int start,
-    PyCompilerFlags *flags,
-    PyArena *arena);
+    PyCompilerFlags *flags);
+
 PyAPI_FUNC(struct _mod *) PyParser_ASTFromStringObject(
     const char *s,
     PyObject *filename,
     int start,
-    PyCompilerFlags *flags,
-    PyArena *arena);
+    PyCompilerFlags *flags);
 PyAPI_FUNC(struct _mod *) PyParser_ASTFromFile(
     FILE *fp,
     const char *filename,       /* decoded from the filesystem encoding */
@@ -52,8 +51,7 @@ PyAPI_FUNC(struct _mod *) PyParser_ASTFromFile(
     const char *ps1,
     const char *ps2,
     PyCompilerFlags *flags,
-    int *errcode,
-    PyArena *arena);
+    int *errcode);
 PyAPI_FUNC(struct _mod *) PyParser_ASTFromFileObject(
     FILE *fp,
     PyObject *filename,
@@ -62,8 +60,7 @@ PyAPI_FUNC(struct _mod *) PyParser_ASTFromFileObject(
     const char *ps1,
     const char *ps2,
     PyCompilerFlags *flags,
-    int *errcode,
-    PyArena *arena);
+    int *errcode);
 #endif
 
 #ifndef PyParser_SimpleParseString

@@ -174,7 +174,6 @@ struct compiler {
                                     including names tuple */
     struct compiler_unit *u; /* compiler state for current block */
     PyObject *c_stack;           /* Python list holding compiler_unit ptrs */
-    PyArena *c_arena;            /* pointer to memory allocation arena */
 };
 
 static int compiler_enter_scope(struct compiler *, identifier, int, void *, int);
@@ -316,7 +315,7 @@ compiler_init(struct compiler *c)
 
 PyCodeObject *
 PyAST_CompileObject(mod_ty mod, PyObject *filename, PyCompilerFlags *flags,
-                   int optimize, PyArena *arena)
+		    int optimize)
 {
     struct compiler c;
     PyCodeObject *co = NULL;
@@ -337,7 +336,6 @@ PyAST_CompileObject(mod_ty mod, PyObject *filename, PyCompilerFlags *flags,
         return NULL;
     Py_INCREF(filename);
     c.c_filename = filename;
-    c.c_arena = arena;
     c.c_future = PyFuture_FromASTObject(mod, filename);
     if (c.c_future == NULL)
         goto finally;
@@ -356,7 +354,7 @@ PyAST_CompileObject(mod_ty mod, PyObject *filename, PyCompilerFlags *flags,
     state.optimize = c.c_optimize;
     state.ff_features = merged;
 
-    if (!_PyAST_Optimize(mod, arena, &state)) {
+    if (!_PyAST_Optimize(mod, &state)) {
         goto finally;
     }
 
@@ -377,14 +375,14 @@ PyAST_CompileObject(mod_ty mod, PyObject *filename, PyCompilerFlags *flags,
 
 PyCodeObject *
 PyAST_CompileEx(mod_ty mod, const char *filename_str, PyCompilerFlags *flags,
-                int optimize, PyArena *arena)
+                int optimize)
 {
     PyObject *filename;
     PyCodeObject *co;
     filename = PyUnicode_DecodeFSDefault(filename_str);
     if (filename == NULL)
         return NULL;
-    co = PyAST_CompileObject(mod, filename, flags, optimize, arena);
+    co = PyAST_CompileObject(mod, filename, flags, optimize);
     Py_DECREF(filename);
     return co;
 
@@ -6037,8 +6035,7 @@ assemble(struct compiler *c, int addNone)
 
 #undef PyAST_Compile
 PyCodeObject *
-PyAST_Compile(mod_ty mod, const char *filename, PyCompilerFlags *flags,
-              PyArena *arena)
+PyAST_Compile(mod_ty mod, const char *filename, PyCompilerFlags *flags)
 {
-    return PyAST_CompileEx(mod, filename, flags, -1, arena);
+    return PyAST_CompileEx(mod, filename, flags, -1);
 }

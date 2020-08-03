@@ -5,7 +5,6 @@
 #include <Python.h>
 #include <token.h>
 #include <Python-ast.h>
-#include <pyarena.h>
 
 #if 0
 #define PyPARSE_YIELD_IS_KEYWORD        0x0001
@@ -58,7 +57,6 @@ typedef struct {
     Token **tokens;
     int mark;
     int fill, size;
-    PyArena *arena;
     KeywordToken **keywords;
     int n_keyword_lists;
     int start_rule;
@@ -150,8 +148,8 @@ RAISE_ERROR_KNOWN_LOCATION(Parser *p, PyObject *errtype, int lineno,
 
 
 #define UNUSED(expr) do { (void)(expr); } while (0)
-#define EXTRA_EXPR(head, tail) head->lineno, head->col_offset, tail->end_lineno, tail->end_col_offset, p->arena
-#define EXTRA _start_lineno, _start_col_offset, _end_lineno, _end_col_offset, p->arena
+#define EXTRA_EXPR(head, tail) head->lineno, head->col_offset, tail->end_lineno, tail->end_col_offset
+#define EXTRA _start_lineno, _start_col_offset, _end_lineno, _end_col_offset
 #define RAISE_SYNTAX_ERROR(msg, ...) _PyPegen_raise_error(p, PyExc_SyntaxError, msg, ##__VA_ARGS__)
 #define RAISE_INDENTATION_ERROR(msg, ...) _PyPegen_raise_error(p, PyExc_IndentationError, msg, ##__VA_ARGS__)
 #define RAISE_SYNTAX_ERROR_KNOWN_LOCATION(a, msg, ...) \
@@ -222,13 +220,13 @@ INVALID_VERSION_CHECK(Parser *p, int version, char *msg, void *node)
 
 arg_ty _PyPegen_add_type_comment_to_arg(Parser *, arg_ty, Token *);
 PyObject *_PyPegen_new_identifier(Parser *, char *);
-Parser *_PyPegen_Parser_New(struct tok_state *, int, int, int, int *, PyArena *);
+Parser *_PyPegen_Parser_New(struct tok_state *, int, int, int, int *);
 void _PyPegen_Parser_Free(Parser *);
 mod_ty _PyPegen_run_parser_from_file_pointer(FILE *, int, PyObject *, const char *,
-                                    const char *, const char *, PyCompilerFlags *, int *, PyArena *);
+                                    const char *, const char *, PyCompilerFlags *, int *);
 void *_PyPegen_run_parser(Parser *);
-mod_ty _PyPegen_run_parser_from_file(const char *, int, PyObject *, PyCompilerFlags *, PyArena *);
-mod_ty _PyPegen_run_parser_from_string(const char *, int, PyObject *, PyCompilerFlags *, PyArena *);
+mod_ty _PyPegen_run_parser_from_file(const char *, int, PyObject *, PyCompilerFlags *);
+mod_ty _PyPegen_run_parser_from_string(const char *, int, PyObject *, PyCompilerFlags *);
 void *_PyPegen_interactive_exit(Parser *);
 asdl_seq *_PyPegen_singleton_seq(Parser *, void *);
 asdl_seq *_PyPegen_seq_insert_in_front(Parser *, void *, asdl_seq *);

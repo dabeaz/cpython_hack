@@ -291,11 +291,10 @@ class PrototypeVisitor(EmitVisitor):
         if args:
             argstr = ", ".join(["%s %s" % (atype, aname)
                                 for atype, aname, opt in args])
-            argstr += ", PyArena *arena"
         else:
-            argstr = "PyArena *arena"
+            argstr = ""
         margs = "a0"
-        for i in range(1, len(args)+1):
+        for i in range(1, len(args)):
             margs += ", a%d" % i
         self.emit("#define %s(%s) _Py_%s(%s)" % (name, margs, name, margs), 0,
                 reflow=False)
@@ -317,9 +316,9 @@ class FunctionVisitor(PrototypeVisitor):
         argstr = ", ".join(["%s %s" % (atype, aname)
                             for atype, aname, opt in args + attrs])
         if argstr:
-            argstr += ", PyArena *arena"
+            pass
         else:
-            argstr = "PyArena *arena"
+            argstr = ""
         self.emit("%s" % ctype, 0)
         emit("%s(%s)" % (name, argstr))
         emit("{")
@@ -334,9 +333,9 @@ class FunctionVisitor(PrototypeVisitor):
                 emit('return NULL;', 2)
                 emit('}', 1)
 
-        emit("p = (%s)PyArena_Malloc(arena, sizeof(*p));" % ctype, 1);
+        emit("p = (%s)malloc(sizeof(*p));" % ctype, 1);
         emit("if (!p)", 1)
-        emit("return NULL;", 2)
+        emit("return (%s) PyErr_NoMemory();" % ctype, 2)
         if union:
             self.emit_body_union(name, args, attrs)
         else:
@@ -387,7 +386,7 @@ class PickleVisitor(EmitVisitor):
 
 class Obj2ModPrototypeVisitor(PickleVisitor):
     def visitProduct(self, prod, name):
-        code = "static int obj2ast_%s(PyObject* obj, %s* out, PyArena* arena);"
+        code = "static int obj2ast_%s(PyObject* obj, %s* out);"
         self.emit(code % (name, get_c_type(name)), 0)
 
     visitSum = visitProduct
@@ -397,7 +396,7 @@ class Obj2ModVisitor(PickleVisitor):
     def funcHeader(self, name):
         ctype = get_c_type(name)
         self.emit("int", 0)
-        self.emit("obj2ast_%s(PyObject* obj, %s* out, PyArena* arena)" % (name, ctype), 0)
+        self.emit("obj2ast_%s(PyObject* obj, %s* out)" % (name, ctype), 0)
         self.emit("{", 0)
         self.emit("int isinstance;", 1)
         self.emit("", 0)
@@ -431,7 +430,7 @@ class Obj2ModVisitor(PickleVisitor):
         self.sumTrailer(name)
 
     def buildArgs(self, fields):
-        return ", ".join(fields + ["arena"])
+        return ", ".join(fields)
 
     def complexSum(self, sum, name):
         self.funcHeader(name)
@@ -479,7 +478,7 @@ class Obj2ModVisitor(PickleVisitor):
     def visitProduct(self, prod, name):
         ctype = get_c_type(name)
         self.emit("int", 0)
-        self.emit("obj2ast_%s(PyObject* obj, %s* out, PyArena* arena)" % (name, ctype), 0)
+        self.emit("obj2ast_%s(PyObject* obj, %s* out)" % (name, ctype), 0)
         self.emit("{", 0)
         self.emit("PyObject* tmp = NULL;", 1)
         for f in prod.fields:
@@ -560,15 +559,15 @@ class Obj2ModVisitor(PickleVisitor):
             self.emit("}", depth+1)
             self.emit("len = PyList_GET_SIZE(tmp);", depth+1)
             if self.isSimpleType(field):
-                self.emit("%s = _Py_asdl_int_seq_new(len, arena);" % field.name, depth+1)
+                self.emit("%s = _Py_asdl_int_seq_new(len);" % field.name, depth+1)
             else:
-                self.emit("%s = _Py_asdl_seq_new(len, arena);" % field.name, depth+1)
+                self.emit("%s = _Py_asdl_seq_new(len);" % field.name, depth+1)
             self.emit("if (%s == NULL) goto failed;" % field.name, depth+1)
             self.emit("for (i = 0; i < len; i++) {", depth+1)
             self.emit("%s val;" % ctype, depth+2)
             self.emit("PyObject *tmp2 = PyList_GET_ITEM(tmp, i);", depth+2)
             self.emit("Py_INCREF(tmp2);", depth+2)
-            self.emit("res = obj2ast_%s(tmp2, &val, arena);" %
+            self.emit("res = obj2ast_%s(tmp2, &val);" %
                       field.type, depth+2, reflow=False)
             self.emit("Py_DECREF(tmp2);", depth+2)
             self.emit("if (res != 0) goto failed;", depth+2)
@@ -582,7 +581,7 @@ class Obj2ModVisitor(PickleVisitor):
             self.emit("asdl_seq_SET(%s, i, val);" % field.name, depth+2)
             self.emit("}", depth+1)
         else:
-            self.emit("res = obj2ast_%s(tmp, &%s, arena);" %
+            self.emit("res = obj2ast_%s(tmp, &%s);" %
                       (field.type, field.name), depth+1)
             self.emit("if (res != 0) goto failed;", depth+1)
 
@@ -891,51 +890,39 @@ static PyObject* ast2obj_int(long b)
 
 /* Conversion Python -> AST */
 
-static int obj2ast_object(PyObject* obj, PyObject** out, PyArena* arena)
+static int obj2ast_object(PyObject* obj, PyObject** out)
 {
     if (obj == Py_None)
         obj = NULL;
-    if (obj) {
-        if (PyArena_AddPyObject(arena, obj) < 0) {
-            *out = NULL;
-            return -1;
-        }
-        Py_INCREF(obj);
-    }
     *out = obj;
     return 0;
 }
 
-static int obj2ast_constant(PyObject* obj, PyObject** out, PyArena* arena)
+static int obj2ast_constant(PyObject* obj, PyObject** out)
 {
-    if (PyArena_AddPyObject(arena, obj) < 0) {
-        *out = NULL;
-        return -1;
-    }
-    Py_INCREF(obj);
     *out = obj;
     return 0;
 }
 
-static int obj2ast_identifier(PyObject* obj, PyObject** out, PyArena* arena)
+static int obj2ast_identifier(PyObject* obj, PyObject** out)
 {
     if (!PyUnicode_CheckExact(obj) && obj != Py_None) {
         PyErr_SetString(PyExc_TypeError, "AST identifier must be of type str");
         return 1;
     }
-    return obj2ast_object(obj, out, arena);
+    return obj2ast_object(obj, out);
 }
 
-static int obj2ast_string(PyObject* obj, PyObject** out, PyArena* arena)
+static int obj2ast_string(PyObject* obj, PyObject** out)
 {
     if (!PyUnicode_CheckExact(obj) && !PyBytes_CheckExact(obj)) {
         PyErr_SetString(PyExc_TypeError, "AST string must be of type str");
         return 1;
     }
-    return obj2ast_object(obj, out, arena);
+    return obj2ast_object(obj, out);
 }
 
-static int obj2ast_int(PyObject* obj, int* out, PyArena* arena)
+static int obj2ast_int(PyObject* obj, int* out)
 {
     int i;
     if (!PyLong_Check(obj)) {
@@ -1258,15 +1245,11 @@ PyObject* PyAST_mod2obj(mod_ty t)
 }
 
 /* mode is 0 for "exec", 1 for "eval" and 2 for "single" input */
-mod_ty PyAST_obj2mod(PyObject* ast, PyArena* arena, int mode)
+mod_ty PyAST_obj2mod(PyObject* ast, int mode)
 {
     PyObject *req_type[3];
     const char * const req_name[] = {"Module", "Expression", "Interactive"};
     int isinstance;
-
-    if (PySys_Audit("compile", "OO", ast, Py_None) < 0) {
-        return NULL;
-    }
 
     req_type[0] = astmodulestate_global->Module_type;
     req_type[1] = astmodulestate_global->Expression_type;
@@ -1287,7 +1270,7 @@ mod_ty PyAST_obj2mod(PyObject* ast, PyArena* arena, int mode)
     }
 
     mod_ty res = NULL;
-    if (obj2ast_mod(ast, &res, arena) != 0)
+    if (obj2ast_mod(ast, &res) != 0)
         return NULL;
     else
         return res;
@@ -1415,7 +1398,7 @@ def write_header(f, mod):
     PrototypeVisitor(f).visit(mod)
     f.write("\n")
     f.write("PyObject* PyAST_mod2obj(mod_ty t);\n")
-    f.write("mod_ty PyAST_obj2mod(PyObject* ast, PyArena* arena, int mode);\n")
+    f.write("mod_ty PyAST_obj2mod(PyObject* ast, int mode);\n")
     f.write("int PyAST_Check(PyObject* obj);\n")
     f.write("#endif /* !Py_LIMITED_API */\n")
     f.write('\n')

@@ -344,7 +344,6 @@ PYTHON_OBJS=	\
 		Python/pathconfig.o \
 		Python/peephole.o \
 		Python/preconfig.o \
-		Python/pyarena.o \
 		Python/pyctype.o \
 		Python/pyhash.o \
 		Python/pylifecycle.o \
@@ -938,7 +937,6 @@ PYTHON_HEADERS= \
 		$(srcdir)/Include/osdefs.h \
 		$(srcdir)/Include/osmodule.h \
 		$(srcdir)/Include/patchlevel.h \
-		$(srcdir)/Include/pyarena.h \
 		$(srcdir)/Include/pycapsule.h \
 		$(srcdir)/Include/pyctype.h \
 		$(srcdir)/Include/pydebug.h \
