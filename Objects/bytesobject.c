@@ -7,8 +7,6 @@
 #include "pycore_bytes_methods.h"
 #include "pycore_object.h"
 #include "pycore_pymem.h"         // PYMEM_CLEANBYTE
-
-#include "pystrhex.h"
 #include <stddef.h>
 
 /*[clinic input]
@@ -763,72 +761,6 @@ bytes_fromhex(PyTypeObject *type, PyObject *arg)
 exit:
     return return_value;
 }
-
-PyDoc_STRVAR(bytes_hex__doc__,
-"hex($self, /, sep=<unrepresentable>, bytes_per_sep=1)\n"
-"--\n"
-"\n"
-"Create a str of hexadecimal numbers from a bytes object.\n"
-"\n"
-"  sep\n"
-"    An optional single character or byte to separate hex bytes.\n"
-"  bytes_per_sep\n"
-"    How many bytes between separators.  Positive values count from the\n"
-"    right, negative values count from the left.\n"
-"\n"
-"Example:\n"
-">>> value = b\'\\xb9\\x01\\xef\'\n"
-">>> value.hex()\n"
-"\'b901ef\'\n"
-">>> value.hex(\':\')\n"
-"\'b9:01:ef\'\n"
-">>> value.hex(\':\', 2)\n"
-"\'b9:01ef\'\n"
-">>> value.hex(\':\', -2)\n"
-"\'b901:ef\'");
-
-#define BYTES_HEX_METHODDEF    \
-    {"hex", (PyCFunction)(void(*)(void))bytes_hex, METH_FASTCALL|METH_KEYWORDS, bytes_hex__doc__},
-
-static PyObject *
-bytes_hex_impl(PyBytesObject *self, PyObject *sep, int bytes_per_sep);
-
-static PyObject *
-bytes_hex(PyBytesObject *self, PyObject *const *args, Py_ssize_t nargs, PyObject *kwnames)
-{
-    PyObject *return_value = NULL;
-    static const char * const _keywords[] = {"sep", "bytes_per_sep", NULL};
-    static _PyArg_Parser _parser = {NULL, _keywords, "hex", 0};
-    PyObject *argsbuf[2];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 0;
-    PyObject *sep = NULL;
-    int bytes_per_sep = 1;
-
-    args = _PyArg_UnpackKeywords(args, nargs, NULL, kwnames, &_parser, 0, 2, 0, argsbuf);
-    if (!args) {
-        goto exit;
-    }
-    if (!noptargs) {
-        goto skip_optional_pos;
-    }
-    if (args[0]) {
-        sep = args[0];
-        if (!--noptargs) {
-            goto skip_optional_pos;
-        }
-    }
-    bytes_per_sep = _PyLong_AsInt(args[1]);
-    if (bytes_per_sep == -1 && PyErr_Occurred()) {
-        goto exit;
-    }
-skip_optional_pos:
-    return_value = bytes_hex_impl(self, sep, bytes_per_sep);
-
-exit:
-    return return_value;
-}
-/*[clinic end generated code: output=dc1bc13e6990e452 input=a9049054013a1b77]*/
-
 
 static PyBytesObject *characters[UCHAR_MAX + 1];
 static PyBytesObject *nullstring;
@@ -3207,38 +3139,6 @@ _PyBytes_FromHex(PyObject *string, int use_bytearray)
     return NULL;
 }
 
-/*[clinic input]
-bytes.hex
-
-    sep: object = NULL
-        An optional single character or byte to separate hex bytes.
-    bytes_per_sep: int = 1
-        How many bytes between separators.  Positive values count from the
-        right, negative values count from the left.
-
-Create a str of hexadecimal numbers from a bytes object.
-
-Example:
->>> value = b'\xb9\x01\xef'
->>> value.hex()
-'b901ef'
->>> value.hex(':')
-'b9:01:ef'
->>> value.hex(':', 2)
-'b9:01ef'
->>> value.hex(':', -2)
-'b901:ef'
-[clinic start generated code]*/
-
-static PyObject *
-bytes_hex_impl(PyBytesObject *self, PyObject *sep, int bytes_per_sep)
-/*[clinic end generated code: output=1f134da504064139 input=f1238d3455990218]*/
-{
-    const char *argbuf = PyBytes_AS_STRING(self);
-    Py_ssize_t arglen = PyBytes_GET_SIZE(self);
-    return _Py_strhex_with_sep(argbuf, arglen, sep, bytes_per_sep);
-}
-
 static PyObject *
 bytes_getnewargs(PyBytesObject *v, PyObject *Py_UNUSED(ignored))
 {
@@ -3261,7 +3161,6 @@ bytes_methods[] = {
     {"find", (PyCFunction)bytes_find, METH_VARARGS,
      _Py_find__doc__},
     BYTES_FROMHEX_METHODDEF
-    BYTES_HEX_METHODDEF
     {"index", (PyCFunction)bytes_index, METH_VARARGS, _Py_index__doc__},
     {"isalnum", stringlib_isalnum, METH_NOARGS,
      _Py_isalnum__doc__},

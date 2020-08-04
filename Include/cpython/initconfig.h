@@ -85,18 +85,6 @@ typedef struct {
        should be enabled or not. */
     int coerce_c_locale_warn;
 
-#ifdef MS_WINDOWS
-    /* If greater than 1, use the "mbcs" encoding instead of the UTF-8
-       encoding for the filesystem encoding.
-
-       Set to 1 if the PYTHONLEGACYWINDOWSFSENCODING environment variable is
-       set to a non-empty string. If set to -1 (default), inherit
-       Py_LegacyWindowsFSEncodingFlag value.
-
-       See PEP 529 for more details. */
-    int legacy_windows_fs_encoding;
-#endif
-
     /* Enable UTF-8 mode? (PEP 540)
 
        Disabled by default (equals to 0).
@@ -139,14 +127,6 @@ typedef struct {
 
     int use_hash_seed;      /* PYTHONHASHSEED=x */
     unsigned long hash_seed;
-
-    /* Enable faulthandler?
-       Set to 1 by -X faulthandler and PYTHONFAULTHANDLER. -1 means unset. */
-    int faulthandler;
-
-    /* Enable tracemalloc?
-       Set by -X tracemalloc=N and PYTHONTRACEMALLOC. -1 means unset */
-    int tracemalloc;
 
     int import_time;        /* PYTHONPROFILEIMPORTTIME, -X importtime */
     int show_ref_count;     /* -X showrefcount */
@@ -322,18 +302,6 @@ typedef struct {
        Py_SetStandardStreamEncoding() function.
        See also 'stdio_encoding' attribute. */
     wchar_t *stdio_errors;
-
-#ifdef MS_WINDOWS
-    /* If greater than zero, use io.FileIO instead of WindowsConsoleIO for sys
-       standard streams.
-
-       Set to 1 if the PYTHONLEGACYWINDOWSSTDIO environment variable is set to
-       a non-empty string. If set to -1 (default), inherit
-       Py_LegacyWindowsStdioFlag value.
-
-       See PEP 528 for more details. */
-    int legacy_windows_stdio;
-#endif
 
     /* Value of the --check-hash-based-pycs command line option:
 

@@ -13,83 +13,7 @@
 #include "Python.h"
 #include "pycore_abstract.h"   // _PyIndex_Check()
 #include "pycore_object.h"
-#include "pystrhex.h"
 #include <stddef.h>
-
-/*[clinic input]
-class memoryview "PyMemoryViewObject *" "&PyMemoryView_Type"
-[clinic start generated code]*/
-/*[clinic end generated code: output=da39a3ee5e6b4b0d input=e2e49d2192835219]*/
-
-/*[clinic input]
-preserve
-[clinic start generated code]*/
-
-PyDoc_STRVAR(memoryview_hex__doc__,
-"hex($self, /, sep=<unrepresentable>, bytes_per_sep=1)\n"
-"--\n"
-"\n"
-"Return the data in the buffer as a str of hexadecimal numbers.\n"
-"\n"
-"  sep\n"
-"    An optional single character or byte to separate hex bytes.\n"
-"  bytes_per_sep\n"
-"    How many bytes between separators.  Positive values count from the\n"
-"    right, negative values count from the left.\n"
-"\n"
-"Example:\n"
-">>> value = memoryview(b\'\\xb9\\x01\\xef\')\n"
-">>> value.hex()\n"
-"\'b901ef\'\n"
-">>> value.hex(\':\')\n"
-"\'b9:01:ef\'\n"
-">>> value.hex(\':\', 2)\n"
-"\'b9:01ef\'\n"
-">>> value.hex(\':\', -2)\n"
-"\'b901:ef\'");
-
-#define MEMORYVIEW_HEX_METHODDEF    \
-    {"hex", (PyCFunction)(void(*)(void))memoryview_hex, METH_FASTCALL|METH_KEYWORDS, memoryview_hex__doc__},
-
-static PyObject *
-memoryview_hex_impl(PyMemoryViewObject *self, PyObject *sep,
-                    int bytes_per_sep);
-
-static PyObject *
-memoryview_hex(PyMemoryViewObject *self, PyObject *const *args, Py_ssize_t nargs, PyObject *kwnames)
-{
-    PyObject *return_value = NULL;
-    static const char * const _keywords[] = {"sep", "bytes_per_sep", NULL};
-    static _PyArg_Parser _parser = {NULL, _keywords, "hex", 0};
-    PyObject *argsbuf[2];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 0;
-    PyObject *sep = NULL;
-    int bytes_per_sep = 1;
-
-    args = _PyArg_UnpackKeywords(args, nargs, NULL, kwnames, &_parser, 0, 2, 0, argsbuf);
-    if (!args) {
-        goto exit;
-    }
-    if (!noptargs) {
-        goto skip_optional_pos;
-    }
-    if (args[0]) {
-        sep = args[0];
-        if (!--noptargs) {
-            goto skip_optional_pos;
-        }
-    }
-    bytes_per_sep = _PyLong_AsInt(args[1]);
-    if (bytes_per_sep == -1 && PyErr_Occurred()) {
-        goto exit;
-    }
-skip_optional_pos:
-    return_value = memoryview_hex_impl(self, sep, bytes_per_sep);
-
-exit:
-    return return_value;
-}
-/*[clinic end generated code: output=91106ef704134b19 input=a9049054013a1b77]*/
 
 
 /****************************************************************************/
@@ -2245,61 +2169,6 @@ memory_tobytes(PyMemoryViewObject *self, PyObject *args, PyObject *kwds)
     return bytes;
 }
 
-/*[clinic input]
-memoryview.hex
-
-    sep: object = NULL
-        An optional single character or byte to separate hex bytes.
-    bytes_per_sep: int = 1
-        How many bytes between separators.  Positive values count from the
-        right, negative values count from the left.
-
-Return the data in the buffer as a str of hexadecimal numbers.
-
-Example:
->>> value = memoryview(b'\xb9\x01\xef')
->>> value.hex()
-'b901ef'
->>> value.hex(':')
-'b9:01:ef'
->>> value.hex(':', 2)
-'b9:01ef'
->>> value.hex(':', -2)
-'b901:ef'
-[clinic start generated code]*/
-
-static PyObject *
-memoryview_hex_impl(PyMemoryViewObject *self, PyObject *sep,
-                    int bytes_per_sep)
-/*[clinic end generated code: output=430ca760f94f3ca7 input=539f6a3a5fb56946]*/
-{
-    Py_buffer *src = VIEW_ADDR(self);
-    PyObject *bytes;
-    PyObject *ret;
-
-    CHECK_RELEASED(self);
-
-    if (MV_C_CONTIGUOUS(self->flags)) {
-        return _Py_strhex_with_sep(src->buf, src->len, sep, bytes_per_sep);
-    }
-
-    bytes = PyBytes_FromStringAndSize(NULL, src->len);
-    if (bytes == NULL)
-        return NULL;
-
-    if (PyBuffer_ToContiguous(PyBytes_AS_STRING(bytes), src, src->len, 'C') < 0) {
-        Py_DECREF(bytes);
-        return NULL;
-    }
-
-    ret = _Py_strhex_with_sep(
-            PyBytes_AS_STRING(bytes), PyBytes_GET_SIZE(bytes),
-            sep, bytes_per_sep);
-    Py_DECREF(bytes);
-
-    return ret;
-}
-
 static PyObject *
 memory_repr(PyMemoryViewObject *self)
 {
@@ -3219,7 +3088,6 @@ Return a readonly version of the memoryview.");
 static PyMethodDef memory_methods[] = {
     {"release",     (PyCFunction)memory_release, METH_NOARGS, memory_release_doc},
     {"tobytes",     (PyCFunction)(void(*)(void))memory_tobytes, METH_VARARGS|METH_KEYWORDS, memory_tobytes_doc},
-    MEMORYVIEW_HEX_METHODDEF
     {"tolist",      (PyCFunction)memory_tolist, METH_NOARGS, memory_tolist_doc},
     {"cast",        (PyCFunction)(void(*)(void))memory_cast, METH_VARARGS|METH_KEYWORDS, memory_cast_doc},
     {"toreadonly",  (PyCFunction)memory_toreadonly, METH_NOARGS, memory_toreadonly_doc},

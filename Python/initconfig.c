@@ -62,14 +62,9 @@ static const char usage_3[] = "\
 -x     : skip first line of source, allowing use of non-Unix forms of #!cmd\n\
 -X opt : set implementation-specific option. The following options are available:\n\
 \n\
-         -X faulthandler: enable faulthandler\n\
          -X showrefcount: output the total reference count and number of used\n\
              memory blocks when the program finishes or after each statement in the\n\
              interactive interpreter. This only works on debug builds\n\
-         -X tracemalloc: start tracing Python memory allocations using the\n\
-             tracemalloc module. By default, only the most recent frame is stored in a\n\
-             traceback of a trace. Use -X tracemalloc=NFRAME to start tracing with a\n\
-             traceback limit of NFRAME frames\n\
          -X importtime: show how long each import takes. It shows module name,\n\
              cumulative time (including nested imports) and self time (excluding\n\
              nested imports). Note that its output may be broken in multi-threaded\n\
@@ -586,8 +581,6 @@ _PyConfig_InitCompatConfig(PyConfig *config)
     config->dev_mode = -1;
     config->install_signal_handlers = 1;
     config->use_hash_seed = -1;
-    config->faulthandler = -1;
-    config->tracemalloc = -1;
     config->module_search_paths_set = 0;
     config->parse_argv = 0;
     config->site_import = -1;
@@ -653,8 +646,6 @@ PyConfig_InitIsolatedConfig(PyConfig *config)
     config->dev_mode = 0;
     config->install_signal_handlers = 0;
     config->use_hash_seed = 0;
-    config->faulthandler = 0;
-    config->tracemalloc = 0;
     config->pathconfig_warnings = 0;
 }
 
@@ -760,8 +751,6 @@ _PyConfig_Copy(PyConfig *config, const PyConfig *config2)
     COPY_ATTR(use_hash_seed);
     COPY_ATTR(hash_seed);
     COPY_ATTR(_install_importlib);
-    COPY_ATTR(faulthandler);
-    COPY_ATTR(tracemalloc);
     COPY_ATTR(import_time);
     COPY_ATTR(show_ref_count);
     COPY_ATTR(dump_refs);
@@ -861,8 +850,6 @@ config_as_dict(const PyConfig *config)
     SET_ITEM_INT(install_signal_handlers);
     SET_ITEM_INT(use_hash_seed);
     SET_ITEM_UINT(hash_seed);
-    SET_ITEM_INT(faulthandler);
-    SET_ITEM_INT(tracemalloc);
     SET_ITEM_INT(import_time);
     SET_ITEM_INT(show_ref_count);
     SET_ITEM_INT(dump_refs);
@@ -1283,52 +1270,6 @@ config_read_env_vars(PyConfig *config)
     return _PyStatus_OK();
 }
 
-
-static PyStatus
-config_init_tracemalloc(PyConfig *config)
-{
-    int nframe;
-    int valid;
-
-    const char *env = config_get_env(config, "PYTHONTRACEMALLOC");
-    if (env) {
-        if (!_Py_str_to_int(env, &nframe)) {
-            valid = (nframe >= 0);
-        }
-        else {
-            valid = 0;
-        }
-        if (!valid) {
-            return _PyStatus_ERR("PYTHONTRACEMALLOC: invalid number of frames");
-        }
-        config->tracemalloc = nframe;
-    }
-
-    const wchar_t *xoption = config_get_xoption(config, L"tracemalloc");
-    if (xoption) {
-        const wchar_t *sep = wcschr(xoption, L'=');
-        if (sep) {
-            if (!config_wstr_to_int(sep + 1, &nframe)) {
-                valid = (nframe >= 0);
-            }
-            else {
-                valid = 0;
-            }
-            if (!valid) {
-                return _PyStatus_ERR("-X tracemalloc=NFRAME: "
-                                     "invalid number of frames");
-            }
-        }
-        else {
-            /* -X tracemalloc behaves as -X tracemalloc=1 */
-            nframe = 1;
-        }
-        config->tracemalloc = nframe;
-    }
-    return _PyStatus_OK();
-}
-
-
 static PyStatus
 config_init_pycache_prefix(PyConfig *config)
 {
@@ -1361,25 +1302,12 @@ static PyStatus
 config_read_complex_options(PyConfig *config)
 {
     /* More complex options configured by env var and -X option */
-    if (config->faulthandler < 0) {
-        if (config_get_env(config, "PYTHONFAULTHANDLER")
-           || config_get_xoption(config, L"faulthandler")) {
-            config->faulthandler = 1;
-        }
-    }
     if (config_get_env(config, "PYTHONPROFILEIMPORTTIME")
        || config_get_xoption(config, L"importtime")) {
         config->import_time = 1;
     }
 
     PyStatus status;
-    if (config->tracemalloc < 0) {
-        status = config_init_tracemalloc(config);
-        if (_PyStatus_EXCEPTION(status)) {
-            return status;
-        }
-    }
-
     if (config->pycache_prefix == NULL) {
         status = config_init_pycache_prefix(config);
         if (_PyStatus_EXCEPTION(status)) {
@@ -1645,17 +1573,6 @@ config_read(PyConfig *config)
     }
 
     /* default values */
-    if (config->dev_mode) {
-        if (config->faulthandler < 0) {
-            config->faulthandler = 1;
-        }
-    }
-    if (config->faulthandler < 0) {
-        config->faulthandler = 0;
-    }
-    if (config->tracemalloc < 0) {
-        config->tracemalloc = 0;
-    }
     if (config->use_hash_seed < 0) {
         config->use_hash_seed = 0;
         config->hash_seed = 0;
@@ -2410,8 +2327,6 @@ PyConfig_Read(PyConfig *config)
     assert(config->dev_mode >= 0);
     assert(config->install_signal_handlers >= 0);
     assert(config->use_hash_seed >= 0);
-    assert(config->faulthandler >= 0);
-    assert(config->tracemalloc >= 0);
     assert(config->site_import >= 0);
     assert(config->bytes_warning >= 0);
     assert(config->inspect >= 0);

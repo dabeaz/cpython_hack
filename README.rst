@@ -66,7 +66,8 @@ Halfway there.  It all gets more difficult from here...
 - Day 52 (8/01/2020). Atom smasher.
 - Day 53 (8/02/2020). What time is it?!?!? Remove pytime.c. Other cleanup.
 - Day 54 (8/03/2020). We don't play arenas.
-  
+- Day 55 (8/04/2020). A hex lifted.
+
 Copyright and License Information
 ---------------------------------
 
