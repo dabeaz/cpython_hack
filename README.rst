@@ -67,7 +67,8 @@ Halfway there.  It all gets more difficult from here...
 - Day 53 (8/02/2020). What time is it?!?!? Remove pytime.c. Other cleanup.
 - Day 54 (8/03/2020). We don't play arenas.
 - Day 55 (8/04/2020). A hex lifted.
-
+- Day 56 (8/05/2020). Various config/cmdline options removed.
+  
 Copyright and License Information
 ---------------------------------
 

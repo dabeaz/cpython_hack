@@ -787,14 +787,12 @@ sys_getandroidapilevel(PyObject *module, PyObject *Py_UNUSED(ignored))
 
 _Py_IDENTIFIER(_);
 _Py_IDENTIFIER(__sizeof__);
-_Py_IDENTIFIER(_xoptions);
 _Py_IDENTIFIER(buffer);
 _Py_IDENTIFIER(builtins);
 _Py_IDENTIFIER(encoding);
 _Py_IDENTIFIER(path);
 _Py_IDENTIFIER(stdout);
 _Py_IDENTIFIER(stderr);
-_Py_IDENTIFIER(warnoptions);
 _Py_IDENTIFIER(write);
 
 static PyObject *
@@ -2152,311 +2150,6 @@ list_builtin_module_names(void)
     return list;
 }
 
-/* Pre-initialization support for sys.warnoptions and sys._xoptions
- *
- * Modern internal code paths:
- *   These APIs get called after _Py_InitializeCore and get to use the
- *   regular CPython list, dict, and unicode APIs.
- *
- * Legacy embedding code paths:
- *   The multi-phase initialization API isn't public yet, so embedding
- *   apps still need to be able configure sys.warnoptions and sys._xoptions
- *   before they call Py_Initialize. To support this, we stash copies of
- *   the supplied wchar * sequences in linked lists, and then migrate the
- *   contents of those lists to the sys module in _PyInitializeCore.
- *
- */
-
-struct _preinit_entry {
-    wchar_t *value;
-    struct _preinit_entry *next;
-};
-
-typedef struct _preinit_entry *_Py_PreInitEntry;
-
-static _Py_PreInitEntry _preinit_warnoptions = NULL;
-static _Py_PreInitEntry _preinit_xoptions = NULL;
-
-static _Py_PreInitEntry
-_alloc_preinit_entry(const wchar_t *value)
-{
-    /* To get this to work, we have to initialize the runtime implicitly */
-    _PyRuntime_Initialize();
-
-    /* Force default allocator, so we can ensure that it also gets used to
-     * destroy the linked list in _clear_preinit_entries.
-     */
-    PyMemAllocatorEx old_alloc;
-    _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-
-    _Py_PreInitEntry node = PyMem_RawCalloc(1, sizeof(*node));
-    if (node != NULL) {
-        node->value = _PyMem_RawWcsdup(value);
-        if (node->value == NULL) {
-            PyMem_RawFree(node);
-            node = NULL;
-        };
-    };
-
-    PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-    return node;
-}
-
-static int
-_append_preinit_entry(_Py_PreInitEntry *optionlist, const wchar_t *value)
-{
-    _Py_PreInitEntry new_entry = _alloc_preinit_entry(value);
-    if (new_entry == NULL) {
-        return -1;
-    }
-    /* We maintain the linked list in this order so it's easy to play back
-     * the add commands in the same order later on in _Py_InitializeCore
-     */
-    _Py_PreInitEntry last_entry = *optionlist;
-    if (last_entry == NULL) {
-        *optionlist = new_entry;
-    } else {
-        while (last_entry->next != NULL) {
-            last_entry = last_entry->next;
-        }
-        last_entry->next = new_entry;
-    }
-    return 0;
-}
-
-static void
-_clear_preinit_entries(_Py_PreInitEntry *optionlist)
-{
-    _Py_PreInitEntry current = *optionlist;
-    *optionlist = NULL;
-    /* Deallocate the nodes and their contents using the default allocator */
-    PyMemAllocatorEx old_alloc;
-    _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-    while (current != NULL) {
-        _Py_PreInitEntry next = current->next;
-        PyMem_RawFree(current->value);
-        PyMem_RawFree(current);
-        current = next;
-    }
-    PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-}
-
-
-PyStatus
-_PySys_ReadPreinitWarnOptions(PyWideStringList *options)
-{
-    PyStatus status;
-    _Py_PreInitEntry entry;
-
-    for (entry = _preinit_warnoptions; entry != NULL; entry = entry->next) {
-        status = PyWideStringList_Append(options, entry->value);
-        if (_PyStatus_EXCEPTION(status)) {
-            return status;
-        }
-    }
-
-    _clear_preinit_entries(&_preinit_warnoptions);
-    return _PyStatus_OK();
-}
-
-
-PyStatus
-_PySys_ReadPreinitXOptions(PyConfig *config)
-{
-    PyStatus status;
-    _Py_PreInitEntry entry;
-
-    for (entry = _preinit_xoptions; entry != NULL; entry = entry->next) {
-        status = PyWideStringList_Append(&config->xoptions, entry->value);
-        if (_PyStatus_EXCEPTION(status)) {
-            return status;
-        }
-    }
-
-    _clear_preinit_entries(&_preinit_xoptions);
-    return _PyStatus_OK();
-}
-
-
-static PyObject *
-get_warnoptions(PyThreadState *tstate)
-{
-    PyObject *warnoptions = sys_get_object_id(tstate, &PyId_warnoptions);
-    if (warnoptions == NULL || !PyList_Check(warnoptions)) {
-        /* PEP432 TODO: we can reach this if warnoptions is NULL in the main
-        *  interpreter config. When that happens, we need to properly set
-         * the `warnoptions` reference in the main interpreter config as well.
-         *
-         * For Python 3.7, we shouldn't be able to get here due to the
-         * combination of how _PyMainInterpreter_ReadConfig and _PySys_EndInit
-         * work, but we expect 3.8+ to make the _PyMainInterpreter_ReadConfig
-         * call optional for embedding applications, thus making this
-         * reachable again.
-         */
-        warnoptions = PyList_New(0);
-        if (warnoptions == NULL) {
-            return NULL;
-        }
-        if (sys_set_object_id(tstate, &PyId_warnoptions, warnoptions)) {
-            Py_DECREF(warnoptions);
-            return NULL;
-        }
-        Py_DECREF(warnoptions);
-    }
-    return warnoptions;
-}
-
-void
-PySys_ResetWarnOptions(void)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    if (tstate == NULL) {
-        _clear_preinit_entries(&_preinit_warnoptions);
-        return;
-    }
-
-    PyObject *warnoptions = sys_get_object_id(tstate, &PyId_warnoptions);
-    if (warnoptions == NULL || !PyList_Check(warnoptions))
-        return;
-    PyList_SetSlice(warnoptions, 0, PyList_GET_SIZE(warnoptions), NULL);
-}
-
-static int
-_PySys_AddWarnOptionWithError(PyThreadState *tstate, PyObject *option)
-{
-    PyObject *warnoptions = get_warnoptions(tstate);
-    if (warnoptions == NULL) {
-        return -1;
-    }
-    if (PyList_Append(warnoptions, option)) {
-        return -1;
-    }
-    return 0;
-}
-
-void
-PySys_AddWarnOptionUnicode(PyObject *option)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    if (_PySys_AddWarnOptionWithError(tstate, option) < 0) {
-        /* No return value, therefore clear error state if possible */
-        if (tstate) {
-            _PyErr_Clear(tstate);
-        }
-    }
-}
-
-void
-PySys_AddWarnOption(const wchar_t *s)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    if (tstate == NULL) {
-        _append_preinit_entry(&_preinit_warnoptions, s);
-        return;
-    }
-    PyObject *unicode;
-    unicode = PyUnicode_FromWideChar(s, -1);
-    if (unicode == NULL)
-        return;
-    PySys_AddWarnOptionUnicode(unicode);
-    Py_DECREF(unicode);
-}
-
-int
-PySys_HasWarnOptions(void)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    PyObject *warnoptions = sys_get_object_id(tstate, &PyId_warnoptions);
-    return (warnoptions != NULL && PyList_Check(warnoptions)
-            && PyList_GET_SIZE(warnoptions) > 0);
-}
-
-static PyObject *
-get_xoptions(PyThreadState *tstate)
-{
-    PyObject *xoptions = sys_get_object_id(tstate, &PyId__xoptions);
-    if (xoptions == NULL || !PyDict_Check(xoptions)) {
-        /* PEP432 TODO: we can reach this if xoptions is NULL in the main
-        *  interpreter config. When that happens, we need to properly set
-         * the `xoptions` reference in the main interpreter config as well.
-         *
-         * For Python 3.7, we shouldn't be able to get here due to the
-         * combination of how _PyMainInterpreter_ReadConfig and _PySys_EndInit
-         * work, but we expect 3.8+ to make the _PyMainInterpreter_ReadConfig
-         * call optional for embedding applications, thus making this
-         * reachable again.
-         */
-        xoptions = PyDict_New();
-        if (xoptions == NULL) {
-            return NULL;
-        }
-        if (sys_set_object_id(tstate, &PyId__xoptions, xoptions)) {
-            Py_DECREF(xoptions);
-            return NULL;
-        }
-        Py_DECREF(xoptions);
-    }
-    return xoptions;
-}
-
-static int
-_PySys_AddXOptionWithError(const wchar_t *s)
-{
-    PyObject *name = NULL, *value = NULL;
-
-    PyThreadState *tstate = _PyThreadState_GET();
-    PyObject *opts = get_xoptions(tstate);
-    if (opts == NULL) {
-        goto error;
-    }
-
-    const wchar_t *name_end = wcschr(s, L'=');
-    if (!name_end) {
-        name = PyUnicode_FromWideChar(s, -1);
-        value = Py_True;
-        Py_INCREF(value);
-    }
-    else {
-        name = PyUnicode_FromWideChar(s, name_end - s);
-        value = PyUnicode_FromWideChar(name_end + 1, -1);
-    }
-    if (name == NULL || value == NULL) {
-        goto error;
-    }
-    if (PyDict_SetItem(opts, name, value) < 0) {
-        goto error;
-    }
-    Py_DECREF(name);
-    Py_DECREF(value);
-    return 0;
-
-error:
-    Py_XDECREF(name);
-    Py_XDECREF(value);
-    return -1;
-}
-
-void
-PySys_AddXOption(const wchar_t *s)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    if (tstate == NULL) {
-        _append_preinit_entry(&_preinit_xoptions, s);
-        return;
-    }
-    if (_PySys_AddXOptionWithError(s) < 0) {
-        /* No return value, therefore clear error state if possible */
-        _PyErr_Clear(tstate);
-    }
-}
-
-PyObject *
-PySys_GetXOptions(void)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    return get_xoptions(tstate);
-}
-
 /* XXX This doc string is too long to be a single string literal in VC++ 5.0.
    Two literals concatenated works just fine.  If you have a K&R compiler
    or other abomination that however *does* understand longer strings,
@@ -2554,18 +2247,12 @@ static PyStructSequence_Field flags_fields[] = {
     {"inspect",                 "-i"},
     {"interactive",             "-i"},
     /*    {"optimize",                "-O or -OO"},*/
-    {"dont_write_bytecode",     "-B"},
-    {"no_user_site",            "-s"},
-    {"no_site",                 "-S"},
     {"ignore_environment",      "-E"},
     {"verbose",                 "-v"},
     /* {"unbuffered",                   "-u"}, */
     /* {"skip_first",                   "-x"}, */
-    {"bytes_warning",           "-b"},
     {"quiet",                   "-q"},
     {"hash_randomization",      "-R"},
-    {"isolated",                "-I"},
-    {"dev_mode",                "-X dev"},
     {"utf8_mode",               "-X utf8"},
     {0}
 };
@@ -2596,18 +2283,12 @@ make_flags(PyThreadState *tstate)
     SetFlag(config->parser_debug);
     SetFlag(config->inspect);
     SetFlag(config->interactive);
-    SetFlag(!config->write_bytecode);
-    SetFlag(!config->user_site_directory);
-    SetFlag(!config->site_import);
     SetFlag(!config->use_environment);
     SetFlag(config->verbose);
     /* SetFlag(saw_unbuffered_flag); */
     /* SetFlag(skipfirstline); */
-    SetFlag(config->bytes_warning);
     SetFlag(config->quiet);
     SetFlag(config->use_hash_seed == 0 || config->hash_seed != 0);
-    SetFlag(config->isolated);
-    PyStructSequence_SET_ITEM(seq, pos++, PyBool_FromLong(config->dev_mode));
     SetFlag(preconfig->utf8_mode);
 #undef SetFlag
 
@@ -2978,28 +2659,6 @@ error:
 }
 
 
-static PyObject*
-sys_create_xoptions_dict(const PyConfig *config)
-{
-    Py_ssize_t nxoption = config->xoptions.length;
-    wchar_t * const * xoptions = config->xoptions.items;
-    PyObject *dict = PyDict_New();
-    if (dict == NULL) {
-        return NULL;
-    }
-
-    for (Py_ssize_t i=0; i < nxoption; i++) {
-        const wchar_t *option = xoptions[i];
-        if (sys_add_xoption(dict, option) < 0) {
-            Py_DECREF(dict);
-            return NULL;
-        }
-    }
-
-    return dict;
-}
-
-
 int
 _PySys_InitMain(PyThreadState *tstate)
 {
@@ -3037,21 +2696,7 @@ _PySys_InitMain(PyThreadState *tstate)
     SET_SYS_FROM_WSTR("base_exec_prefix", config->base_exec_prefix);
     SET_SYS_FROM_WSTR("platlibdir", config->platlibdir);
 
-    if (config->pycache_prefix != NULL) {
-        SET_SYS_FROM_WSTR("pycache_prefix", config->pycache_prefix);
-    } else {
-        PyDict_SetItemString(sysdict, "pycache_prefix", Py_None);
-    }
-
     COPY_LIST("argv", config->argv);
-    COPY_LIST("warnoptions", config->warnoptions);
-
-    PyObject *xoptions = sys_create_xoptions_dict(config);
-    if (xoptions == NULL) {
-        return -1;
-    }
-    SET_SYS_FROM_STRING_BORROW("_xoptions", xoptions);
-    Py_DECREF(xoptions);
 
 #undef COPY_LIST
 #undef SET_SYS_FROM_WSTR
@@ -3069,16 +2714,6 @@ _PySys_InitMain(PyThreadState *tstate)
         }
         _PyErr_Clear(tstate);
     }
-
-    SET_SYS_FROM_STRING_INT_RESULT("dont_write_bytecode",
-                         PyBool_FromLong(!config->write_bytecode));
-
-    if (get_warnoptions(tstate) == NULL) {
-        return -1;
-    }
-
-    if (get_xoptions(tstate) == NULL)
-        return -1;
 
     if (_PyErr_Occurred(tstate)) {
         goto err_occurred;
@@ -3288,7 +2923,7 @@ PySys_SetArgvEx(int argc, wchar_t **argv, int updatepath)
 void
 PySys_SetArgv(int argc, wchar_t **argv)
 {
-    PySys_SetArgvEx(argc, argv, Py_IsolatedFlag == 0);
+  PySys_SetArgvEx(argc, argv, 1);
 }
 
 /* Reimplementation of PyFile_WriteString() no calling indirectly

@@ -1694,40 +1694,6 @@ unicode_check_encoding_errors(const char *encoding, const char *errors)
     if (encoding == NULL && errors == NULL) {
         return 0;
     }
-
-    PyInterpreterState *interp = _PyInterpreterState_GET();
-    /* In release mode, only check in development mode (-X dev) */
-    if (!_PyInterpreterState_GetConfig(interp)->dev_mode) {
-        return 0;
-    }
-    
-    /* Avoid calling _PyCodec_Lookup() and PyCodec_LookupError() before the
-       codec registry is ready: before_PyUnicode_InitEncodings() is called. */
-    if (!interp->unicode.fs_codec.encoding) {
-        return 0;
-    }
-
-    /* Disable checks during Python finalization. For example, it allows to
-       call _PyObject_Dump() during finalization for debugging purpose. */
-    if (interp->finalizing) {
-        return 0;
-    }
-
-    if (encoding != NULL) {
-        PyObject *handler = _PyCodec_Lookup(encoding);
-        if (handler == NULL) {
-            return -1;
-        }
-        Py_DECREF(handler);
-    }
-
-    if (errors != NULL) {
-        PyObject *handler = PyCodec_LookupError(errors);
-        if (handler == NULL) {
-            return -1;
-        }
-        Py_DECREF(handler);
-    }
     return 0;
 }
 

@@ -40,7 +40,6 @@ Options and arguments (and corresponding environment variables):\n\
 static const char usage_2[] = "\
 -i     : inspect interactively after running script; forces a prompt even\n\
          if stdin does not appear to be a terminal; also PYTHONINSPECT=x\n\
--I     : isolate Python from the user's environment (implies -E and -s)\n\
 -m mod : run library module as a script (terminates option list)\n\
 -O     : remove assert and __debug__-dependent statements; add .opt-1 before\n\
          .pyc extension; also PYTHONOPTIMIZE=x\n\
@@ -62,13 +61,6 @@ static const char usage_3[] = "\
 -x     : skip first line of source, allowing use of non-Unix forms of #!cmd\n\
 -X opt : set implementation-specific option. The following options are available:\n\
 \n\
-         -X showrefcount: output the total reference count and number of used\n\
-             memory blocks when the program finishes or after each statement in the\n\
-             interactive interpreter. This only works on debug builds\n\
-         -X importtime: show how long each import takes. It shows module name,\n\
-             cumulative time (including nested imports) and self time (excluding\n\
-             nested imports). Note that its output may be broken in multi-threaded\n\
-             application. Typical usage is python3 -X importtime -c 'import asyncio'\n\
          -X dev: enable CPython’s “development mode”, introducing additional runtime\n\
              checks which are too expensive to be enabled by default. Effect of the\n\
              developer mode:\n\
@@ -81,8 +73,6 @@ static const char usage_3[] = "\
          -X utf8: enable UTF-8 mode for operating system interfaces, overriding the default\n\
              locale-aware mode. -X utf8=0 explicitly disables UTF-8 mode (even when it would\n\
              otherwise activate automatically)\n\
-         -X pycache_prefix=PATH: enable writing .pyc files to a parallel tree rooted at the\n\
-             given directory instead of to the code tree\n\
 \n\
 --check-hash-based-pycs always|default|never:\n\
     control how Python invalidates hash-based .pyc files\n\
@@ -102,8 +92,8 @@ static const char usage_5[] =
 "PYTHONPLATLIBDIR : override sys.platlibdir.\n"
 "PYTHONCASEOK : ignore case in 'import' statements (Windows).\n"
 "PYTHONUTF8: if set to 1, enable the UTF-8 mode.\n"
-"PYTHONIOENCODING: Encoding[:errors] used for stdin/stdout/stderr.\n"
-"PYTHONFAULTHANDLER: dump the Python traceback on fatal errors.\n";
+  "PYTHONIOENCODING: Encoding[:errors] used for stdin/stdout/stderr.\n";
+  
 static const char usage_6[] =
 "PYTHONHASHSEED: if this variable is set to 'random', a random value is used\n"
 "   to seed the hashes of str and bytes objects.  It can also be set to an\n"
@@ -117,8 +107,7 @@ static const char usage_6[] =
 "   locale coercion and locale compatibility warnings on stderr.\n"
 "PYTHONBREAKPOINT: if this variable is set to 0, it disables the default\n"
 "   debugger. It can be set to the callable of your debugger of choice.\n"
-"PYTHONDEVMODE: enable the development mode.\n"
-"PYTHONPYCACHEPREFIX: root directory for bytecode cache (pyc) files.\n";
+"PYTHONDEVMODE: enable the development mode.\n";
 
 #define PYTHONHOMEHELP "<prefix>/lib/pythonX.X"
 
@@ -133,16 +122,12 @@ int Py_QuietFlag = 0; /* Needed by sysmodule.c */
 int Py_InteractiveFlag = 0; /* Needed by Py_FdIsInteractive() below */
 int Py_InspectFlag = 0; /* Needed to determine whether to exit at SystemExit */
 int Py_OptimizeFlag = 0; /* Needed by compile.c */
-int Py_NoSiteFlag = 0; /* Suppress 'import site' */
 int Py_BytesWarningFlag = 0; /* Warn on str(bytes) and str(buffer) */
 int Py_FrozenFlag = 0; /* Needed by getpath.c */
 int Py_IgnoreEnvironmentFlag = 0; /* e.g. PYTHONPATH, PYTHONHOME */
-int Py_DontWriteBytecodeFlag = 0; /* Suppress writing bytecode files (*.pyc) */
 int Py_NoUserSiteDirectory = 0; /* for -s and site.py */
 int Py_UnbufferedStdioFlag = 0; /* Unbuffered binary std{in,out,err} */
 int Py_HashRandomizationFlag = 0; /* for -R and PYTHONHASHSEED */
-int Py_IsolatedFlag = 0; /* for -I, isolate from user's env */
-
 
 static PyObject *
 _Py_GetGlobalVariablesAsDict(void)
@@ -188,15 +173,11 @@ _Py_GetGlobalVariablesAsDict(void)
     SET_ITEM_INT(Py_InspectFlag);
 
     SET_ITEM_INT(Py_OptimizeFlag);
-    SET_ITEM_INT(Py_NoSiteFlag);
     SET_ITEM_INT(Py_BytesWarningFlag);
     SET_ITEM_INT(Py_FrozenFlag);
     SET_ITEM_INT(Py_IgnoreEnvironmentFlag);
-    SET_ITEM_INT(Py_DontWriteBytecodeFlag);
-    SET_ITEM_INT(Py_NoUserSiteDirectory);
     SET_ITEM_INT(Py_UnbufferedStdioFlag);
     SET_ITEM_INT(Py_HashRandomizationFlag);
-    SET_ITEM_INT(Py_IsolatedFlag);
 
     return dict;
 
@@ -366,18 +347,6 @@ _PyWideStringList_Extend(PyWideStringList *list, const PyWideStringList *list2)
 }
 
 
-static int
-_PyWideStringList_Find(PyWideStringList *list, const wchar_t *item)
-{
-    for (Py_ssize_t i = 0; i < list->length; i++) {
-        if (wcscmp(list->items[i], item) == 0) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-
 PyObject*
 _PyWideStringList_AsList(const PyWideStringList *list)
 {
@@ -539,14 +508,11 @@ PyConfig_Clear(PyConfig *config)
         ATTR = NULL; \
     } while (0)
 
-    CLEAR(config->pycache_prefix);
     CLEAR(config->pythonpath_env);
     CLEAR(config->home);
     CLEAR(config->program_name);
 
     _PyWideStringList_Clear(&config->argv);
-    _PyWideStringList_Clear(&config->warnoptions);
-    _PyWideStringList_Clear(&config->xoptions);
     _PyWideStringList_Clear(&config->module_search_paths);
     config->module_search_paths_set = 0;
 
@@ -576,29 +542,21 @@ _PyConfig_InitCompatConfig(PyConfig *config)
     memset(config, 0, sizeof(*config));
 
     config->_config_init = (int)_PyConfig_INIT_COMPAT;
-    config->isolated = -1;
     config->use_environment = -1;
-    config->dev_mode = -1;
-    config->install_signal_handlers = 1;
     config->use_hash_seed = -1;
     config->module_search_paths_set = 0;
     config->parse_argv = 0;
-    config->site_import = -1;
-    config->bytes_warning = -1;
     config->inspect = -1;
     config->interactive = -1;
     config->parser_debug= -1;
-    config->write_bytecode = -1;
     config->verbose = -1;
     config->quiet = -1;
-    config->user_site_directory = -1;
     config->configure_c_stdio = 0;
     config->buffered_stdio = -1;
     config->_install_importlib = 1;
     config->check_hash_pycs_mode = NULL;
     config->pathconfig_warnings = -1;
     config->_init_main = 1;
-    config->_isolated_interpreter = 0;
 }
 
 
@@ -607,17 +565,12 @@ config_init_defaults(PyConfig *config)
 {
     _PyConfig_InitCompatConfig(config);
 
-    config->isolated = 0;
     config->use_environment = 1;
-    config->site_import = 1;
-    config->bytes_warning = 0;
     config->inspect = 0;
     config->interactive = 0;
     config->parser_debug= 0;
-    config->write_bytecode = 1;
     config->verbose = 0;
     config->quiet = 0;
-    config->user_site_directory = 1;
     config->buffered_stdio = 1;
     config->pathconfig_warnings = 1;
 }
@@ -640,11 +593,7 @@ PyConfig_InitIsolatedConfig(PyConfig *config)
     config_init_defaults(config);
 
     config->_config_init = (int)_PyConfig_INIT_ISOLATED;
-    config->isolated = 1;
     config->use_environment = 0;
-    config->user_site_directory = 0;
-    config->dev_mode = 0;
-    config->install_signal_handlers = 0;
     config->use_hash_seed = 0;
     config->pathconfig_warnings = 0;
 }
@@ -744,27 +693,17 @@ _PyConfig_Copy(PyConfig *config, const PyConfig *config2)
     } while (0)
 
     COPY_ATTR(_config_init);
-    COPY_ATTR(isolated);
     COPY_ATTR(use_environment);
-    COPY_ATTR(dev_mode);
-    COPY_ATTR(install_signal_handlers);
     COPY_ATTR(use_hash_seed);
     COPY_ATTR(hash_seed);
     COPY_ATTR(_install_importlib);
-    COPY_ATTR(import_time);
-    COPY_ATTR(show_ref_count);
-    COPY_ATTR(dump_refs);
-    COPY_ATTR(malloc_stats);
 
-    COPY_WSTR_ATTR(pycache_prefix);
     COPY_WSTR_ATTR(pythonpath_env);
     COPY_WSTR_ATTR(home);
     COPY_WSTR_ATTR(program_name);
 
     COPY_ATTR(parse_argv);
     COPY_WSTRLIST(argv);
-    COPY_WSTRLIST(warnoptions);
-    COPY_WSTRLIST(xoptions);
     COPY_WSTRLIST(module_search_paths);
     COPY_ATTR(module_search_paths_set);
 
@@ -776,15 +715,11 @@ _PyConfig_Copy(PyConfig *config, const PyConfig *config2)
     COPY_WSTR_ATTR(base_exec_prefix);
     COPY_WSTR_ATTR(platlibdir);
 
-    COPY_ATTR(site_import);
-    COPY_ATTR(bytes_warning);
     COPY_ATTR(inspect);
     COPY_ATTR(interactive);
     COPY_ATTR(parser_debug);
-    COPY_ATTR(write_bytecode);
     COPY_ATTR(verbose);
     COPY_ATTR(quiet);
-    COPY_ATTR(user_site_directory);
     COPY_ATTR(configure_c_stdio);
     COPY_ATTR(buffered_stdio);
     COPY_WSTR_ATTR(filesystem_encoding);
@@ -798,7 +733,6 @@ _PyConfig_Copy(PyConfig *config, const PyConfig *config2)
     COPY_WSTR_ATTR(check_hash_pycs_mode);
     COPY_ATTR(pathconfig_warnings);
     COPY_ATTR(_init_main);
-    COPY_ATTR(_isolated_interpreter);
     COPY_WSTRLIST(_orig_argv);
 
 #undef COPY_ATTR
@@ -844,24 +778,14 @@ config_as_dict(const PyConfig *config)
     SET_ITEM(#LIST, _PyWideStringList_AsList(&config->LIST))
 
     SET_ITEM_INT(_config_init);
-    SET_ITEM_INT(isolated);
     SET_ITEM_INT(use_environment);
-    SET_ITEM_INT(dev_mode);
-    SET_ITEM_INT(install_signal_handlers);
     SET_ITEM_INT(use_hash_seed);
     SET_ITEM_UINT(hash_seed);
-    SET_ITEM_INT(import_time);
-    SET_ITEM_INT(show_ref_count);
-    SET_ITEM_INT(dump_refs);
-    SET_ITEM_INT(malloc_stats);
     SET_ITEM_WSTR(filesystem_encoding);
     SET_ITEM_WSTR(filesystem_errors);
-    SET_ITEM_WSTR(pycache_prefix);
     SET_ITEM_WSTR(program_name);
     SET_ITEM_INT(parse_argv);
     SET_ITEM_WSTRLIST(argv);
-    SET_ITEM_WSTRLIST(xoptions);
-    SET_ITEM_WSTRLIST(warnoptions);
     SET_ITEM_WSTR(pythonpath_env);
     SET_ITEM_WSTR(home);
     SET_ITEM_WSTRLIST(module_search_paths);
@@ -872,15 +796,11 @@ config_as_dict(const PyConfig *config)
     SET_ITEM_WSTR(exec_prefix);
     SET_ITEM_WSTR(base_exec_prefix);
     SET_ITEM_WSTR(platlibdir);
-    SET_ITEM_INT(site_import);
-    SET_ITEM_INT(bytes_warning);
     SET_ITEM_INT(inspect);
     SET_ITEM_INT(interactive);
     SET_ITEM_INT(parser_debug);
-    SET_ITEM_INT(write_bytecode);
     SET_ITEM_INT(verbose);
     SET_ITEM_INT(quiet);
-    SET_ITEM_INT(user_site_directory);
     SET_ITEM_INT(configure_c_stdio);
     SET_ITEM_INT(buffered_stdio);
     SET_ITEM_WSTR(stdio_encoding);
@@ -893,7 +813,6 @@ config_as_dict(const PyConfig *config)
     SET_ITEM_WSTR(check_hash_pycs_mode);
     SET_ITEM_INT(pathconfig_warnings);
     SET_ITEM_INT(_init_main);
-    SET_ITEM_INT(_isolated_interpreter);
     SET_ITEM_WSTRLIST(_orig_argv);
 
     return dict;
@@ -966,9 +885,7 @@ config_get_global_vars(PyConfig *config)
             config->ATTR = !(VALUE); \
         }
 
-    COPY_FLAG(isolated, Py_IsolatedFlag);
     COPY_NOT_FLAG(use_environment, Py_IgnoreEnvironmentFlag);
-    COPY_FLAG(bytes_warning, Py_BytesWarningFlag);
     COPY_FLAG(inspect, Py_InspectFlag);
     COPY_FLAG(interactive, Py_InteractiveFlag);
     COPY_FLAG(parser_debug, Py_DebugFlag);
@@ -977,9 +894,6 @@ config_get_global_vars(PyConfig *config)
     COPY_NOT_FLAG(pathconfig_warnings, Py_FrozenFlag);
 
     COPY_NOT_FLAG(buffered_stdio, Py_UnbufferedStdioFlag);
-    COPY_NOT_FLAG(site_import, Py_NoSiteFlag);
-    COPY_NOT_FLAG(write_bytecode, Py_DontWriteBytecodeFlag);
-    COPY_NOT_FLAG(user_site_directory, Py_NoUserSiteDirectory);
 
 #undef COPY_FLAG
 #undef COPY_NOT_FLAG
@@ -999,9 +913,7 @@ config_set_global_vars(const PyConfig *config)
             VAR = !config->ATTR; \
         }
 
-    COPY_FLAG(isolated, Py_IsolatedFlag);
     COPY_NOT_FLAG(use_environment, Py_IgnoreEnvironmentFlag);
-    COPY_FLAG(bytes_warning, Py_BytesWarningFlag);
     COPY_FLAG(inspect, Py_InspectFlag);
     COPY_FLAG(interactive, Py_InteractiveFlag);
     COPY_FLAG(parser_debug, Py_DebugFlag);
@@ -1010,9 +922,6 @@ config_set_global_vars(const PyConfig *config)
     COPY_NOT_FLAG(pathconfig_warnings, Py_FrozenFlag);
 
     COPY_NOT_FLAG(buffered_stdio, Py_UnbufferedStdioFlag);
-    COPY_NOT_FLAG(site_import, Py_NoSiteFlag);
-    COPY_NOT_FLAG(write_bytecode, Py_DontWriteBytecodeFlag);
-    COPY_NOT_FLAG(user_site_directory, Py_NoUserSiteDirectory);
 
     /* Random or non-zero hash seed */
     Py_HashRandomizationFlag = (config->use_hash_seed == 0 ||
@@ -1130,13 +1039,6 @@ config_init_executable(PyConfig *config)
 }
 
 
-static const wchar_t*
-config_get_xoption(const PyConfig *config, wchar_t *name)
-{
-    return _Py_get_xoption(&config->xoptions, name);
-}
-
-
 static PyStatus
 config_init_home(PyConfig *config)
 {
@@ -1189,24 +1091,6 @@ config_init_hash_seed(PyConfig *config)
 }
 
 
-static int
-config_wstr_to_int(const wchar_t *wstr, int *result)
-{
-    const wchar_t *endptr = wstr;
-    errno = 0;
-    long value = wcstol(wstr, (wchar_t **)&endptr, 10);
-    if (*endptr != '\0' || errno == ERANGE) {
-        return -1;
-    }
-    if (value < INT_MIN || value > INT_MAX) {
-        return -1;
-    }
-
-    *result = (int)value;
-    return 0;
-}
-
-
 static PyStatus
 config_read_env_vars(PyConfig *config)
 {
@@ -1218,30 +1102,10 @@ config_read_env_vars(PyConfig *config)
     _Py_get_env_flag(use_env, &config->verbose, "PYTHONVERBOSE");
     _Py_get_env_flag(use_env, &config->inspect, "PYTHONINSPECT");
 
-    int dont_write_bytecode = 0;
-    _Py_get_env_flag(use_env, &dont_write_bytecode, "PYTHONDONTWRITEBYTECODE");
-    if (dont_write_bytecode) {
-        config->write_bytecode = 0;
-    }
-
-    int no_user_site_directory = 0;
-    _Py_get_env_flag(use_env, &no_user_site_directory, "PYTHONNOUSERSITE");
-    if (no_user_site_directory) {
-        config->user_site_directory = 0;
-    }
-
     int unbuffered_stdio = 0;
     _Py_get_env_flag(use_env, &unbuffered_stdio, "PYTHONUNBUFFERED");
     if (unbuffered_stdio) {
         config->buffered_stdio = 0;
-    }
-
-
-    if (config_get_env(config, "PYTHONDUMPREFS")) {
-        config->dump_refs = 1;
-    }
-    if (config_get_env(config, "PYTHONMALLOCSTATS")) {
-        config->malloc_stats = 1;
     }
 
     if (config->pythonpath_env == NULL) {
@@ -1269,54 +1133,6 @@ config_read_env_vars(PyConfig *config)
 
     return _PyStatus_OK();
 }
-
-static PyStatus
-config_init_pycache_prefix(PyConfig *config)
-{
-    assert(config->pycache_prefix == NULL);
-
-    const wchar_t *xoption = config_get_xoption(config, L"pycache_prefix");
-    if (xoption) {
-        const wchar_t *sep = wcschr(xoption, L'=');
-        if (sep && wcslen(sep) > 1) {
-            config->pycache_prefix = _PyMem_RawWcsdup(sep + 1);
-            if (config->pycache_prefix == NULL) {
-                return _PyStatus_NO_MEMORY();
-            }
-        }
-        else {
-            // PYTHONPYCACHEPREFIX env var ignored
-            // if "-X pycache_prefix=" option is used
-            config->pycache_prefix = NULL;
-        }
-        return _PyStatus_OK();
-    }
-
-    return CONFIG_GET_ENV_DUP(config, &config->pycache_prefix,
-                              L"PYTHONPYCACHEPREFIX",
-                              "PYTHONPYCACHEPREFIX");
-}
-
-
-static PyStatus
-config_read_complex_options(PyConfig *config)
-{
-    /* More complex options configured by env var and -X option */
-    if (config_get_env(config, "PYTHONPROFILEIMPORTTIME")
-       || config_get_xoption(config, L"importtime")) {
-        config->import_time = 1;
-    }
-
-    PyStatus status;
-    if (config->pycache_prefix == NULL) {
-        status = config_init_pycache_prefix(config);
-        if (_PyStatus_EXCEPTION(status)) {
-            return status;
-        }
-    }
-    return _PyStatus_OK();
-}
-
 
 static const wchar_t *
 config_get_stdio_errors(void)
@@ -1533,16 +1349,6 @@ config_read(PyConfig *config)
         }
     }
 
-    /* -X options */
-    if (config_get_xoption(config, L"showrefcount")) {
-        config->show_ref_count = 1;
-    }
-
-    status = config_read_complex_options(config);
-    if (_PyStatus_EXCEPTION(status)) {
-        return status;
-    }
-
     if (config->home == NULL) {
         status = config_init_home(config);
         if (_PyStatus_EXCEPTION(status)) {
@@ -1653,9 +1459,7 @@ _PyConfig_Write(const PyConfig *config, _PyRuntimeState *runtime)
 
     /* Write the new pre-configuration into _PyRuntime */
     PyPreConfig *preconfig = &runtime->preconfig;
-    preconfig->isolated = config->isolated;
     preconfig->use_environment = config->use_environment;
-    preconfig->dev_mode = config->dev_mode;
 
     if (_Py_SetArgcArgv(config->_orig_argv.length,
                         config->_orig_argv.items) < 0)
@@ -1689,7 +1493,7 @@ config_usage(int error, const wchar_t* program)
 
 /* Parse the command line arguments */
 static PyStatus
-config_parse_cmdline(PyConfig *config, PyWideStringList *warnoptions,
+config_parse_cmdline(PyConfig *config, 
                      Py_ssize_t *opt_index)
 {
     PyStatus status;
@@ -1757,10 +1561,6 @@ config_parse_cmdline(PyConfig *config, PyWideStringList *warnoptions,
             }
             break;
 
-        case 'b':
-            config->bytes_warning++;
-            break;
-
         case 'd':
             config->parser_debug++;
             break;
@@ -1777,18 +1577,6 @@ config_parse_cmdline(PyConfig *config, PyWideStringList *warnoptions,
             break;
 
         /* case 'J': reserved for Jython */
-
-        case 'B':
-            config->write_bytecode = 0;
-            break;
-
-        case 's':
-            config->user_site_directory = 0;
-            break;
-
-        case 'S':
-            config->site_import = 0;
-            break;
 
         case 't':
             /* ignored for backwards compatibility */
@@ -1813,13 +1601,6 @@ config_parse_cmdline(PyConfig *config, PyWideStringList *warnoptions,
 
         case 'V':
             print_version++;
-            break;
-
-        case 'W':
-            status = PyWideStringList_Append(warnoptions, _PyOS_optarg);
-            if (_PyStatus_EXCEPTION(status)) {
-                return status;
-            }
             break;
 
         case 'q':
@@ -1868,160 +1649,6 @@ config_parse_cmdline(PyConfig *config, PyWideStringList *warnoptions,
 
 
 #  define WCSTOK wcstok
-
-/* Get warning options from PYTHONWARNINGS environment variable. */
-static PyStatus
-config_init_env_warnoptions(PyConfig *config, PyWideStringList *warnoptions)
-{
-    PyStatus status;
-    /* CONFIG_GET_ENV_DUP requires dest to be initialized to NULL */
-    wchar_t *env = NULL;
-    status = CONFIG_GET_ENV_DUP(config, &env,
-                             L"PYTHONWARNINGS", "PYTHONWARNINGS");
-    if (_PyStatus_EXCEPTION(status)) {
-        return status;
-    }
-
-    /* env var is not set or is empty */
-    if (env == NULL) {
-        return _PyStatus_OK();
-    }
-
-
-    wchar_t *warning, *context = NULL;
-    for (warning = WCSTOK(env, L",", &context);
-         warning != NULL;
-         warning = WCSTOK(NULL, L",", &context))
-    {
-        status = PyWideStringList_Append(warnoptions, warning);
-        if (_PyStatus_EXCEPTION(status)) {
-            PyMem_RawFree(env);
-            return status;
-        }
-    }
-    PyMem_RawFree(env);
-    return _PyStatus_OK();
-}
-
-
-static PyStatus
-warnoptions_append(PyConfig *config, PyWideStringList *options,
-                   const wchar_t *option)
-{
-    /* config_init_warnoptions() add existing config warnoptions at the end:
-       ensure that the new option is not already present in this list to
-       prevent change the options order whne config_init_warnoptions() is
-       called twice. */
-    if (_PyWideStringList_Find(&config->warnoptions, option)) {
-        /* Already present: do nothing */
-        return _PyStatus_OK();
-    }
-    if (_PyWideStringList_Find(options, option)) {
-        /* Already present: do nothing */
-        return _PyStatus_OK();
-    }
-    return PyWideStringList_Append(options, option);
-}
-
-
-static PyStatus
-warnoptions_extend(PyConfig *config, PyWideStringList *options,
-                   const PyWideStringList *options2)
-{
-    const Py_ssize_t len = options2->length;
-    wchar_t *const *items = options2->items;
-
-    for (Py_ssize_t i = 0; i < len; i++) {
-        PyStatus status = warnoptions_append(config, options, items[i]);
-        if (_PyStatus_EXCEPTION(status)) {
-            return status;
-        }
-    }
-    return _PyStatus_OK();
-}
-
-
-static PyStatus
-config_init_warnoptions(PyConfig *config,
-                        const PyWideStringList *cmdline_warnoptions,
-                        const PyWideStringList *env_warnoptions,
-                        const PyWideStringList *sys_warnoptions)
-{
-    PyStatus status;
-    PyWideStringList options = _PyWideStringList_INIT;
-
-    /* Priority of warnings options, lowest to highest:
-     *
-     * - any implicit filters added by _warnings.c/warnings.py
-     * - PyConfig.dev_mode: "default" filter
-     * - PYTHONWARNINGS environment variable
-     * - '-W' command line options
-     * - PyConfig.bytes_warning ('-b' and '-bb' command line options):
-     *   "default::BytesWarning" or "error::BytesWarning" filter
-     * - early PySys_AddWarnOption() calls
-     * - PyConfig.warnoptions
-     *
-     * PyConfig.warnoptions is copied to sys.warnoptions. Since the warnings
-     * module works on the basis of "the most recently added filter will be
-     * checked first", we add the lowest precedence entries first so that later
-     * entries override them.
-     */
-
-    if (config->dev_mode) {
-        status = warnoptions_append(config, &options, L"default");
-        if (_PyStatus_EXCEPTION(status)) {
-            goto error;
-        }
-    }
-
-    status = warnoptions_extend(config, &options, env_warnoptions);
-    if (_PyStatus_EXCEPTION(status)) {
-        goto error;
-    }
-
-    status = warnoptions_extend(config, &options, cmdline_warnoptions);
-    if (_PyStatus_EXCEPTION(status)) {
-        goto error;
-    }
-
-    /* If the bytes_warning_flag isn't set, bytesobject.c and bytearrayobject.c
-     * don't even try to emit a warning, so we skip setting the filter in that
-     * case.
-     */
-    if (config->bytes_warning) {
-        const wchar_t *filter;
-        if (config->bytes_warning> 1) {
-            filter = L"error::BytesWarning";
-        }
-        else {
-            filter = L"default::BytesWarning";
-        }
-        status = warnoptions_append(config, &options, filter);
-        if (_PyStatus_EXCEPTION(status)) {
-            goto error;
-        }
-    }
-
-    status = warnoptions_extend(config, &options, sys_warnoptions);
-    if (_PyStatus_EXCEPTION(status)) {
-        goto error;
-    }
-
-    /* Always add all PyConfig.warnoptions options */
-    status = _PyWideStringList_Extend(&options, &config->warnoptions);
-    if (_PyStatus_EXCEPTION(status)) {
-        goto error;
-    }
-
-    _PyWideStringList_Clear(&config->warnoptions);
-    config->warnoptions = options;
-    return _PyStatus_OK();
-
-error:
-    _PyWideStringList_Clear(&options);
-    return status;
-}
-
 
 static PyStatus
 config_update_argv(PyConfig *config, Py_ssize_t opt_index)
@@ -2140,9 +1767,6 @@ static PyStatus
 config_read_cmdline(PyConfig *config)
 {
     PyStatus status;
-    PyWideStringList cmdline_warnoptions = _PyWideStringList_INIT;
-    PyWideStringList env_warnoptions = _PyWideStringList_INIT;
-    PyWideStringList sys_warnoptions = _PyWideStringList_INIT;
 
     if (config->parse_argv < 0) {
         config->parse_argv = 1;
@@ -2157,7 +1781,7 @@ config_read_cmdline(PyConfig *config)
 
     if (config->parse_argv) {
         Py_ssize_t opt_index;
-        status = config_parse_cmdline(config, &cmdline_warnoptions, &opt_index);
+        status = config_parse_cmdline(config, &opt_index);
         if (_PyStatus_EXCEPTION(status)) {
             goto done;
         }
@@ -2178,24 +1802,6 @@ config_read_cmdline(PyConfig *config)
             goto done;
         }
     }
-
-    if (config->use_environment) {
-        status = config_init_env_warnoptions(config, &env_warnoptions);
-        if (_PyStatus_EXCEPTION(status)) {
-            goto done;
-        }
-    }
-
-    /* Handle early PySys_AddWarnOption() calls */
-    status = _PySys_ReadPreinitWarnOptions(&sys_warnoptions);
-    if (_PyStatus_EXCEPTION(status)) {
-        goto done;
-    }
-
-    status = config_init_warnoptions(config,
-                                     &cmdline_warnoptions,
-                                     &env_warnoptions,
-                                     &sys_warnoptions);
     if (_PyStatus_EXCEPTION(status)) {
         goto done;
     }
@@ -2203,9 +1809,6 @@ config_read_cmdline(PyConfig *config)
     status = _PyStatus_OK();
 
 done:
-    _PyWideStringList_Clear(&cmdline_warnoptions);
-    _PyWideStringList_Clear(&env_warnoptions);
-    _PyWideStringList_Clear(&sys_warnoptions);
     return status;
 }
 
@@ -2299,19 +1902,7 @@ PyConfig_Read(PyConfig *config)
         goto done;
     }
 
-    assert(config->isolated >= 0);
-    if (config->isolated) {
-        config->use_environment = 0;
-        config->user_site_directory = 0;
-    }
-
     status = config_read_cmdline(config);
-    if (_PyStatus_EXCEPTION(status)) {
-        goto done;
-    }
-
-    /* Handle early PySys_AddXOption() calls */
-    status = _PySys_ReadPreinitXOptions(config);
     if (_PyStatus_EXCEPTION(status)) {
         goto done;
     }
@@ -2322,20 +1913,13 @@ PyConfig_Read(PyConfig *config)
     }
 
     /* Check config consistency */
-    assert(config->isolated >= 0);
     assert(config->use_environment >= 0);
-    assert(config->dev_mode >= 0);
-    assert(config->install_signal_handlers >= 0);
     assert(config->use_hash_seed >= 0);
-    assert(config->site_import >= 0);
-    assert(config->bytes_warning >= 0);
     assert(config->inspect >= 0);
     assert(config->interactive >= 0);
     assert(config->parser_debug >= 0);
-    assert(config->write_bytecode >= 0);
     assert(config->verbose >= 0);
     assert(config->quiet >= 0);
-    assert(config->user_site_directory >= 0);
     assert(config->parse_argv >= 0);
     assert(config->configure_c_stdio >= 0);
     assert(config->buffered_stdio >= 0);
@@ -2343,8 +1927,6 @@ PyConfig_Read(PyConfig *config)
     assert(_PyWideStringList_CheckConsistency(&config->argv));
     /* sys.argv must be non-empty: empty argv is replaced with [''] */
     assert(config->argv.length >= 1);
-    assert(_PyWideStringList_CheckConsistency(&config->xoptions));
-    assert(_PyWideStringList_CheckConsistency(&config->warnoptions));
     assert(_PyWideStringList_CheckConsistency(&config->module_search_paths));
     if (config->_install_importlib) {
         assert(config->module_search_paths_set != 0);
@@ -2481,10 +2063,7 @@ _Py_DumpPathConfig(PyThreadState *tstate)
     DUMP_CONFIG("PYTHONHOME", home);
     DUMP_CONFIG("PYTHONPATH", pythonpath_env);
     DUMP_CONFIG("program name", program_name);
-    PySys_WriteStderr("  isolated = %i\n", config->isolated);
     PySys_WriteStderr("  environment = %i\n", config->use_environment);
-    PySys_WriteStderr("  user site = %i\n", config->user_site_directory);
-    PySys_WriteStderr("  import site = %i\n", config->site_import);
 #undef DUMP_CONFIG
 
 #define DUMP_SYS(NAME) \

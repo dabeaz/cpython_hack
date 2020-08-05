@@ -190,18 +190,12 @@ pymain_header(const PyConfig *config)
     }
 
     fprintf(stderr, "Python %s on %s\n", Py_GetVersion(), Py_GetPlatform());
-    if (config->site_import) {
-        fprintf(stderr, "%s\n", COPYRIGHT);
-    }
 }
 
 
 static void
 pymain_import_readline(const PyConfig *config)
 {
-    if (config->isolated) {
-        return;
-    }
     if (!config->inspect && config_run_code(config)) {
         return;
     }
@@ -492,7 +486,7 @@ pymain_run_python(int *exitcode)
             goto error;
         }
     }
-    else if (!config->isolated) {
+    else if (1) {
         PyObject *path0 = NULL;
         int res = _PyPathConfig_ComputeSysPath0(&config->argv, &path0);
         if (res < 0) {

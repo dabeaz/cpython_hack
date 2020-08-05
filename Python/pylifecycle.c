@@ -44,7 +44,6 @@ static PyStatus add_main_module(PyInterpreterState *interp);
 static PyStatus init_import_site(void);
 static PyStatus init_set_builtins_open(void);
 static PyStatus init_sys_streams(PyThreadState *tstate);
-static PyStatus init_signals(PyThreadState *tstate);
 static void call_py_exitfuncs(PyThreadState *tstate);
 static void wait_for_thread_shutdown(PyThreadState *tstate);
 static void call_ll_exitfuncs(_PyRuntimeState *runtime);
@@ -924,15 +923,6 @@ init_interp_main(PyThreadState *tstate)
         return status;
     }
 
-    if (is_main_interp) {
-        if (config->install_signal_handlers) {
-            status = init_signals(tstate);
-            if (_PyStatus_EXCEPTION(status)) {
-                return status;
-            }
-        }
-    }
-
     status = init_sys_streams(tstate);
     if (_PyStatus_EXCEPTION(status)) {
         return status;
@@ -962,13 +952,6 @@ init_interp_main(PyThreadState *tstate)
         }
 
         interp->runtime->initialized = 1;
-    }
-
-    if (config->site_import) {
-        status = init_import_site();
-        if (_PyStatus_EXCEPTION(status)) {
-            return status;
-        }
     }
 
     if (is_main_interp) {
@@ -1076,8 +1059,6 @@ Py_InitializeEx(int install_sigs)
 
     PyConfig config;
     _PyConfig_InitCompatConfig(&config);
-
-    config.install_signal_handlers = install_sigs;
 
     status = Py_InitializeFromConfig(&config);
     if (_PyStatus_EXCEPTION(status)) {
@@ -1229,7 +1210,6 @@ Py_FinalizeEx(void)
 
     /* Get current thread state and interpreter pointer */
     PyThreadState *tstate = _PyRuntimeState_GetThreadState(runtime);
-    PyInterpreterState *interp = tstate->interp;
 
     // Wrap up existing "threading"-module-created, non-daemon threads.
     wait_for_thread_shutdown(tstate);
@@ -1251,9 +1231,6 @@ Py_FinalizeEx(void)
 
     /* Copy the core config, PyInterpreterState_Delete() free
        the core config memory */
-#ifdef WITH_PYMALLOC
-    int malloc_stats = interp->config.malloc_stats;
-#endif
 
     /* Remaining daemon threads will automatically exit
        when they attempt to take the GIL (ex: PyEval_RestoreThread()). */
@@ -1331,12 +1308,6 @@ Py_FinalizeEx(void)
 
     finalize_interp_clear(tstate);
     finalize_interp_delete(tstate);
-    
-#ifdef WITH_PYMALLOC
-    if (malloc_stats) {
-        _PyObject_DebugMallocStats(stderr);
-    }
-#endif
 
     call_ll_exitfuncs(runtime);
 
@@ -1414,7 +1385,6 @@ new_interpreter(PyThreadState **tstate_p, int isolated_subinterpreter)
     if (_PyStatus_EXCEPTION(status)) {
         goto error;
     }
-    interp->config._isolated_interpreter = isolated_subinterpreter;
 
     status = pycore_interp_init(tstate);
     if (_PyStatus_EXCEPTION(status)) {
@@ -1546,20 +1516,6 @@ add_main_module(PyInterpreterState *interp)
         }
         Py_DECREF(loader);
     }
-    return _PyStatus_OK();
-}
-
-/* Import the site module (not into __main__ though) */
-
-static PyStatus
-init_import_site(void)
-{
-    PyObject *m;
-    m = PyImport_ImportModule("site");
-    if (m == NULL) {
-        return _PyStatus_ERR("Failed to import the site module");
-    }
-    Py_DECREF(m);
     return _PyStatus_OK();
 }
 
@@ -2187,49 +2143,6 @@ Py_Exit(int sts)
 
     exit(sts);
 }
-
-static PyStatus
-init_signals(PyThreadState *tstate)
-{
-#ifdef SIGPIPE
-    PyOS_setsig(SIGPIPE, SIG_IGN);
-#endif
-#ifdef SIGXFZ
-    PyOS_setsig(SIGXFZ, SIG_IGN);
-#endif
-#ifdef SIGXFSZ
-    PyOS_setsig(SIGXFSZ, SIG_IGN);
-#endif
-    // PyOS_InitInterrupts(); /* May imply init_signals() */
-    if (_PyErr_Occurred(tstate)) {
-        return _PyStatus_ERR("can't import signal");
-    }
-    return _PyStatus_OK();
-}
-
-
-/* Restore signals that the interpreter has called SIG_IGN on to SIG_DFL.
- *
- * All of the code in this function must only use async-signal-safe functions,
- * listed at `man 7 signal` or
- * http://www.opengroup.org/onlinepubs/009695399/functions/xsh_chap02_04.html.
- *
- * If this function is updated, update also _posix_spawn() of subprocess.py.
- */
-void
-_Py_RestoreSignals(void)
-{
-#ifdef SIGPIPE
-    PyOS_setsig(SIGPIPE, SIG_DFL);
-#endif
-#ifdef SIGXFZ
-    PyOS_setsig(SIGXFZ, SIG_DFL);
-#endif
-#ifdef SIGXFSZ
-    PyOS_setsig(SIGXFSZ, SIG_DFL);
-#endif
-}
-
 
 /*
  * The file descriptor fd is considered ``interactive'' if either

@@ -135,9 +135,7 @@ precmdline_get_preconfig(_PyPreCmdline *cmdline, const PyPreConfig *config)
         cmdline->ATTR = config->ATTR; \
     }
 
-    COPY_ATTR(isolated);
     COPY_ATTR(use_environment);
-    COPY_ATTR(dev_mode);
 
 #undef COPY_ATTR
 }
@@ -149,9 +147,7 @@ precmdline_set_preconfig(const _PyPreCmdline *cmdline, PyPreConfig *config)
 #define COPY_ATTR(ATTR) \
     config->ATTR = cmdline->ATTR
 
-    COPY_ATTR(isolated);
     COPY_ATTR(use_environment);
-    COPY_ATTR(dev_mode);
 
 #undef COPY_ATTR
 }
@@ -162,15 +158,7 @@ _PyPreCmdline_SetConfig(const _PyPreCmdline *cmdline, PyConfig *config)
 {
 #define COPY_ATTR(ATTR) \
     config->ATTR = cmdline->ATTR
-
-    PyStatus status = _PyWideStringList_Extend(&config->xoptions, &cmdline->xoptions);
-    if (_PyStatus_EXCEPTION(status)) {
-        return status;
-    }
-
-    COPY_ATTR(isolated);
     COPY_ATTR(use_environment);
-    COPY_ATTR(dev_mode);
     return _PyStatus_OK();
 
 #undef COPY_ATTR
@@ -198,10 +186,6 @@ precmdline_parse_cmdline(_PyPreCmdline *cmdline)
         switch (c) {
         case 'E':
             cmdline->use_environment = 0;
-            break;
-
-        case 'I':
-            cmdline->isolated = 1;
             break;
 
         case 'X':
@@ -236,33 +220,6 @@ _PyPreCmdline_Read(_PyPreCmdline *cmdline, const PyPreConfig *preconfig)
             return status;
         }
     }
-
-    /* isolated, use_environment */
-    if (cmdline->isolated < 0) {
-        cmdline->isolated = 0;
-    }
-    if (cmdline->isolated > 0) {
-        cmdline->use_environment = 0;
-    }
-    if (cmdline->use_environment < 0) {
-        cmdline->use_environment = 0;
-    }
-
-    /* dev_mode */
-    if ((cmdline->dev_mode < 0)
-        && (_Py_get_xoption(&cmdline->xoptions, L"dev")
-            || _Py_GetEnv(cmdline->use_environment, "PYTHONDEVMODE")))
-    {
-        cmdline->dev_mode = 1;
-    }
-    if (cmdline->dev_mode < 0) {
-        cmdline->dev_mode = 0;
-    }
-
-    assert(cmdline->use_environment >= 0);
-    assert(cmdline->isolated >= 0);
-    assert(cmdline->dev_mode >= 0);
-
     return _PyStatus_OK();
 }
 
@@ -277,7 +234,6 @@ _PyPreConfig_InitCompatConfig(PyPreConfig *config)
 
     config->_config_init = (int)_PyConfig_INIT_COMPAT;
     config->parse_argv = 0;
-    config->isolated = -1;
     config->use_environment = -1;
     config->configure_locale = 1;
 
@@ -290,7 +246,6 @@ _PyPreConfig_InitCompatConfig(PyPreConfig *config)
     config->coerce_c_locale = 0;
     config->coerce_c_locale_warn = 0;
 
-    config->dev_mode = -1;
     config->allocator = PYMEM_ALLOCATOR_NOT_SET;
 }
 
@@ -301,7 +256,6 @@ PyPreConfig_InitPythonConfig(PyPreConfig *config)
     _PyPreConfig_InitCompatConfig(config);
 
     config->_config_init = (int)_PyConfig_INIT_PYTHON;
-    config->isolated = 0;
     config->parse_argv = 1;
     config->use_environment = 1;
     /* Set to -1 to enable C locale coercion (PEP 538) and UTF-8 Mode (PEP 540)
@@ -310,20 +264,6 @@ PyPreConfig_InitPythonConfig(PyPreConfig *config)
     config->coerce_c_locale = -1;
     config->coerce_c_locale_warn = -1;
     config->utf8_mode = -1;
-}
-
-
-void
-PyPreConfig_InitIsolatedConfig(PyPreConfig *config)
-{
-    _PyPreConfig_InitCompatConfig(config);
-
-    config->_config_init = (int)_PyConfig_INIT_ISOLATED;
-    config->configure_locale = 0;
-    config->isolated = 1;
-    config->use_environment = 0;
-    config->utf8_mode = 0;
-    config->dev_mode = 0;
 }
 
 
@@ -345,9 +285,6 @@ _PyPreConfig_InitFromConfig(PyPreConfig *preconfig, const PyConfig *config)
     case _PyConfig_INIT_PYTHON:
         PyPreConfig_InitPythonConfig(preconfig);
         break;
-    case _PyConfig_INIT_ISOLATED:
-        PyPreConfig_InitIsolatedConfig(preconfig);
-        break;
     case _PyConfig_INIT_COMPAT:
     default:
         _PyPreConfig_InitCompatConfig(preconfig);
@@ -364,10 +301,8 @@ preconfig_copy(PyPreConfig *config, const PyPreConfig *config2)
 
     COPY_ATTR(_config_init);
     COPY_ATTR(parse_argv);
-    COPY_ATTR(isolated);
     COPY_ATTR(use_environment);
     COPY_ATTR(configure_locale);
-    COPY_ATTR(dev_mode);
     COPY_ATTR(coerce_c_locale);
     COPY_ATTR(coerce_c_locale_warn);
     COPY_ATTR(utf8_mode);
@@ -402,13 +337,11 @@ _PyPreConfig_AsDict(const PyPreConfig *config)
 
     SET_ITEM_INT(_config_init);
     SET_ITEM_INT(parse_argv);
-    SET_ITEM_INT(isolated);
     SET_ITEM_INT(use_environment);
     SET_ITEM_INT(configure_locale);
     SET_ITEM_INT(coerce_c_locale);
     SET_ITEM_INT(coerce_c_locale_warn);
     SET_ITEM_INT(utf8_mode);
-    SET_ITEM_INT(dev_mode);
     SET_ITEM_INT(allocator);
     return dict;
 
@@ -429,9 +362,7 @@ _PyPreConfig_GetConfig(PyPreConfig *preconfig, const PyConfig *config)
     }
 
     COPY_ATTR(parse_argv);
-    COPY_ATTR(isolated);
     COPY_ATTR(use_environment);
-    COPY_ATTR(dev_mode);
 
 #undef COPY_ATTR
 }
@@ -454,7 +385,6 @@ preconfig_get_global_vars(PyPreConfig *config)
         config->ATTR = !(VALUE); \
     }
 
-    COPY_FLAG(isolated, Py_IsolatedFlag);
     COPY_NOT_FLAG(use_environment, Py_IgnoreEnvironmentFlag);
     if (Py_UTF8Mode > 0) {
         config->utf8_mode = Py_UTF8Mode;
@@ -477,7 +407,6 @@ preconfig_set_global_vars(const PyPreConfig *config)
         VAR = !config->ATTR; \
     }
 
-    COPY_FLAG(isolated, Py_IsolatedFlag);
     COPY_NOT_FLAG(use_environment, Py_IgnoreEnvironmentFlag);
     COPY_FLAG(utf8_mode, Py_UTF8Mode);
 
@@ -689,10 +618,6 @@ preconfig_init_allocator(PyPreConfig *config)
             config->allocator = (int)name;
         }
     }
-
-    if (config->dev_mode && config->allocator == PYMEM_ALLOCATOR_NOT_SET) {
-        config->allocator = PYMEM_ALLOCATOR_DEBUG;
-    }
     return _PyStatus_OK();
 }
 
@@ -727,9 +652,7 @@ preconfig_read(PyPreConfig *config, _PyPreCmdline *cmdline)
     assert(config->coerce_c_locale >= 0);
     assert(config->coerce_c_locale_warn >= 0);
     assert(config->utf8_mode >= 0);
-    assert(config->isolated >= 0);
     assert(config->use_environment >= 0);
-    assert(config->dev_mode >= 0);
 
     return _PyStatus_OK();
 }

@@ -117,21 +117,10 @@ PyAPI_FUNC(void) PyPreConfig_InitIsolatedConfig(PyPreConfig *config);
 
 typedef struct {
     int _config_init;     /* _PyConfigInitEnum value */
-
-    int isolated;         /* Isolated mode? see PyPreConfig.isolated */
     int use_environment;  /* Use environment variables? see PyPreConfig.use_environment */
-    int dev_mode;         /* Python Development Mode? See PyPreConfig.dev_mode */
-
-    /* Install signal handlers? Yes by default. */
-    int install_signal_handlers;
 
     int use_hash_seed;      /* PYTHONHASHSEED=x */
     unsigned long hash_seed;
-
-    int import_time;        /* PYTHONPROFILEIMPORTTIME, -X importtime */
-    int show_ref_count;     /* -X showrefcount */
-    int dump_refs;          /* PYTHONDUMPREFS */
-    int malloc_stats;       /* PYTHONMALLOCSTATS */
 
     /* Python filesystem encoding and error handler:
        sys.getfilesystemencoding() and sys.getfilesystemencodeerrors().
@@ -169,7 +158,6 @@ typedef struct {
     wchar_t *filesystem_encoding;
     wchar_t *filesystem_errors;
 
-    wchar_t *pycache_prefix;  /* PYTHONPYCACHEPREFIX, -X pycache_prefix=PATH */
     int parse_argv;           /* Parse argv command line arguments? */
 
     /* Command line arguments (sys.argv).
@@ -190,31 +178,6 @@ typedef struct {
        - Use argv[0] if available and non-empty.
        - Use "python" on Windows, or "python3 on other platforms. */
     wchar_t *program_name;
-
-    PyWideStringList xoptions;     /* Command line -X options */
-
-    /* Warnings options: lowest to highest priority. warnings.filters
-       is built in the reverse order (highest to lowest priority). */
-    PyWideStringList warnoptions;
-
-    /* If equal to zero, disable the import of the module site and the
-       site-dependent manipulations of sys.path that it entails. Also disable
-       these manipulations if site is explicitly imported later (call
-       site.main() if you want them to be triggered).
-
-       Set to 0 by the -S command line option. If set to -1 (default), it is
-       set to !Py_NoSiteFlag. */
-    int site_import;
-
-    /* Bytes warnings:
-
-       * If equal to 1, issue a warning when comparing bytes or bytearray with
-         str or bytes with int.
-       * If equal or greater to 2, issue an error.
-
-       Incremented by the -b command line option. If set to -1 (default), inherit
-       Py_BytesWarningFlag value. */
-    int bytes_warning;
 
     /* If greater than 0, enable inspect: when a script is passed as first
        argument or the -c option is used, enter interactive mode after
@@ -240,14 +203,6 @@ typedef struct {
        value. */
     int parser_debug;
 
-    /* If equal to 0, Python won't try to write ``.pyc`` files on the
-       import of source modules.
-
-       Set to 0 by the -B command line option and the PYTHONDONTWRITEBYTECODE
-       environment variable. If set to -1 (default), it is set to
-       !Py_DontWriteBytecodeFlag. */
-    int write_bytecode;
-
     /* If greater than 0, enable the verbose mode: print a message each time a
        module is initialized, showing the place (filename or built-in module)
        from which it is loaded.
@@ -266,14 +221,6 @@ typedef struct {
        Incremented by the -q option. If set to -1 (default), inherit
        Py_QuietFlag value. */
     int quiet;
-
-   /* If greater than 0, don't add the user site-packages directory to
-      sys.path.
-
-      Set to 0 by the -s and -I command line options , and the PYTHONNOUSERSITE
-      environment variable. If set to -1 (default), it is set to
-      !Py_NoUserSiteDirectory. */
-    int user_site_directory;
 
     /* If non-zero, configure C standard steams (stdio, stdout,
        stderr):
@@ -364,10 +311,6 @@ typedef struct {
 
     /* If equal to 0, stop Python initialization before the "main" phase */
     int _init_main;
-
-    /* If non-zero, disallow threads, subprocesses, and fork.
-       Default: 0. */
-    int _isolated_interpreter;
 
     /* Original command line arguments. If _orig_argv is empty and _argv is
        not equal to [''], PyConfig_Read() copies the configuration 'argv' list
