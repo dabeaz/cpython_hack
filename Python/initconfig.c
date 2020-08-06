@@ -52,8 +52,6 @@ static const char usage_2[] = "\
 static const char usage_3[] = "\
 -u     : force the stdout and stderr streams to be unbuffered;\n\
          this option has no effect on stdin; also PYTHONUNBUFFERED=x\n\
--v     : verbose (trace import statements); also PYTHONVERBOSE=x\n\
-         can be supplied multiple times to increase verbosity\n\
 -V     : print the Python version number and exit (also --version)\n\
          when given twice, print more information about the build\n\
 -W arg : warning control; arg is action:message:category:module:lineno\n\
@@ -117,7 +115,6 @@ static const char usage_6[] =
    stdin and stdout error handler to "surrogateescape". */
 int Py_UTF8Mode = 0;
 int Py_DebugFlag = 0; /* Needed by parser.c */
-int Py_VerboseFlag = 0; /* Needed by import.c */
 int Py_QuietFlag = 0; /* Needed by sysmodule.c */
 int Py_InteractiveFlag = 0; /* Needed by Py_FdIsInteractive() below */
 int Py_InspectFlag = 0; /* Needed to determine whether to exit at SystemExit */
@@ -167,7 +164,6 @@ _Py_GetGlobalVariablesAsDict(void)
 
     SET_ITEM_INT(Py_UTF8Mode);
     SET_ITEM_INT(Py_DebugFlag);
-    SET_ITEM_INT(Py_VerboseFlag);
     SET_ITEM_INT(Py_QuietFlag);
     SET_ITEM_INT(Py_InteractiveFlag);
     SET_ITEM_INT(Py_InspectFlag);
@@ -531,7 +527,6 @@ PyConfig_Clear(PyConfig *config)
     CLEAR(config->run_command);
     CLEAR(config->run_module);
     CLEAR(config->run_filename);
-    CLEAR(config->check_hash_pycs_mode);
 #undef CLEAR
 }
 
@@ -548,13 +543,10 @@ _PyConfig_InitCompatConfig(PyConfig *config)
     config->parse_argv = 0;
     config->inspect = -1;
     config->interactive = -1;
-    config->parser_debug= -1;
-    config->verbose = -1;
     config->quiet = -1;
     config->configure_c_stdio = 0;
     config->buffered_stdio = -1;
     config->_install_importlib = 1;
-    config->check_hash_pycs_mode = NULL;
     config->pathconfig_warnings = -1;
     config->_init_main = 1;
 }
@@ -568,8 +560,6 @@ config_init_defaults(PyConfig *config)
     config->use_environment = 1;
     config->inspect = 0;
     config->interactive = 0;
-    config->parser_debug= 0;
-    config->verbose = 0;
     config->quiet = 0;
     config->buffered_stdio = 1;
     config->pathconfig_warnings = 1;
@@ -717,8 +707,6 @@ _PyConfig_Copy(PyConfig *config, const PyConfig *config2)
 
     COPY_ATTR(inspect);
     COPY_ATTR(interactive);
-    COPY_ATTR(parser_debug);
-    COPY_ATTR(verbose);
     COPY_ATTR(quiet);
     COPY_ATTR(configure_c_stdio);
     COPY_ATTR(buffered_stdio);
@@ -730,7 +718,6 @@ _PyConfig_Copy(PyConfig *config, const PyConfig *config2)
     COPY_WSTR_ATTR(run_command);
     COPY_WSTR_ATTR(run_module);
     COPY_WSTR_ATTR(run_filename);
-    COPY_WSTR_ATTR(check_hash_pycs_mode);
     COPY_ATTR(pathconfig_warnings);
     COPY_ATTR(_init_main);
     COPY_WSTRLIST(_orig_argv);
@@ -798,8 +785,6 @@ config_as_dict(const PyConfig *config)
     SET_ITEM_WSTR(platlibdir);
     SET_ITEM_INT(inspect);
     SET_ITEM_INT(interactive);
-    SET_ITEM_INT(parser_debug);
-    SET_ITEM_INT(verbose);
     SET_ITEM_INT(quiet);
     SET_ITEM_INT(configure_c_stdio);
     SET_ITEM_INT(buffered_stdio);
@@ -810,7 +795,6 @@ config_as_dict(const PyConfig *config)
     SET_ITEM_WSTR(run_module);
     SET_ITEM_WSTR(run_filename);
     SET_ITEM_INT(_install_importlib);
-    SET_ITEM_WSTR(check_hash_pycs_mode);
     SET_ITEM_INT(pathconfig_warnings);
     SET_ITEM_INT(_init_main);
     SET_ITEM_WSTRLIST(_orig_argv);
@@ -888,8 +872,6 @@ config_get_global_vars(PyConfig *config)
     COPY_NOT_FLAG(use_environment, Py_IgnoreEnvironmentFlag);
     COPY_FLAG(inspect, Py_InspectFlag);
     COPY_FLAG(interactive, Py_InteractiveFlag);
-    COPY_FLAG(parser_debug, Py_DebugFlag);
-    COPY_FLAG(verbose, Py_VerboseFlag);
     COPY_FLAG(quiet, Py_QuietFlag);
     COPY_NOT_FLAG(pathconfig_warnings, Py_FrozenFlag);
 
@@ -916,8 +898,6 @@ config_set_global_vars(const PyConfig *config)
     COPY_NOT_FLAG(use_environment, Py_IgnoreEnvironmentFlag);
     COPY_FLAG(inspect, Py_InspectFlag);
     COPY_FLAG(interactive, Py_InteractiveFlag);
-    COPY_FLAG(parser_debug, Py_DebugFlag);
-    COPY_FLAG(verbose, Py_VerboseFlag);
     COPY_FLAG(quiet, Py_QuietFlag);
     COPY_NOT_FLAG(pathconfig_warnings, Py_FrozenFlag);
 
@@ -1098,8 +1078,6 @@ config_read_env_vars(PyConfig *config)
     int use_env = config->use_environment;
 
     /* Get environment variables */
-    _Py_get_env_flag(use_env, &config->parser_debug, "PYTHONDEBUG");
-    _Py_get_env_flag(use_env, &config->verbose, "PYTHONVERBOSE");
     _Py_get_env_flag(use_env, &config->inspect, "PYTHONINSPECT");
 
     int unbuffered_stdio = 0;
@@ -1404,14 +1382,6 @@ config_read(PyConfig *config)
         }
     }
 
-    if (config->check_hash_pycs_mode == NULL) {
-        status = PyConfig_SetString(config, &config->check_hash_pycs_mode,
-                                    L"default");
-        if (_PyStatus_EXCEPTION(status)) {
-            return status;
-        }
-    }
-
     if (config->configure_c_stdio < 0) {
         config->configure_c_stdio = 1;
     }
@@ -1548,21 +1518,12 @@ config_parse_cmdline(PyConfig *config,
                 || wcscmp(_PyOS_optarg, L"never") == 0
                 || wcscmp(_PyOS_optarg, L"default") == 0)
             {
-                status = PyConfig_SetString(config, &config->check_hash_pycs_mode,
-                                            _PyOS_optarg);
-                if (_PyStatus_EXCEPTION(status)) {
-                    return status;
-                }
             } else {
                 fprintf(stderr, "--check-hash-based-pycs must be one of "
                         "'default', 'always', or 'never'\n");
                 config_usage(1, program);
                 return _PyStatus_EXIT(2);
             }
-            break;
-
-        case 'd':
-            config->parser_debug++;
             break;
 
         case 'i':
@@ -1584,10 +1545,6 @@ config_parse_cmdline(PyConfig *config,
 
         case 'u':
             config->buffered_stdio = 0;
-            break;
-
-        case 'v':
-            config->verbose++;
             break;
 
         case 'x':
@@ -1917,8 +1874,6 @@ PyConfig_Read(PyConfig *config)
     assert(config->use_hash_seed >= 0);
     assert(config->inspect >= 0);
     assert(config->interactive >= 0);
-    assert(config->parser_debug >= 0);
-    assert(config->verbose >= 0);
     assert(config->quiet >= 0);
     assert(config->parse_argv >= 0);
     assert(config->configure_c_stdio >= 0);
@@ -1945,7 +1900,6 @@ PyConfig_Read(PyConfig *config)
     assert(config->stdio_errors != NULL);
     /* -c and -m options are exclusive */
     assert(!(config->run_command != NULL && config->run_module != NULL));
-    assert(config->check_hash_pycs_mode != NULL);
     assert(config->_install_importlib >= 0);
     assert(config->pathconfig_warnings >= 0);
     assert(_PyWideStringList_CheckConsistency(&config->_orig_argv));

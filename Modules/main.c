@@ -185,7 +185,7 @@ pymain_header(const PyConfig *config)
         return;
     }
 
-    if (!config->verbose && (config_run_code(config) || !stdin_is_interactive(config))) {
+    if ((config_run_code(config) || !stdin_is_interactive(config))) {
         return;
     }
 

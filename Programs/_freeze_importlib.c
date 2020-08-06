@@ -79,8 +79,6 @@ main(int argc, char *argv[])
     PyConfig config;
     PyConfig_InitIsolatedConfig(&config);
 
-    config.site_import = 0;
-
     PyStatus status;
     status = PyConfig_SetString(&config, &config.program_name,
                                 L"./_freeze_importlib");

@@ -2243,12 +2243,10 @@ Flags provided through command line arguments or environment vars.");
 static PyTypeObject FlagsType;
 
 static PyStructSequence_Field flags_fields[] = {
-    {"debug",                   "-d"},
     {"inspect",                 "-i"},
     {"interactive",             "-i"},
     /*    {"optimize",                "-O or -OO"},*/
     {"ignore_environment",      "-E"},
-    {"verbose",                 "-v"},
     /* {"unbuffered",                   "-u"}, */
     /* {"skip_first",                   "-x"}, */
     {"quiet",                   "-q"},
@@ -2280,11 +2278,9 @@ make_flags(PyThreadState *tstate)
 #define SetFlag(flag) \
     PyStructSequence_SET_ITEM(seq, pos++, PyLong_FromLong(flag))
 
-    SetFlag(config->parser_debug);
     SetFlag(config->inspect);
     SetFlag(config->interactive);
     SetFlag(!config->use_environment);
-    SetFlag(config->verbose);
     /* SetFlag(saw_unbuffered_flag); */
     /* SetFlag(skipfirstline); */
     SetFlag(config->quiet);

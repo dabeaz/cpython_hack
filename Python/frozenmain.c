@@ -77,10 +77,6 @@ Py_FrozenMain(int argc, char **argv)
         Py_ExitStatusException(status);
     }
 
-    if (Py_VerboseFlag)
-        fprintf(stderr, "Python %s\n%s\n",
-            Py_GetVersion(), Py_GetCopyright());
-
     PySys_SetArgv(argc, argv_copy);
 
     n = PyImport_ImportFrozenModule("__main__");

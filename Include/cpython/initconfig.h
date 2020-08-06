@@ -195,26 +195,6 @@ typedef struct {
        inherit Py_InteractiveFlag value. */
     int interactive;
 
-    /* If greater than 0, enable the debug mode: turn on parser debugging
-       output (for expert only, depending on compilation options).
-
-       Incremented by the -d command line option. Set by the PYTHONDEBUG
-       environment variable. If set to -1 (default), inherit Py_DebugFlag
-       value. */
-    int parser_debug;
-
-    /* If greater than 0, enable the verbose mode: print a message each time a
-       module is initialized, showing the place (filename or built-in module)
-       from which it is loaded.
-
-       If greater or equal to 2, print a message for each file that is checked
-       for when searching for a module. Also provides information on module
-       cleanup at exit.
-
-       Incremented by the -v option. Set by the PYTHONVERBOSE environment
-       variable. If set to -1 (default), inherit Py_VerboseFlag value. */
-    int verbose;
-
     /* If greater than 0, enable the quiet mode: Don't display the copyright
        and version messages even in interactive mode.
 
@@ -249,20 +229,6 @@ typedef struct {
        Py_SetStandardStreamEncoding() function.
        See also 'stdio_encoding' attribute. */
     wchar_t *stdio_errors;
-
-    /* Value of the --check-hash-based-pycs command line option:
-
-       - "default" means the 'check_source' flag in hash-based pycs
-         determines invalidation
-       - "always" causes the interpreter to hash the source file for
-         invalidation regardless of value of 'check_source' bit
-       - "never" causes the interpreter to always assume hash-based pycs are
-         valid
-
-       The default value is "default".
-
-       See PEP 552 "Deterministic pycs" for more details. */
-    wchar_t *check_hash_pycs_mode;
 
     /* --- Path configuration inputs ------------ */
 

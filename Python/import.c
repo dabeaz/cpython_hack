@@ -519,28 +519,17 @@ _PyImport_Cleanup(PyThreadState *tstate)
        destruction order.  Sigh. */
 
     /* XXX Perhaps these precautions are obsolete. Who knows? */
-
-    int verbose = _PyInterpreterState_GetConfig(interp)->verbose;
-    if (verbose) {
-        PySys_WriteStderr("# clear builtins._\n");
-    }
     if (PyDict_SetItemString(interp->builtins, "_", Py_None) < 0) {
         PyErr_WriteUnraisable(NULL);
     }
 
     const char * const *p;
     for (p = sys_deletes; *p != NULL; p++) {
-        if (verbose) {
-            PySys_WriteStderr("# clear sys.%s\n", *p);
-        }
         if (PyDict_SetItemString(interp->sysdict, *p, Py_None) < 0) {
             PyErr_WriteUnraisable(NULL);
         }
     }
     for (p = sys_files; *p != NULL; p+=2) {
-        if (verbose) {
-            PySys_WriteStderr("# restore sys.%s\n", *p);
-        }
         PyObject *value = _PyDict_GetItemStringWithError(interp->sysdict,
                                                          *(p+1));
         if (value == NULL) {
@@ -580,9 +569,6 @@ _PyImport_Cleanup(PyThreadState *tstate)
     }
 #define CLEAR_MODULE(name, mod) \
     if (PyModule_Check(mod)) { \
-        if (verbose && PyUnicode_Check(name)) { \
-            PySys_FormatStderr("# cleanup[2] removing %U\n", name); \
-        } \
         STORE_MODULE_WEAKREF(name, mod); \
         if (PyObject_SetItem(modules, name, Py_None) < 0) { \
             PyErr_WriteUnraisable(NULL); \
@@ -675,9 +661,6 @@ _PyImport_Cleanup(PyThreadState *tstate)
             if (dict == interp->builtins || dict == interp->sysdict)
                 continue;
             Py_INCREF(mod);
-            if (verbose && PyUnicode_Check(name)) {
-                PySys_FormatStderr("# cleanup[3] wiping %U\n", name);
-            }
             _PyModule_Clear(mod);
             Py_DECREF(mod);
         }
@@ -685,13 +668,7 @@ _PyImport_Cleanup(PyThreadState *tstate)
     }
 
     /* Next, delete sys and builtins (in that order) */
-    if (verbose) {
-        PySys_FormatStderr("# cleanup[3] wiping sys\n");
-    }
     _PyModule_ClearDict(interp->sysdict);
-    if (verbose) {
-        PySys_FormatStderr("# cleanup[3] wiping builtins\n");
-    }
     _PyModule_ClearDict(interp->builtins);
 
     /* Clear module dict copies stored in the interpreter state */
@@ -854,12 +831,6 @@ import_find_extension(PyThreadState *tstate, PyObject *name,
     if (_PyState_AddModule(tstate, mod, def) < 0) {
         PyMapping_DelItem(modules, name);
         return NULL;
-    }
-
-    int verbose = _PyInterpreterState_GetConfig(tstate->interp)->verbose;
-    if (verbose) {
-        PySys_FormatStderr("import %U # previously loaded (%R)\n",
-                           name, filename);
     }
     return mod;
 }
@@ -1568,7 +1539,7 @@ remove_importlib_frames(PyThreadState *tstate)
        which end with a call to "_call_with_frames_removed". */
 
     _PyErr_Fetch(tstate, &exception, &value, &base_tb);
-    if (!exception || _PyInterpreterState_GetConfig(tstate->interp)->verbose) {
+    if (!exception) {
         goto done;
     }
 
@@ -2287,18 +2258,6 @@ PyInit__imp(void)
     if (d == NULL) {
         goto failure;
     }
-
-    const wchar_t *mode = _Py_GetConfig()->check_hash_pycs_mode;
-    PyObject *pyc_mode = PyUnicode_FromWideChar(mode, -1);
-    if (pyc_mode == NULL) {
-        goto failure;
-    }
-    if (PyDict_SetItemString(d, "check_hash_based_pycs", pyc_mode) < 0) {
-        Py_DECREF(pyc_mode);
-        goto failure;
-    }
-    Py_DECREF(pyc_mode);
-
     return m;
   failure:
     Py_XDECREF(m);

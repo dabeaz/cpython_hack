@@ -591,20 +591,6 @@ _PyInterpreterState_ClearModules(PyInterpreterState *interp)
 void
 PyThreadState_Clear(PyThreadState *tstate)
 {
-    int verbose = _PyInterpreterState_GetConfig(tstate->interp)->verbose;
-
-    if (verbose && tstate->frame != NULL) {
-        /* bpo-20526: After the main thread calls
-           _PyRuntimeState_SetFinalizing() in Py_FinalizeEx(), threads must
-           exit when trying to take the GIL. If a thread exit in the middle of
-           _PyEval_EvalFrameDefault(), tstate->frame is not reset to its
-           previous value. It is more likely with daemon threads, but it can
-           happen with regular threads if threading._shutdown() fails
-           (ex: interrupted by CTRL+C). */
-        fprintf(stderr,
-          "PyThreadState_Clear: warning: thread still has a frame\n");
-    }
-
     /* Don't clear tstate->frame: it is a borrowed reference */
 
     Py_CLEAR(tstate->dict);
@@ -617,13 +603,6 @@ PyThreadState_Clear(PyThreadState *tstate)
     Py_CLEAR(tstate->exc_state.exc_type);
     Py_CLEAR(tstate->exc_state.exc_value);
     Py_CLEAR(tstate->exc_state.exc_traceback);
-
-    /* The stack of exception states should contain just this thread. */
-    if (verbose && tstate->exc_info != &tstate->exc_state) {
-        fprintf(stderr,
-          "PyThreadState_Clear: warning: thread still has a generator\n");
-    }
-
     tstate->c_profilefunc = NULL;
     tstate->c_tracefunc = NULL;
     Py_CLEAR(tstate->c_profileobj);

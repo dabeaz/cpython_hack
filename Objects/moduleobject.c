@@ -563,21 +563,12 @@ _PyModule_ClearDict(PyObject *d)
     Py_ssize_t pos;
     PyObject *key, *value;
 
-    int verbose = _Py_GetConfig()->verbose;
-
     /* First, clear only names starting with a single underscore */
     pos = 0;
     while (PyDict_Next(d, &pos, &key, &value)) {
         if (value != Py_None && PyUnicode_Check(key)) {
             if (PyUnicode_READ_CHAR(key, 0) == '_' &&
                 PyUnicode_READ_CHAR(key, 1) != '_') {
-                if (verbose > 1) {
-                    const char *s = PyUnicode_AsUTF8(key);
-                    if (s != NULL)
-                        PySys_WriteStderr("#   clear[1] %s\n", s);
-                    else
-                        PyErr_Clear();
-                }
                 if (PyDict_SetItem(d, key, Py_None) != 0) {
                     PyErr_WriteUnraisable(NULL);
                 }
@@ -592,13 +583,6 @@ _PyModule_ClearDict(PyObject *d)
             if (PyUnicode_READ_CHAR(key, 0) != '_' ||
                 !_PyUnicode_EqualToASCIIString(key, "__builtins__"))
             {
-                if (verbose > 1) {
-                    const char *s = PyUnicode_AsUTF8(key);
-                    if (s != NULL)
-                        PySys_WriteStderr("#   clear[2] %s\n", s);
-                    else
-                        PyErr_Clear();
-                }
                 if (PyDict_SetItem(d, key, Py_None) != 0) {
                     PyErr_WriteUnraisable(NULL);
                 }
@@ -701,12 +685,7 @@ module___init___impl(PyModuleObject *self, PyObject *name, PyObject *doc)
 static void
 module_dealloc(PyModuleObject *m)
 {
-    int verbose = _Py_GetConfig()->verbose;
-
     PyObject_GC_UnTrack(m);
-    if (verbose && m->md_name) {
-        PySys_FormatStderr("# destroy %U\n", m->md_name);
-    }
     if (m->md_weaklist != NULL)
         PyObject_ClearWeakRefs((PyObject *) m);
     /* bpo-39824: Don't call m_free() if m_size > 0 and md_state=NULL */
