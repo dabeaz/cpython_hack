@@ -353,7 +353,6 @@ PYTHON_OBJS=	\
 		Python/structmember.o \
 		Python/symtable.o \
 		Python/sysmodule.o \
-		Python/thread.o \
 		Python/traceback.o \
 		Python/getopt.o \
 		Python/pystrcmp.o \
@@ -953,7 +952,6 @@ PYTHON_HEADERS= \
 		$(srcdir)/Include/pystrcmp.h \
 		$(srcdir)/Include/pystrtod.h \
 		$(srcdir)/Include/pythonrun.h \
-		$(srcdir)/Include/pythread.h \
 		$(srcdir)/Include/rangeobject.h \
 		$(srcdir)/Include/setobject.h \
 		$(srcdir)/Include/sliceobject.h \
@@ -1633,8 +1631,6 @@ patchcheck: @DEF_MAKE_RULE@
 	$(RUNSHARED) ./$(BUILDPYTHON) $(srcdir)/Tools/scripts/patchcheck.py
 
 # Dependencies
-
-# Python/thread.o: @THREADHEADERS@ 
 
 # Declare targets that aren't real files
 .PHONY: all build_all sharedmods check-clean-src oldsharedmods test quicktest

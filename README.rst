@@ -69,7 +69,8 @@ Halfway there.  It all gets more difficult from here...
 - Day 55 (8/04/2020). A hex lifted.
 - Day 56 (8/05/2020). Various config/cmdline options removed.
 - Day 57 (8/06/2020). Continued removal of options.
-
+- Day 58 (8/07/2020). Threads. Pulled.
+  
 Copyright and License Information
 ---------------------------------
 

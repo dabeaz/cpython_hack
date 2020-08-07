@@ -34,7 +34,6 @@ struct _gilstate_runtime_state {
     */
     /* TODO: Given interp_main, it may be possible to kill this ref */
     PyInterpreterState *autoInterpreterState;
-    Py_tss_t autoTSSkey;
 };
   
 /* Full Python runtime state */

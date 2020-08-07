@@ -904,7 +904,7 @@ write_thread_id(int fd, PyThreadState *tstate, int is_current)
     else
         PUTS(fd, "Thread 0x");
     _Py_DumpHexadecimal(fd,
-                        tstate->thread_id,
+                        0, 
                         sizeof(unsigned long) * 2);
     PUTS(fd, " (most recent call first):\n");
 }

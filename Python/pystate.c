@@ -48,11 +48,6 @@ _PyRuntimeState_Init_impl(_PyRuntimeState *runtime)
     _PyEval_InitRuntimeState(&runtime->ceval);
     PyPreConfig_InitPythonConfig(&runtime->preconfig);
     runtime->gilstate.check_enabled = 1;
-
-    /* A TSS key must be initialized with Py_tss_NEEDS_INIT
-       in accordance with the specification. */
-    Py_tss_t initial = Py_tss_NEEDS_INIT;
-    runtime->gilstate.autoTSSkey = initial;
     runtime->interpreters.next_id = -1;
     return _PyStatus_OK();
 }
@@ -176,7 +171,6 @@ void
 PyInterpreterState_Clear(PyInterpreterState *interp)
 {
     _PyRuntimeState *runtime = interp->runtime;
-    PyThreadState *tstate = _PyThreadState_GET();
 
     for (PyThreadState *p = interp->tstate_head; p != NULL; p = p->next) {
         PyThreadState_Clear(p);
@@ -394,7 +388,6 @@ new_threadstate(PyInterpreterState *interp, int init)
     tstate->use_tracing = 0;
     tstate->gilstate_counter = 0;
     tstate->async_exc = NULL;
-    tstate->thread_id = PyThread_get_thread_ident();
 
     tstate->dict = NULL;
 
@@ -638,12 +631,6 @@ tstate_delete_common(PyThreadState *tstate,
     if (tstate->next) {
         tstate->next->prev = tstate->prev;
     }
-
-    if (gilstate->autoInterpreterState &&
-        PyThread_tss_get(&gilstate->autoTSSkey) == tstate)
-    {
-        PyThread_tss_set(&gilstate->autoTSSkey, NULL);
-    }
 }
 
 
@@ -879,7 +866,7 @@ _PyThread_CurrentFrames(void)
             if (frame == NULL) {
                 continue;
             }
-            PyObject *id = PyLong_FromUnsignedLong(t->thread_id);
+            PyObject *id = PyLong_FromUnsignedLong(0);
             if (id == NULL) {
                 goto fail;
             }

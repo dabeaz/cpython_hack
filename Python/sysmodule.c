@@ -2587,8 +2587,6 @@ _PySys_InitCore(PyThreadState *tstate, PyObject *sysdict)
                         PyUnicode_FromString("legacy"));
 #endif
 
-    SET_SYS_FROM_STRING("thread_info", PyThread_GetInfo());
-
     /* initialize asyncgen_hooks */
     if (AsyncGenHooksType.tp_name == NULL) {
         if (PyStructSequence_InitType2(

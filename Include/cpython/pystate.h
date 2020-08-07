@@ -90,7 +90,7 @@ struct _ts {
     int gilstate_counter;
 
     PyObject *async_exc; /* Asynchronous exception to raise */
-    unsigned long thread_id; /* Thread id where this tstate was created */
+   /* unsigned long thread_id; Thread id where this tstate was created */
 
     int trash_delete_nesting;
     PyObject *trash_delete_later;
