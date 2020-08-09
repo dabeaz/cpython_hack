@@ -70,7 +70,8 @@ Halfway there.  It all gets more difficult from here...
 - Day 56 (8/05/2020). Various config/cmdline options removed.
 - Day 57 (8/06/2020). Continued removal of options.
 - Day 58 (8/07/2020). Threads. Pulled.
-  
+- Day 59 (8/08/2020). Removed some deprecated C API functions.
+
 Copyright and License Information
 ---------------------------------
 

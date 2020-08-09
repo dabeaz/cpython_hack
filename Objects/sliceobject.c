@@ -278,19 +278,6 @@ PySlice_AdjustIndices(Py_ssize_t length,
     return 0;
 }
 
-#undef PySlice_GetIndicesEx
-
-int
-PySlice_GetIndicesEx(PyObject *_r, Py_ssize_t length,
-                     Py_ssize_t *start, Py_ssize_t *stop, Py_ssize_t *step,
-                     Py_ssize_t *slicelength)
-{
-    if (PySlice_Unpack(_r, start, stop, step) < 0)
-        return -1;
-    *slicelength = PySlice_AdjustIndices(length, start, stop, *step);
-    return 0;
-}
-
 static PyObject *
 slice_new(PyTypeObject *type, PyObject *args, PyObject *kw)
 {

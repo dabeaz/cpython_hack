@@ -10,7 +10,6 @@
 #include "pycore_pymem.h"         // _PyMem_IsPtrFreed()
 #include "pycore_pystate.h"       // _PyThreadState_GET()
 #include "frameobject.h"
-#include "interpreteridobject.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -1667,7 +1666,6 @@ _PyTypes_Init(void)
     INIT_TYPE(&PySeqIter_Type, "sequence iterator");
     INIT_TYPE(&PyCoro_Type, "coroutine");
     INIT_TYPE(&_PyCoroWrapper_Type, "coroutine wrapper");
-    INIT_TYPE(&_PyInterpreterID_Type, "interpreter ID");
     return _PyStatus_OK();
 
 #undef INIT_TYPE

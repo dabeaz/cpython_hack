@@ -283,14 +283,6 @@ PyObject_Call(PyObject *callable, PyObject *args, PyObject *kwargs)
 }
 
 
-PyObject *
-PyCFunction_Call(PyObject *callable, PyObject *args, PyObject *kwargs)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    return _PyObject_Call(tstate, callable, args, kwargs);
-}
-
-
 /* --- PyFunction call functions ---------------------------------- */
 
 static PyObject* _Py_HOT_FUNCTION
@@ -390,37 +382,6 @@ _PyFunction_Vectorcall(PyObject *func, PyObject* const* stack,
                 nkwargs, 1,
                 d, (int)nd, kwdefs,
                 closure, name, qualname);
-}
-
-
-/* --- More complex call functions -------------------------------- */
-
-/* External interface to call any callable object.
-   The args must be a tuple or NULL.  The kwargs must be a dict or NULL. */
-PyObject *
-PyEval_CallObjectWithKeywords(PyObject *callable,
-                              PyObject *args, PyObject *kwargs)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-
-    if (args != NULL && !PyTuple_Check(args)) {
-        _PyErr_SetString(tstate, PyExc_TypeError,
-                         "argument list must be a tuple");
-        return NULL;
-    }
-
-    if (kwargs != NULL && !PyDict_Check(kwargs)) {
-        _PyErr_SetString(tstate, PyExc_TypeError,
-                         "keyword list must be a dictionary");
-        return NULL;
-    }
-
-    if (args == NULL) {
-        return _PyObject_FastCallDictTstate(tstate, callable, NULL, 0, kwargs);
-    }
-    else {
-        return _PyObject_Call(tstate, callable, args, kwargs);
-    }
 }
 
 
@@ -551,25 +512,6 @@ PyObject_CallFunction(PyObject *callable, const char *format, ...)
     return result;
 }
 
-
-/* PyEval_CallFunction is exact copy of PyObject_CallFunction.
- * This function is kept for backward compatibility.
- */
-PyObject *
-PyEval_CallFunction(PyObject *callable, const char *format, ...)
-{
-    va_list va;
-    PyObject *result;
-    PyThreadState *tstate = _PyThreadState_GET();
-
-    va_start(va, format);
-    result = _PyObject_CallFunctionVa(tstate, callable, format, va, 0);
-    va_end(va);
-
-    return result;
-}
-
-
 PyObject *
 _PyObject_CallFunction_SizeT(PyObject *callable, const char *format, ...)
 {
@@ -621,33 +563,6 @@ PyObject_CallMethod(PyObject *obj, const char *name, const char *format, ...)
     Py_DECREF(callable);
     return retval;
 }
-
-
-/* PyEval_CallMethod is exact copy of PyObject_CallMethod.
- * This function is kept for backward compatibility.
- */
-PyObject *
-PyEval_CallMethod(PyObject *obj, const char *name, const char *format, ...)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    if (obj == NULL || name == NULL) {
-        return null_error(tstate);
-    }
-
-    PyObject *callable = PyObject_GetAttrString(obj, name);
-    if (callable == NULL) {
-        return NULL;
-    }
-
-    va_list va;
-    va_start(va, format);
-    PyObject *retval = callmethod(tstate, callable, format, va, 0);
-    va_end(va);
-
-    Py_DECREF(callable);
-    return retval;
-}
-
 
 PyObject *
 _PyObject_CallMethodId(PyObject *obj, _Py_Identifier *name,

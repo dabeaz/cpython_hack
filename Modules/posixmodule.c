@@ -187,14 +187,6 @@ extern char        *ctermid_r(char *);
 #  include <sanitizer/msan_interface.h>
 #endif
 
-
-/* Legacy wrapper */
-void
-PyOS_AfterFork(void)
-{
-}
-
-
 PyObject *
 _PyLong_FromUid(uid_t uid)
 {

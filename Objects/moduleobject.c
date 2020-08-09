@@ -509,19 +509,6 @@ PyModule_GetFilenameObject(PyObject *m)
     return fileobj;
 }
 
-const char *
-PyModule_GetFilename(PyObject *m)
-{
-    PyObject *fileobj;
-    const char *utf8;
-    fileobj = PyModule_GetFilenameObject(m);
-    if (fileobj == NULL)
-        return NULL;
-    utf8 = PyUnicode_AsUTF8(fileobj);
-    Py_DECREF(fileobj);   /* module dict has still a reference */
-    return utf8;
-}
-
 PyModuleDef*
 PyModule_GetDef(PyObject* m)
 {
