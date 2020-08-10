@@ -264,7 +264,7 @@ PySymtable_BuildObject(mod_ty mod, PyObject *filename, PyFutureFeatures *future)
     asdl_seq *seq;
     int i;
     PyThreadState *tstate;
-    int recursion_limit = Py_GetRecursionLimit();
+    int recursion_limit = 1000; /* Py_GetRecursionLimit(); */
     int starting_recursion_depth;
 
     if (st == NULL)
@@ -1170,11 +1170,10 @@ symtable_record_directive(struct symtable *st, identifier name, int lineno, int 
 static int
 symtable_visit_stmt(struct symtable *st, stmt_ty s)
 {
+
     if (++st->recursion_depth > st->recursion_limit) {
-        PyErr_SetString(PyExc_RecursionError,
-                        "maximum recursion depth exceeded during compilation");
-        VISIT_QUIT(st, 0);
     }
+
     switch (s->kind) {
     case FunctionDef_kind:
         if (!symtable_add_def(st, s->v.FunctionDef.name, DEF_LOCAL))
@@ -1527,11 +1526,11 @@ symtable_handle_namedexpr(struct symtable *st, expr_ty e)
 static int
 symtable_visit_expr(struct symtable *st, expr_ty e)
 {
+
     if (++st->recursion_depth > st->recursion_limit) {
-        PyErr_SetString(PyExc_RecursionError,
-                        "maximum recursion depth exceeded during compilation");
-        VISIT_QUIT(st, 0);
     }
+
+    
     switch (e->kind) {
     case NamedExpr_kind:
         if(!symtable_handle_namedexpr(st, e))

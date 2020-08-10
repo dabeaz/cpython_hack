@@ -71,7 +71,9 @@ Halfway there.  It all gets more difficult from here...
 - Day 57 (8/06/2020). Continued removal of options.
 - Day 58 (8/07/2020). Threads. Pulled.
 - Day 59 (8/08/2020). Removed some deprecated C API functions.
-
+- Day 60 (8/09/2020). What recursion limit? Segfault FTW!
+  
+  
 Copyright and License Information
 ---------------------------------
 

@@ -286,38 +286,6 @@ sys_getprofile(PyObject *module, PyObject *Py_UNUSED(ignored))
     return sys_getprofile_impl(module);
 }
 
-PyDoc_STRVAR(sys_setrecursionlimit__doc__,
-"setrecursionlimit($module, limit, /)\n"
-"--\n"
-"\n"
-"Set the maximum depth of the Python interpreter stack to n.\n"
-"\n"
-"This limit prevents infinite recursion from causing an overflow of the C\n"
-"stack and crashing Python.  The highest possible limit is platform-\n"
-"dependent.");
-
-#define SYS_SETRECURSIONLIMIT_METHODDEF    \
-    {"setrecursionlimit", (PyCFunction)sys_setrecursionlimit, METH_O, sys_setrecursionlimit__doc__},
-
-static PyObject *
-sys_setrecursionlimit_impl(PyObject *module, int new_limit);
-
-static PyObject *
-sys_setrecursionlimit(PyObject *module, PyObject *arg)
-{
-    PyObject *return_value = NULL;
-    int new_limit;
-
-    new_limit = _PyLong_AsInt(arg);
-    if (new_limit == -1 && PyErr_Occurred()) {
-        goto exit;
-    }
-    return_value = sys_setrecursionlimit_impl(module, new_limit);
-
-exit:
-    return return_value;
-}
-
 PyDoc_STRVAR(sys_set_coroutine_origin_tracking_depth__doc__,
 "set_coroutine_origin_tracking_depth($module, /, depth)\n"
 "--\n"
@@ -404,28 +372,6 @@ static PyObject *
 sys_get_asyncgen_hooks(PyObject *module, PyObject *Py_UNUSED(ignored))
 {
     return sys_get_asyncgen_hooks_impl(module);
-}
-
-PyDoc_STRVAR(sys_getrecursionlimit__doc__,
-"getrecursionlimit($module, /)\n"
-"--\n"
-"\n"
-"Return the current value of the recursion limit.\n"
-"\n"
-"The recursion limit is the maximum depth of the Python interpreter\n"
-"stack.  This limit prevents infinite recursion from causing an overflow\n"
-"of the C stack and crashing Python.");
-
-#define SYS_GETRECURSIONLIMIT_METHODDEF    \
-    {"getrecursionlimit", (PyCFunction)sys_getrecursionlimit, METH_NOARGS, sys_getrecursionlimit__doc__},
-
-static PyObject *
-sys_getrecursionlimit_impl(PyObject *module);
-
-static PyObject *
-sys_getrecursionlimit(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    return sys_getrecursionlimit_impl(module);
 }
 
 #if defined(HAVE_DLOPEN)
@@ -1458,55 +1404,6 @@ sys_getprofile_impl(PyObject *module)
     return temp;
 }
 
-
-/*[clinic input]
-sys.setrecursionlimit
-
-    limit as new_limit: int
-    /
-
-Set the maximum depth of the Python interpreter stack to n.
-
-This limit prevents infinite recursion from causing an overflow of the C
-stack and crashing Python.  The highest possible limit is platform-
-dependent.
-[clinic start generated code]*/
-
-static PyObject *
-sys_setrecursionlimit_impl(PyObject *module, int new_limit)
-/*[clinic end generated code: output=35e1c64754800ace input=b0f7a23393924af3]*/
-{
-    int mark;
-    PyThreadState *tstate = _PyThreadState_GET();
-
-    if (new_limit < 1) {
-        _PyErr_SetString(tstate, PyExc_ValueError,
-                         "recursion limit must be greater or equal than 1");
-        return NULL;
-    }
-
-    /* Issue #25274: When the recursion depth hits the recursion limit in
-       _Py_CheckRecursiveCall(), the overflowed flag of the thread state is
-       set to 1 and a RecursionError is raised. The overflowed flag is reset
-       to 0 when the recursion depth goes below the low-water mark: see
-       Py_LeaveRecursiveCall().
-
-       Reject too low new limit if the current recursion depth is higher than
-       the new low-water mark. Otherwise it may not be possible anymore to
-       reset the overflowed flag to 0. */
-    mark = _Py_RecursionLimitLowerWaterMark(new_limit);
-    if (tstate->recursion_depth >= mark) {
-        _PyErr_Format(tstate, PyExc_RecursionError,
-                      "cannot set the recursion limit to %i at "
-                      "the recursion depth %i: the limit is too low",
-                      new_limit, tstate->recursion_depth);
-        return NULL;
-    }
-
-    Py_SetRecursionLimit(new_limit);
-    Py_RETURN_NONE;
-}
-
 /*[clinic input]
 sys.set_coroutine_origin_tracking_depth
 
@@ -1722,22 +1619,6 @@ get_hash_info(PyThreadState *tstate)
         return NULL;
     }
     return hash_info;
-}
-/*[clinic input]
-sys.getrecursionlimit
-
-Return the current value of the recursion limit.
-
-The recursion limit is the maximum depth of the Python interpreter
-stack.  This limit prevents infinite recursion from causing an overflow
-of the C stack and crashing Python.
-[clinic start generated code]*/
-
-static PyObject *
-sys_getrecursionlimit_impl(PyObject *module)
-/*[clinic end generated code: output=d571fb6b4549ef2e input=1c6129fd2efaeea8]*/
-{
-    return PyLong_FromLong(Py_GetRecursionLimit());
 }
 
 #ifdef HAVE_DLOPEN
@@ -2098,7 +1979,6 @@ static PyMethodDef sys_methods[] = {
     SYS_GETFILESYSTEMENCODEERRORS_METHODDEF
     SYS_GETTOTALREFCOUNT_METHODDEF
     SYS_GETREFCOUNT_METHODDEF
-    SYS_GETRECURSIONLIMIT_METHODDEF
     {"getsizeof",   (PyCFunction)(void(*)(void))sys_getsizeof,
      METH_VARARGS | METH_KEYWORDS, getsizeof_doc},
     SYS__GETFRAME_METHODDEF
@@ -2108,7 +1988,6 @@ static PyMethodDef sys_methods[] = {
     SYS_SETDLOPENFLAGS_METHODDEF
     {"setprofile",      sys_setprofile, METH_O, setprofile_doc},
     SYS_GETPROFILE_METHODDEF
-    SYS_SETRECURSIONLIMIT_METHODDEF
     {"settrace",        sys_settrace, METH_O, settrace_doc},
     SYS_GETTRACE_METHODDEF
     SYS_CALL_TRACING_METHODDEF
@@ -2223,12 +2102,10 @@ exit() -- exit the interpreter by raising SystemExit\n\
 getdlopenflags() -- returns flags to be used for dlopen() calls\n\
 getprofile() -- get the global profiling function\n\
 getrefcount() -- return the reference count for an object (plus one :-)\n\
-getrecursionlimit() -- return the max recursion depth for the interpreter\n\
 getsizeof() -- return the size of an object in bytes\n\
 gettrace() -- get the global debug tracing function\n\
 setdlopenflags() -- set the flags to be used for dlopen() calls\n\
 setprofile() -- set the global profiling function\n\
-setrecursionlimit() -- set the max recursion depth for the interpreter\n\
 settrace() -- set the global debug tracing function\n\
 "
 )

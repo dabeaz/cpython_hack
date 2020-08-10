@@ -62,12 +62,11 @@ PyAPI_DATA(int) _Py_CheckRecursionLimit;
 /* With USE_STACKCHECK macro defined, trigger stack checks in
    _Py_CheckRecursiveCall() on every 64th call to Py_EnterRecursiveCall. */
 static inline int _Py_MakeRecCheck(PyThreadState *tstate)  {
-    return (++tstate->recursion_depth > tstate->interp->ceval.recursion_limit
-            || ++tstate->stackcheck_counter > 64);
+  return 0;
 }
 #else
 static inline int _Py_MakeRecCheck(PyThreadState *tstate) {
-    return (++tstate->recursion_depth > tstate->interp->ceval.recursion_limit);
+  return 0;
 }
 #endif
 
@@ -77,7 +76,7 @@ PyAPI_FUNC(int) _Py_CheckRecursiveCall(
 
 static inline int _Py_EnterRecursiveCall(PyThreadState *tstate,
                                          const char *where) {
-    return (_Py_MakeRecCheck(tstate) && _Py_CheckRecursiveCall(tstate, where));
+  return (_Py_MakeRecCheck(tstate));
 }
 
 static inline int _Py_EnterRecursiveCall_inline(const char *where) {
@@ -101,10 +100,6 @@ static inline int _Py_RecursionLimitLowerWaterMark(int limit) {
 
 static inline void _Py_LeaveRecursiveCall(PyThreadState *tstate)  {
     tstate->recursion_depth--;
-    int limit = tstate->interp->ceval.recursion_limit;
-    if (tstate->recursion_depth < _Py_RecursionLimitLowerWaterMark(limit)) {
-        tstate->overflowed = 0;
-    }
 }
 
 static inline void _Py_LeaveRecursiveCall_inline(void)  {

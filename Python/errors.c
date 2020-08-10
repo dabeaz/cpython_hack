@@ -343,11 +343,7 @@ _PyErr_NormalizeException(PyThreadState *tstate, PyObject **exc,
     Py_DECREF(type);
     Py_DECREF(value);
     recursion_depth++;
-    if (recursion_depth == Py_NORMALIZE_RECURSION_LIMIT) {
-        _PyErr_SetString(tstate, PyExc_RecursionError,
-                         "maximum recursion depth exceeded "
-                         "while normalizing an exception");
-    }
+    
     /* If the new exception doesn't set a traceback and the old
        exception had a traceback, use the old traceback for the
        new exception.  It's better than nothing.
@@ -662,13 +658,6 @@ PyErr_SetFromErrnoWithFilenameObjects(PyObject *exc, PyObject *filenameObject, P
     PyObject *message;
     PyObject *v, *args;
     int i = errno;
-
-#if 0
-#ifdef EINTR
-    if (i == EINTR && PyErr_CheckSignals())
-        return NULL;
-#endif
-#endif
     
     if (i != 0) {
         const char *s = strerror(i);
