@@ -304,12 +304,7 @@ PyObject_Repr(PyObject *v)
 
     /* It is possible for a type to have a tp_repr representation that loops
        infinitely. */
-    if (_Py_EnterRecursiveCall(tstate,
-                               " while getting the repr of an object")) {
-        return NULL;
-    }
     res = (*Py_TYPE(v)->tp_repr)(v);
-    _Py_LeaveRecursiveCall(tstate);
 
     if (res == NULL) {
         return NULL;
@@ -350,11 +345,7 @@ PyObject_Str(PyObject *v)
 
     /* It is possible for a type to have a tp_str representation that loops
        infinitely. */
-    if (_Py_EnterRecursiveCall(tstate, " while getting the str of an object")) {
-        return NULL;
-    }
     res = (*Py_TYPE(v)->tp_str)(v);
-    _Py_LeaveRecursiveCall(tstate);
 
     if (res == NULL) {
         return NULL;
@@ -592,11 +583,7 @@ PyObject_RichCompare(PyObject *v, PyObject *w, int op)
         }
         return NULL;
     }
-    if (_Py_EnterRecursiveCall(tstate, " in comparison")) {
-        return NULL;
-    }
     PyObject *res = do_richcompare(tstate, v, w, op);
-    _Py_LeaveRecursiveCall(tstate);
     return res;
 }
 

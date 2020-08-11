@@ -14,46 +14,7 @@ PyAPI_FUNC(PyFrameObject *) PyEval_GetFrame(void);
 
 PyAPI_FUNC(int) Py_AddPendingCall(int (*func)(void *), void *arg);
 PyAPI_FUNC(int) Py_MakePendingCalls(void);
-
-/* Protection against deeply nested recursive calls
-
-   In Python 3.0, this protection has two levels:
-   * normal anti-recursion protection is triggered when the recursion level
-     exceeds the current recursion limit. It raises a RecursionError, and sets
-     the "overflowed" flag in the thread state structure. This flag
-     temporarily *disables* the normal protection; this allows cleanup code
-     to potentially outgrow the recursion limit while processing the
-     RecursionError.
-   * "last chance" anti-recursion protection is triggered when the recursion
-     level exceeds "current recursion limit + 50". By construction, this
-     protection can only be triggered when the "overflowed" flag is set. It
-     means the cleanup code has itself gone into an infinite loop, or the
-     RecursionError has been mistakingly ignored. When this protection is
-     triggered, the interpreter aborts with a Fatal Error.
-
-   In addition, the "overflowed" flag is automatically reset when the
-   recursion level drops below "current recursion limit - 50". This heuristic
-   is meant to ensure that the normal anti-recursion protection doesn't get
-   disabled too long.
-
-   Please note: this scheme has its own limitations. See:
-   http://mail.python.org/pipermail/python-dev/2008-August/082106.html
-   for some observations.
-*/
-PyAPI_FUNC(void) Py_SetRecursionLimit(int);
-PyAPI_FUNC(int) Py_GetRecursionLimit(void);
-
-PyAPI_FUNC(int) Py_EnterRecursiveCall(const char *where);
-PyAPI_FUNC(void) Py_LeaveRecursiveCall(void);
-
-#define Py_ALLOW_RECURSION \
-  do { unsigned char _old = PyThreadState_GET()->recursion_critical;\
-    PyThreadState_GET()->recursion_critical = 1;
-
-#define Py_END_ALLOW_RECURSION \
-    PyThreadState_GET()->recursion_critical = _old; \
-  } while(0);
-
+  
 PyAPI_FUNC(const char *) PyEval_GetFuncName(PyObject *);
 PyAPI_FUNC(const char *) PyEval_GetFuncDesc(PyObject *);
 

@@ -818,9 +818,6 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
 /* Start of code */
 
     /* push frame */
-    if (_Py_EnterRecursiveCall(tstate, "")) {
-        return NULL;
-    }
 
     tstate->frame = f;
 
@@ -3375,7 +3372,6 @@ exiting:
 
     /* pop frame */
 exit_eval_frame:
-    _Py_LeaveRecursiveCall(tstate);
     f->f_executing = 0;
     tstate->frame = f->f_back;
 
@@ -3889,9 +3885,7 @@ fail: /* Jump here from prelude on failure */
         _PyObject_GC_TRACK(f);
     }
     else {
-        ++tstate->recursion_depth;
         Py_DECREF(f);
-        --tstate->recursion_depth;
     }
     return retval;
 }
@@ -5130,21 +5124,4 @@ _PyEval_RequestCodeExtraIndex(freefunc free)
     new_index = interp->co_extra_user_count++;
     interp->co_extra_freefuncs[new_index] = free;
     return new_index;
-}
-
-/* Implement Py_EnterRecursiveCall() and Py_LeaveRecursiveCall() as functions
-   for the limited API. */
-
-#undef Py_EnterRecursiveCall
-
-int Py_EnterRecursiveCall(const char *where)
-{
-    return _Py_EnterRecursiveCall_inline(where);
-}
-
-#undef Py_LeaveRecursiveCall
-
-void Py_LeaveRecursiveCall(void)
-{
-    _Py_LeaveRecursiveCall_inline();
 }

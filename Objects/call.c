@@ -176,11 +176,7 @@ _PyObject_MakeTpCall(PyThreadState *tstate, PyObject *callable,
     }
 
     PyObject *result = NULL;
-    if (_Py_EnterRecursiveCall(tstate, " while calling a Python object") == 0)
-    {
-        result = call(callable, argstuple, kwdict);
-        _Py_LeaveRecursiveCall(tstate);
-    }
+    result = call(callable, argstuple, kwdict);
 
     Py_DECREF(argstuple);
     if (kwdict != keywords) {
@@ -263,13 +259,7 @@ _PyObject_Call(PyThreadState *tstate, PyObject *callable,
             return NULL;
         }
 
-        if (_Py_EnterRecursiveCall(tstate, " while calling a Python object")) {
-            return NULL;
-        }
-
         result = (*call)(callable, args, kwargs);
-
-        _Py_LeaveRecursiveCall(tstate);
 
         return _Py_CheckFunctionResult(tstate, callable, result, NULL);
     }
@@ -315,9 +305,7 @@ function_code_fastcall(PyThreadState *tstate, PyCodeObject *co,
         _PyObject_GC_TRACK(f);
     }
     else {
-        ++tstate->recursion_depth;
         Py_DECREF(f);
-        --tstate->recursion_depth;
     }
     return result;
 }

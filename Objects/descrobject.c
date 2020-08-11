@@ -278,9 +278,6 @@ typedef void (*funcptr)(void);
 static inline funcptr
 method_enter_call(PyThreadState *tstate, PyObject *func)
 {
-    if (_Py_EnterRecursiveCall(tstate, " while calling a Python object")) {
-        return NULL;
-    }
     return (funcptr)((PyMethodDescrObject *)func)->d_method->ml_meth;
 }
 
@@ -305,7 +302,6 @@ method_vectorcall_VARARGS(
     }
     PyObject *result = meth(args[0], argstuple);
     Py_DECREF(argstuple);
-    _Py_LeaveRecursiveCall(tstate);
     return result;
 }
 
@@ -337,7 +333,6 @@ method_vectorcall_VARARGS_KEYWORDS(
         goto exit;
     }
     result = meth(args[0], argstuple, kwdict);
-    _Py_LeaveRecursiveCall(tstate);
 exit:
     Py_DECREF(argstuple);
     Py_XDECREF(kwdict);
@@ -360,7 +355,6 @@ method_vectorcall_FASTCALL_KEYWORDS_METHOD(
     PyObject *result = meth(args[0],
                             ((PyMethodDescrObject *)func)->d_common.d_type,
                             args+1, nargs-1, kwnames);
-    Py_LeaveRecursiveCall();
     return result;
 }
 
@@ -379,7 +373,6 @@ method_vectorcall_FASTCALL(
         return NULL;
     }
     PyObject *result = meth(args[0], args+1, nargs-1);
-    _Py_LeaveRecursiveCall(tstate);
     return result;
 }
 
@@ -398,7 +391,6 @@ method_vectorcall_FASTCALL_KEYWORDS(
         return NULL;
     }
     PyObject *result = meth(args[0], args+1, nargs-1, kwnames);
-    _Py_LeaveRecursiveCall(tstate);
     return result;
 }
 
@@ -425,7 +417,6 @@ method_vectorcall_NOARGS(
         return NULL;
     }
     PyObject *result = meth(args[0], NULL);
-    _Py_LeaveRecursiveCall(tstate);
     return result;
 }
 
@@ -453,7 +444,6 @@ method_vectorcall_O(
         return NULL;
     }
     PyObject *result = meth(args[0], args[1]);
-    _Py_LeaveRecursiveCall(tstate);
     return result;
 }
 

@@ -53,13 +53,15 @@ struct _ts {
 
     /* Borrowed reference to the current frame (it can be NULL) */
     PyFrameObject *frame;
+  #if 0
     int recursion_depth;
     char overflowed; /* The stack has overflowed. Allow 50 more calls
                         to handle the runtime error. */
     char recursion_critical; /* The current calls must not cause
                                 a stack overflow. */
     int stackcheck_counter;
-
+#endif
+  
     /* 'tracing' keeps track of the execution depth when tracing/profiling.
        This is to prevent the actual trace/profile code from being recorded in
        the trace/profile. */

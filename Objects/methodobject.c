@@ -400,9 +400,6 @@ typedef void (*funcptr)(void);
 static inline funcptr
 cfunction_enter_call(PyThreadState *tstate, PyObject *func)
 {
-    if (_Py_EnterRecursiveCall(tstate, " while calling a Python object")) {
-        return NULL;
-    }
     return (funcptr)PyCFunction_GET_FUNCTION(func);
 }
 
@@ -422,7 +419,6 @@ cfunction_vectorcall_FASTCALL(
         return NULL;
     }
     PyObject *result = meth(PyCFunction_GET_SELF(func), args, nargs);
-    _Py_LeaveRecursiveCall(tstate);
     return result;
 }
 
@@ -438,7 +434,6 @@ cfunction_vectorcall_FASTCALL_KEYWORDS(
         return NULL;
     }
     PyObject *result = meth(PyCFunction_GET_SELF(func), args, nargs, kwnames);
-    _Py_LeaveRecursiveCall(tstate);
     return result;
 }
 
@@ -454,7 +449,6 @@ cfunction_vectorcall_FASTCALL_KEYWORDS_METHOD(
         return NULL;
     }
     PyObject *result = meth(PyCFunction_GET_SELF(func), cls, args, nargs, kwnames);
-    _Py_LeaveRecursiveCall(tstate);
     return result;
 }
 
@@ -481,7 +475,6 @@ cfunction_vectorcall_NOARGS(
         return NULL;
     }
     PyObject *result = meth(PyCFunction_GET_SELF(func), NULL);
-    _Py_LeaveRecursiveCall(tstate);
     return result;
 }
 
@@ -508,7 +501,6 @@ cfunction_vectorcall_O(
         return NULL;
     }
     PyObject *result = meth(PyCFunction_GET_SELF(func), args[0]);
-    _Py_LeaveRecursiveCall(tstate);
     return result;
 }
 
