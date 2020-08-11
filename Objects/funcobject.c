@@ -803,24 +803,7 @@ static PyMemberDef cm_memberlist[] = {
     {NULL}  /* Sentinel */
 };
 
-static PyObject *
-cm_get___isabstractmethod__(classmethod *cm, void *closure)
-{
-    int res = _PyObject_IsAbstract(cm->cm_callable);
-    if (res == -1) {
-        return NULL;
-    }
-    else if (res) {
-        Py_RETURN_TRUE;
-    }
-    Py_RETURN_FALSE;
-}
-
 static PyGetSetDef cm_getsetlist[] = {
-    {"__isabstractmethod__",
-     (getter)cm_get___isabstractmethod__, NULL,
-     NULL,
-     NULL},
     {"__dict__", PyObject_GenericGetDict, PyObject_GenericSetDict, NULL, NULL},
     {NULL} /* Sentinel */
 };
@@ -985,24 +968,7 @@ static PyMemberDef sm_memberlist[] = {
     {NULL}  /* Sentinel */
 };
 
-static PyObject *
-sm_get___isabstractmethod__(staticmethod *sm, void *closure)
-{
-    int res = _PyObject_IsAbstract(sm->sm_callable);
-    if (res == -1) {
-        return NULL;
-    }
-    else if (res) {
-        Py_RETURN_TRUE;
-    }
-    Py_RETURN_FALSE;
-}
-
 static PyGetSetDef sm_getsetlist[] = {
-    {"__isabstractmethod__",
-     (getter)sm_get___isabstractmethod__, NULL,
-     NULL,
-     NULL},
     {"__dict__", PyObject_GenericGetDict, PyObject_GenericSetDict, NULL, NULL},
     {NULL} /* Sentinel */
 };

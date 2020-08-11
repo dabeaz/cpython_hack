@@ -311,7 +311,6 @@ static size_t method_cache_collisions = 0;
 #  define INTERN_NAME_STRINGS
 
 /* alphabetical order */
-_Py_IDENTIFIER(__abstractmethods__);
 _Py_IDENTIFIER(__class__);
 _Py_IDENTIFIER(__class_getitem__);
 _Py_IDENTIFIER(__delitem__);
@@ -818,60 +817,6 @@ type_set_module(PyTypeObject *type, PyObject *value, void *context)
 }
 
 static PyObject *
-type_abstractmethods(PyTypeObject *type, void *context)
-{
-    PyObject *mod = NULL;
-    /* type itself has an __abstractmethods__ descriptor (this). Don't return
-       that. */
-    if (type != &PyType_Type)
-        mod = _PyDict_GetItemIdWithError(type->tp_dict, &PyId___abstractmethods__);
-    if (!mod) {
-        if (!PyErr_Occurred()) {
-            PyObject *message = _PyUnicode_FromId(&PyId___abstractmethods__);
-            if (message)
-                PyErr_SetObject(PyExc_AttributeError, message);
-        }
-        return NULL;
-    }
-    Py_INCREF(mod);
-    return mod;
-}
-
-static int
-type_set_abstractmethods(PyTypeObject *type, PyObject *value, void *context)
-{
-    /* __abstractmethods__ should only be set once on a type, in
-       abc.ABCMeta.__new__, so this function doesn't do anything
-       special to update subclasses.
-    */
-    int abstract, res;
-    if (value != NULL) {
-        abstract = PyObject_IsTrue(value);
-        if (abstract < 0)
-            return -1;
-        res = _PyDict_SetItemId(type->tp_dict, &PyId___abstractmethods__, value);
-    }
-    else {
-        abstract = 0;
-        res = _PyDict_DelItemId(type->tp_dict, &PyId___abstractmethods__);
-        if (res && PyErr_ExceptionMatches(PyExc_KeyError)) {
-            PyObject *message = _PyUnicode_FromId(&PyId___abstractmethods__);
-            if (message)
-                PyErr_SetObject(PyExc_AttributeError, message);
-            return -1;
-        }
-    }
-    if (res == 0) {
-        PyType_Modified(type);
-        if (abstract)
-            type->tp_flags |= Py_TPFLAGS_IS_ABSTRACT;
-        else
-            type->tp_flags &= ~Py_TPFLAGS_IS_ABSTRACT;
-    }
-    return res;
-}
-
-static PyObject *
 type_get_bases(PyTypeObject *type, void *context)
 {
     Py_INCREF(type->tp_bases);
@@ -1172,8 +1117,6 @@ static PyGetSetDef type_getsets[] = {
     {"__qualname__", (getter)type_qualname, (setter)type_set_qualname, NULL},
     {"__bases__", (getter)type_get_bases, (setter)type_set_bases, NULL},
     {"__module__", (getter)type_module, (setter)type_set_module, NULL},
-    {"__abstractmethods__", (getter)type_abstractmethods,
-     (setter)type_set_abstractmethods, NULL},
     {"__dict__",  (getter)type_dict,  NULL, NULL},
     {"__doc__", (getter)type_get_doc, (setter)type_set_doc, NULL},
     {"__text_signature__", (getter)type_get_text_signature, NULL, NULL},
@@ -4099,50 +4042,6 @@ object_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
                          type->tp_name);
             return NULL;
         }
-    }
-
-    if (type->tp_flags & Py_TPFLAGS_IS_ABSTRACT) {
-        PyObject *abstract_methods;
-        PyObject *sorted_methods;
-        PyObject *joined;
-        PyObject *comma;
-        _Py_static_string(comma_id, ", ");
-        Py_ssize_t method_count;
-
-        /* Compute ", ".join(sorted(type.__abstractmethods__))
-           into joined. */
-        abstract_methods = type_abstractmethods(type, NULL);
-        if (abstract_methods == NULL)
-            return NULL;
-        sorted_methods = PySequence_List(abstract_methods);
-        Py_DECREF(abstract_methods);
-        if (sorted_methods == NULL)
-            return NULL;
-        if (PyList_Sort(sorted_methods)) {
-            Py_DECREF(sorted_methods);
-            return NULL;
-        }
-        comma = _PyUnicode_FromId(&comma_id);
-        if (comma == NULL) {
-            Py_DECREF(sorted_methods);
-            return NULL;
-        }
-        joined = PyUnicode_Join(comma, sorted_methods);
-        method_count = PyObject_Length(sorted_methods);
-        Py_DECREF(sorted_methods);
-        if (joined == NULL)
-            return NULL;
-        if (method_count == -1)
-            return NULL;
-
-        PyErr_Format(PyExc_TypeError,
-                     "Can't instantiate abstract class %s "
-                     "with abstract method%s %U",
-                     type->tp_name,
-                     method_count > 1 ? "s" : "",
-                     joined);
-        Py_DECREF(joined);
-        return NULL;
     }
     return type->tp_alloc(type, 0);
 }

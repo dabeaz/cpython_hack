@@ -19,8 +19,6 @@ extern "C" {
 _Py_IDENTIFIER(Py_Repr);
 _Py_IDENTIFIER(__bytes__);
 _Py_IDENTIFIER(__dir__);
-_Py_IDENTIFIER(__isabstractmethod__);
-
 
 int
 _PyObject_CheckConsistency(PyObject *op, int check_content)
@@ -684,23 +682,6 @@ PyObject_SetAttrString(PyObject *v, const char *name, PyObject *w)
         return -1;
     res = PyObject_SetAttr(v, s, w);
     Py_XDECREF(s);
-    return res;
-}
-
-int
-_PyObject_IsAbstract(PyObject *obj)
-{
-    int res;
-    PyObject* isabstract;
-
-    if (obj == NULL)
-        return 0;
-
-    res = _PyObject_LookupAttrId(obj, &PyId___isabstractmethod__, &isabstract);
-    if (res > 0) {
-        res = PyObject_IsTrue(isabstract);
-        Py_DECREF(isabstract);
-    }
     return res;
 }
 

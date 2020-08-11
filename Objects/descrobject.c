@@ -1705,40 +1705,7 @@ property_init_impl(propertyobject *self, PyObject *fget, PyObject *fset,
     return 0;
 }
 
-static PyObject *
-property_get___isabstractmethod__(propertyobject *prop, void *closure)
-{
-    int res = _PyObject_IsAbstract(prop->prop_get);
-    if (res == -1) {
-        return NULL;
-    }
-    else if (res) {
-        Py_RETURN_TRUE;
-    }
-
-    res = _PyObject_IsAbstract(prop->prop_set);
-    if (res == -1) {
-        return NULL;
-    }
-    else if (res) {
-        Py_RETURN_TRUE;
-    }
-
-    res = _PyObject_IsAbstract(prop->prop_del);
-    if (res == -1) {
-        return NULL;
-    }
-    else if (res) {
-        Py_RETURN_TRUE;
-    }
-    Py_RETURN_FALSE;
-}
-
 static PyGetSetDef property_getsetlist[] = {
-    {"__isabstractmethod__",
-     (getter)property_get___isabstractmethod__, NULL,
-     NULL,
-     NULL},
     {NULL} /* Sentinel */
 };
 
