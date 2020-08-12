@@ -49,17 +49,6 @@ static PyObject * do_call_core(
 static int lltrace;
 static int prtrace(PyThreadState *, PyObject *, const char *);
 #endif
-static int call_trace(Py_tracefunc, PyObject *,
-                      PyThreadState *, PyFrameObject *,
-                      int, PyObject *);
-static int call_trace_protected(Py_tracefunc, PyObject *,
-                                PyThreadState *, PyFrameObject *,
-                                int, PyObject *);
-static void call_exc_trace(Py_tracefunc, PyObject *,
-                           PyThreadState *, PyFrameObject *);
-static int maybe_call_line_trace(Py_tracefunc, PyObject *,
-                                 PyThreadState *, PyFrameObject *,
-                                 int *, int *, int *);
 
 static PyObject * import_name(PyThreadState *, PyFrameObject *,
                               PyObject *, PyObject *, PyObject *);
@@ -820,40 +809,6 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
     /* push frame */
 
     tstate->frame = f;
-
-    if (tstate->use_tracing) {
-        if (tstate->c_tracefunc != NULL) {
-            /* tstate->c_tracefunc, if defined, is a
-               function that will be called on *every* entry
-               to a code block.  Its return value, if not
-               None, is a function that will be called at
-               the start of each executed line of code.
-               (Actually, the function must return itself
-               in order to continue tracing.)  The trace
-               functions are called with three arguments:
-               a pointer to the current frame, a string
-               indicating why the function is called, and
-               an argument which depends on the situation.
-               The global trace function is also called
-               whenever an exception is detected. */
-            if (call_trace_protected(tstate->c_tracefunc,
-                                     tstate->c_traceobj,
-                                     tstate, f, PyTrace_CALL, Py_None)) {
-                /* Trace function raised an error */
-                goto exit_eval_frame;
-            }
-        }
-        if (tstate->c_profilefunc != NULL) {
-            /* Similar for c_profilefunc, except it needn't
-               return itself and isn't called for "line" events */
-            if (call_trace_protected(tstate->c_profilefunc,
-                                     tstate->c_profileobj,
-                                     tstate, f, PyTrace_CALL, Py_None)) {
-                /* Profile function raised an error */
-                goto exit_eval_frame;
-            }
-        }
-    }
     co = f->f_code;
     names = co->co_names;
     consts = co->co_consts;
@@ -952,30 +907,6 @@ main_loop:
 
     fast_next_opcode:
         f->f_lasti = INSTR_OFFSET();
-
-        /* line-by-line tracing support */
-
-        if (_Py_TracingPossible(ceval2) &&
-            tstate->c_tracefunc != NULL && !tstate->tracing) {
-            int err;
-            /* see maybe_call_line_trace
-               for expository comments */
-            f->f_stacktop = stack_pointer;
-
-            err = maybe_call_line_trace(tstate->c_tracefunc,
-                                        tstate->c_traceobj,
-                                        tstate, f,
-                                        &instr_lb, &instr_ub, &instr_prev);
-            /* Reload possibly changed frame fields */
-            JUMPTO(f->f_lasti);
-            if (f->f_stacktop != NULL) {
-                stack_pointer = f->f_stacktop;
-                f->f_stacktop = NULL;
-            }
-            if (err)
-                /* trace function raised an exception */
-                goto error;
-        }
 
         /* Extract opcode and argument */
 
@@ -1751,9 +1682,6 @@ main_loop:
             Py_DECREF(v);
             if (retval == NULL) {
                 PyObject *val;
-                if (tstate->c_tracefunc != NULL
-                        && _PyErr_ExceptionMatches(tstate, PyExc_StopIteration))
-                    call_exc_trace(tstate->c_tracefunc, tstate->c_traceobj, tstate, f);
                 err = _PyGen_FetchStopIterationValue(&val);
                 if (err < 0)
                     goto error;
@@ -2849,9 +2777,6 @@ main_loop:
                 if (!_PyErr_ExceptionMatches(tstate, PyExc_StopIteration)) {
                     goto error;
                 }
-                else if (tstate->c_tracefunc != NULL) {
-                    call_exc_trace(tstate->c_tracefunc, tstate->c_traceobj, tstate, f);
-                }
                 _PyErr_Clear(tstate);
             }
             /* iterator ended normally */
@@ -3274,10 +3199,6 @@ error:
         /* Log traceback info. */
         PyTraceBack_Here(f);
 
-        if (tstate->c_tracefunc != NULL)
-            call_exc_trace(tstate->c_tracefunc, tstate->c_traceobj,
-                           tstate, f);
-
 exception_unwind:
         /* Unwind stacks if an exception occurred */
         while (f->f_iblock > 0) {
@@ -3355,20 +3276,6 @@ exception_unwind:
     }
 
 exiting:
-    if (tstate->use_tracing) {
-        if (tstate->c_tracefunc) {
-            if (call_trace_protected(tstate->c_tracefunc, tstate->c_traceobj,
-                                     tstate, f, PyTrace_RETURN, retval)) {
-                Py_CLEAR(retval);
-            }
-        }
-        if (tstate->c_profilefunc) {
-            if (call_trace_protected(tstate->c_profilefunc, tstate->c_profileobj,
-                                     tstate, f, PyTrace_RETURN, retval)) {
-                Py_CLEAR(retval);
-            }
-        }
-    }
 
     /* pop frame */
 exit_eval_frame:
@@ -4152,194 +4059,6 @@ prtrace(PyThreadState *tstate, PyObject *v, const char *str)
 }
 #endif
 
-static void
-call_exc_trace(Py_tracefunc func, PyObject *self,
-               PyThreadState *tstate, PyFrameObject *f)
-{
-    PyObject *type, *value, *traceback, *orig_traceback, *arg;
-    int err;
-    _PyErr_Fetch(tstate, &type, &value, &orig_traceback);
-    if (value == NULL) {
-        value = Py_None;
-        Py_INCREF(value);
-    }
-    _PyErr_NormalizeException(tstate, &type, &value, &orig_traceback);
-    traceback = (orig_traceback != NULL) ? orig_traceback : Py_None;
-    arg = PyTuple_Pack(3, type, value, traceback);
-    if (arg == NULL) {
-        _PyErr_Restore(tstate, type, value, orig_traceback);
-        return;
-    }
-    err = call_trace(func, self, tstate, f, PyTrace_EXCEPTION, arg);
-    Py_DECREF(arg);
-    if (err == 0) {
-        _PyErr_Restore(tstate, type, value, orig_traceback);
-    }
-    else {
-        Py_XDECREF(type);
-        Py_XDECREF(value);
-        Py_XDECREF(orig_traceback);
-    }
-}
-
-static int
-call_trace_protected(Py_tracefunc func, PyObject *obj,
-                     PyThreadState *tstate, PyFrameObject *frame,
-                     int what, PyObject *arg)
-{
-    PyObject *type, *value, *traceback;
-    int err;
-    _PyErr_Fetch(tstate, &type, &value, &traceback);
-    err = call_trace(func, obj, tstate, frame, what, arg);
-    if (err == 0)
-    {
-        _PyErr_Restore(tstate, type, value, traceback);
-        return 0;
-    }
-    else {
-        Py_XDECREF(type);
-        Py_XDECREF(value);
-        Py_XDECREF(traceback);
-        return -1;
-    }
-}
-
-static int
-call_trace(Py_tracefunc func, PyObject *obj,
-           PyThreadState *tstate, PyFrameObject *frame,
-           int what, PyObject *arg)
-{
-    int result;
-    if (tstate->tracing)
-        return 0;
-    tstate->tracing++;
-    tstate->use_tracing = 0;
-    result = func(obj, frame, what, arg);
-    tstate->use_tracing = ((tstate->c_tracefunc != NULL)
-                           || (tstate->c_profilefunc != NULL));
-    tstate->tracing--;
-    return result;
-}
-
-PyObject *
-_PyEval_CallTracing(PyObject *func, PyObject *args)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    int save_tracing = tstate->tracing;
-    int save_use_tracing = tstate->use_tracing;
-    PyObject *result;
-
-    tstate->tracing = 0;
-    tstate->use_tracing = ((tstate->c_tracefunc != NULL)
-                           || (tstate->c_profilefunc != NULL));
-    result = PyObject_Call(func, args, NULL);
-    tstate->tracing = save_tracing;
-    tstate->use_tracing = save_use_tracing;
-    return result;
-}
-
-/* See Objects/lnotab_notes.txt for a description of how tracing works. */
-static int
-maybe_call_line_trace(Py_tracefunc func, PyObject *obj,
-                      PyThreadState *tstate, PyFrameObject *frame,
-                      int *instr_lb, int *instr_ub, int *instr_prev)
-{
-    int result = 0;
-    int line = frame->f_lineno;
-
-    /* If the last instruction executed isn't in the current
-       instruction window, reset the window.
-    */
-    if (frame->f_lasti < *instr_lb || frame->f_lasti >= *instr_ub) {
-        PyAddrPair bounds;
-        line = _PyCode_CheckLineNumber(frame->f_code, frame->f_lasti,
-                                       &bounds);
-        *instr_lb = bounds.ap_lower;
-        *instr_ub = bounds.ap_upper;
-    }
-    /* If the last instruction falls at the start of a line or if it
-       represents a jump backwards, update the frame's line number and
-       then call the trace function if we're tracing source lines.
-    */
-    if ((frame->f_lasti == *instr_lb || frame->f_lasti < *instr_prev)) {
-        frame->f_lineno = line;
-        if (frame->f_trace_lines) {
-            result = call_trace(func, obj, tstate, frame, PyTrace_LINE, Py_None);
-        }
-    }
-    /* Always emit an opcode event if we're tracing all opcodes. */
-    if (frame->f_trace_opcodes) {
-        result = call_trace(func, obj, tstate, frame, PyTrace_OPCODE, Py_None);
-    }
-    *instr_prev = frame->f_lasti;
-    return result;
-}
-
-int
-_PyEval_SetProfile(PyThreadState *tstate, Py_tracefunc func, PyObject *arg)
-{
-    assert(is_tstate_valid(tstate));
-    PyObject *profileobj = tstate->c_profileobj;
-
-    tstate->c_profilefunc = NULL;
-    tstate->c_profileobj = NULL;
-    /* Must make sure that tracing is not ignored if 'profileobj' is freed */
-    tstate->use_tracing = tstate->c_tracefunc != NULL;
-    Py_XDECREF(profileobj);
-
-    Py_XINCREF(arg);
-    tstate->c_profileobj = arg;
-    tstate->c_profilefunc = func;
-
-    /* Flag that tracing or profiling is turned on */
-    tstate->use_tracing = (func != NULL) || (tstate->c_tracefunc != NULL);
-    return 0;
-}
-
-void
-PyEval_SetProfile(Py_tracefunc func, PyObject *arg)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    if (_PyEval_SetProfile(tstate, func, arg) < 0) {
-        _PyErr_WriteUnraisableMsg("in PyEval_SetProfile", NULL);
-    }
-}
-
-int
-_PyEval_SetTrace(PyThreadState *tstate, Py_tracefunc func, PyObject *arg)
-{
-    assert(is_tstate_valid(tstate));
-    struct _ceval_state *ceval2 = &tstate->interp->ceval;
-    PyObject *traceobj = tstate->c_traceobj;
-    ceval2->tracing_possible += (func != NULL) - (tstate->c_tracefunc != NULL);
-
-    tstate->c_tracefunc = NULL;
-    tstate->c_traceobj = NULL;
-    /* Must make sure that profiling is not ignored if 'traceobj' is freed */
-    tstate->use_tracing = (tstate->c_profilefunc != NULL);
-    Py_XDECREF(traceobj);
-
-    Py_XINCREF(arg);
-    tstate->c_traceobj = arg;
-    tstate->c_tracefunc = func;
-
-    /* Flag that tracing or profiling is turned on */
-    tstate->use_tracing = ((func != NULL)
-                           || (tstate->c_profilefunc != NULL));
-
-    return 0;
-}
-
-void
-PyEval_SetTrace(Py_tracefunc func, PyObject *arg)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    if (_PyEval_SetTrace(tstate, func, arg) < 0) {
-        _PyErr_WriteUnraisableMsg("in PyEval_SetTrace", NULL);
-    }
-}
-
-
 void
 _PyEval_SetCoroutineOriginTrackingDepth(PyThreadState *tstate, int new_depth)
 {
@@ -4504,69 +4223,8 @@ PyEval_GetFuncDesc(PyObject *func)
 }
 
 #define C_TRACE(x, call) \
-if (tstate->use_tracing && tstate->c_profilefunc) { \
-    if (call_trace(tstate->c_profilefunc, tstate->c_profileobj, \
-        tstate, tstate->frame, \
-        PyTrace_C_CALL, func)) { \
-        x = NULL; \
-    } \
-    else { \
-        x = call; \
-        if (tstate->c_profilefunc != NULL) { \
-            if (x == NULL) { \
-                call_trace_protected(tstate->c_profilefunc, \
-                    tstate->c_profileobj, \
-                    tstate, tstate->frame, \
-                    PyTrace_C_EXCEPTION, func); \
-                /* XXX should pass (type, value, tb) */ \
-            } else { \
-                if (call_trace(tstate->c_profilefunc, \
-                    tstate->c_profileobj, \
-                    tstate, tstate->frame, \
-                    PyTrace_C_RETURN, func)) { \
-                    Py_DECREF(x); \
-                    x = NULL; \
-                } \
-            } \
-        } \
-    } \
-} else { \
-    x = call; \
-    }
+    x = call; 
 
-
-static PyObject *
-trace_call_function(PyThreadState *tstate,
-                    PyObject *func,
-                    PyObject **args, Py_ssize_t nargs,
-                    PyObject *kwnames)
-{
-    PyObject *x;
-    if (PyCFunction_CheckExact(func) || PyCMethod_CheckExact(func)) {
-        C_TRACE(x, PyObject_Vectorcall(func, args, nargs, kwnames));
-        return x;
-    }
-    else if (Py_IS_TYPE(func, &PyMethodDescr_Type) && nargs > 0) {
-        /* We need to create a temporary bound method as argument
-           for profiling.
-
-           If nargs == 0, then this cannot work because we have no
-           "self". In any case, the call itself would raise
-           TypeError (foo needs an argument), so we just skip
-           profiling. */
-        PyObject *self = args[0];
-        func = Py_TYPE(func)->tp_descr_get(func, self, (PyObject*)Py_TYPE(self));
-        if (func == NULL) {
-            return NULL;
-        }
-        C_TRACE(x, PyObject_Vectorcall(func,
-                                        args+1, nargs-1,
-                                        kwnames));
-        Py_DECREF(func);
-        return x;
-    }
-    return PyObject_Vectorcall(func, args, nargs | PY_VECTORCALL_ARGUMENTS_OFFSET, kwnames);
-}
 
 /* Issue #29227: Inline call_function() into _PyEval_EvalFrameDefault()
    to reduce the stack consumption. */
@@ -4579,13 +4237,7 @@ call_function(PyThreadState *tstate, PyObject ***pp_stack, Py_ssize_t oparg, PyO
     Py_ssize_t nkwargs = (kwnames == NULL) ? 0 : PyTuple_GET_SIZE(kwnames);
     Py_ssize_t nargs = oparg - nkwargs;
     PyObject **stack = (*pp_stack) - nargs - nkwargs;
-
-    if (tstate->use_tracing) {
-        x = trace_call_function(tstate, func, stack, nargs, kwnames);
-    }
-    else {
-        x = PyObject_Vectorcall(func, stack, nargs | PY_VECTORCALL_ARGUMENTS_OFFSET, kwnames);
-    }
+    x = PyObject_Vectorcall(func, stack, nargs | PY_VECTORCALL_ARGUMENTS_OFFSET, kwnames);
 
     assert((x != NULL) ^ (_PyErr_Occurred(tstate) != NULL));
 
@@ -4609,28 +4261,6 @@ do_call_core(PyThreadState *tstate, PyObject *func, PyObject *callargs, PyObject
     }
     else if (Py_IS_TYPE(func, &PyMethodDescr_Type)) {
         Py_ssize_t nargs = PyTuple_GET_SIZE(callargs);
-        if (nargs > 0 && tstate->use_tracing) {
-            /* We need to create a temporary bound method as argument
-               for profiling.
-
-               If nargs == 0, then this cannot work because we have no
-               "self". In any case, the call itself would raise
-               TypeError (foo needs an argument), so we just skip
-               profiling. */
-            PyObject *self = PyTuple_GET_ITEM(callargs, 0);
-            func = Py_TYPE(func)->tp_descr_get(func, self, (PyObject*)Py_TYPE(self));
-            if (func == NULL) {
-                return NULL;
-            }
-
-            C_TRACE(result, _PyObject_FastCallDictTstate(
-                                    tstate, func,
-                                    &_PyTuple_ITEMS(callargs)[1],
-                                    nargs - 1,
-                                    kwdict));
-            Py_DECREF(func);
-            return result;
-        }
     }
     return PyObject_Call(func, callargs, kwdict);
 }

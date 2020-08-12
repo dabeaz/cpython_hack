@@ -246,46 +246,6 @@ exit:
     return return_value;
 }
 
-PyDoc_STRVAR(sys_gettrace__doc__,
-"gettrace($module, /)\n"
-"--\n"
-"\n"
-"Return the global debug tracing function set with sys.settrace.\n"
-"\n"
-"See the debugger chapter in the library manual.");
-
-#define SYS_GETTRACE_METHODDEF    \
-    {"gettrace", (PyCFunction)sys_gettrace, METH_NOARGS, sys_gettrace__doc__},
-
-static PyObject *
-sys_gettrace_impl(PyObject *module);
-
-static PyObject *
-sys_gettrace(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    return sys_gettrace_impl(module);
-}
-
-PyDoc_STRVAR(sys_getprofile__doc__,
-"getprofile($module, /)\n"
-"--\n"
-"\n"
-"Return the profiling function set with sys.setprofile.\n"
-"\n"
-"See the profiler chapter in the library manual.");
-
-#define SYS_GETPROFILE_METHODDEF    \
-    {"getprofile", (PyCFunction)sys_getprofile, METH_NOARGS, sys_getprofile__doc__},
-
-static PyObject *
-sys_getprofile_impl(PyObject *module);
-
-static PyObject *
-sys_getprofile(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    return sys_getprofile_impl(module);
-}
-
 PyDoc_STRVAR(sys_set_coroutine_origin_tracking_depth__doc__,
 "set_coroutine_origin_tracking_depth($module, /, depth)\n"
 "--\n"
@@ -592,65 +552,6 @@ sys__current_frames(PyObject *module, PyObject *Py_UNUSED(ignored))
     return sys__current_frames_impl(module);
 }
 
-PyDoc_STRVAR(sys_call_tracing__doc__,
-"call_tracing($module, func, args, /)\n"
-"--\n"
-"\n"
-"Call func(*args), while tracing is enabled.\n"
-"\n"
-"The tracing state is saved, and restored afterwards.  This is intended\n"
-"to be called from a debugger from a checkpoint, to recursively debug\n"
-"some other code.");
-
-#define SYS_CALL_TRACING_METHODDEF    \
-    {"call_tracing", (PyCFunction)(void(*)(void))sys_call_tracing, METH_FASTCALL, sys_call_tracing__doc__},
-
-static PyObject *
-sys_call_tracing_impl(PyObject *module, PyObject *func, PyObject *funcargs);
-
-static PyObject *
-sys_call_tracing(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
-{
-    PyObject *return_value = NULL;
-    PyObject *func;
-    PyObject *funcargs;
-
-    if (!_PyArg_CheckPositional("call_tracing", nargs, 2, 2)) {
-        goto exit;
-    }
-    func = args[0];
-    if (!PyTuple_Check(args[1])) {
-        _PyArg_BadArgument("call_tracing", "argument 2", "tuple", args[1]);
-        goto exit;
-    }
-    funcargs = args[1];
-    return_value = sys_call_tracing_impl(module, func, funcargs);
-
-exit:
-    return return_value;
-}
-
-PyDoc_STRVAR(sys__debugmallocstats__doc__,
-"_debugmallocstats($module, /)\n"
-"--\n"
-"\n"
-"Print summary info to stderr about the state of pymalloc\'s structures.\n"
-"\n"
-"In Py_DEBUG mode, also perform some expensive internal consistency\n"
-"checks.");
-
-#define SYS__DEBUGMALLOCSTATS_METHODDEF    \
-    {"_debugmallocstats", (PyCFunction)sys__debugmallocstats, METH_NOARGS, sys__debugmallocstats__doc__},
-
-static PyObject *
-sys__debugmallocstats_impl(PyObject *module);
-
-static PyObject *
-sys__debugmallocstats(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    return sys__debugmallocstats_impl(module);
-}
-
 PyDoc_STRVAR(sys__clear_type_cache__doc__,
 "_clear_type_cache($module, /)\n"
 "--\n"
@@ -816,90 +717,6 @@ PySys_SetObject(const char *name, PyObject *v)
     PyThreadState *tstate = _PyThreadState_GET();
     return sys_set_object(tstate, name, v);
 }
-
-static PyObject *
-sys_breakpointhook(PyObject *self, PyObject *const *args, Py_ssize_t nargs, PyObject *keywords)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    assert(!_PyErr_Occurred(tstate));
-    char *envar = Py_GETENV("PYTHONBREAKPOINT");
-
-    if (envar == NULL || strlen(envar) == 0) {
-        envar = "pdb.set_trace";
-    }
-    else if (!strcmp(envar, "0")) {
-        /* The breakpoint is explicitly no-op'd. */
-        Py_RETURN_NONE;
-    }
-    /* According to POSIX the string returned by getenv() might be invalidated
-     * or the string content might be overwritten by a subsequent call to
-     * getenv().  Since importing a module can performs the getenv() calls,
-     * we need to save a copy of envar. */
-    envar = _PyMem_RawStrdup(envar);
-    if (envar == NULL) {
-        _PyErr_NoMemory(tstate);
-        return NULL;
-    }
-    const char *last_dot = strrchr(envar, '.');
-    const char *attrname = NULL;
-    PyObject *modulepath = NULL;
-
-    if (last_dot == NULL) {
-        /* The breakpoint is a built-in, e.g. PYTHONBREAKPOINT=int */
-        modulepath = PyUnicode_FromString("builtins");
-        attrname = envar;
-    }
-    else if (last_dot != envar) {
-        /* Split on the last dot; */
-        modulepath = PyUnicode_FromStringAndSize(envar, last_dot - envar);
-        attrname = last_dot + 1;
-    }
-    else {
-        goto warn;
-    }
-    if (modulepath == NULL) {
-        PyMem_RawFree(envar);
-        return NULL;
-    }
-
-    PyObject *module = PyImport_Import(modulepath);
-    Py_DECREF(modulepath);
-
-    if (module == NULL) {
-        if (_PyErr_ExceptionMatches(tstate, PyExc_ImportError)) {
-            goto warn;
-        }
-        PyMem_RawFree(envar);
-        return NULL;
-    }
-
-    PyObject *hook = PyObject_GetAttrString(module, attrname);
-    Py_DECREF(module);
-
-    if (hook == NULL) {
-        if (_PyErr_ExceptionMatches(tstate, PyExc_AttributeError)) {
-            goto warn;
-        }
-        PyMem_RawFree(envar);
-        return NULL;
-    }
-    PyMem_RawFree(envar);
-    PyObject *retval = PyObject_Vectorcall(hook, args, nargs, keywords);
-    Py_DECREF(hook);
-    return retval;
-
-  warn:
-    /* If any of the imports went wrong, then warn and ignore. */
-    _PyErr_Clear(tstate);
-    PyMem_RawFree(envar);
-    Py_RETURN_NONE;
-}
-
-PyDoc_STRVAR(breakpointhook_doc,
-"breakpointhook(*args, **kws)\n"
-"\n"
-"This hook function is called by built-in breakpoint().\n"
-);
 
 /* Write repr(o) to sys.stdout using sys.stdout.encoding and 'backslashreplace'
    error handler. If sys.stdout has a buffer attribute, use
@@ -1202,207 +1019,6 @@ sys_intern_impl(PyObject *module, PyObject *s)
     }
 }
 
-
-/*
- * Cached interned string objects used for calling the profile and
- * trace functions.  Initialized by trace_init().
- */
-static PyObject *whatstrings[8] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
-
-static int
-trace_init(void)
-{
-    static const char * const whatnames[8] = {
-        "call", "exception", "line", "return",
-        "c_call", "c_exception", "c_return",
-        "opcode"
-    };
-    PyObject *name;
-    int i;
-    for (i = 0; i < 8; ++i) {
-        if (whatstrings[i] == NULL) {
-            name = PyUnicode_InternFromString(whatnames[i]);
-            if (name == NULL)
-                return -1;
-            whatstrings[i] = name;
-        }
-    }
-    return 0;
-}
-
-
-static PyObject *
-call_trampoline(PyThreadState *tstate, PyObject* callback,
-                PyFrameObject *frame, int what, PyObject *arg)
-{
-    if (PyFrame_FastToLocalsWithError(frame) < 0) {
-        return NULL;
-    }
-
-    PyObject *stack[3];
-    stack[0] = (PyObject *)frame;
-    stack[1] = whatstrings[what];
-    stack[2] = (arg != NULL) ? arg : Py_None;
-
-    /* call the Python-level function */
-    PyObject *result = _PyObject_FastCallTstate(tstate, callback, stack, 3);
-
-    PyFrame_LocalsToFast(frame, 1);
-    if (result == NULL) {
-        PyTraceBack_Here(frame);
-    }
-
-    return result;
-}
-
-static int
-profile_trampoline(PyObject *self, PyFrameObject *frame,
-                   int what, PyObject *arg)
-{
-    if (arg == NULL) {
-        arg = Py_None;
-    }
-
-    PyThreadState *tstate = _PyThreadState_GET();
-    PyObject *result = call_trampoline(tstate, self, frame, what, arg);
-    if (result == NULL) {
-        _PyEval_SetProfile(tstate, NULL, NULL);
-        return -1;
-    }
-
-    Py_DECREF(result);
-    return 0;
-}
-
-static int
-trace_trampoline(PyObject *self, PyFrameObject *frame,
-                 int what, PyObject *arg)
-{
-    PyObject *callback;
-    if (what == PyTrace_CALL) {
-        callback = self;
-    }
-    else {
-        callback = frame->f_trace;
-    }
-    if (callback == NULL) {
-        return 0;
-    }
-
-    PyThreadState *tstate = _PyThreadState_GET();
-    PyObject *result = call_trampoline(tstate, callback, frame, what, arg);
-    if (result == NULL) {
-        _PyEval_SetTrace(tstate, NULL, NULL);
-        Py_CLEAR(frame->f_trace);
-        return -1;
-    }
-
-    if (result != Py_None) {
-        Py_XSETREF(frame->f_trace, result);
-    }
-    else {
-        Py_DECREF(result);
-    }
-    return 0;
-}
-
-static PyObject *
-sys_settrace(PyObject *self, PyObject *args)
-{
-    if (trace_init() == -1) {
-        return NULL;
-    }
-
-    PyThreadState *tstate = _PyThreadState_GET();
-    if (args == Py_None) {
-        if (_PyEval_SetTrace(tstate, NULL, NULL) < 0) {
-            return NULL;
-        }
-    }
-    else {
-        if (_PyEval_SetTrace(tstate, trace_trampoline, args) < 0) {
-            return NULL;
-        }
-    }
-    Py_RETURN_NONE;
-}
-
-PyDoc_STRVAR(settrace_doc,
-"settrace(function)\n\
-\n\
-Set the global debug tracing function.  It will be called on each\n\
-function call.  See the debugger chapter in the library manual."
-);
-
-/*[clinic input]
-sys.gettrace
-
-Return the global debug tracing function set with sys.settrace.
-
-See the debugger chapter in the library manual.
-[clinic start generated code]*/
-
-static PyObject *
-sys_gettrace_impl(PyObject *module)
-/*[clinic end generated code: output=e97e3a4d8c971b6e input=373b51bb2147f4d8]*/
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    PyObject *temp = tstate->c_traceobj;
-
-    if (temp == NULL)
-        temp = Py_None;
-    Py_INCREF(temp);
-    return temp;
-}
-
-static PyObject *
-sys_setprofile(PyObject *self, PyObject *args)
-{
-    if (trace_init() == -1) {
-        return NULL;
-    }
-
-    PyThreadState *tstate = _PyThreadState_GET();
-    if (args == Py_None) {
-        if (_PyEval_SetProfile(tstate, NULL, NULL) < 0) {
-            return NULL;
-        }
-    }
-    else {
-        if (_PyEval_SetProfile(tstate, profile_trampoline, args) < 0) {
-            return NULL;
-        }
-    }
-    Py_RETURN_NONE;
-}
-
-PyDoc_STRVAR(setprofile_doc,
-"setprofile(function)\n\
-\n\
-Set the profiling function.  It will be called on each function call\n\
-and return.  See the profiler chapter in the library manual."
-);
-
-/*[clinic input]
-sys.getprofile
-
-Return the profiling function set with sys.setprofile.
-
-See the profiler chapter in the library manual.
-[clinic start generated code]*/
-
-static PyObject *
-sys_getprofile_impl(PyObject *module)
-/*[clinic end generated code: output=579b96b373448188 input=1b3209d89a32965d]*/
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    PyObject *temp = tstate->c_profileobj;
-
-    if (temp == NULL)
-        temp = Py_None;
-    Py_INCREF(temp);
-    return temp;
-}
 
 /*[clinic input]
 sys.set_coroutine_origin_tracking_depth
@@ -1856,54 +1472,10 @@ sys__current_frames_impl(PyObject *module)
     return _PyThread_CurrentFrames();
 }
 
-/*[clinic input]
-sys.call_tracing
-
-    func: object
-    args as funcargs: object(subclass_of='&PyTuple_Type')
-    /
-
-Call func(*args), while tracing is enabled.
-
-The tracing state is saved, and restored afterwards.  This is intended
-to be called from a debugger from a checkpoint, to recursively debug
-some other code.
-[clinic start generated code]*/
-
-static PyObject *
-sys_call_tracing_impl(PyObject *module, PyObject *func, PyObject *funcargs)
-/*[clinic end generated code: output=7e4999853cd4e5a6 input=5102e8b11049f92f]*/
-{
-    return _PyEval_CallTracing(func, funcargs);
-}
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/*[clinic input]
-sys._debugmallocstats
-
-Print summary info to stderr about the state of pymalloc's structures.
-
-In Py_DEBUG mode, also perform some expensive internal consistency
-checks.
-[clinic start generated code]*/
-
-static PyObject *
-sys__debugmallocstats_impl(PyObject *module)
-/*[clinic end generated code: output=ec3565f8c7cee46a input=33c0c9c416f98424]*/
-{
-#ifdef WITH_PYMALLOC
-    if (_PyObject_DebugMallocStats(stderr)) {
-        fputc('\n', stderr);
-    }
-#endif
-    _PyObject_DebugTypeStats(stderr);
-
-    Py_RETURN_NONE;
-}
 
 #ifdef DYNAMIC_EXECUTION_PROFILE
 /* Defined in ceval.c because it uses static globals if that file */
@@ -1961,8 +1533,6 @@ sys_getandroidapilevel_impl(PyObject *module)
 
 static PyMethodDef sys_methods[] = {
     /* Might as well keep this in alphabetic order */
-    {"breakpointhook",  (PyCFunction)(void(*)(void))sys_breakpointhook,
-     METH_FASTCALL | METH_KEYWORDS, breakpointhook_doc},
     SYS__CLEAR_TYPE_CACHE_METHODDEF
     SYS__CURRENT_FRAMES_METHODDEF
     SYS_DISPLAYHOOK_METHODDEF
@@ -1986,12 +1556,6 @@ static PyMethodDef sys_methods[] = {
     SYS_IS_FINALIZING_METHODDEF
     SYS_MDEBUG_METHODDEF
     SYS_SETDLOPENFLAGS_METHODDEF
-    {"setprofile",      sys_setprofile, METH_O, setprofile_doc},
-    SYS_GETPROFILE_METHODDEF
-    {"settrace",        sys_settrace, METH_O, settrace_doc},
-    SYS_GETTRACE_METHODDEF
-    SYS_CALL_TRACING_METHODDEF
-    SYS__DEBUGMALLOCSTATS_METHODDEF
     SYS_SET_COROUTINE_ORIGIN_TRACKING_DEPTH_METHODDEF
     SYS_GET_COROUTINE_ORIGIN_TRACKING_DEPTH_METHODDEF
     {"set_asyncgen_hooks", (PyCFunction)(void(*)(void))sys_set_asyncgen_hooks,
@@ -2368,9 +1932,6 @@ _PySys_InitCore(PyThreadState *tstate, PyObject *sysdict)
                                PyDict_GetItemString(sysdict, "displayhook"));
     SET_SYS_FROM_STRING_BORROW("__excepthook__",
                                PyDict_GetItemString(sysdict, "excepthook"));
-    SET_SYS_FROM_STRING_BORROW(
-        "__breakpointhook__",
-        PyDict_GetItemString(sysdict, "breakpointhook"));
     SET_SYS_FROM_STRING_BORROW("__unraisablehook__",
                                PyDict_GetItemString(sysdict, "unraisablehook"));
 
@@ -2496,38 +2057,6 @@ err_occurred:
             return res;                                    \
         }                                                  \
     } while (0)
-
-
-static int
-sys_add_xoption(PyObject *opts, const wchar_t *s)
-{
-    PyObject *name, *value;
-
-    const wchar_t *name_end = wcschr(s, L'=');
-    if (!name_end) {
-        name = PyUnicode_FromWideChar(s, -1);
-        value = Py_True;
-        Py_INCREF(value);
-    }
-    else {
-        name = PyUnicode_FromWideChar(s, name_end - s);
-        value = PyUnicode_FromWideChar(name_end + 1, -1);
-    }
-    if (name == NULL || value == NULL) {
-        goto error;
-    }
-    if (PyDict_SetItem(opts, name, value) < 0) {
-        goto error;
-    }
-    Py_DECREF(name);
-    Py_DECREF(value);
-    return 0;
-
-error:
-    Py_XDECREF(name);
-    Py_XDECREF(value);
-    return -1;
-}
 
 
 int

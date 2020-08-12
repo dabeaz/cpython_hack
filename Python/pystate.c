@@ -380,8 +380,6 @@ new_threadstate(PyInterpreterState *interp, int init)
     tstate->interp = interp;
 
     tstate->frame = NULL;
-    tstate->tracing = 0;
-    tstate->use_tracing = 0;
     tstate->gilstate_counter = 0;
     tstate->async_exc = NULL;
 
@@ -396,11 +394,6 @@ new_threadstate(PyInterpreterState *interp, int init)
     tstate->exc_state.exc_traceback = NULL;
     tstate->exc_state.previous_item = NULL;
     tstate->exc_info = &tstate->exc_state;
-
-    tstate->c_profilefunc = NULL;
-    tstate->c_tracefunc = NULL;
-    tstate->c_profileobj = NULL;
-    tstate->c_traceobj = NULL;
 
     tstate->trash_delete_nesting = 0;
     tstate->trash_delete_later = NULL;
@@ -592,10 +585,6 @@ PyThreadState_Clear(PyThreadState *tstate)
     Py_CLEAR(tstate->exc_state.exc_type);
     Py_CLEAR(tstate->exc_state.exc_value);
     Py_CLEAR(tstate->exc_state.exc_traceback);
-    tstate->c_profilefunc = NULL;
-    tstate->c_tracefunc = NULL;
-    Py_CLEAR(tstate->c_profileobj);
-    Py_CLEAR(tstate->c_traceobj);
 
     Py_CLEAR(tstate->async_gen_firstiter);
     Py_CLEAR(tstate->async_gen_finalizer);
