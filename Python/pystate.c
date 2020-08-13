@@ -121,13 +121,6 @@ PyInterpreterState_New(void)
     PyConfig_InitPythonConfig(&interp->config);
 
     interp->eval_frame = _PyEval_EvalFrameDefault;
-#ifdef HAVE_DLOPEN
-#if HAVE_DECL_RTLD_NOW
-    interp->dlopenflags = RTLD_NOW;
-#else
-    interp->dlopenflags = RTLD_LAZY;
-#endif
-#endif
 
     struct pyinterpreters *interpreters = &runtime->interpreters;
 
@@ -380,7 +373,6 @@ new_threadstate(PyInterpreterState *interp, int init)
     tstate->interp = interp;
 
     tstate->frame = NULL;
-    tstate->gilstate_counter = 0;
     tstate->async_exc = NULL;
 
     tstate->dict = NULL;
@@ -399,12 +391,6 @@ new_threadstate(PyInterpreterState *interp, int init)
     tstate->trash_delete_later = NULL;
     tstate->on_delete = NULL;
     tstate->on_delete_data = NULL;
-
-    tstate->coroutine_origin_tracking_depth = 0;
-
-    tstate->async_gen_firstiter = NULL;
-    tstate->async_gen_finalizer = NULL;
-
     tstate->context = NULL;
     tstate->context_ver = 1;
 
@@ -585,10 +571,6 @@ PyThreadState_Clear(PyThreadState *tstate)
     Py_CLEAR(tstate->exc_state.exc_type);
     Py_CLEAR(tstate->exc_state.exc_value);
     Py_CLEAR(tstate->exc_state.exc_traceback);
-
-    Py_CLEAR(tstate->async_gen_firstiter);
-    Py_CLEAR(tstate->async_gen_finalizer);
-
     Py_CLEAR(tstate->context);
 
     if (tstate->on_delete != NULL) {

@@ -4044,69 +4044,6 @@ Error:
     return 0;
 }
 
-
-#ifdef LLTRACE
-static int
-prtrace(PyThreadState *tstate, PyObject *v, const char *str)
-{
-    printf("%s ", str);
-    if (PyObject_Print(v, stdout, 0) != 0) {
-        /* Don't know what else to do */
-        _PyErr_Clear(tstate);
-    }
-    printf("\n");
-    return 1;
-}
-#endif
-
-void
-_PyEval_SetCoroutineOriginTrackingDepth(PyThreadState *tstate, int new_depth)
-{
-    assert(new_depth >= 0);
-    tstate->coroutine_origin_tracking_depth = new_depth;
-}
-
-int
-_PyEval_GetCoroutineOriginTrackingDepth(void)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    return tstate->coroutine_origin_tracking_depth;
-}
-
-int
-_PyEval_SetAsyncGenFirstiter(PyObject *firstiter)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-
-    Py_XINCREF(firstiter);
-    Py_XSETREF(tstate->async_gen_firstiter, firstiter);
-    return 0;
-}
-
-PyObject *
-_PyEval_GetAsyncGenFirstiter(void)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    return tstate->async_gen_firstiter;
-}
-
-int
-_PyEval_SetAsyncGenFinalizer(PyObject *finalizer)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-
-    Py_XINCREF(finalizer);
-    Py_XSETREF(tstate->async_gen_finalizer, finalizer);
-    return 0;
-}
-
-PyObject *
-_PyEval_GetAsyncGenFinalizer(void)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    return tstate->async_gen_finalizer;
-}
-
 PyFrameObject *
 PyEval_GetFrame(void)
 {

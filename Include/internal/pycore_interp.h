@@ -168,10 +168,6 @@ struct _is {
     struct _Py_unicode_state unicode;
 
     PyConfig config;
-#ifdef HAVE_DLOPEN
-    int dlopenflags;
-#endif
-
     PyObject *dict;  /* Stores per-interpreter state */
 
     PyObject *builtins_copy;

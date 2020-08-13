@@ -1093,39 +1093,6 @@ PyTypeObject _PyCoroWrapper_Type = {
     0,                                          /* tp_free */
 };
 
-static PyObject *
-compute_cr_origin(int origin_depth)
-{
-    PyFrameObject *frame = PyEval_GetFrame();
-    /* First count how many frames we have */
-    int frame_count = 0;
-    for (; frame && frame_count < origin_depth; ++frame_count) {
-        frame = frame->f_back;
-    }
-
-    /* Now collect them */
-    PyObject *cr_origin = PyTuple_New(frame_count);
-    if (cr_origin == NULL) {
-        return NULL;
-    }
-    frame = PyEval_GetFrame();
-    for (int i = 0; i < frame_count; ++i) {
-        PyCodeObject *code = frame->f_code;
-        PyObject *frameinfo = Py_BuildValue("OiO",
-                                            code->co_filename,
-                                            PyFrame_GetLineNumber(frame),
-                                            code->co_name);
-        if (!frameinfo) {
-            Py_DECREF(cr_origin);
-            return NULL;
-        }
-        PyTuple_SET_ITEM(cr_origin, i, frameinfo);
-        frame = frame->f_back;
-    }
-
-    return cr_origin;
-}
-
 PyObject *
 PyCoro_New(PyFrameObject *f, PyObject *name, PyObject *qualname)
 {
@@ -1134,20 +1101,7 @@ PyCoro_New(PyFrameObject *f, PyObject *name, PyObject *qualname)
         return NULL;
     }
 
-    PyThreadState *tstate = _PyThreadState_GET();
-    int origin_depth = tstate->coroutine_origin_tracking_depth;
-
-    if (origin_depth == 0) {
-        ((PyCoroObject *)coro)->cr_origin = NULL;
-    } else {
-        PyObject *cr_origin = compute_cr_origin(origin_depth);
-        ((PyCoroObject *)coro)->cr_origin = cr_origin;
-        if (!cr_origin) {
-            Py_DECREF(coro);
-            return NULL;
-        }
-    }
-
+    ((PyCoroObject *)coro)->cr_origin = NULL;
     return coro;
 }
 
@@ -1215,50 +1169,9 @@ async_gen_repr(PyAsyncGenObject *o)
 }
 
 
-static int
-async_gen_init_hooks(PyAsyncGenObject *o)
-{
-    PyThreadState *tstate;
-    PyObject *finalizer;
-    PyObject *firstiter;
-
-    if (o->ag_hooks_inited) {
-        return 0;
-    }
-
-    o->ag_hooks_inited = 1;
-
-    tstate = _PyThreadState_GET();
-
-    finalizer = tstate->async_gen_finalizer;
-    if (finalizer) {
-        Py_INCREF(finalizer);
-        o->ag_finalizer = finalizer;
-    }
-
-    firstiter = tstate->async_gen_firstiter;
-    if (firstiter) {
-        PyObject *res;
-
-        Py_INCREF(firstiter);
-        res = PyObject_CallOneArg(firstiter, (PyObject *)o);
-        Py_DECREF(firstiter);
-        if (res == NULL) {
-            return 1;
-        }
-        Py_DECREF(res);
-    }
-
-    return 0;
-}
-
-
 static PyObject *
 async_gen_anext(PyAsyncGenObject *o)
 {
-    if (async_gen_init_hooks(o)) {
-        return NULL;
-    }
     return async_gen_asend_new(o, NULL);
 }
 
@@ -1266,9 +1179,6 @@ async_gen_anext(PyAsyncGenObject *o)
 static PyObject *
 async_gen_asend(PyAsyncGenObject *o, PyObject *arg)
 {
-    if (async_gen_init_hooks(o)) {
-        return NULL;
-    }
     return async_gen_asend_new(o, arg);
 }
 
@@ -1276,18 +1186,12 @@ async_gen_asend(PyAsyncGenObject *o, PyObject *arg)
 static PyObject *
 async_gen_aclose(PyAsyncGenObject *o, PyObject *arg)
 {
-    if (async_gen_init_hooks(o)) {
-        return NULL;
-    }
     return async_gen_athrow_new(o, NULL);
 }
 
 static PyObject *
 async_gen_athrow(PyAsyncGenObject *o, PyObject *args)
 {
-    if (async_gen_init_hooks(o)) {
-        return NULL;
-    }
     return async_gen_athrow_new(o, args);
 }
 

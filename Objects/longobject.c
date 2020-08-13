@@ -5962,46 +5962,6 @@ PyTypeObject PyLong_Type = {
     PyObject_Del,                               /* tp_free */
 };
 
-static PyTypeObject Int_InfoType;
-
-PyDoc_STRVAR(int_info__doc__,
-"sys.int_info\n\
-\n\
-A named tuple that holds information about Python's\n\
-internal representation of integers.  The attributes are read only.");
-
-static PyStructSequence_Field int_info_fields[] = {
-    {"bits_per_digit", "size of a digit in bits"},
-    {"sizeof_digit", "size in bytes of the C type used to represent a digit"},
-    {NULL, NULL}
-};
-
-static PyStructSequence_Desc int_info_desc = {
-    "sys.int_info",   /* name */
-    int_info__doc__,  /* doc */
-    int_info_fields,  /* fields */
-    2                 /* number of fields */
-};
-
-PyObject *
-PyLong_GetInfo(void)
-{
-    PyObject* int_info;
-    int field = 0;
-    int_info = PyStructSequence_New(&Int_InfoType);
-    if (int_info == NULL)
-        return NULL;
-    PyStructSequence_SET_ITEM(int_info, field++,
-                              PyLong_FromLong(PyLong_SHIFT));
-    PyStructSequence_SET_ITEM(int_info, field++,
-                              PyLong_FromLong(sizeof(digit)));
-    if (PyErr_Occurred()) {
-        Py_CLEAR(int_info);
-        return NULL;
-    }
-    return int_info;
-}
-
 int
 _PyLong_Init(PyThreadState *tstate)
 {
@@ -6031,13 +5991,6 @@ _PyLong_Init(PyThreadState *tstate)
         _PyLong_One = PyLong_FromLong(1);
         if (_PyLong_One == NULL) {
             return 0;
-        }
-
-        /* initialize int_info */
-        if (Int_InfoType.tp_name == NULL) {
-            if (PyStructSequence_InitType2(&Int_InfoType, &int_info_desc) < 0) {
-                return 0;
-            }
         }
     }
 

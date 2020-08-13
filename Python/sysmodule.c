@@ -246,189 +246,6 @@ exit:
     return return_value;
 }
 
-PyDoc_STRVAR(sys_set_coroutine_origin_tracking_depth__doc__,
-"set_coroutine_origin_tracking_depth($module, /, depth)\n"
-"--\n"
-"\n"
-"Enable or disable origin tracking for coroutine objects in this thread.\n"
-"\n"
-"Coroutine objects will track \'depth\' frames of traceback information\n"
-"about where they came from, available in their cr_origin attribute.\n"
-"\n"
-"Set a depth of 0 to disable.");
-
-#define SYS_SET_COROUTINE_ORIGIN_TRACKING_DEPTH_METHODDEF    \
-    {"set_coroutine_origin_tracking_depth", (PyCFunction)(void(*)(void))sys_set_coroutine_origin_tracking_depth, METH_FASTCALL|METH_KEYWORDS, sys_set_coroutine_origin_tracking_depth__doc__},
-
-static PyObject *
-sys_set_coroutine_origin_tracking_depth_impl(PyObject *module, int depth);
-
-static PyObject *
-sys_set_coroutine_origin_tracking_depth(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *kwnames)
-{
-    PyObject *return_value = NULL;
-    static const char * const _keywords[] = {"depth", NULL};
-    static _PyArg_Parser _parser = {NULL, _keywords, "set_coroutine_origin_tracking_depth", 0};
-    PyObject *argsbuf[1];
-    int depth;
-
-    args = _PyArg_UnpackKeywords(args, nargs, NULL, kwnames, &_parser, 1, 1, 0, argsbuf);
-    if (!args) {
-        goto exit;
-    }
-    depth = _PyLong_AsInt(args[0]);
-    if (depth == -1 && PyErr_Occurred()) {
-        goto exit;
-    }
-    return_value = sys_set_coroutine_origin_tracking_depth_impl(module, depth);
-
-exit:
-    return return_value;
-}
-
-PyDoc_STRVAR(sys_get_coroutine_origin_tracking_depth__doc__,
-"get_coroutine_origin_tracking_depth($module, /)\n"
-"--\n"
-"\n"
-"Check status of origin tracking for coroutine objects in this thread.");
-
-#define SYS_GET_COROUTINE_ORIGIN_TRACKING_DEPTH_METHODDEF    \
-    {"get_coroutine_origin_tracking_depth", (PyCFunction)sys_get_coroutine_origin_tracking_depth, METH_NOARGS, sys_get_coroutine_origin_tracking_depth__doc__},
-
-static int
-sys_get_coroutine_origin_tracking_depth_impl(PyObject *module);
-
-static PyObject *
-sys_get_coroutine_origin_tracking_depth(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    PyObject *return_value = NULL;
-    int _return_value;
-
-    _return_value = sys_get_coroutine_origin_tracking_depth_impl(module);
-    if ((_return_value == -1) && PyErr_Occurred()) {
-        goto exit;
-    }
-    return_value = PyLong_FromLong((long)_return_value);
-
-exit:
-    return return_value;
-}
-
-PyDoc_STRVAR(sys_get_asyncgen_hooks__doc__,
-"get_asyncgen_hooks($module, /)\n"
-"--\n"
-"\n"
-"Return the installed asynchronous generators hooks.\n"
-"\n"
-"This returns a namedtuple of the form (firstiter, finalizer).");
-
-#define SYS_GET_ASYNCGEN_HOOKS_METHODDEF    \
-    {"get_asyncgen_hooks", (PyCFunction)sys_get_asyncgen_hooks, METH_NOARGS, sys_get_asyncgen_hooks__doc__},
-
-static PyObject *
-sys_get_asyncgen_hooks_impl(PyObject *module);
-
-static PyObject *
-sys_get_asyncgen_hooks(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    return sys_get_asyncgen_hooks_impl(module);
-}
-
-#if defined(HAVE_DLOPEN)
-
-PyDoc_STRVAR(sys_setdlopenflags__doc__,
-"setdlopenflags($module, flags, /)\n"
-"--\n"
-"\n"
-"Set the flags used by the interpreter for dlopen calls.\n"
-"\n"
-"This is used, for example, when the interpreter loads extension\n"
-"modules. Among other things, this will enable a lazy resolving of\n"
-"symbols when importing a module, if called as sys.setdlopenflags(0).\n"
-"To share symbols across extension modules, call as\n"
-"sys.setdlopenflags(os.RTLD_GLOBAL).  Symbolic names for the flag\n"
-"modules can be found in the os module (RTLD_xxx constants, e.g.\n"
-"os.RTLD_LAZY).");
-
-#define SYS_SETDLOPENFLAGS_METHODDEF    \
-    {"setdlopenflags", (PyCFunction)sys_setdlopenflags, METH_O, sys_setdlopenflags__doc__},
-
-static PyObject *
-sys_setdlopenflags_impl(PyObject *module, int new_val);
-
-static PyObject *
-sys_setdlopenflags(PyObject *module, PyObject *arg)
-{
-    PyObject *return_value = NULL;
-    int new_val;
-
-    new_val = _PyLong_AsInt(arg);
-    if (new_val == -1 && PyErr_Occurred()) {
-        goto exit;
-    }
-    return_value = sys_setdlopenflags_impl(module, new_val);
-
-exit:
-    return return_value;
-}
-
-#endif /* defined(HAVE_DLOPEN) */
-
-#if defined(HAVE_DLOPEN)
-
-PyDoc_STRVAR(sys_getdlopenflags__doc__,
-"getdlopenflags($module, /)\n"
-"--\n"
-"\n"
-"Return the current value of the flags that are used for dlopen calls.\n"
-"\n"
-"The flag constants are defined in the os module.");
-
-#define SYS_GETDLOPENFLAGS_METHODDEF    \
-    {"getdlopenflags", (PyCFunction)sys_getdlopenflags, METH_NOARGS, sys_getdlopenflags__doc__},
-
-static PyObject *
-sys_getdlopenflags_impl(PyObject *module);
-
-static PyObject *
-sys_getdlopenflags(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    return sys_getdlopenflags_impl(module);
-}
-
-#endif /* defined(HAVE_DLOPEN) */
-
-#if defined(USE_MALLOPT)
-
-PyDoc_STRVAR(sys_mdebug__doc__,
-"mdebug($module, flag, /)\n"
-"--\n"
-"\n");
-
-#define SYS_MDEBUG_METHODDEF    \
-    {"mdebug", (PyCFunction)sys_mdebug, METH_O, sys_mdebug__doc__},
-
-static PyObject *
-sys_mdebug_impl(PyObject *module, int flag);
-
-static PyObject *
-sys_mdebug(PyObject *module, PyObject *arg)
-{
-    PyObject *return_value = NULL;
-    int flag;
-
-    flag = _PyLong_AsInt(arg);
-    if (flag == -1 && PyErr_Occurred()) {
-        goto exit;
-    }
-    return_value = sys_mdebug_impl(module, flag);
-
-exit:
-    return return_value;
-}
-
-#endif /* defined(USE_MALLOPT) */
-
 PyDoc_STRVAR(sys_getrefcount__doc__,
 "getrefcount($module, object, /)\n"
 "--\n"
@@ -452,34 +269,6 @@ sys_getrefcount(PyObject *module, PyObject *object)
     Py_ssize_t _return_value;
 
     _return_value = sys_getrefcount_impl(module, object);
-    if ((_return_value == -1) && PyErr_Occurred()) {
-        goto exit;
-    }
-    return_value = PyLong_FromSsize_t(_return_value);
-
-exit:
-    return return_value;
-}
-
-PyDoc_STRVAR(sys_getallocatedblocks__doc__,
-"getallocatedblocks($module, /)\n"
-"--\n"
-"\n"
-"Return the number of memory blocks currently allocated.");
-
-#define SYS_GETALLOCATEDBLOCKS_METHODDEF    \
-    {"getallocatedblocks", (PyCFunction)sys_getallocatedblocks, METH_NOARGS, sys_getallocatedblocks__doc__},
-
-static Py_ssize_t
-sys_getallocatedblocks_impl(PyObject *module);
-
-static PyObject *
-sys_getallocatedblocks(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    PyObject *return_value = NULL;
-    Py_ssize_t _return_value;
-
-    _return_value = sys_getallocatedblocks_impl(module);
     if ((_return_value == -1) && PyErr_Occurred()) {
         goto exit;
     }
@@ -587,50 +376,6 @@ sys_is_finalizing(PyObject *module, PyObject *Py_UNUSED(ignored))
 {
     return sys_is_finalizing_impl(module);
 }
-
-#if defined(ANDROID_API_LEVEL)
-
-PyDoc_STRVAR(sys_getandroidapilevel__doc__,
-"getandroidapilevel($module, /)\n"
-"--\n"
-"\n"
-"Return the build time API version of Android as an integer.");
-
-#define SYS_GETANDROIDAPILEVEL_METHODDEF    \
-    {"getandroidapilevel", (PyCFunction)sys_getandroidapilevel, METH_NOARGS, sys_getandroidapilevel__doc__},
-
-static PyObject *
-sys_getandroidapilevel_impl(PyObject *module);
-
-static PyObject *
-sys_getandroidapilevel(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    return sys_getandroidapilevel_impl(module);
-}
-
-#endif /* defined(ANDROID_API_LEVEL) */
-
-#ifndef SYS_SETDLOPENFLAGS_METHODDEF
-    #define SYS_SETDLOPENFLAGS_METHODDEF
-#endif /* !defined(SYS_SETDLOPENFLAGS_METHODDEF) */
-
-#ifndef SYS_GETDLOPENFLAGS_METHODDEF
-    #define SYS_GETDLOPENFLAGS_METHODDEF
-#endif /* !defined(SYS_GETDLOPENFLAGS_METHODDEF) */
-
-#ifndef SYS_MDEBUG_METHODDEF
-    #define SYS_MDEBUG_METHODDEF
-#endif /* !defined(SYS_MDEBUG_METHODDEF) */
-
-#ifndef SYS_GETTOTALREFCOUNT_METHODDEF
-    #define SYS_GETTOTALREFCOUNT_METHODDEF
-#endif /* !defined(SYS_GETTOTALREFCOUNT_METHODDEF) */
-
-#ifndef SYS_GETANDROIDAPILEVEL_METHODDEF
-    #define SYS_GETANDROIDAPILEVEL_METHODDEF
-#endif /* !defined(SYS_GETANDROIDAPILEVEL_METHODDEF) */
-/*[clinic end generated code: output=87baa3357293ea65 input=a9049054013a1b77]*/
-
 
 _Py_IDENTIFIER(_);
 _Py_IDENTIFIER(__sizeof__);
@@ -1019,292 +764,6 @@ sys_intern_impl(PyObject *module, PyObject *s)
     }
 }
 
-
-/*[clinic input]
-sys.set_coroutine_origin_tracking_depth
-
-  depth: int
-
-Enable or disable origin tracking for coroutine objects in this thread.
-
-Coroutine objects will track 'depth' frames of traceback information
-about where they came from, available in their cr_origin attribute.
-
-Set a depth of 0 to disable.
-[clinic start generated code]*/
-
-static PyObject *
-sys_set_coroutine_origin_tracking_depth_impl(PyObject *module, int depth)
-/*[clinic end generated code: output=0a2123c1cc6759c5 input=a1d0a05f89d2c426]*/
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    if (depth < 0) {
-        _PyErr_SetString(tstate, PyExc_ValueError, "depth must be >= 0");
-        return NULL;
-    }
-    _PyEval_SetCoroutineOriginTrackingDepth(tstate, depth);
-    Py_RETURN_NONE;
-}
-
-/*[clinic input]
-sys.get_coroutine_origin_tracking_depth -> int
-
-Check status of origin tracking for coroutine objects in this thread.
-[clinic start generated code]*/
-
-static int
-sys_get_coroutine_origin_tracking_depth_impl(PyObject *module)
-/*[clinic end generated code: output=3699f7be95a3afb8 input=335266a71205b61a]*/
-{
-    return _PyEval_GetCoroutineOriginTrackingDepth();
-}
-
-static PyTypeObject AsyncGenHooksType;
-
-PyDoc_STRVAR(asyncgen_hooks_doc,
-"asyncgen_hooks\n\
-\n\
-A named tuple providing information about asynchronous\n\
-generators hooks.  The attributes are read only.");
-
-static PyStructSequence_Field asyncgen_hooks_fields[] = {
-    {"firstiter", "Hook to intercept first iteration"},
-    {"finalizer", "Hook to intercept finalization"},
-    {0}
-};
-
-static PyStructSequence_Desc asyncgen_hooks_desc = {
-    "asyncgen_hooks",          /* name */
-    asyncgen_hooks_doc,        /* doc */
-    asyncgen_hooks_fields ,    /* fields */
-    2
-};
-
-static PyObject *
-sys_set_asyncgen_hooks(PyObject *self, PyObject *args, PyObject *kw)
-{
-    static char *keywords[] = {"firstiter", "finalizer", NULL};
-    PyObject *firstiter = NULL;
-    PyObject *finalizer = NULL;
-    PyThreadState *tstate = _PyThreadState_GET();
-
-    if (!PyArg_ParseTupleAndKeywords(
-            args, kw, "|OO", keywords,
-            &firstiter, &finalizer)) {
-        return NULL;
-    }
-
-    if (finalizer && finalizer != Py_None) {
-        if (!PyCallable_Check(finalizer)) {
-            _PyErr_Format(tstate, PyExc_TypeError,
-                          "callable finalizer expected, got %.50s",
-                          Py_TYPE(finalizer)->tp_name);
-            return NULL;
-        }
-        if (_PyEval_SetAsyncGenFinalizer(finalizer) < 0) {
-            return NULL;
-        }
-    }
-    else if (finalizer == Py_None && _PyEval_SetAsyncGenFinalizer(NULL) < 0) {
-        return NULL;
-    }
-
-    if (firstiter && firstiter != Py_None) {
-        if (!PyCallable_Check(firstiter)) {
-            _PyErr_Format(tstate, PyExc_TypeError,
-                          "callable firstiter expected, got %.50s",
-                          Py_TYPE(firstiter)->tp_name);
-            return NULL;
-        }
-        if (_PyEval_SetAsyncGenFirstiter(firstiter) < 0) {
-            return NULL;
-        }
-    }
-    else if (firstiter == Py_None && _PyEval_SetAsyncGenFirstiter(NULL) < 0) {
-        return NULL;
-    }
-
-    Py_RETURN_NONE;
-}
-
-PyDoc_STRVAR(set_asyncgen_hooks_doc,
-"set_asyncgen_hooks(* [, firstiter] [, finalizer])\n\
-\n\
-Set a finalizer for async generators objects."
-);
-
-/*[clinic input]
-sys.get_asyncgen_hooks
-
-Return the installed asynchronous generators hooks.
-
-This returns a namedtuple of the form (firstiter, finalizer).
-[clinic start generated code]*/
-
-static PyObject *
-sys_get_asyncgen_hooks_impl(PyObject *module)
-/*[clinic end generated code: output=53a253707146f6cf input=3676b9ea62b14625]*/
-{
-    PyObject *res;
-    PyObject *firstiter = _PyEval_GetAsyncGenFirstiter();
-    PyObject *finalizer = _PyEval_GetAsyncGenFinalizer();
-
-    res = PyStructSequence_New(&AsyncGenHooksType);
-    if (res == NULL) {
-        return NULL;
-    }
-
-    if (firstiter == NULL) {
-        firstiter = Py_None;
-    }
-
-    if (finalizer == NULL) {
-        finalizer = Py_None;
-    }
-
-    Py_INCREF(firstiter);
-    PyStructSequence_SET_ITEM(res, 0, firstiter);
-
-    Py_INCREF(finalizer);
-    PyStructSequence_SET_ITEM(res, 1, finalizer);
-
-    return res;
-}
-
-
-static PyTypeObject Hash_InfoType;
-
-PyDoc_STRVAR(hash_info_doc,
-"hash_info\n\
-\n\
-A named tuple providing parameters used for computing\n\
-hashes. The attributes are read only.");
-
-static PyStructSequence_Field hash_info_fields[] = {
-    {"width", "width of the type used for hashing, in bits"},
-    {"modulus", "prime number giving the modulus on which the hash "
-                "function is based"},
-    {"inf", "value to be used for hash of a positive infinity"},
-    {"nan", "value to be used for hash of a nan"},
-    {"imag", "multiplier used for the imaginary part of a complex number"},
-    {"algorithm", "name of the algorithm for hashing of str, bytes and "
-                  "memoryviews"},
-    {"hash_bits", "internal output size of hash algorithm"},
-    {"seed_bits", "seed size of hash algorithm"},
-    {"cutoff", "small string optimization cutoff"},
-    {NULL, NULL}
-};
-
-static PyStructSequence_Desc hash_info_desc = {
-    "sys.hash_info",
-    hash_info_doc,
-    hash_info_fields,
-    9,
-};
-
-static PyObject *
-get_hash_info(PyThreadState *tstate)
-{
-    PyObject *hash_info;
-    int field = 0;
-    PyHash_FuncDef *hashfunc;
-    hash_info = PyStructSequence_New(&Hash_InfoType);
-    if (hash_info == NULL)
-        return NULL;
-    hashfunc = PyHash_GetFuncDef();
-    PyStructSequence_SET_ITEM(hash_info, field++,
-                              PyLong_FromLong(8*sizeof(Py_hash_t)));
-    PyStructSequence_SET_ITEM(hash_info, field++,
-                              PyLong_FromSsize_t(_PyHASH_MODULUS));
-    PyStructSequence_SET_ITEM(hash_info, field++,
-                              PyLong_FromLong(_PyHASH_INF));
-    PyStructSequence_SET_ITEM(hash_info, field++,
-                              PyLong_FromLong(_PyHASH_NAN));
-    PyStructSequence_SET_ITEM(hash_info, field++,
-                              PyLong_FromLong(_PyHASH_IMAG));
-    PyStructSequence_SET_ITEM(hash_info, field++,
-                              PyUnicode_FromString(hashfunc->name));
-    PyStructSequence_SET_ITEM(hash_info, field++,
-                              PyLong_FromLong(hashfunc->hash_bits));
-    PyStructSequence_SET_ITEM(hash_info, field++,
-                              PyLong_FromLong(hashfunc->seed_bits));
-    PyStructSequence_SET_ITEM(hash_info, field++,
-                              PyLong_FromLong(Py_HASH_CUTOFF));
-    if (_PyErr_Occurred(tstate)) {
-        Py_CLEAR(hash_info);
-        return NULL;
-    }
-    return hash_info;
-}
-
-#ifdef HAVE_DLOPEN
-
-/*[clinic input]
-sys.setdlopenflags
-
-    flags as new_val: int
-    /
-
-Set the flags used by the interpreter for dlopen calls.
-
-This is used, for example, when the interpreter loads extension
-modules. Among other things, this will enable a lazy resolving of
-symbols when importing a module, if called as sys.setdlopenflags(0).
-To share symbols across extension modules, call as
-sys.setdlopenflags(os.RTLD_GLOBAL).  Symbolic names for the flag
-modules can be found in the os module (RTLD_xxx constants, e.g.
-os.RTLD_LAZY).
-[clinic start generated code]*/
-
-static PyObject *
-sys_setdlopenflags_impl(PyObject *module, int new_val)
-/*[clinic end generated code: output=ec918b7fe0a37281 input=4c838211e857a77f]*/
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    tstate->interp->dlopenflags = new_val;
-    Py_RETURN_NONE;
-}
-
-
-/*[clinic input]
-sys.getdlopenflags
-
-Return the current value of the flags that are used for dlopen calls.
-
-The flag constants are defined in the os module.
-[clinic start generated code]*/
-
-static PyObject *
-sys_getdlopenflags_impl(PyObject *module)
-/*[clinic end generated code: output=e92cd1bc5005da6e input=dc4ea0899c53b4b6]*/
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-    return PyLong_FromLong(tstate->interp->dlopenflags);
-}
-
-#endif  /* HAVE_DLOPEN */
-
-#ifdef USE_MALLOPT
-/* Link with -lmalloc (or -lmpc) on an SGI */
-#include <malloc.h>
-
-/*[clinic input]
-sys.mdebug
-
-    flag: int
-    /
-[clinic start generated code]*/
-
-static PyObject *
-sys_mdebug_impl(PyObject *module, int flag)
-/*[clinic end generated code: output=5431d545847c3637 input=151d150ae1636f8a]*/
-{
-    int flag;
-    mallopt(M_DEBUG, flag);
-    Py_RETURN_NONE;
-}
-#endif /* USE_MALLOPT */
-
 size_t
 _PySys_GetSizeOf(PyObject *o)
 {
@@ -1403,19 +862,6 @@ sys_getrefcount_impl(PyObject *module, PyObject *object)
 /*[clinic end generated code: output=5fd477f2264b85b2 input=bf474efd50a21535]*/
 {
     return Py_REFCNT(object);
-}
-
-/*[clinic input]
-sys.getallocatedblocks -> Py_ssize_t
-
-Return the number of memory blocks currently allocated.
-[clinic start generated code]*/
-
-static Py_ssize_t
-sys_getallocatedblocks_impl(PyObject *module)
-/*[clinic end generated code: output=f0c4e873f0b6dcf7 input=dab13ee346a0673e]*/
-{
-    return _Py_GetAllocatedBlocks();
 }
 
 
@@ -1540,28 +986,14 @@ static PyMethodDef sys_methods[] = {
     SYS_EXCEPTHOOK_METHODDEF
     SYS_EXIT_METHODDEF
     SYS_GETDEFAULTENCODING_METHODDEF
-    SYS_GETDLOPENFLAGS_METHODDEF
-    SYS_GETALLOCATEDBLOCKS_METHODDEF
-#ifdef DYNAMIC_EXECUTION_PROFILE
-    {"getdxp",          _Py_GetDXProfile, METH_VARARGS},
-#endif
     SYS_GETFILESYSTEMENCODING_METHODDEF
     SYS_GETFILESYSTEMENCODEERRORS_METHODDEF
-    SYS_GETTOTALREFCOUNT_METHODDEF
     SYS_GETREFCOUNT_METHODDEF
     {"getsizeof",   (PyCFunction)(void(*)(void))sys_getsizeof,
      METH_VARARGS | METH_KEYWORDS, getsizeof_doc},
     SYS__GETFRAME_METHODDEF
     SYS_INTERN_METHODDEF
     SYS_IS_FINALIZING_METHODDEF
-    SYS_MDEBUG_METHODDEF
-    SYS_SETDLOPENFLAGS_METHODDEF
-    SYS_SET_COROUTINE_ORIGIN_TRACKING_DEPTH_METHODDEF
-    SYS_GET_COROUTINE_ORIGIN_TRACKING_DEPTH_METHODDEF
-    {"set_asyncgen_hooks", (PyCFunction)(void(*)(void))sys_set_asyncgen_hooks,
-     METH_VARARGS | METH_KEYWORDS, set_asyncgen_hooks_doc},
-    SYS_GET_ASYNCGEN_HOOKS_METHODDEF
-    SYS_GETANDROIDAPILEVEL_METHODDEF
     SYS_UNRAISABLEHOOK_METHODDEF
     {NULL,              NULL}           /* sentinel */
 };
@@ -1635,17 +1067,12 @@ builtin_module_names -- tuple of module names built into this interpreter\n\
 copyright -- copyright notice pertaining to this interpreter\n\
 exec_prefix -- prefix used to find the machine-specific Python library\n\
 executable -- absolute path of the executable binary of the Python interpreter\n\
-float_info -- a named tuple with information about the float implementation.\n\
-float_repr_style -- string indicating the style of repr() output for floats\n\
-hash_info -- a named tuple with information about the hash algorithm.\n\
 hexversion -- version information encoded as a single integer\n\
 implementation -- Python implementation information.\n\
-int_info -- a named tuple with information about the int implementation.\n\
 maxsize -- the largest supported length of containers.\n\
 maxunicode -- the value of the largest Unicode code point\n\
 platform -- platform identifier\n\
 prefix -- prefix used to find the Python library\n\
-thread_info -- a named tuple with information about the thread implementation.\n\
 version -- the version of this interpreter as a string\n\
 version_info -- version information as a named tuple\n\
 "
@@ -1663,78 +1090,11 @@ displayhook() -- print an object to the screen, and save it in builtins._\n\
 excepthook() -- print an exception and its traceback to sys.stderr\n\
 exc_info() -- return thread-safe information about the current exception\n\
 exit() -- exit the interpreter by raising SystemExit\n\
-getdlopenflags() -- returns flags to be used for dlopen() calls\n\
-getprofile() -- get the global profiling function\n\
 getrefcount() -- return the reference count for an object (plus one :-)\n\
 getsizeof() -- return the size of an object in bytes\n\
-gettrace() -- get the global debug tracing function\n\
-setdlopenflags() -- set the flags to be used for dlopen() calls\n\
-setprofile() -- set the global profiling function\n\
-settrace() -- set the global debug tracing function\n\
 "
 )
 /* end of sys_doc */ ;
-
-
-PyDoc_STRVAR(flags__doc__,
-"sys.flags\n\
-\n\
-Flags provided through command line arguments or environment vars.");
-
-static PyTypeObject FlagsType;
-
-static PyStructSequence_Field flags_fields[] = {
-    {"inspect",                 "-i"},
-    {"interactive",             "-i"},
-    /*    {"optimize",                "-O or -OO"},*/
-    {"ignore_environment",      "-E"},
-    /* {"unbuffered",                   "-u"}, */
-    /* {"skip_first",                   "-x"}, */
-    {"quiet",                   "-q"},
-    {"hash_randomization",      "-R"},
-    {"utf8_mode",               "-X utf8"},
-    {0}
-};
-
-static PyStructSequence_Desc flags_desc = {
-    "sys.flags",        /* name */
-    flags__doc__,       /* doc */
-    flags_fields,       /* fields */
-    14
-};
-
-static PyObject*
-make_flags(PyThreadState *tstate)
-{
-    PyInterpreterState *interp = tstate->interp;
-    const PyPreConfig *preconfig = &interp->runtime->preconfig;
-    const PyConfig *config = _PyInterpreterState_GetConfig(interp);
-
-    PyObject *seq = PyStructSequence_New(&FlagsType);
-    if (seq == NULL) {
-        return NULL;
-    }
-
-    int pos = 0;
-#define SetFlag(flag) \
-    PyStructSequence_SET_ITEM(seq, pos++, PyLong_FromLong(flag))
-
-    SetFlag(config->inspect);
-    SetFlag(config->interactive);
-    SetFlag(!config->use_environment);
-    /* SetFlag(saw_unbuffered_flag); */
-    /* SetFlag(skipfirstline); */
-    SetFlag(config->quiet);
-    SetFlag(config->use_hash_seed == 0 || config->hash_seed != 0);
-    SetFlag(preconfig->utf8_mode);
-#undef SetFlag
-
-    if (_PyErr_Occurred(tstate)) {
-        Py_DECREF(seq);
-        return NULL;
-    }
-    return seq;
-}
 
 PyDoc_STRVAR(version_info__doc__,
 "sys.version_info\n\
@@ -1860,16 +1220,6 @@ make_impl_info(PyObject *version_info)
     if (res < 0)
         goto error;
 
-#ifdef MULTIARCH
-    value = PyUnicode_FromString(MULTIARCH);
-    if (value == NULL)
-        goto error;
-    res = PyDict_SetItemString(impl_info, "_multiarch", value);
-    Py_DECREF(value);
-    if (res < 0)
-        goto error;
-#endif
-
     /* dict ready */
 
     ns = _PyNamespace_New(impl_info);
@@ -1951,18 +1301,6 @@ _PySys_InitCore(PyThreadState *tstate, PyObject *sysdict)
                         PyUnicode_FromString(Py_GetPlatform()));
     SET_SYS_FROM_STRING("maxsize",
                         PyLong_FromSsize_t(PY_SSIZE_T_MAX));
-    SET_SYS_FROM_STRING("float_info",
-                        PyFloat_GetInfo());
-    SET_SYS_FROM_STRING("int_info",
-                        PyLong_GetInfo());
-    /* initialize hash_info */
-    if (Hash_InfoType.tp_name == NULL) {
-        if (PyStructSequence_InitType2(&Hash_InfoType, &hash_info_desc) < 0) {
-            goto type_init_failed;
-        }
-    }
-    SET_SYS_FROM_STRING("hash_info",
-                        get_hash_info(tstate));
     SET_SYS_FROM_STRING("maxunicode",
                         PyLong_FromLong(0x10FFFF));
     SET_SYS_FROM_STRING("builtin_module_names",
@@ -1973,17 +1311,6 @@ _PySys_InitCore(PyThreadState *tstate, PyObject *sysdict)
 #else
     SET_SYS_FROM_STRING("byteorder",
                         PyUnicode_FromString("little"));
-#endif
-
-#ifdef MS_COREDLL
-    SET_SYS_FROM_STRING("dllhandle",
-                        PyLong_FromVoidPtr(PyWin_DLLhModule));
-    SET_SYS_FROM_STRING("winver",
-                        PyUnicode_FromString(PyWin_DLLVersionString));
-#endif
-#ifdef ABIFLAGS
-    SET_SYS_FROM_STRING("abiflags",
-                        PyUnicode_FromString(ABIFLAGS));
 #endif
 
     /* version_info */
@@ -2007,32 +1334,7 @@ _PySys_InitCore(PyThreadState *tstate, PyObject *sysdict)
     /*
     SET_SYS_FROM_STRING("implementation", make_impl_info(version_info));
     */
-    /* flags */
-    if (FlagsType.tp_name == 0) {
-        if (PyStructSequence_InitType2(&FlagsType, &flags_desc) < 0) {
-            goto type_init_failed;
-        }
-    }
-    /* Set flags to their default values (updated by _PySys_InitMain()) */
-    SET_SYS_FROM_STRING("flags", make_flags(tstate));
-
-    /* float repr style: 0.03 (short) vs 0.029999999999999999 (legacy) */
-#ifndef PY_NO_SHORT_FLOAT_REPR
-    SET_SYS_FROM_STRING("float_repr_style",
-                        PyUnicode_FromString("short"));
-#else
-    SET_SYS_FROM_STRING("float_repr_style",
-                        PyUnicode_FromString("legacy"));
-#endif
-
-    /* initialize asyncgen_hooks */
-    if (AsyncGenHooksType.tp_name == NULL) {
-        if (PyStructSequence_InitType2(
-                &AsyncGenHooksType, &asyncgen_hooks_desc) < 0) {
-            goto type_init_failed;
-        }
-    }
-
+    
     if (_PyErr_Occurred(tstate)) {
         goto err_occurred;
     }
@@ -2100,21 +1402,7 @@ _PySys_InitMain(PyThreadState *tstate)
 
 #undef COPY_LIST
 #undef SET_SYS_FROM_WSTR
-
-
-    /* Set flags to their final values */
-    SET_SYS_FROM_STRING_INT_RESULT("flags", make_flags(tstate));
-    /* prevent user from creating new instances */
-    FlagsType.tp_init = NULL;
-    FlagsType.tp_new = NULL;
-    res = PyDict_DelItemString(FlagsType.tp_dict, "__new__");
-    if (res < 0) {
-        if (!_PyErr_ExceptionMatches(tstate, PyExc_KeyError)) {
-            return res;
-        }
-        _PyErr_Clear(tstate);
-    }
-
+    
     if (_PyErr_Occurred(tstate)) {
         goto err_occurred;
     }

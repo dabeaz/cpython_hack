@@ -75,6 +75,7 @@ Halfway there.  It all gets more difficult from here...
 - Day 61 (8/10/2020). More removal of recursion checking/limits.
 - Day 62 (8/11/2020). Removed remaining abstract class support.
 - Day 63 (8/12/2020). Trace that! Or not.
+- Day 64 (8/13/2020). Gutted more of the sys module.
   
 Copyright and License Information
 ---------------------------------

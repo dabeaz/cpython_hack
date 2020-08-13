@@ -53,19 +53,6 @@ struct _ts {
 
     /* Borrowed reference to the current frame (it can be NULL) */
     PyFrameObject *frame;
-
-  #if 0
-    /* 'tracing' keeps track of the execution depth when tracing/profiling.
-       This is to prevent the actual trace/profile code from being recorded in
-       the trace/profile. */
-    int tracing;
-    int use_tracing;
-
-    Py_tracefunc c_profilefunc;
-    Py_tracefunc c_tracefunc;
-    PyObject *c_profileobj;
-    PyObject *c_traceobj;
-#endif
   
     /* The exception currently being raised */
     PyObject *curexc_type;
@@ -82,8 +69,6 @@ struct _ts {
     _PyErr_StackItem *exc_info;
 
     PyObject *dict;  /* Stores per-thread state */
-
-    int gilstate_counter;
 
     PyObject *async_exc; /* Asynchronous exception to raise */
    /* unsigned long thread_id; Thread id where this tstate was created */
@@ -117,11 +102,13 @@ struct _ts {
     void (*on_delete)(void *);
     void *on_delete_data;
 
+  #if 0
     int coroutine_origin_tracking_depth;
 
     PyObject *async_gen_firstiter;
     PyObject *async_gen_finalizer;
-
+#endif
+  
     PyObject *context;
     uint64_t context_ver;
 

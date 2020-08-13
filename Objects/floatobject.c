@@ -424,81 +424,6 @@ PyFloat_GetMin(void)
     return DBL_MIN;
 }
 
-static PyTypeObject FloatInfoType;
-
-PyDoc_STRVAR(floatinfo__doc__,
-"sys.float_info\n\
-\n\
-A named tuple holding information about the float type. It contains low level\n\
-information about the precision and internal representation. Please study\n\
-your system's :file:`float.h` for more information.");
-
-static PyStructSequence_Field floatinfo_fields[] = {
-    {"max",             "DBL_MAX -- maximum representable finite float"},
-    {"max_exp",         "DBL_MAX_EXP -- maximum int e such that radix**(e-1) "
-                    "is representable"},
-    {"max_10_exp",      "DBL_MAX_10_EXP -- maximum int e such that 10**e "
-                    "is representable"},
-    {"min",             "DBL_MIN -- Minimum positive normalized float"},
-    {"min_exp",         "DBL_MIN_EXP -- minimum int e such that radix**(e-1) "
-                    "is a normalized float"},
-    {"min_10_exp",      "DBL_MIN_10_EXP -- minimum int e such that 10**e is "
-                    "a normalized"},
-    {"dig",             "DBL_DIG -- maximum number of decimal digits that "
-                    "can be faithfully represented in a float"},
-    {"mant_dig",        "DBL_MANT_DIG -- mantissa digits"},
-    {"epsilon",         "DBL_EPSILON -- Difference between 1 and the next "
-                    "representable float"},
-    {"radix",           "FLT_RADIX -- radix of exponent"},
-    {"rounds",          "FLT_ROUNDS -- rounding mode used for arithmetic "
-                    "operations"},
-    {0}
-};
-
-static PyStructSequence_Desc floatinfo_desc = {
-    "sys.float_info",           /* name */
-    floatinfo__doc__,           /* doc */
-    floatinfo_fields,           /* fields */
-    11
-};
-
-PyObject *
-PyFloat_GetInfo(void)
-{
-    PyObject* floatinfo;
-    int pos = 0;
-
-    floatinfo = PyStructSequence_New(&FloatInfoType);
-    if (floatinfo == NULL) {
-        return NULL;
-    }
-
-#define SetIntFlag(flag) \
-    PyStructSequence_SET_ITEM(floatinfo, pos++, PyLong_FromLong(flag))
-#define SetDblFlag(flag) \
-    PyStructSequence_SET_ITEM(floatinfo, pos++, PyFloat_FromDouble(flag))
-
-    SetDblFlag(DBL_MAX);
-    SetIntFlag(DBL_MAX_EXP);
-    SetIntFlag(DBL_MAX_10_EXP);
-    SetDblFlag(DBL_MIN);
-    SetIntFlag(DBL_MIN_EXP);
-    SetIntFlag(DBL_MIN_10_EXP);
-    SetIntFlag(DBL_DIG);
-    SetIntFlag(DBL_MANT_DIG);
-    SetDblFlag(DBL_EPSILON);
-    SetIntFlag(FLT_RADIX);
-    SetIntFlag(FLT_ROUNDS);
-#undef SetIntFlag
-#undef SetDblFlag
-
-    if (PyErr_Occurred()) {
-        Py_CLEAR(floatinfo);
-        return NULL;
-    }
-    return floatinfo;
-}
-
 PyObject *
 PyFloat_FromDouble(double fval)
 {
@@ -2332,13 +2257,6 @@ _PyFloat_Init(void)
 
     double_format = detected_double_format;
     float_format = detected_float_format;
-
-    /* Init float info */
-    if (FloatInfoType.tp_name == NULL) {
-        if (PyStructSequence_InitType2(&FloatInfoType, &floatinfo_desc) < 0) {
-            return 0;
-        }
-    }
     return 1;
 }
 
