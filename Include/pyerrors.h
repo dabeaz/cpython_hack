@@ -132,9 +132,6 @@ PyAPI_DATA(PyObject *) PyExc_TimeoutError;
 /* Compatibility aliases */
 PyAPI_DATA(PyObject *) PyExc_EnvironmentError;
 PyAPI_DATA(PyObject *) PyExc_IOError;
-#ifdef MS_WINDOWS
-PyAPI_DATA(PyObject *) PyExc_WindowsError;
-#endif
 
 /* Predefined warning categories */
 PyAPI_DATA(PyObject *) PyExc_Warning;
@@ -177,26 +174,6 @@ PyAPI_FUNC(PyObject *) PyErr_FormatV(
     const char *format,
     va_list vargs);
 #endif
-
-#ifdef MS_WINDOWS
-PyAPI_FUNC(PyObject *) PyErr_SetFromWindowsErrWithFilename(
-    int ierr,
-    const char *filename        /* decoded from the filesystem encoding */
-    );
-PyAPI_FUNC(PyObject *) PyErr_SetFromWindowsErr(int);
-PyAPI_FUNC(PyObject *) PyErr_SetExcFromWindowsErrWithFilenameObject(
-    PyObject *,int, PyObject *);
-#if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03040000
-PyAPI_FUNC(PyObject *) PyErr_SetExcFromWindowsErrWithFilenameObjects(
-    PyObject *,int, PyObject *, PyObject *);
-#endif
-PyAPI_FUNC(PyObject *) PyErr_SetExcFromWindowsErrWithFilename(
-    PyObject *exc,
-    int ierr,
-    const char *filename        /* decoded from the filesystem encoding */
-    );
-PyAPI_FUNC(PyObject *) PyErr_SetExcFromWindowsErr(PyObject *, int);
-#endif /* MS_WINDOWS */
 
 #if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03060000
 PyAPI_FUNC(PyObject *) PyErr_SetImportErrorSubclass(PyObject *, PyObject *,
@@ -307,11 +284,6 @@ PyAPI_FUNC(int) PyUnicodeTranslateError_SetReason(
    not rely on any particular behavior; eventually the C99 defn may
    be reliable.
 */
-#if defined(MS_WIN32) && !defined(HAVE_SNPRINTF)
-# define HAVE_SNPRINTF
-# define snprintf _snprintf
-# define vsnprintf _vsnprintf
-#endif
 
 #include <stdarg.h>
 PyAPI_FUNC(int) PyOS_snprintf(char *str, size_t size, const char  *format, ...)

@@ -312,7 +312,6 @@ static size_t method_cache_collisions = 0;
 
 /* alphabetical order */
 _Py_IDENTIFIER(__class__);
-_Py_IDENTIFIER(__class_getitem__);
 _Py_IDENTIFIER(__delitem__);
 _Py_IDENTIFIER(__dict__);
 _Py_IDENTIFIER(__doc__);
@@ -2452,23 +2451,6 @@ static PyGetSetDef subtype_getsets_weakref_only[] = {
     {0}
 };
 
-static int
-valid_identifier(PyObject *s)
-{
-    if (!PyUnicode_Check(s)) {
-        PyErr_Format(PyExc_TypeError,
-                     "__slots__ items must be strings, not '%.200s'",
-                     Py_TYPE(s)->tp_name);
-        return 0;
-    }
-    if (!PyUnicode_IsIdentifier(s)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "__slots__ must be identifiers");
-        return 0;
-    }
-    return 1;
-}
-
 /* Forward */
 static int
 object_init(PyObject *self, PyObject *args, PyObject *kwds);
@@ -2552,14 +2534,13 @@ static PyObject *
 type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 {
     PyObject *name, *bases = NULL, *orig_dict, *dict = NULL;
-    PyObject *qualname, *slots = NULL, *tmp, *newslots, *cell;
-    PyTypeObject *type = NULL, *base, *tmptype, *winner;
+    PyObject *qualname, *tmp, *cell;
+    PyTypeObject *type = NULL, *base, *winner;
     PyHeapTypeObject *et;
     PyMemberDef *mp;
     Py_ssize_t i, nbases, nslots, slotoffset, name_size;
-    int j, may_add_dict, may_add_weak, add_dict, add_weak;
+    int may_add_dict, may_add_weak, add_dict, add_weak;
     _Py_IDENTIFIER(__qualname__);
-    _Py_IDENTIFIER(__slots__);
     _Py_IDENTIFIER(__classcell__);
 
     assert(args != NULL && PyTuple_Check(args));
@@ -2624,148 +2605,16 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
     if (dict == NULL)
         goto error;
 
-    /* Check for a __slots__ sequence variable in dict, and count it */
-    slots = _PyDict_GetItemIdWithError(dict, &PyId___slots__);
     nslots = 0;
     add_dict = 0;
     add_weak = 0;
     may_add_dict = base->tp_dictoffset == 0;
     may_add_weak = base->tp_weaklistoffset == 0 && base->tp_itemsize == 0;
-    if (slots == NULL) {
-        if (PyErr_Occurred()) {
-            goto error;
-        }
-        if (may_add_dict) {
-            add_dict++;
-        }
-        if (may_add_weak) {
-            add_weak++;
-        }
+    if (may_add_dict) {
+      add_dict++;
     }
-    else {
-        /* Have slots */
-
-        /* Make it into a tuple */
-        if (PyUnicode_Check(slots))
-            slots = PyTuple_Pack(1, slots);
-        else
-            slots = PySequence_Tuple(slots);
-        if (slots == NULL)
-            goto error;
-        assert(PyTuple_Check(slots));
-
-        /* Are slots allowed? */
-        nslots = PyTuple_GET_SIZE(slots);
-        if (nslots > 0 && base->tp_itemsize != 0) {
-            PyErr_Format(PyExc_TypeError,
-                         "nonempty __slots__ "
-                         "not supported for subtype of '%s'",
-                         base->tp_name);
-            goto error;
-        }
-
-        /* Check for valid slot names and two special cases */
-        for (i = 0; i < nslots; i++) {
-            PyObject *tmp = PyTuple_GET_ITEM(slots, i);
-            if (!valid_identifier(tmp))
-                goto error;
-            assert(PyUnicode_Check(tmp));
-            if (_PyUnicode_EqualToASCIIId(tmp, &PyId___dict__)) {
-                if (!may_add_dict || add_dict) {
-                    PyErr_SetString(PyExc_TypeError,
-                        "__dict__ slot disallowed: "
-                        "we already got one");
-                    goto error;
-                }
-                add_dict++;
-            }
-            if (_PyUnicode_EqualToASCIIString(tmp, "__weakref__")) {
-                if (!may_add_weak || add_weak) {
-                    PyErr_SetString(PyExc_TypeError,
-                        "__weakref__ slot disallowed: "
-                        "either we already got one, "
-                        "or __itemsize__ != 0");
-                    goto error;
-                }
-                add_weak++;
-            }
-        }
-
-        /* Copy slots into a list, mangle names and sort them.
-           Sorted names are needed for __class__ assignment.
-           Convert them back to tuple at the end.
-        */
-        newslots = PyList_New(nslots - add_dict - add_weak);
-        if (newslots == NULL)
-            goto error;
-        for (i = j = 0; i < nslots; i++) {
-            tmp = PyTuple_GET_ITEM(slots, i);
-            if ((add_dict &&
-                 _PyUnicode_EqualToASCIIId(tmp, &PyId___dict__)) ||
-                (add_weak &&
-                 _PyUnicode_EqualToASCIIString(tmp, "__weakref__")))
-                continue;
-            tmp =_Py_Mangle(name, tmp);
-            if (!tmp) {
-                Py_DECREF(newslots);
-                goto error;
-            }
-            PyList_SET_ITEM(newslots, j, tmp);
-            if (PyDict_GetItemWithError(dict, tmp)) {
-                /* CPython inserts __qualname__ and __classcell__ (when needed)
-                   into the namespace when creating a class.  They will be deleted
-                   below so won't act as class variables. */
-                if (!_PyUnicode_EqualToASCIIId(tmp, &PyId___qualname__) &&
-                    !_PyUnicode_EqualToASCIIId(tmp, &PyId___classcell__)) {
-                    PyErr_Format(PyExc_ValueError,
-                                 "%R in __slots__ conflicts with class variable",
-                                 tmp);
-                    Py_DECREF(newslots);
-                    goto error;
-                }
-            }
-            else if (PyErr_Occurred()) {
-                Py_DECREF(newslots);
-                goto error;
-            }
-            j++;
-        }
-        assert(j == nslots - add_dict - add_weak);
-        nslots = j;
-        Py_CLEAR(slots);
-        if (PyList_Sort(newslots) == -1) {
-            Py_DECREF(newslots);
-            goto error;
-        }
-        slots = PyList_AsTuple(newslots);
-        Py_DECREF(newslots);
-        if (slots == NULL)
-            goto error;
-
-        /* Secondary bases may provide weakrefs or dict */
-        if (nbases > 1 &&
-            ((may_add_dict && !add_dict) ||
-             (may_add_weak && !add_weak))) {
-            for (i = 0; i < nbases; i++) {
-                tmp = PyTuple_GET_ITEM(bases, i);
-                if (tmp == (PyObject *)base)
-                    continue; /* Skip primary base */
-                assert(PyType_Check(tmp));
-                tmptype = (PyTypeObject *)tmp;
-                if (may_add_dict && !add_dict &&
-                    tmptype->tp_dictoffset != 0)
-                    add_dict++;
-                if (may_add_weak && !add_weak &&
-                    tmptype->tp_weaklistoffset != 0)
-                    add_weak++;
-                if (may_add_dict && !add_dict)
-                    continue;
-                if (may_add_weak && !add_weak)
-                    continue;
-                /* Nothing more to check */
-                break;
-            }
-        }
+    if (may_add_weak) {
+      add_weak++;
     }
 
     /* Allocate the type object */
@@ -2777,8 +2626,7 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
     et = (PyHeapTypeObject *)type;
     Py_INCREF(name);
     et->ht_name = name;
-    et->ht_slots = slots;
-    slots = NULL;
+    et->ht_slots = NULL;
 
     /* Initialize tp_flags */
     type->tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HEAPTYPE |
@@ -2899,57 +2747,9 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
         goto error;
     }
 
-    /* Special-case __init_subclass__ and __class_getitem__:
-       if they are plain functions, make them classmethods */
-    tmp = _PyDict_GetItemIdWithError(dict, &PyId___init_subclass__);
-    if (tmp != NULL && PyFunction_Check(tmp)) {
-        tmp = PyClassMethod_New(tmp);
-        if (tmp == NULL)
-            goto error;
-        if (_PyDict_SetItemId(dict, &PyId___init_subclass__, tmp) < 0) {
-            Py_DECREF(tmp);
-            goto error;
-        }
-        Py_DECREF(tmp);
-    }
-    else if (tmp == NULL && PyErr_Occurred()) {
-        goto error;
-    }
-
-    tmp = _PyDict_GetItemIdWithError(dict, &PyId___class_getitem__);
-    if (tmp != NULL && PyFunction_Check(tmp)) {
-        tmp = PyClassMethod_New(tmp);
-        if (tmp == NULL)
-            goto error;
-        if (_PyDict_SetItemId(dict, &PyId___class_getitem__, tmp) < 0) {
-            Py_DECREF(tmp);
-            goto error;
-        }
-        Py_DECREF(tmp);
-    }
-    else if (tmp == NULL && PyErr_Occurred()) {
-        goto error;
-    }
-
     /* Add descriptors for custom slots from __slots__, or for __dict__ */
     mp = PyHeapType_GET_MEMBERS(et);
     slotoffset = base->tp_basicsize;
-    if (et->ht_slots != NULL) {
-        for (i = 0; i < nslots; i++, mp++) {
-            mp->name = PyUnicode_AsUTF8(
-                PyTuple_GET_ITEM(et->ht_slots, i));
-            if (mp->name == NULL)
-                goto error;
-            mp->type = T_OBJECT_EX;
-            mp->offset = slotoffset;
-
-            /* __dict__ and __weakref__ are already filtered out */
-            assert(strcmp(mp->name, "__dict__") != 0);
-            assert(strcmp(mp->name, "__weakref__") != 0);
-
-            slotoffset += sizeof(PyObject *);
-        }
-    }
     if (add_dict) {
         if (base->tp_itemsize)
             type->tp_dictoffset = -(long)sizeof(PyObject *);
@@ -2976,12 +2776,15 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
         type->tp_getset = NULL;
 
     /* Special case some slots */
+    #if 0
     if (type->tp_dictoffset != 0 || nslots > 0) {
         if (base->tp_getattr == NULL && base->tp_getattro == NULL)
             type->tp_getattro = PyObject_GenericGetAttr;
         if (base->tp_setattr == NULL && base->tp_setattro == NULL)
             type->tp_setattro = PyObject_GenericSetAttr;
     }
+    #endif
+    
     type->tp_dealloc = subtype_dealloc;
 
     /* Enable GC unless this class is not adding new instance variables and
@@ -3042,7 +2845,6 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 error:
     Py_XDECREF(dict);
     Py_XDECREF(bases);
-    Py_XDECREF(slots);
     Py_XDECREF(type);
     return NULL;
 }
@@ -3841,12 +3643,6 @@ type_traverse(PyTypeObject *type, visitproc visit, void *arg)
     Py_VISIT(type->tp_bases);
     Py_VISIT(type->tp_base);
     Py_VISIT(((PyHeapTypeObject *)type)->ht_module);
-
-    /* There's no need to visit type->tp_subclasses or
-       ((PyHeapTypeObject *)type)->ht_slots, because they can't be involved
-       in cycles; tp_subclasses is a list of weak references,
-       and slots is a tuple of strings. */
-
     return 0;
 }
 
@@ -4163,35 +3959,6 @@ compatible_with_tp_base(PyTypeObject *child)
 }
 
 static int
-same_slots_added(PyTypeObject *a, PyTypeObject *b)
-{
-    PyTypeObject *base = a->tp_base;
-    Py_ssize_t size;
-    PyObject *slots_a, *slots_b;
-
-    assert(base == b->tp_base);
-    size = base->tp_basicsize;
-    if (a->tp_dictoffset == size && b->tp_dictoffset == size)
-        size += sizeof(PyObject *);
-    if (a->tp_weaklistoffset == size && b->tp_weaklistoffset == size)
-        size += sizeof(PyObject *);
-
-    /* Check slots compliance */
-    if (!(a->tp_flags & Py_TPFLAGS_HEAPTYPE) ||
-        !(b->tp_flags & Py_TPFLAGS_HEAPTYPE)) {
-        return 0;
-    }
-    slots_a = ((PyHeapTypeObject *)a)->ht_slots;
-    slots_b = ((PyHeapTypeObject *)b)->ht_slots;
-    if (slots_a && slots_b) {
-        if (PyObject_RichCompareBool(slots_a, slots_b, Py_EQ) != 1)
-            return 0;
-        size += sizeof(PyObject *) * PyTuple_GET_SIZE(slots_a);
-    }
-    return size == a->tp_basicsize && size == b->tp_basicsize;
-}
-
-static int
 compatible_for_assignment(PyTypeObject* oldto, PyTypeObject* newto, const char* attr)
 {
     PyTypeObject *newbase, *oldbase;
@@ -4221,17 +3988,6 @@ compatible_for_assignment(PyTypeObject* oldto, PyTypeObject* newto, const char* 
         newbase = newbase->tp_base;
     while (compatible_with_tp_base(oldbase))
         oldbase = oldbase->tp_base;
-    if (newbase != oldbase &&
-        (newbase->tp_base != oldbase->tp_base ||
-         !same_slots_added(newbase, oldbase))) {
-        PyErr_Format(PyExc_TypeError,
-                     "%s assignment: "
-                     "'%s' object layout differs from '%s'",
-                     attr,
-                     newto->tp_name,
-                     oldto->tp_name);
-        return 0;
-    }
 
     return 1;
 }

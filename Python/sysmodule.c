@@ -1073,8 +1073,6 @@ maxsize -- the largest supported length of containers.\n\
 maxunicode -- the value of the largest Unicode code point\n\
 platform -- platform identifier\n\
 prefix -- prefix used to find the Python library\n\
-version -- the version of this interpreter as a string\n\
-version_info -- version information as a named tuple\n\
 "
 )
 PyDoc_STR(
@@ -1096,76 +1094,6 @@ getsizeof() -- return the size of an object in bytes\n\
 )
 /* end of sys_doc */ ;
 
-PyDoc_STRVAR(version_info__doc__,
-"sys.version_info\n\
-\n\
-Version information as a named tuple.");
-
-static PyTypeObject VersionInfoType;
-
-static PyStructSequence_Field version_info_fields[] = {
-    {"major", "Major release number"},
-    {"minor", "Minor release number"},
-    {"micro", "Patch release number"},
-    {"releaselevel", "'alpha', 'beta', 'candidate', or 'final'"},
-    {"serial", "Serial release number"},
-    {0}
-};
-
-static PyStructSequence_Desc version_info_desc = {
-    "sys.version_info",     /* name */
-    version_info__doc__,    /* doc */
-    version_info_fields,    /* fields */
-    5
-};
-
-static PyObject *
-make_version_info(PyThreadState *tstate)
-{
-    PyObject *version_info;
-    char *s;
-    int pos = 0;
-
-    version_info = PyStructSequence_New(&VersionInfoType);
-    if (version_info == NULL) {
-        return NULL;
-    }
-
-    /*
-     * These release level checks are mutually exclusive and cover
-     * the field, so don't get too fancy with the pre-processor!
-     */
-#if PY_RELEASE_LEVEL == PY_RELEASE_LEVEL_ALPHA
-    s = "alpha";
-#elif PY_RELEASE_LEVEL == PY_RELEASE_LEVEL_BETA
-    s = "beta";
-#elif PY_RELEASE_LEVEL == PY_RELEASE_LEVEL_GAMMA
-    s = "candidate";
-#elif PY_RELEASE_LEVEL == PY_RELEASE_LEVEL_FINAL
-    s = "final";
-#endif
-
-#define SetIntItem(flag) \
-    PyStructSequence_SET_ITEM(version_info, pos++, PyLong_FromLong(flag))
-#define SetStrItem(flag) \
-    PyStructSequence_SET_ITEM(version_info, pos++, PyUnicode_FromString(flag))
-
-    SetIntItem(PY_MAJOR_VERSION);
-    SetIntItem(PY_MINOR_VERSION);
-    SetIntItem(PY_MICRO_VERSION);
-    SetStrItem(s);
-    SetIntItem(PY_RELEASE_SERIAL);
-#undef SetIntItem
-#undef SetStrItem
-
-    if (_PyErr_Occurred(tstate)) {
-        Py_CLEAR(version_info);
-        return NULL;
-    }
-    return version_info;
-}
-
-
 /* sys.implementation values */
 #define NAME "cpython"
 const char *_PySys_ImplName = NAME;
@@ -1178,60 +1106,6 @@ const char *_PySys_ImplCacheTag = TAG;
 #undef MAJOR
 #undef MINOR
 #undef TAG
-
-#if 0
-static PyObject *
-make_impl_info(PyObject *version_info)
-{
-    int res;
-    PyObject *impl_info, *value, *ns;
-
-    impl_info = PyDict_New();
-    if (impl_info == NULL)
-        return NULL;
-
-    /* populate the dict */
-
-    value = PyUnicode_FromString(_PySys_ImplName);
-    if (value == NULL)
-        goto error;
-    res = PyDict_SetItemString(impl_info, "name", value);
-    Py_DECREF(value);
-    if (res < 0)
-        goto error;
-
-    value = PyUnicode_FromString(_PySys_ImplCacheTag);
-    if (value == NULL)
-        goto error;
-    res = PyDict_SetItemString(impl_info, "cache_tag", value);
-    Py_DECREF(value);
-    if (res < 0)
-        goto error;
-
-    res = PyDict_SetItemString(impl_info, "version", version_info);
-    if (res < 0)
-        goto error;
-
-    value = PyLong_FromLong(PY_VERSION_HEX);
-    if (value == NULL)
-        goto error;
-    res = PyDict_SetItemString(impl_info, "hexversion", value);
-    Py_DECREF(value);
-    if (res < 0)
-        goto error;
-
-    /* dict ready */
-
-    ns = _PyNamespace_New(impl_info);
-    Py_DECREF(impl_info);
-    return ns;
-
-error:
-    Py_CLEAR(impl_info);
-    return NULL;
-}
-
-#endif
 
 static struct PyModuleDef sysmodule = {
     PyModuleDef_HEAD_INIT,
@@ -1273,7 +1147,6 @@ static struct PyModuleDef sysmodule = {
 static PyStatus
 _PySys_InitCore(PyThreadState *tstate, PyObject *sysdict)
 {
-    PyObject *version_info;
     int res;
 
     /* stdin/stdout/stderr are set in pylifecycle.c */
@@ -1284,19 +1157,12 @@ _PySys_InitCore(PyThreadState *tstate, PyObject *sysdict)
                                PyDict_GetItemString(sysdict, "excepthook"));
     SET_SYS_FROM_STRING_BORROW("__unraisablehook__",
                                PyDict_GetItemString(sysdict, "unraisablehook"));
-
-    SET_SYS_FROM_STRING("version",
-                         PyUnicode_FromString(Py_GetVersion()));
-    SET_SYS_FROM_STRING("hexversion",
-                         PyLong_FromLong(PY_VERSION_HEX));
     SET_SYS_FROM_STRING("_git",
                         Py_BuildValue("(szz)", "CPython", _Py_gitidentifier(),
                                       _Py_gitversion()));
     SET_SYS_FROM_STRING("_framework", PyUnicode_FromString(_PYTHONFRAMEWORK));
     SET_SYS_FROM_STRING("api_version",
                         PyLong_FromLong(PYTHON_API_VERSION));
-    SET_SYS_FROM_STRING("copyright",
-                        PyUnicode_FromString(Py_GetCopyright()));
     SET_SYS_FROM_STRING("platform",
                         PyUnicode_FromString(Py_GetPlatform()));
     SET_SYS_FROM_STRING("maxsize",
@@ -1312,36 +1178,10 @@ _PySys_InitCore(PyThreadState *tstate, PyObject *sysdict)
     SET_SYS_FROM_STRING("byteorder",
                         PyUnicode_FromString("little"));
 #endif
-
-    /* version_info */
-    if (VersionInfoType.tp_name == NULL) {
-        if (PyStructSequence_InitType2(&VersionInfoType,
-                                       &version_info_desc) < 0) {
-            goto type_init_failed;
-        }
-    }
-    version_info = make_version_info(tstate);
-    SET_SYS_FROM_STRING("version_info", version_info);
-    /* prevent user from creating new instances */
-    VersionInfoType.tp_init = NULL;
-    VersionInfoType.tp_new = NULL;
-    res = PyDict_DelItemString(VersionInfoType.tp_dict, "__new__");
-    if (res < 0 && _PyErr_ExceptionMatches(tstate, PyExc_KeyError)) {
-        _PyErr_Clear(tstate);
-    }
-
-    /* implementation */
-    /*
-    SET_SYS_FROM_STRING("implementation", make_impl_info(version_info));
-    */
-    
     if (_PyErr_Occurred(tstate)) {
         goto err_occurred;
     }
     return _PyStatus_OK();
-
-type_init_failed:
-    return _PyStatus_ERR("failed to initialize a type");
 
 err_occurred:
     return _PyStatus_ERR("can't initialize sys module");

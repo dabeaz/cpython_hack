@@ -5903,10 +5903,8 @@ makecode(struct compiler *c, struct assembler *a)
     if (flags < 0)
         goto error;
 
-    bytecode = PyCode_Optimize(a->a_bytecode, consts, names, a->a_lnotab);
-    if (!bytecode)
-        goto error;
-
+    bytecode = a->a_bytecode;
+    
     tmp = PyList_AsTuple(consts); /* PyCode_New requires a tuple */
     if (!tmp)
         goto error;
@@ -5935,7 +5933,6 @@ makecode(struct compiler *c, struct assembler *a)
     Py_XDECREF(name);
     Py_XDECREF(freevars);
     Py_XDECREF(cellvars);
-    Py_XDECREF(bytecode);
     return co;
 }
 

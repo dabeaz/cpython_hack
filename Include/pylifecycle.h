@@ -47,9 +47,6 @@ PyAPI_FUNC(wchar_t *) Py_GetPrefix(void);
 PyAPI_FUNC(wchar_t *) Py_GetExecPrefix(void);
 PyAPI_FUNC(wchar_t *) Py_GetPath(void);
 PyAPI_FUNC(void)      Py_SetPath(const wchar_t *);
-#ifdef MS_WINDOWS
-int _Py_CheckPython3(void);
-#endif
 
 /* In their own files */
 PyAPI_FUNC(const char *) Py_GetVersion(void);

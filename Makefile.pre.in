@@ -342,7 +342,6 @@ PYTHON_OBJS=	\
 		Python/mysnprintf.o \
 		Python/mystrtoul.o \
 		Python/pathconfig.o \
-		Python/peephole.o \
 		Python/preconfig.o \
 		Python/pyctype.o \
 		Python/pyhash.o \
@@ -513,7 +512,6 @@ coverage-lcov:
 	    '*/Include/*' \
 	    '*/Modules/xx*.c' \
 	    '*/Parser/listnode.c' \
-	    '*/Python/pyfpe.c' \
 	    '*/Python/pystrcmp.c' \
 	    '/usr/include/*' \
 	    '/usr/local/include/*' \
@@ -936,7 +934,6 @@ PYTHON_HEADERS= \
 		$(srcdir)/Include/pyctype.h \
 		$(srcdir)/Include/pydebug.h \
 		$(srcdir)/Include/pyerrors.h \
-		$(srcdir)/Include/pyfpe.h \
 		$(srcdir)/Include/pyframe.h \
 		$(srcdir)/Include/pyhash.h \
 		$(srcdir)/Include/pylifecycle.h \
@@ -958,7 +955,6 @@ PYTHON_HEADERS= \
 		$(srcdir)/Include/sysmodule.h \
 		$(srcdir)/Include/token.h \
 		$(srcdir)/Include/traceback.h \
-		$(srcdir)/Include/tracemalloc.h \
 		$(srcdir)/Include/tupleobject.h \
 		$(srcdir)/Include/ucnhash.h \
 		$(srcdir)/Include/unicodeobject.h \

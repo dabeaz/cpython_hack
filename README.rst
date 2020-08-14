@@ -76,7 +76,8 @@ Halfway there.  It all gets more difficult from here...
 - Day 62 (8/11/2020). Removed remaining abstract class support.
 - Day 63 (8/12/2020). Trace that! Or not.
 - Day 64 (8/13/2020). Gutted more of the sys module.
-  
+- Day 65 (8/14/2020). No peeping. Or slotting.
+
 Copyright and License Information
 ---------------------------------
 
