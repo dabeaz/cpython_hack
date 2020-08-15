@@ -709,64 +709,6 @@ ascii_encode(textio *self, PyObject *text)
 }
 
 static PyObject *
-utf16be_encode(textio *self, PyObject *text)
-{
-    return _PyUnicode_EncodeUTF16(text,
-                                  PyUnicode_AsUTF8(self->errors), 1);
-}
-
-static PyObject *
-utf16le_encode(textio *self, PyObject *text)
-{
-    return _PyUnicode_EncodeUTF16(text,
-                                  PyUnicode_AsUTF8(self->errors), -1);
-}
-
-static PyObject *
-utf16_encode(textio *self, PyObject *text)
-{
-    if (!self->encoding_start_of_stream) {
-        /* Skip the BOM and use native byte ordering */
-#if PY_BIG_ENDIAN
-        return utf16be_encode(self, text);
-#else
-        return utf16le_encode(self, text);
-#endif
-    }
-    return _PyUnicode_EncodeUTF16(text,
-                                  PyUnicode_AsUTF8(self->errors), 0);
-}
-
-static PyObject *
-utf32be_encode(textio *self, PyObject *text)
-{
-    return _PyUnicode_EncodeUTF32(text,
-                                  PyUnicode_AsUTF8(self->errors), 1);
-}
-
-static PyObject *
-utf32le_encode(textio *self, PyObject *text)
-{
-    return _PyUnicode_EncodeUTF32(text,
-                                  PyUnicode_AsUTF8(self->errors), -1);
-}
-
-static PyObject *
-utf32_encode(textio *self, PyObject *text)
-{
-    if (!self->encoding_start_of_stream) {
-        /* Skip the BOM and use native byte ordering */
-#if PY_BIG_ENDIAN
-        return utf32be_encode(self, text);
-#else
-        return utf32le_encode(self, text);
-#endif
-    }
-    return _PyUnicode_EncodeUTF32(text,
-                                  PyUnicode_AsUTF8(self->errors), 0);
-}
-
-static PyObject *
 utf8_encode(textio *self, PyObject *text)
 {
     return _PyUnicode_AsUTF8String(text, PyUnicode_AsUTF8(self->errors));
@@ -798,12 +740,6 @@ static const encodefuncentry encodefuncs[] = {
     {"ascii",       (encodefunc_t) ascii_encode},
     {"iso8859-1",   (encodefunc_t) latin1_encode},
     {"utf-8",       (encodefunc_t) utf8_encode},
-    {"utf-16-be",   (encodefunc_t) utf16be_encode},
-    {"utf-16-le",   (encodefunc_t) utf16le_encode},
-    {"utf-16",      (encodefunc_t) utf16_encode},
-    {"utf-32-be",   (encodefunc_t) utf32be_encode},
-    {"utf-32-le",   (encodefunc_t) utf32le_encode},
-    {"utf-32",      (encodefunc_t) utf32_encode},
     {NULL, NULL}
 };
 

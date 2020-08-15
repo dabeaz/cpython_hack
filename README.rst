@@ -77,7 +77,8 @@ Halfway there.  It all gets more difficult from here...
 - Day 63 (8/12/2020). Trace that! Or not.
 - Day 64 (8/13/2020). Gutted more of the sys module.
 - Day 65 (8/14/2020). No peeping. Or slotting.
-
+- Day 66 (8/15/2020). UTF-7, not enough. UTF-16, too much. UTF-8, just right.
+  
 Copyright and License Information
 ---------------------------------
 
