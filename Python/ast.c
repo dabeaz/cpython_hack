@@ -267,8 +267,6 @@ validate_expr(expr_ty exp, expr_context_ty ctx)
         return !exp->v.Yield.value || validate_expr(exp->v.Yield.value, Load);
     case YieldFrom_kind:
         return validate_expr(exp->v.YieldFrom.value, Load);
-    case Await_kind:
-        return validate_expr(exp->v.Await.value, Load);
     case Compare_kind:
         if (!asdl_seq_LEN(exp->v.Compare.comparators)) {
             PyErr_SetString(PyExc_ValueError, "Compare with no comparators");
@@ -388,11 +386,6 @@ validate_stmt(stmt_ty stmt)
             validate_expr(stmt->v.For.iter, Load) &&
             validate_body(stmt->v.For.body, "For") &&
             validate_stmts(stmt->v.For.orelse);
-    case AsyncFor_kind:
-        return validate_expr(stmt->v.AsyncFor.target, Store) &&
-            validate_expr(stmt->v.AsyncFor.iter, Load) &&
-            validate_body(stmt->v.AsyncFor.body, "AsyncFor") &&
-            validate_stmts(stmt->v.AsyncFor.orelse);
     case While_kind:
         return validate_expr(stmt->v.While.test, Load) &&
             validate_body(stmt->v.While.body, "While") &&
@@ -411,16 +404,6 @@ validate_stmt(stmt_ty stmt)
                 return 0;
         }
         return validate_body(stmt->v.With.body, "With");
-    case AsyncWith_kind:
-        if (!validate_nonempty_seq(stmt->v.AsyncWith.items, "items", "AsyncWith"))
-            return 0;
-        for (i = 0; i < asdl_seq_LEN(stmt->v.AsyncWith.items); i++) {
-            withitem_ty item = asdl_seq_GET(stmt->v.AsyncWith.items, i);
-            if (!validate_expr(item->context_expr, Load) ||
-                (item->optional_vars && !validate_expr(item->optional_vars, Store)))
-                return 0;
-        }
-        return validate_body(stmt->v.AsyncWith.body, "AsyncWith");
     case Raise_kind:
         if (stmt->v.Raise.exc) {
             return validate_expr(stmt->v.Raise.exc, Load) &&
@@ -472,12 +455,6 @@ validate_stmt(stmt_ty stmt)
         return validate_nonempty_seq(stmt->v.Nonlocal.names, "names", "Nonlocal");
     case Expr_kind:
         return validate_expr(stmt->v.Expr.value, Load);
-    case AsyncFunctionDef_kind:
-        return validate_body(stmt->v.AsyncFunctionDef.body, "AsyncFunctionDef") &&
-            validate_arguments(stmt->v.AsyncFunctionDef.args) &&
-            validate_exprs(stmt->v.AsyncFunctionDef.decorator_list, Load, 0) &&
-            (!stmt->v.AsyncFunctionDef.returns ||
-             validate_expr(stmt->v.AsyncFunctionDef.returns, Load));
     case Pass_kind:
     case Break_kind:
     case Continue_kind:

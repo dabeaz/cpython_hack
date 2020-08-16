@@ -201,8 +201,6 @@ static int are_all_items_const(asdl_seq *, Py_ssize_t, Py_ssize_t);
 static int expr_constant(expr_ty);
 
 static int compiler_with(struct compiler *, stmt_ty, int);
-static int compiler_async_with(struct compiler *, stmt_ty, int);
-static int compiler_async_for(struct compiler *, stmt_ty);
 static int compiler_call_helper(struct compiler *c, int n,
                                 asdl_seq *args,
                                 asdl_seq *keywords);
@@ -210,12 +208,6 @@ static int compiler_try_except(struct compiler *, stmt_ty);
 static int compiler_set_qualname(struct compiler *);
 
 static int compiler_sync_comprehension_generator(
-                                      struct compiler *c,
-                                      asdl_seq *generators, int gen_index,
-                                      int depth,
-                                      expr_ty elt, expr_ty val, int type);
-
-static int compiler_async_comprehension_generator(
                                       struct compiler *c,
                                       asdl_seq *generators, int gen_index,
                                       int depth,
@@ -1557,10 +1549,6 @@ find_ann(asdl_seq *stmts)
             res = find_ann(st->v.For.body) ||
                   find_ann(st->v.For.orelse);
             break;
-        case AsyncFor_kind:
-            res = find_ann(st->v.AsyncFor.body) ||
-                  find_ann(st->v.AsyncFor.orelse);
-            break;
         case While_kind:
             res = find_ann(st->v.While.body) ||
                   find_ann(st->v.While.orelse);
@@ -1571,9 +1559,6 @@ find_ann(asdl_seq *stmts)
             break;
         case With_kind:
             res = find_ann(st->v.With.body);
-            break;
-        case AsyncWith_kind:
-            res = find_ann(st->v.AsyncWith.body);
             break;
         case Try_kind:
             for (j = 0; j < asdl_seq_LEN(st->v.Try.handlers); j++) {
@@ -2199,27 +2184,13 @@ compiler_function(struct compiler *c, stmt_ty s, int is_async)
     int scope_type;
     int firstlineno;
 
-    if (is_async) {
-        assert(s->kind == AsyncFunctionDef_kind);
-
-        args = s->v.AsyncFunctionDef.args;
-        returns = s->v.AsyncFunctionDef.returns;
-        decos = s->v.AsyncFunctionDef.decorator_list;
-        name = s->v.AsyncFunctionDef.name;
-        body = s->v.AsyncFunctionDef.body;
-
-        scope_type = COMPILER_SCOPE_ASYNC_FUNCTION;
-    } else {
-        assert(s->kind == FunctionDef_kind);
-
-        args = s->v.FunctionDef.args;
-        returns = s->v.FunctionDef.returns;
-        decos = s->v.FunctionDef.decorator_list;
-        name = s->v.FunctionDef.name;
-        body = s->v.FunctionDef.body;
-
-        scope_type = COMPILER_SCOPE_FUNCTION;
-    }
+    assert(s->kind == FunctionDef_kind);
+    args = s->v.FunctionDef.args;
+    returns = s->v.FunctionDef.returns;
+    decos = s->v.FunctionDef.decorator_list;
+    name = s->v.FunctionDef.name;
+    body = s->v.FunctionDef.body;
+    scope_type = COMPILER_SCOPE_FUNCTION;
 
     if (!compiler_check_debug_args(c, args))
         return 0;
@@ -2759,56 +2730,6 @@ compiler_for(struct compiler *c, stmt_ty s)
     return 1;
 }
 
-
-static int
-compiler_async_for(struct compiler *c, stmt_ty s)
-{
-    basicblock *start, *except, *end;
-    if (IS_TOP_LEVEL_AWAIT(c)){
-        c->u->u_ste->ste_coroutine = 1;
-    } else if (c->u->u_scope_type != COMPILER_SCOPE_ASYNC_FUNCTION) {
-        return compiler_error(c, "'async for' outside async function");
-    }
-
-    start = compiler_new_block(c);
-    except = compiler_new_block(c);
-    end = compiler_new_block(c);
-
-    if (start == NULL || except == NULL || end == NULL) {
-        return 0;
-    }
-    VISIT(c, expr, s->v.AsyncFor.iter);
-    ADDOP(c, GET_AITER);
-
-    compiler_use_next_block(c, start);
-    if (!compiler_push_fblock(c, FOR_LOOP, start, end, NULL)) {
-        return 0;
-    }
-    /* SETUP_FINALLY to guard the __anext__ call */
-    ADDOP_JREL(c, SETUP_FINALLY, except);
-    ADDOP(c, GET_ANEXT);
-    ADDOP_LOAD_CONST(c, Py_None);
-    ADDOP(c, YIELD_FROM);
-    ADDOP(c, POP_BLOCK);  /* for SETUP_FINALLY */
-
-    /* Success block for __anext__ */
-    VISIT(c, expr, s->v.AsyncFor.target);
-    VISIT_SEQ(c, stmt, s->v.AsyncFor.body);
-    ADDOP_JABS(c, JUMP_ABSOLUTE, start);
-
-    compiler_pop_fblock(c, FOR_LOOP, start);
-
-    /* Except block for __anext__ */
-    compiler_use_next_block(c, except);
-    ADDOP(c, END_ASYNC_FOR);
-
-    /* `else` block */
-    VISIT_SEQ(c, stmt, s->v.For.orelse);
-
-    compiler_use_next_block(c, end);
-
-    return 1;
-}
 
 static int
 compiler_while(struct compiler *c, stmt_ty s)
@@ -3425,12 +3346,6 @@ compiler_visit_stmt(struct compiler *c, stmt_ty s)
         return compiler_continue(c);
     case With_kind:
         return compiler_with(c, s, 0);
-    case AsyncFunctionDef_kind:
-        return compiler_function(c, s, 1);
-    case AsyncWith_kind:
-        return compiler_async_with(c, s, 0);
-    case AsyncFor_kind:
-        return compiler_async_for(c, s);
     }
 
     return 1;
@@ -4360,13 +4275,8 @@ compiler_comprehension_generator(struct compiler *c,
 {
     comprehension_ty gen;
     gen = (comprehension_ty)asdl_seq_GET(generators, gen_index);
-    if (gen->is_async) {
-        return compiler_async_comprehension_generator(
-            c, generators, gen_index, depth, elt, val, type);
-    } else {
-        return compiler_sync_comprehension_generator(
-            c, generators, gen_index, depth, elt, val, type);
-    }
+    return compiler_sync_comprehension_generator(
+						 c, generators, gen_index, depth, elt, val, type);
 }
 
 static int
@@ -4489,97 +4399,6 @@ compiler_sync_comprehension_generator(struct compiler *c,
 }
 
 static int
-compiler_async_comprehension_generator(struct compiler *c,
-                                      asdl_seq *generators, int gen_index,
-                                      int depth,
-                                      expr_ty elt, expr_ty val, int type)
-{
-    comprehension_ty gen;
-    basicblock *start, *if_cleanup, *except;
-    Py_ssize_t i, n;
-    start = compiler_new_block(c);
-    except = compiler_new_block(c);
-    if_cleanup = compiler_new_block(c);
-
-    if (start == NULL || if_cleanup == NULL || except == NULL) {
-        return 0;
-    }
-
-    gen = (comprehension_ty)asdl_seq_GET(generators, gen_index);
-
-    if (gen_index == 0) {
-        /* Receive outermost iter as an implicit argument */
-        c->u->u_argcount = 1;
-        ADDOP_I(c, LOAD_FAST, 0);
-    }
-    else {
-        /* Sub-iter - calculate on the fly */
-        VISIT(c, expr, gen->iter);
-        ADDOP(c, GET_AITER);
-    }
-
-    compiler_use_next_block(c, start);
-
-    ADDOP_JREL(c, SETUP_FINALLY, except);
-    ADDOP(c, GET_ANEXT);
-    ADDOP_LOAD_CONST(c, Py_None);
-    ADDOP(c, YIELD_FROM);
-    ADDOP(c, POP_BLOCK);
-    VISIT(c, expr, gen->target);
-
-    n = asdl_seq_LEN(gen->ifs);
-    for (i = 0; i < n; i++) {
-        expr_ty e = (expr_ty)asdl_seq_GET(gen->ifs, i);
-        if (!compiler_jump_if(c, e, if_cleanup, 0))
-            return 0;
-        NEXT_BLOCK(c);
-    }
-
-    depth++;
-    if (++gen_index < asdl_seq_LEN(generators))
-        if (!compiler_comprehension_generator(c,
-                                              generators, gen_index, depth,
-                                              elt, val, type))
-        return 0;
-
-    /* only append after the last for generator */
-    if (gen_index >= asdl_seq_LEN(generators)) {
-        /* comprehension specific code */
-        switch (type) {
-        case COMP_GENEXP:
-            VISIT(c, expr, elt);
-            ADDOP(c, YIELD_VALUE);
-            ADDOP(c, POP_TOP);
-            break;
-        case COMP_LISTCOMP:
-            VISIT(c, expr, elt);
-            ADDOP_I(c, LIST_APPEND, depth + 1);
-            break;
-        case COMP_SETCOMP:
-            VISIT(c, expr, elt);
-            ADDOP_I(c, SET_ADD, depth + 1);
-            break;
-        case COMP_DICTCOMP:
-            /* With '{k: v}', k is evaluated before v, so we do
-               the same. */
-            VISIT(c, expr, elt);
-            VISIT(c, expr, val);
-            ADDOP_I(c, MAP_ADD, depth + 1);
-            break;
-        default:
-            return 0;
-        }
-    }
-    compiler_use_next_block(c, if_cleanup);
-    ADDOP_JABS(c, JUMP_ABSOLUTE, start);
-
-    compiler_use_next_block(c, except);
-    ADDOP(c, END_ASYNC_FOR);
-
-    return 1;
-}
-
-static int
 compiler_comprehension(struct compiler *c, expr_ty e, int type,
                        identifier name, asdl_seq *generators, expr_ty elt,
                        expr_ty val)
@@ -4651,20 +4470,8 @@ compiler_comprehension(struct compiler *c, expr_ty e, int type,
     Py_DECREF(co);
 
     VISIT(c, expr, outermost->iter);
-
-    if (outermost->is_async) {
-        ADDOP(c, GET_AITER);
-    } else {
-        ADDOP(c, GET_ITER);
-    }
-
+    ADDOP(c, GET_ITER);
     ADDOP_I(c, CALL_FUNCTION, 1);
-
-    if (is_async_generator && type != COMP_GENEXP) {
-        ADDOP(c, GET_AWAITABLE);
-        ADDOP_LOAD_CONST(c, Py_None);
-        ADDOP(c, YIELD_FROM);
-    }
 
     return 1;
 error_in_scope:
@@ -4775,111 +4582,6 @@ compiler_with_except_finish(struct compiler *c) {
     ADDOP(c, POP_TOP);
     return 1;
 }
-
-/*
-   Implements the async with statement.
-
-   The semantics outlined in that PEP are as follows:
-
-   async with EXPR as VAR:
-       BLOCK
-
-   It is implemented roughly as:
-
-   context = EXPR
-   exit = context.__aexit__  # not calling it
-   value = await context.__aenter__()
-   try:
-       VAR = value  # if VAR present in the syntax
-       BLOCK
-   finally:
-       if an exception was raised:
-           exc = copy of (exception, instance, traceback)
-       else:
-           exc = (None, None, None)
-       if not (await exit(*exc)):
-           raise
- */
-static int
-compiler_async_with(struct compiler *c, stmt_ty s, int pos)
-{
-    basicblock *block, *final, *exit;
-    withitem_ty item = asdl_seq_GET(s->v.AsyncWith.items, pos);
-
-    assert(s->kind == AsyncWith_kind);
-    if (IS_TOP_LEVEL_AWAIT(c)){
-        c->u->u_ste->ste_coroutine = 1;
-    } else if (c->u->u_scope_type != COMPILER_SCOPE_ASYNC_FUNCTION){
-        return compiler_error(c, "'async with' outside async function");
-    }
-
-    block = compiler_new_block(c);
-    final = compiler_new_block(c);
-    exit = compiler_new_block(c);
-    if (!block || !final || !exit)
-        return 0;
-
-    /* Evaluate EXPR */
-    VISIT(c, expr, item->context_expr);
-
-    ADDOP(c, BEFORE_ASYNC_WITH);
-    ADDOP(c, GET_AWAITABLE);
-    ADDOP_LOAD_CONST(c, Py_None);
-    ADDOP(c, YIELD_FROM);
-
-    ADDOP_JREL(c, SETUP_ASYNC_WITH, final);
-
-    /* SETUP_ASYNC_WITH pushes a finally block. */
-    compiler_use_next_block(c, block);
-    if (!compiler_push_fblock(c, ASYNC_WITH, block, final, NULL)) {
-        return 0;
-    }
-
-    if (item->optional_vars) {
-        VISIT(c, expr, item->optional_vars);
-    }
-    else {
-    /* Discard result from context.__aenter__() */
-        ADDOP(c, POP_TOP);
-    }
-
-    pos++;
-    if (pos == asdl_seq_LEN(s->v.AsyncWith.items))
-        /* BLOCK code */
-        VISIT_SEQ(c, stmt, s->v.AsyncWith.body)
-    else if (!compiler_async_with(c, s, pos))
-            return 0;
-
-    compiler_pop_fblock(c, ASYNC_WITH, block);
-    ADDOP(c, POP_BLOCK);
-    /* End of body; start the cleanup */
-
-    /* For successful outcome:
-     * call __exit__(None, None, None)
-     */
-    if(!compiler_call_exit_with_nones(c))
-        return 0;
-    ADDOP(c, GET_AWAITABLE);
-    ADDOP_O(c, LOAD_CONST, Py_None, consts);
-    ADDOP(c, YIELD_FROM);
-
-    ADDOP(c, POP_TOP);
-
-    ADDOP_JABS(c, JUMP_ABSOLUTE, exit);
-
-    /* For exceptional outcome: */
-    compiler_use_next_block(c, final);
-
-    ADDOP(c, WITH_EXCEPT_START);
-    ADDOP(c, GET_AWAITABLE);
-    ADDOP_LOAD_CONST(c, Py_None);
-    ADDOP(c, YIELD_FROM);
-    compiler_with_except_finish(c);
-
-compiler_use_next_block(c, exit);
-    return 1;
-}
-
 
 /*
    Implements the with statement from PEP 343.
@@ -5021,23 +4723,6 @@ compiler_visit_expr1(struct compiler *c, expr_ty e)
 
         VISIT(c, expr, e->v.YieldFrom.value);
         ADDOP(c, GET_YIELD_FROM_ITER);
-        ADDOP_LOAD_CONST(c, Py_None);
-        ADDOP(c, YIELD_FROM);
-        break;
-    case Await_kind:
-        if (!IS_TOP_LEVEL_AWAIT(c)){
-            if (c->u->u_ste->ste_type != FunctionBlock){
-                return compiler_error(c, "'await' outside function");
-            }
-
-            if (c->u->u_scope_type != COMPILER_SCOPE_ASYNC_FUNCTION &&
-                    c->u->u_scope_type != COMPILER_SCOPE_COMPREHENSION){
-                return compiler_error(c, "'await' outside async function");
-            }
-        }
-
-        VISIT(c, expr, e->v.Await.value);
-        ADDOP(c, GET_AWAITABLE);
         ADDOP_LOAD_CONST(c, Py_None);
         ADDOP(c, YIELD_FROM);
         break;
@@ -5936,40 +5621,6 @@ makecode(struct compiler *c, struct assembler *a)
     return co;
 }
 
-
-/* For debugging purposes only */
-#if 0
-static void
-dump_instr(const struct instr *i)
-{
-    const char *jrel = i->i_jrel ? "jrel " : "";
-    const char *jabs = i->i_jabs ? "jabs " : "";
-    char arg[128];
-
-    *arg = '\0';
-    if (HAS_ARG(i->i_opcode)) {
-        sprintf(arg, "arg: %d ", i->i_oparg);
-    }
-    fprintf(stderr, "line: %d, opcode: %d %s%s%s\n",
-                    i->i_lineno, i->i_opcode, arg, jabs, jrel);
-}
-
-static void
-dump_basicblock(const basicblock *b)
-{
-    const char *seen = b->b_seen ? "seen " : "";
-    const char *b_return = b->b_return ? "return " : "";
-    fprintf(stderr, "used: %d, depth: %d, offset: %d %s%s\n",
-        b->b_iused, b->b_startdepth, b->b_offset, seen, b_return);
-    if (b->b_instr) {
-        int i;
-        for (i = 0; i < b->b_iused; i++) {
-            fprintf(stderr, "  [%02d] ", i);
-            dump_instr(b->b_instr + i);
-        }
-    }
-}
-#endif
 
 static PyCodeObject *
 assemble(struct compiler *c, int addNone)

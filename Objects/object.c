@@ -1623,7 +1623,6 @@ _PyTypes_Init(void)
     INIT_TYPE(&_PyMethodWrapper_Type, "method wrapper");
     INIT_TYPE(&PyEllipsis_Type, "ellipsis");
     INIT_TYPE(&PyMemberDescr_Type, "member descriptor");
-    /*    INIT_TYPE(&_PyNamespace_Type, "namespace");*/
     INIT_TYPE(&PyCapsule_Type, "capsule");
     INIT_TYPE(&PyLongRangeIter_Type, "long range iterator");
     INIT_TYPE(&PyCell_Type, "cell");
@@ -1632,8 +1631,6 @@ _PyTypes_Init(void)
     INIT_TYPE(&PyMethodDescr_Type, "method descr");
     INIT_TYPE(&PyCallIter_Type, "call iter");
     INIT_TYPE(&PySeqIter_Type, "sequence iterator");
-    INIT_TYPE(&PyCoro_Type, "coroutine");
-    INIT_TYPE(&_PyCoroWrapper_Type, "coroutine wrapper");
     return _PyStatus_OK();
 
 #undef INIT_TYPE

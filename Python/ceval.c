@@ -61,7 +61,6 @@ static PyObject * unicode_concatenate(PyThreadState *, PyObject *, PyObject *,
 static PyObject * special_lookup(PyThreadState *, PyObject *, _Py_Identifier *);
 static int check_args_iterable(PyThreadState *, PyObject *func, PyObject *vararg);
 static void format_kwargs_error(PyThreadState *, PyObject *func, PyObject *kwargs);
-static void format_awaitable_error(PyThreadState *, PyTypeObject *, int, int);
 
 #define NAME_ERROR_MSG \
     "name '%.200s' is not defined"
@@ -1530,147 +1529,12 @@ main_loop:
             goto exiting;
         }
 
-        case TARGET(GET_AITER): {
-            unaryfunc getter = NULL;
-            PyObject *iter = NULL;
-            PyObject *obj = TOP();
-            PyTypeObject *type = Py_TYPE(obj);
-
-            if (type->tp_as_async != NULL) {
-                getter = type->tp_as_async->am_aiter;
-            }
-
-            if (getter != NULL) {
-                iter = (*getter)(obj);
-                Py_DECREF(obj);
-                if (iter == NULL) {
-                    SET_TOP(NULL);
-                    goto error;
-                }
-            }
-            else {
-                SET_TOP(NULL);
-                _PyErr_Format(tstate, PyExc_TypeError,
-                              "'async for' requires an object with "
-                              "__aiter__ method, got %.100s",
-                              type->tp_name);
-                Py_DECREF(obj);
-                goto error;
-            }
-
-            if (Py_TYPE(iter)->tp_as_async == NULL ||
-                    Py_TYPE(iter)->tp_as_async->am_anext == NULL) {
-
-                SET_TOP(NULL);
-                _PyErr_Format(tstate, PyExc_TypeError,
-                              "'async for' received an object from __aiter__ "
-                              "that does not implement __anext__: %.100s",
-                              Py_TYPE(iter)->tp_name);
-                Py_DECREF(iter);
-                goto error;
-            }
-
-            SET_TOP(iter);
-            DISPATCH();
-        }
-
-        case TARGET(GET_ANEXT): {
-            unaryfunc getter = NULL;
-            PyObject *next_iter = NULL;
-            PyObject *awaitable = NULL;
-            PyObject *aiter = TOP();
-            PyTypeObject *type = Py_TYPE(aiter);
-
-            if (PyAsyncGen_CheckExact(aiter)) {
-                awaitable = type->tp_as_async->am_anext(aiter);
-                if (awaitable == NULL) {
-                    goto error;
-                }
-            } else {
-                if (type->tp_as_async != NULL){
-                    getter = type->tp_as_async->am_anext;
-                }
-
-                if (getter != NULL) {
-                    next_iter = (*getter)(aiter);
-                    if (next_iter == NULL) {
-                        goto error;
-                    }
-                }
-                else {
-                    _PyErr_Format(tstate, PyExc_TypeError,
-                                  "'async for' requires an iterator with "
-                                  "__anext__ method, got %.100s",
-                                  type->tp_name);
-                    goto error;
-                }
-
-                awaitable = _PyCoro_GetAwaitableIter(next_iter);
-                if (awaitable == NULL) {
-                    _PyErr_FormatFromCause(
-                        PyExc_TypeError,
-                        "'async for' received an invalid object "
-                        "from __anext__: %.100s",
-                        Py_TYPE(next_iter)->tp_name);
-
-                    Py_DECREF(next_iter);
-                    goto error;
-                } else {
-                    Py_DECREF(next_iter);
-                }
-            }
-
-            PUSH(awaitable);
-            PREDICT(LOAD_CONST);
-            DISPATCH();
-        }
-
-        case TARGET(GET_AWAITABLE): {
-            PREDICTED(GET_AWAITABLE);
-            PyObject *iterable = TOP();
-            PyObject *iter = _PyCoro_GetAwaitableIter(iterable);
-
-            if (iter == NULL) {
-                int opcode_at_minus_3 = 0;
-                if ((next_instr - first_instr) > 2) {
-                    opcode_at_minus_3 = _Py_OPCODE(next_instr[-3]);
-                }
-                format_awaitable_error(tstate, Py_TYPE(iterable),
-                                       opcode_at_minus_3,
-                                       _Py_OPCODE(next_instr[-2]));
-            }
-
-            Py_DECREF(iterable);
-
-            if (iter != NULL && PyCoro_CheckExact(iter)) {
-                PyObject *yf = _PyGen_yf((PyGenObject*)iter);
-                if (yf != NULL) {
-                    /* `iter` is a coroutine object that is being
-                       awaited, `yf` is a pointer to the current awaitable
-                       being awaited on. */
-                    Py_DECREF(yf);
-                    Py_CLEAR(iter);
-                    _PyErr_SetString(tstate, PyExc_RuntimeError,
-                                     "coroutine is being awaited already");
-                    /* The code below jumps to `error` if `iter` is NULL. */
-                }
-            }
-
-            SET_TOP(iter); /* Even if it's NULL */
-
-            if (iter == NULL) {
-                goto error;
-            }
-
-            PREDICT(LOAD_CONST);
-            DISPATCH();
-        }
 
         case TARGET(YIELD_FROM): {
             PyObject *v = POP();
             PyObject *receiver = TOP();
             int err;
-            if (PyGen_CheckExact(receiver) || PyCoro_CheckExact(receiver)) {
+            if (PyGen_CheckExact(receiver)) { // || PyCoro_CheckExact(receiver)) {
                 retval = _PyGen_Send((PyGenObject *)receiver, v);
             } else {
                 _Py_IDENTIFIER(send);
@@ -1699,16 +1563,6 @@ main_loop:
 
         case TARGET(YIELD_VALUE): {
             retval = POP();
-
-            if (co->co_flags & CO_ASYNC_GENERATOR) {
-                PyObject *w = _PyAsyncGenValueWrapperNew(retval);
-                Py_DECREF(retval);
-                if (w == NULL) {
-                    retval = NULL;
-                    goto error;
-                }
-                retval = w;
-            }
 
             f->f_stacktop = stack_pointer;
             goto exiting;
@@ -1751,26 +1605,6 @@ main_loop:
             assert(PyExceptionClass_Check(exc));
             _PyErr_Restore(tstate, exc, val, tb);
             goto exception_unwind;
-        }
-
-        case TARGET(END_ASYNC_FOR): {
-            PyObject *exc = POP();
-            assert(PyExceptionClass_Check(exc));
-            if (PyErr_GivenExceptionMatches(exc, PyExc_StopAsyncIteration)) {
-                PyTryBlock *b = PyFrame_BlockPop(f);
-                assert(b->b_type == EXCEPT_HANDLER);
-                Py_DECREF(exc);
-                UNWIND_EXCEPT_HANDLER(b);
-                Py_DECREF(POP());
-                JUMPBY(oparg);
-                FAST_DISPATCH();
-            }
-            else {
-                PyObject *val = POP();
-                PyObject *tb = POP();
-                _PyErr_Restore(tstate, exc, val, tb);
-                goto exception_unwind;
-            }
         }
 
         case TARGET(LOAD_ASSERTION_ERROR): {
@@ -2737,20 +2571,8 @@ main_loop:
             /* before: [obj]; after [getiter(obj)] */
             PyObject *iterable = TOP();
             PyObject *iter;
-            if (PyCoro_CheckExact(iterable)) {
-                /* `iterable` is a coroutine */
-                if (!(co->co_flags & (CO_COROUTINE | CO_ITERABLE_COROUTINE))) {
-                    /* and it is used in a 'yield from' expression of a
-                       regular generator. */
-                    Py_DECREF(iterable);
-                    SET_TOP(NULL);
-                    _PyErr_SetString(tstate, PyExc_TypeError,
-                                     "cannot 'yield from' a coroutine object "
-                                     "in a non-coroutine generator");
-                    goto error;
-                }
-            }
-            else if (!PyGen_CheckExact(iterable)) {
+
+	      if (!PyGen_CheckExact(iterable)) {
                 /* `iterable` is not a generator. */
                 iter = PyObject_GetIter(iterable);
                 Py_DECREF(iterable);
@@ -2790,41 +2612,6 @@ main_loop:
         case TARGET(SETUP_FINALLY): {
             PyFrame_BlockSetup(f, SETUP_FINALLY, INSTR_OFFSET() + oparg,
                                STACK_LEVEL());
-            DISPATCH();
-        }
-
-        case TARGET(BEFORE_ASYNC_WITH): {
-            _Py_IDENTIFIER(__aenter__);
-            _Py_IDENTIFIER(__aexit__);
-            PyObject *mgr = TOP();
-            PyObject *enter = special_lookup(tstate, mgr, &PyId___aenter__);
-            PyObject *res;
-            if (enter == NULL) {
-                goto error;
-            }
-            PyObject *exit = special_lookup(tstate, mgr, &PyId___aexit__);
-            if (exit == NULL) {
-                Py_DECREF(enter);
-                goto error;
-            }
-            SET_TOP(exit);
-            Py_DECREF(mgr);
-            res = _PyObject_CallNoArg(enter);
-            Py_DECREF(enter);
-            if (res == NULL)
-                goto error;
-            PUSH(res);
-            PREDICT(GET_AWAITABLE);
-            DISPATCH();
-        }
-
-        case TARGET(SETUP_ASYNC_WITH): {
-            PyObject *res = POP();
-            /* Setup the finally block before pushing the result
-               of __aenter__ on the stack. */
-            PyFrame_BlockSetup(f, SETUP_FINALLY, INSTR_OFFSET() + oparg,
-                               STACK_LEVEL());
-            PUSH(res);
             DISPATCH();
         }
 
@@ -3754,7 +3541,7 @@ _PyEval_EvalCode(PyThreadState *tstate,
     /* Handle generator/coroutine/asynchronous generator */
     if (co->co_flags & (CO_GENERATOR | CO_COROUTINE | CO_ASYNC_GENERATOR)) {
         PyObject *gen;
-        int is_coro = co->co_flags & CO_COROUTINE;
+
 
         /* Don't need to keep the reference to f_back, it will be set
          * when the generator is resumed. */
@@ -3762,13 +3549,7 @@ _PyEval_EvalCode(PyThreadState *tstate,
 
         /* Create a new generator that owns the ready to run frame
          * and return that as the value. */
-        if (is_coro) {
-            gen = PyCoro_New(f, name, qualname);
-        } else if (co->co_flags & CO_ASYNC_GENERATOR) {
-            gen = PyAsyncGen_New(f, name, qualname);
-        } else {
-            gen = PyGen_NewWithQualName(f, name, qualname);
-        }
+	gen = PyGen_NewWithQualName(f, name, qualname);
         if (gen == NULL) {
             return NULL;
         }
@@ -4122,12 +3903,6 @@ PyEval_MergeCompilerFlags(PyCompilerFlags *cf)
             result = 1;
             cf->cf_flags |= compilerflags;
         }
-#if 0 /* future keyword */
-        if (codeflags & CO_GENERATOR_ALLOWED) {
-            result = 1;
-            cf->cf_flags |= CO_GENERATOR_ALLOWED;
-        }
-#endif
     }
     return result;
 }
@@ -4195,9 +3970,6 @@ do_call_core(PyThreadState *tstate, PyObject *func, PyObject *callargs, PyObject
     if (PyCFunction_CheckExact(func) || PyCMethod_CheckExact(func)) {
         C_TRACE(result, PyObject_Call(func, callargs, kwdict));
         return result;
-    }
-    else if (Py_IS_TYPE(func, &PyMethodDescr_Type)) {
-        Py_ssize_t nargs = PyTuple_GET_SIZE(callargs);
     }
     return PyObject_Call(func, callargs, kwdict);
 }
@@ -4557,25 +4329,6 @@ format_exc_unbound(PyThreadState *tstate, PyCodeObject *co, int oparg)
                                 PyTuple_GET_SIZE(co->co_cellvars));
         format_exc_check_arg(tstate, PyExc_NameError,
                              UNBOUNDFREE_ERROR_MSG, name);
-    }
-}
-
-static void
-format_awaitable_error(PyThreadState *tstate, PyTypeObject *type, int prevprevopcode, int prevopcode)
-{
-    if (type->tp_as_async == NULL || type->tp_as_async->am_await == NULL) {
-        if (prevopcode == BEFORE_ASYNC_WITH) {
-            _PyErr_Format(tstate, PyExc_TypeError,
-                          "'async with' received an object from __aenter__ "
-                          "that does not implement __await__: %.100s",
-                          type->tp_name);
-        }
-        else if (prevopcode == WITH_EXCEPT_START || (prevopcode == CALL_FUNCTION && prevprevopcode == DUP_TOP)) {
-            _PyErr_Format(tstate, PyExc_TypeError,
-                          "'async with' received an object from __aexit__ "
-                          "that does not implement __await__: %.100s",
-                          type->tp_name);
-        }
     }
 }
 

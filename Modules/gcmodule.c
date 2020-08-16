@@ -971,7 +971,6 @@ clear_freelists(PyThreadState *tstate)
     _PyFloat_ClearFreeList(tstate);
     _PyList_ClearFreeList(tstate);
     _PyDict_ClearFreeList();
-    _PyAsyncGen_ClearFreeLists(tstate);
 }
 
 /* Deduce which objects among "base" are unreachable from outside the list

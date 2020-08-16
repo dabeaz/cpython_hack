@@ -55,8 +55,6 @@ ELLIPSIS                '...'
 COLONEQUAL              ':='
 
 OP
-AWAIT
-ASYNC
 TYPE_IGNORE
 TYPE_COMMENT
 ERRORTOKEN

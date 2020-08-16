@@ -415,9 +415,6 @@ static void fstring_shift_children_locations(expr_ty n, int lineno, int col_offs
                 fstring_shift_comprehension(n, comp, lineno, col_offset);
             }
             break;
-        case Await_kind:
-            shift_expr(n, n->v.Await.value, lineno, col_offset);
-            break;
         case Yield_kind:
             shift_expr(n, n->v.Yield.value, lineno, col_offset);
             break;

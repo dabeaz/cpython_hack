@@ -384,7 +384,7 @@ append_ast_comprehension(_PyUnicodeWriter *writer, comprehension_ty gen)
 {
     Py_ssize_t i, if_count;
 
-    APPEND_STR(gen->is_async ? " async for " : " for ");
+    APPEND_STR(" for ");
     APPEND_EXPR(gen->target, PR_TUPLE);
     APPEND_STR(" in ");
     APPEND_EXPR(gen->iter, PR_TEST + 1);
@@ -826,16 +826,6 @@ append_ast_yield_from(_PyUnicodeWriter *writer, expr_ty e)
 }
 
 static int
-append_ast_await(_PyUnicodeWriter *writer, expr_ty e, int level)
-{
-    APPEND_STR_IF(level > PR_AWAIT, "(");
-    APPEND_STR("await ");
-    APPEND_EXPR(e->v.Await.value, PR_ATOM);
-    APPEND_STR_IF(level > PR_AWAIT, ")");
-    return 0;
-}
-
-static int
 append_named_expr(_PyUnicodeWriter *writer, expr_ty e, int level)
 {
     APPEND_STR_IF(level > PR_TUPLE, "(");
@@ -876,8 +866,6 @@ append_ast_expr(_PyUnicodeWriter *writer, expr_ty e, int level)
         return append_ast_yield(writer, e);
     case YieldFrom_kind:
         return append_ast_yield_from(writer, e);
-    case Await_kind:
-        return append_ast_await(writer, e, level);
     case Compare_kind:
         return append_ast_compare(writer, e, level);
     case Call_kind:

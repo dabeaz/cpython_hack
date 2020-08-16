@@ -1134,7 +1134,6 @@ static void
 finalize_interp_types(PyThreadState *tstate, int is_main_interp)
 {
     _PyFrame_Fini(tstate);
-    _PyAsyncGen_Fini(tstate);
 
     if (is_main_interp) {
         _PySet_Fini();
@@ -1270,25 +1269,6 @@ Py_FinalizeEx(void)
     if (flush_std_files() < 0) {
         status = -1;
     }
-
-    /* Collect final garbage.  This disposes of cycles created by
-     * class definitions, for example.
-     * XXX This is disabled because it caused too many problems.  If
-     * XXX a __del__ or weakref callback triggers here, Python code has
-     * XXX a hard time running, because even the sys module has been
-     * XXX cleared out (sys.stdout is gone, sys.excepthook is gone, etc).
-     * XXX One symptom is a sequence of information-free messages
-     * XXX coming from threads (if a __del__ or callback is invoked,
-     * XXX other threads can execute too, and any exception they encounter
-     * XXX triggers a comedy of errors as subsystem after subsystem
-     * XXX fails to find what it *expects* to find in sys to help report
-     * XXX the exception and consequent unexpected failures).  I've also
-     * XXX seen segfaults then, after adding print statements to the
-     * XXX Python code getting called.
-     */
-#if 0
-    _PyGC_CollectIfEnabled();
-#endif
 
     /* Destroy the database used by _PyImport_{Fixup,Find}Extension */
     _PyImport_Fini();

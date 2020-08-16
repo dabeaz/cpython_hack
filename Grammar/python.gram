@@ -72,11 +72,11 @@ small_stmt[stmt_ty] (memo):
     | &'global' global_stmt
     | &'nonlocal' nonlocal_stmt
 compound_stmt[stmt_ty]:
-    | &('def' | '@' | ASYNC) function_def
+    | &('def' | '@') function_def
     | &'if' if_stmt
     | &('class' | '@') class_def
-    | &('with' | ASYNC) with_stmt
-    | &('for' | ASYNC) for_stmt
+    | &('with') with_stmt
+    | &('for') for_stmt
     | &'try' try_stmt
     | &'while' while_stmt
 
@@ -164,18 +164,13 @@ while_stmt[stmt_ty]:
 for_stmt[stmt_ty]:
     | 'for' t=star_targets 'in' ex=star_expressions ':' tc=[TYPE_COMMENT] b=block el=[else_block] {
         _Py_For(t, ex, b, el, NEW_TYPE_COMMENT(p, tc), EXTRA) }
-    | ASYNC 'for' t=star_targets 'in' ex=star_expressions ':' tc=[TYPE_COMMENT] b=block el=[else_block] {
-        CHECK_VERSION(5, "Async for loops are", _Py_AsyncFor(t, ex, b, el, NEW_TYPE_COMMENT(p, tc), EXTRA)) }
 
 with_stmt[stmt_ty]:
     | 'with' '(' a=','.with_item+ ','? ')' ':' b=block {
         _Py_With(a, b, NULL, EXTRA) }
     | 'with' a=','.with_item+ ':' tc=[TYPE_COMMENT] b=block {
         _Py_With(a, b, NEW_TYPE_COMMENT(p, tc), EXTRA) }
-    | ASYNC 'with' '(' a=','.with_item+ ','? ')' ':' b=block {
-       CHECK_VERSION(5, "Async with statements are", _Py_AsyncWith(a, b, NULL, EXTRA)) }
-    | ASYNC 'with' a=','.with_item+ ':' tc=[TYPE_COMMENT] b=block {
-       CHECK_VERSION(5, "Async with statements are", _Py_AsyncWith(a, b, NEW_TYPE_COMMENT(p, tc), EXTRA)) }
+
 with_item[withitem_ty]:
     | e=expression o=['as' t=target { t }] { _Py_withitem(e, o) }
 
@@ -204,14 +199,7 @@ function_def_raw[stmt_ty]:
         _Py_FunctionDef(n->v.Name.id,
                         (params) ? params : CHECK(_PyPegen_empty_arguments(p)),
                         b, NULL, a, NEW_TYPE_COMMENT(p, tc), EXTRA) }
-    | ASYNC 'def' n=NAME '(' params=[params] ')' a=['->' z=expression { z }] ':' tc=[func_type_comment] b=block {
-        CHECK_VERSION(
-            5,
-            "Async functions are",
-            _Py_AsyncFunctionDef(n->v.Name.id,
-                            (params) ? params : CHECK(_PyPegen_empty_arguments(p)),
-                            b, NULL, a, NEW_TYPE_COMMENT(p, tc), EXTRA)
-        ) }
+
 func_type_comment[Token*]:
     | NEWLINE t=TYPE_COMMENT &(NEWLINE INDENT) { t }  # Must be followed by indented block
     | invalid_double_type_comments
@@ -450,7 +438,6 @@ power[expr_ty]:
     | a=await_primary '**' b=factor { _Py_BinOp(a, Pow, b, EXTRA) }
     | await_primary
 await_primary[expr_ty] (memo):
-    | AWAIT a=primary { CHECK_VERSION(5, "Await expressions are", _Py_Await(a, EXTRA)) }
     | primary
 primary[expr_ty]:
     | a=primary '.' b=NAME { _Py_Attribute(a, b->v.Name.id, Load, EXTRA) }
@@ -512,10 +499,8 @@ kvpair[KeyValuePair*]: a=expression ':' b=expression { _PyPegen_key_value_pair(p
 for_if_clauses[asdl_seq*]:
     | for_if_clause+
 for_if_clause[comprehension_ty]:
-    | ASYNC 'for' a=star_targets 'in' b=disjunction c=('if' z=disjunction { z })* {
-        CHECK_VERSION(6, "Async comprehensions are", _Py_comprehension(a, b, c, 1)) }
     | 'for' a=star_targets 'in' b=disjunction c=('if' z=disjunction { z })* {
-        _Py_comprehension(a, b, c, 0) }
+        _Py_comprehension(a, b, c) }
 
 yield_expr[expr_ty]:
     | 'yield' 'from' a=expression { _Py_YieldFrom(a, EXTRA) }

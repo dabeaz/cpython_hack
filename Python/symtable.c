@@ -1374,40 +1374,6 @@ symtable_visit_stmt(struct symtable *st, stmt_ty s)
         VISIT_SEQ(st, withitem, s->v.With.items);
         VISIT_SEQ(st, stmt, s->v.With.body);
         break;
-    case AsyncFunctionDef_kind:
-        if (!symtable_add_def(st, s->v.AsyncFunctionDef.name, DEF_LOCAL))
-            VISIT_QUIT(st, 0);
-        if (s->v.AsyncFunctionDef.args->defaults)
-            VISIT_SEQ(st, expr, s->v.AsyncFunctionDef.args->defaults);
-        if (s->v.AsyncFunctionDef.args->kw_defaults)
-            VISIT_SEQ_WITH_NULL(st, expr,
-                                s->v.AsyncFunctionDef.args->kw_defaults);
-        if (!symtable_visit_annotations(st, s->v.AsyncFunctionDef.args,
-                                        s->v.AsyncFunctionDef.returns))
-            VISIT_QUIT(st, 0);
-        if (s->v.AsyncFunctionDef.decorator_list)
-            VISIT_SEQ(st, expr, s->v.AsyncFunctionDef.decorator_list);
-        if (!symtable_enter_block(st, s->v.AsyncFunctionDef.name,
-                                  FunctionBlock, (void *)s, s->lineno,
-                                  s->col_offset))
-            VISIT_QUIT(st, 0);
-        st->st_cur->ste_coroutine = 1;
-        VISIT(st, arguments, s->v.AsyncFunctionDef.args);
-        VISIT_SEQ(st, stmt, s->v.AsyncFunctionDef.body);
-        if (!symtable_exit_block(st))
-            VISIT_QUIT(st, 0);
-        break;
-    case AsyncWith_kind:
-        VISIT_SEQ(st, withitem, s->v.AsyncWith.items);
-        VISIT_SEQ(st, stmt, s->v.AsyncWith.body);
-        break;
-    case AsyncFor_kind:
-        VISIT(st, expr, s->v.AsyncFor.target);
-        VISIT(st, expr, s->v.AsyncFor.iter);
-        VISIT_SEQ(st, stmt, s->v.AsyncFor.body);
-        if (s->v.AsyncFor.orelse)
-            VISIT_SEQ(st, stmt, s->v.AsyncFor.orelse);
-        break;
     }
     VISIT_QUIT(st, 1);
 }
@@ -1577,10 +1543,6 @@ symtable_visit_expr(struct symtable *st, expr_ty e)
     case YieldFrom_kind:
         VISIT(st, expr, e->v.YieldFrom.value);
         st->st_cur->ste_generator = 1;
-        break;
-    case Await_kind:
-        VISIT(st, expr, e->v.Await.value);
-        st->st_cur->ste_coroutine = 1;
         break;
     case Compare_kind:
         VISIT(st, expr, e->v.Compare.left);
@@ -1810,9 +1772,6 @@ symtable_visit_comprehension(struct symtable *st, comprehension_ty lc)
     VISIT(st, expr, lc->iter);
     st->st_cur->ste_comp_iter_expr--;
     VISIT_SEQ(st, expr, lc->ifs);
-    if (lc->is_async) {
-        st->st_cur->ste_coroutine = 1;
-    }
     return 1;
 }
 
@@ -1842,9 +1801,6 @@ symtable_handle_comprehension(struct symtable *st, expr_ty e,
         !symtable_enter_block(st, scope_name, FunctionBlock, (void *)e,
                               e->lineno, e->col_offset)) {
         return 0;
-    }
-    if (outermost->is_async) {
-        st->st_cur->ste_coroutine = 1;
     }
     st->st_cur->ste_comprehension = 1;
 

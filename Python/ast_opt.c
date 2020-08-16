@@ -509,9 +509,6 @@ astfold_expr(expr_ty node_, _PyASTOptimizeState *state)
         CALL(astfold_expr, expr_ty, node_->v.GeneratorExp.elt);
         CALL_SEQ(astfold_comprehension, comprehension_ty, node_->v.GeneratorExp.generators);
         break;
-    case Await_kind:
-        CALL(astfold_expr, expr_ty, node_->v.Await.value);
-        break;
     case Yield_kind:
         CALL_OPT(astfold_expr, expr_ty, node_->v.Yield.value);
         break;
@@ -622,14 +619,6 @@ astfold_stmt(stmt_ty node_, _PyASTOptimizeState *state)
             CALL_OPT(astfold_expr, expr_ty, node_->v.FunctionDef.returns);
         }
         break;
-    case AsyncFunctionDef_kind:
-        CALL(astfold_arguments, arguments_ty, node_->v.AsyncFunctionDef.args);
-        CALL(astfold_body, asdl_seq, node_->v.AsyncFunctionDef.body);
-        CALL_SEQ(astfold_expr, expr_ty, node_->v.AsyncFunctionDef.decorator_list);
-        if (!(state->ff_features & CO_FUTURE_ANNOTATIONS)) {
-            CALL_OPT(astfold_expr, expr_ty, node_->v.AsyncFunctionDef.returns);
-        }
-        break;
     case ClassDef_kind:
         CALL_SEQ(astfold_expr, expr_ty, node_->v.ClassDef.bases);
         CALL_SEQ(astfold_keyword, keyword_ty, node_->v.ClassDef.keywords);
@@ -665,12 +654,6 @@ astfold_stmt(stmt_ty node_, _PyASTOptimizeState *state)
 
         CALL(fold_iter, expr_ty, node_->v.For.iter);
         break;
-    case AsyncFor_kind:
-        CALL(astfold_expr, expr_ty, node_->v.AsyncFor.target);
-        CALL(astfold_expr, expr_ty, node_->v.AsyncFor.iter);
-        CALL_SEQ(astfold_stmt, stmt_ty, node_->v.AsyncFor.body);
-        CALL_SEQ(astfold_stmt, stmt_ty, node_->v.AsyncFor.orelse);
-        break;
     case While_kind:
         CALL(astfold_expr, expr_ty, node_->v.While.test);
         CALL_SEQ(astfold_stmt, stmt_ty, node_->v.While.body);
@@ -684,10 +667,6 @@ astfold_stmt(stmt_ty node_, _PyASTOptimizeState *state)
     case With_kind:
         CALL_SEQ(astfold_withitem, withitem_ty, node_->v.With.items);
         CALL_SEQ(astfold_stmt, stmt_ty, node_->v.With.body);
-        break;
-    case AsyncWith_kind:
-        CALL_SEQ(astfold_withitem, withitem_ty, node_->v.AsyncWith.items);
-        CALL_SEQ(astfold_stmt, stmt_ty, node_->v.AsyncWith.body);
         break;
     case Raise_kind:
         CALL_OPT(astfold_expr, expr_ty, node_->v.Raise.exc);
