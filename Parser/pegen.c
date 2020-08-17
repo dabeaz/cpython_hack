@@ -5,34 +5,6 @@
 #include "pegen.h"
 #include "string_parser.h"
 
-PyObject *
-_PyPegen_new_type_comment(Parser *p, char *s)
-{
-    PyObject *res = PyUnicode_DecodeUTF8(s, strlen(s), NULL);
-    if (res == NULL) {
-        return NULL;
-    }
-    return res;
-}
-
-arg_ty
-_PyPegen_add_type_comment_to_arg(Parser *p, arg_ty a, Token *tc)
-{
-    if (tc == NULL) {
-        return a;
-    }
-    char *bytes = PyBytes_AsString(tc->bytes);
-    if (bytes == NULL) {
-        return NULL;
-    }
-    PyObject *tco = _PyPegen_new_type_comment(p, bytes);
-    if (tco == NULL) {
-        return NULL;
-    }
-    return arg(a->arg, a->annotation, tco,
-               a->lineno, a->col_offset, a->end_lineno, a->end_col_offset);
-}
-
 static int
 init_normalization(Parser *p)
 {
@@ -1006,8 +978,6 @@ _PyPegen_Parser_New(struct tok_state *tok, int start_rule, int flags,
         return (Parser *) PyErr_NoMemory();
     }
     assert(tok != NULL);
-    tok->type_comments = (flags & PyPARSE_TYPE_COMMENTS) > 0;
-    tok->async_hacks = (flags & PyPARSE_ASYNC_HACKS) > 0;
     p->tok = tok;
     p->keywords = NULL;
     p->n_keyword_lists = -1;
@@ -1561,13 +1531,13 @@ _PyPegen_get_values(Parser *p, asdl_seq *seq)
 
 /* Constructs a NameDefaultPair */
 NameDefaultPair *
-_PyPegen_name_default_pair(Parser *p, arg_ty arg, expr_ty value, Token *tc)
+_PyPegen_name_default_pair(Parser *p, arg_ty arg, expr_ty value)
 {
   NameDefaultPair *a = (NameDefaultPair *) malloc(sizeof(NameDefaultPair));
   if (!a) {
     return NULL;
   }
-  a->arg = _PyPegen_add_type_comment_to_arg(p, arg, tc);
+  a->arg = arg;
   a->value = value;
   return a;
 }
@@ -1831,8 +1801,8 @@ _PyPegen_function_def_decorators(Parser *p, asdl_seq *decorators, stmt_ty functi
     return _Py_FunctionDef(function_def->v.FunctionDef.name, function_def->v.FunctionDef.args,
                            function_def->v.FunctionDef.body, decorators,
                            function_def->v.FunctionDef.returns,
-                           function_def->v.FunctionDef.type_comment, function_def->lineno,
                            function_def->col_offset, function_def->end_lineno,
+                           function_def->lineno,
                            function_def->end_col_offset);
 }
 
@@ -2009,27 +1979,7 @@ error:
 
 mod_ty
 _PyPegen_make_module(Parser *p, asdl_seq *a) {
-    asdl_seq *type_ignores = NULL;
-    Py_ssize_t num = p->type_ignore_comments.num_items;
-    if (num > 0) {
-        // Turn the raw (comment, lineno) pairs into TypeIgnore objects in the arena
-        type_ignores = _Py_asdl_seq_new(num);
-        if (type_ignores == NULL) {
-            return NULL;
-        }
-        for (int i = 0; i < num; i++) {
-            PyObject *tag = _PyPegen_new_type_comment(p, p->type_ignore_comments.items[i].comment);
-            if (tag == NULL) {
-                return NULL;
-            }
-            type_ignore_ty ti = TypeIgnore(p->type_ignore_comments.items[i].lineno, tag);
-            if (ti == NULL) {
-                return NULL;
-            }
-            asdl_seq_SET(type_ignores, i, ti);
-        }
-    }
-    return Module(a, type_ignores);
+    return Module(a);
 }
 
 // Error reporting helpers

@@ -80,13 +80,6 @@ tok_new(void)
     tok->filename = NULL;
     tok->decoding_readline = NULL;
     tok->decoding_buffer = NULL;
-    tok->type_comments = 0;
-
-    tok->async_hacks = 0;
-    tok->async_def = 0;
-    tok->async_def_indent = 0;
-    tok->async_def_nl = 0;
-
     return tok;
 }
 
@@ -1282,27 +1275,6 @@ tok_get(struct tok_state *tok, const char **p_start, const char **p_end)
     /* Peek ahead at the next character */
     c = tok_nextc(tok);
     tok_backup(tok, c);
-    /* Check if we are closing an async function */
-    if (tok->async_def
-        && !blankline
-        /* Due to some implementation artifacts of type comments,
-         * a TYPE_COMMENT at the start of a function won't set an
-         * indentation level and it will produce a NEWLINE after it.
-         * To avoid spuriously ending an async function due to this,
-         * wait until we have some non-newline char in front of us. */
-        && c != '\n'
-        && tok->level == 0
-        /* There was a NEWLINE after ASYNC DEF,
-           so we're past the signature. */
-        && tok->async_def_nl
-        /* Current indentation level is less than where
-           the async function was defined */
-        && tok->async_def_indent >= tok->indent)
-    {
-        tok->async_def = 0;
-        tok->async_def_indent = 0;
-        tok->async_def_nl = 0;
-    }
 
  again:
     tok->start = NULL;
@@ -1320,56 +1292,6 @@ tok_get(struct tok_state *tok, const char **p_start, const char **p_end)
 
         while (c != EOF && c != '\n') {
             c = tok_nextc(tok);
-        }
-
-        if (tok->type_comments) {
-            p = tok->start;
-            prefix = type_comment_prefix;
-            while (*prefix && p < tok->cur) {
-                if (*prefix == ' ') {
-                    while (*p == ' ' || *p == '\t') {
-                        p++;
-                    }
-                } else if (*prefix == *p) {
-                    p++;
-                } else {
-                    break;
-                }
-
-                prefix++;
-            }
-
-            /* This is a type comment if we matched all of type_comment_prefix. */
-            if (!*prefix) {
-                int is_type_ignore = 1;
-                const char *ignore_end = p + 6;
-                tok_backup(tok, c);  /* don't eat the newline or EOF */
-
-                type_start = p;
-
-                /* A TYPE_IGNORE is "type: ignore" followed by the end of the token
-                 * or anything ASCII and non-alphanumeric. */
-                is_type_ignore = (
-                    tok->cur >= ignore_end && memcmp(p, "ignore", 6) == 0
-                    && !(tok->cur > ignore_end
-                         && ((unsigned char)ignore_end[0] >= 128 || Py_ISALNUM(ignore_end[0]))));
-
-                if (is_type_ignore) {
-                    *p_start = ignore_end;
-                    *p_end = tok->cur;
-
-                    /* If this type ignore is the only thing on the line, consume the newline also. */
-                    if (blankline) {
-                        tok_nextc(tok);
-                        tok->atbol = 1;
-                    }
-                    return TYPE_IGNORE;
-                } else {
-                    *p_start = type_start;  /* after type_comment_prefix */
-                    *p_end = tok->cur;
-                    return TYPE_COMMENT;
-                }
-            }
         }
     }
 
@@ -1432,11 +1354,6 @@ tok_get(struct tok_state *tok, const char **p_start, const char **p_end)
         *p_start = tok->start;
         *p_end = tok->cur - 1; /* Leave '\n' out of the string */
         tok->cont_line = 0;
-        if (tok->async_def) {
-            /* We're somewhere inside an 'async def' function, and
-               we've encountered a NEWLINE after its signature. */
-            tok->async_def_nl = 1;
-        }
         return NEWLINE;
     }
 
