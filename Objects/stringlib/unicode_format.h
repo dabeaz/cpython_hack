@@ -511,8 +511,6 @@ render_field(PyObject *fieldobj, SubString *format_spec, _PyUnicodeWriter *write
         formatter = _PyLong_FormatAdvancedWriter;
     else if (PyFloat_CheckExact(fieldobj))
         formatter = _PyFloat_FormatAdvancedWriter;
-    else if (PyComplex_CheckExact(fieldobj))
-        formatter = _PyComplex_FormatAdvancedWriter;
 
     if (formatter) {
         /* we know exactly which formatter will be called when __format__ is

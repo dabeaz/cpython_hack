@@ -943,31 +943,6 @@ _PyCode_ConstantKey(PyObject *op)
         else
             key = PyTuple_Pack(2, Py_TYPE(op), op);
     }
-    else if (PyComplex_CheckExact(op)) {
-        Py_complex z;
-        int real_negzero, imag_negzero;
-        /* For the complex case we must make complex(x, 0.)
-           different from complex(x, -0.) and complex(0., y)
-           different from complex(-0., y), for any x and y.
-           All four complex zeros must be distinguished.*/
-        z = PyComplex_AsCComplex(op);
-        real_negzero = z.real == 0.0 && copysign(1.0, z.real) < 0.0;
-        imag_negzero = z.imag == 0.0 && copysign(1.0, z.imag) < 0.0;
-        /* use True, False and None singleton as tags for the real and imag
-         * sign, to make tuples different */
-        if (real_negzero && imag_negzero) {
-            key = PyTuple_Pack(3, Py_TYPE(op), op, Py_True);
-        }
-        else if (imag_negzero) {
-            key = PyTuple_Pack(3, Py_TYPE(op), op, Py_False);
-        }
-        else if (real_negzero) {
-            key = PyTuple_Pack(3, Py_TYPE(op), op, Py_None);
-        }
-        else {
-            key = PyTuple_Pack(2, Py_TYPE(op), op);
-        }
-    }
     else if (PyTuple_CheckExact(op)) {
         Py_ssize_t i, len;
         PyObject *tuple;

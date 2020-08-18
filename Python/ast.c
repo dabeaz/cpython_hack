@@ -131,7 +131,6 @@ validate_constant(PyObject *value)
 
     if (PyLong_CheckExact(value)
             || PyFloat_CheckExact(value)
-            || PyComplex_CheckExact(value)
             || PyBool_Check(value)
             || PyUnicode_CheckExact(value)
             || PyBytes_CheckExact(value))

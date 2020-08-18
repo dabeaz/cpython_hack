@@ -1067,7 +1067,8 @@ float_pow(PyObject *v, PyObject *w, PyObject *z)
             /* Negative numbers raised to fractional powers
              * become complex.
              */
-            return PyComplex_Type.tp_as_number->nb_power(v, w, z);
+	  PyErr_SetString(PyExc_ValueError, "can't raise negative number to fractional power");
+	  return NULL;
         }
         /* iw is an exact integer, albeit perhaps a very large
          * one.  Replace iv by its absolute value and remember

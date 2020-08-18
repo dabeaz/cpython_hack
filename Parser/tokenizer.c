@@ -44,7 +44,6 @@ static void tok_backup(struct tok_state *tok, int c);
 
 /* Spaces in this constant are treated as "zero or more spaces or tabs" when
    tokenizing. */
-static const char* type_comment_prefix = "# type: ";
 
 /* Create and initialize a new tok_state structure */
 
@@ -1286,10 +1285,8 @@ tok_get(struct tok_state *tok, const char **p_start, const char **p_end)
     /* Set start of current token */
     tok->start = tok->cur - 1;
 
-    /* Skip comment, unless it's a type comment */
+    /* Skip comment */
     if (c == '#') {
-        const char *prefix, *p, *type_start;
-
         while (c != EOF && c != '\n') {
             c = tok_nextc(tok);
         }

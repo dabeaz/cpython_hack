@@ -3572,9 +3572,6 @@ PyObject *
 _PyBuiltin_Init(PyThreadState *tstate)
 {
     PyObject *mod, *dict, *debug;
-
-    const PyConfig *config = _PyInterpreterState_GetConfig(tstate->interp);
-
     if (PyType_Ready(&PyFilter_Type) < 0 ||
         PyType_Ready(&PyMap_Type) < 0 ||
         PyType_Ready(&PyZip_Type) < 0)
@@ -3602,7 +3599,6 @@ _PyBuiltin_Init(PyThreadState *tstate)
     SETBUILTIN("bytearray",             &PyByteArray_Type);
     SETBUILTIN("bytes",                 &PyBytes_Type);
     SETBUILTIN("classmethod",           &PyClassMethod_Type);
-    SETBUILTIN("complex",               &PyComplex_Type);
     SETBUILTIN("dict",                  &PyDict_Type);
     SETBUILTIN("enumerate",             &PyEnum_Type);
     SETBUILTIN("filter",                &PyFilter_Type);

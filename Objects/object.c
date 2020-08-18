@@ -1600,7 +1600,6 @@ _PyTypes_Init(void)
     INIT_TYPE(&PyUnicode_Type, "str");
     INIT_TYPE(&PySlice_Type, "slice");
     INIT_TYPE(&PyStaticMethod_Type, "static method");
-    INIT_TYPE(&PyComplex_Type, "complex");
     INIT_TYPE(&PyFloat_Type, "float");
     INIT_TYPE(&PyFrozenSet_Type, "frozenset");
     INIT_TYPE(&PyProperty_Type, "property");

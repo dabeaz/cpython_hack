@@ -559,18 +559,6 @@ w_complex_object(PyObject *v, char flag, WFILE *p)
             w_float_str(PyFloat_AS_DOUBLE(v), p);
         }
     }
-    else if (PyComplex_CheckExact(v)) {
-        if (p->version > 1) {
-            W_TYPE(TYPE_BINARY_COMPLEX, p);
-            w_float_bin(PyComplex_RealAsDouble(v), p);
-            w_float_bin(PyComplex_ImagAsDouble(v), p);
-        }
-        else {
-            W_TYPE(TYPE_COMPLEX, p);
-            w_float_str(PyComplex_RealAsDouble(v), p);
-            w_float_str(PyComplex_ImagAsDouble(v), p);
-        }
-    }
     else if (PyBytes_CheckExact(v)) {
         W_TYPE(TYPE_STRING, p);
         w_pstring(PyBytes_AS_STRING(v), PyBytes_GET_SIZE(v), p);
@@ -1174,34 +1162,6 @@ r_object(RFILE *p)
             if (x == -1.0 && PyErr_Occurred())
                 break;
             retval = PyFloat_FromDouble(x);
-            R_REF(retval);
-            break;
-        }
-
-    case TYPE_COMPLEX:
-        {
-            Py_complex c;
-            c.real = r_float_str(p);
-            if (c.real == -1.0 && PyErr_Occurred())
-                break;
-            c.imag = r_float_str(p);
-            if (c.imag == -1.0 && PyErr_Occurred())
-                break;
-            retval = PyComplex_FromCComplex(c);
-            R_REF(retval);
-            break;
-        }
-
-    case TYPE_BINARY_COMPLEX:
-        {
-            Py_complex c;
-            c.real = r_float_bin(p);
-            if (c.real == -1.0 && PyErr_Occurred())
-                break;
-            c.imag = r_float_bin(p);
-            if (c.imag == -1.0 && PyErr_Occurred())
-                break;
-            retval = PyComplex_FromCComplex(c);
             R_REF(retval);
             break;
         }

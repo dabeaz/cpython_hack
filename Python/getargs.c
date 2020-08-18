@@ -851,17 +851,6 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
         break;
     }
 
-    case 'D': {/* complex double */
-        Py_complex *p = va_arg(*p_va, Py_complex *);
-        Py_complex cval;
-        cval = PyComplex_AsCComplex(arg);
-        if (PyErr_Occurred())
-            RETURN_ERR_OCCURRED;
-        else
-            *p = cval;
-        break;
-    }
-
     case 'c': {/* char */
         char *p = va_arg(*p_va, char *);
         if (PyBytes_Check(arg) && PyBytes_Size(arg) == 1)

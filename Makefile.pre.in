@@ -377,7 +377,6 @@ OBJECT_OBJS=	\
 		Objects/cellobject.o \
 		Objects/classobject.o \
 		Objects/codeobject.o \
-		Objects/complexobject.o \
 		Objects/descrobject.o \
 		Objects/enumobject.o \
 		Objects/exceptions.o \
@@ -901,7 +900,6 @@ PYTHON_HEADERS= \
 		$(srcdir)/Include/code.h \
 		$(srcdir)/Include/codecs.h \
 		$(srcdir)/Include/compile.h \
-		$(srcdir)/Include/complexobject.h \
 		$(srcdir)/Include/descrobject.h \
 		$(srcdir)/Include/dictobject.h \
 		$(srcdir)/Include/enumobject.h \

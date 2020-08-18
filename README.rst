@@ -80,6 +80,7 @@ Halfway there.  It all gets more difficult from here...
 - Day 66 (8/15/2020). UTF-7, not enough. UTF-16, too much. UTF-8, just right.
 - Day 67 (8/16/2020). Async. Awaited.
 - Day 68 (8/17/2020). No, you can't comment on types.
+- Day 69 (8/18/2020). Complex numbers fell into a singularity.
   
 Copyright and License Information
 ---------------------------------

@@ -3920,7 +3920,7 @@ check_subscripter(struct compiler *c, expr_ty e)
     case Constant_kind:
         v = e->v.Constant.value;
         if (!(v == Py_None || v == Py_Ellipsis ||
-              PyLong_Check(v) || PyFloat_Check(v) || PyComplex_Check(v) ||
+              PyLong_Check(v) || PyFloat_Check(v) ||
               PyAnySet_Check(v)))
         {
             return 1;
