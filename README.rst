@@ -81,7 +81,8 @@ Halfway there.  It all gets more difficult from here...
 - Day 67 (8/16/2020). Async. Awaited.
 - Day 68 (8/17/2020). No, you can't comment on types.
 - Day 69 (8/18/2020). Complex numbers fell into a singularity.
-  
+- Day 70 (8/19/2020). _weakref module. Weak.  
+
 Copyright and License Information
 ---------------------------------
 

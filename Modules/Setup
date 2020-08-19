@@ -105,7 +105,7 @@ posix -DPy_BUILD_CORE_BUILTIN -I$(srcdir)/Include/internal posixmodule.c # posix
 # errno errnomodule.c			# posix (UNIX) errno values
 # _sre _sre.c				# Fredrik Lundh's new regular expressions
 _codecs _codecsmodule.c			# access to the builtin codecs and codec registry
-_weakref _weakref.c			# weak references
+# _weakref _weakref.c			# weak references
 #_functools -DPy_BUILD_CORE_BUILTIN -I$(srcdir)/Include/internal _functoolsmodule.c   # Tools for working with functions and callable objects
 #_operator _operator.c	        	# operator.add() and similar goodies
 #_collections _collectionsmodule.c	# Container types

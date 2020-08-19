@@ -474,46 +474,6 @@ PyAPI_FUNC(PyObject*) PyUnicode_AsCharmapString(
     PyObject *mapping           /* encoding mapping */
     );
 
-/* --- MBCS codecs for Windows -------------------------------------------- */
-
-#ifdef MS_WINDOWS
-PyAPI_FUNC(PyObject*) PyUnicode_DecodeMBCS(
-    const char *string,         /* MBCS encoded string */
-    Py_ssize_t length,          /* size of string */
-    const char *errors          /* error handling */
-    );
-
-PyAPI_FUNC(PyObject*) PyUnicode_DecodeMBCSStateful(
-    const char *string,         /* MBCS encoded string */
-    Py_ssize_t length,          /* size of string */
-    const char *errors,         /* error handling */
-    Py_ssize_t *consumed        /* bytes consumed */
-    );
-
-#if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03030000
-PyAPI_FUNC(PyObject*) PyUnicode_DecodeCodePageStateful(
-    int code_page,              /* code page number */
-    const char *string,         /* encoded string */
-    Py_ssize_t length,          /* size of string */
-    const char *errors,         /* error handling */
-    Py_ssize_t *consumed        /* bytes consumed */
-    );
-#endif
-
-PyAPI_FUNC(PyObject*) PyUnicode_AsMBCSString(
-    PyObject *unicode           /* Unicode object */
-    );
-
-#if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03030000
-PyAPI_FUNC(PyObject*) PyUnicode_EncodeCodePage(
-    int code_page,              /* code page number */
-    PyObject *unicode,          /* Unicode object */
-    const char *errors          /* error handling */
-    );
-#endif
-
-#endif /* MS_WINDOWS */
-
 /* --- Locale encoding --------------------------------------------------- */
 
 #if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03030000

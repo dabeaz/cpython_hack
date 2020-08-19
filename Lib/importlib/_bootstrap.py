@@ -969,7 +969,7 @@ def _setup(sys_module, _imp_module):
 
     # Directly load built-in modules needed during bootstrap.
     self_module = sys.modules[__name__]
-    for builtin_name in ('_weakref',):
+    for builtin_name in []:
         if builtin_name not in sys.modules:
             builtin_module = _builtin_from_name(builtin_name)
         else:
