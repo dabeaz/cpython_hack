@@ -3,7 +3,6 @@
 
 #include "Python.h"
 #include "pycore_runtime.h"  // _PyRuntime_Initialize()
-#include <locale.h>
 
 /* Main program */
 
@@ -47,14 +46,6 @@ Py_FrozenMain(int argc, char **argv)
         setbuf(stdout, (char *)NULL);
         setbuf(stderr, (char *)NULL);
     }
-
-    oldloc = _PyMem_RawStrdup(setlocale(LC_ALL, NULL));
-    if (!oldloc) {
-        fprintf(stderr, "out of memory\n");
-        goto error;
-    }
-
-    setlocale(LC_ALL, "");
     for (i = 0; i < argc; i++) {
         argv_copy[i] = Py_DecodeLocale(argv[i], NULL);
         argv_copy2[i] = argv_copy[i];
@@ -65,7 +56,6 @@ Py_FrozenMain(int argc, char **argv)
             goto error;
         }
     }
-    setlocale(LC_ALL, oldloc);
     PyMem_RawFree(oldloc);
     oldloc = NULL;
     if (argc >= 1)

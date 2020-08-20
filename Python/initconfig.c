@@ -10,7 +10,6 @@
 #include "pycore_pystate.h"       // _PyThreadState_GET()
 
 #include "osdefs.h"               // DELIM
-#include <locale.h>               // setlocale()
 #ifdef HAVE_LANGINFO_H
 #  include <langinfo.h>           // nl_langinfo(CODESET)
 #endif
@@ -68,9 +67,6 @@ static const char usage_3[] = "\
                 * Enable asyncio debug mode\n\
                 * Set the dev_mode attribute of sys.flags to True\n\
                 * io.IOBase destructor logs close() exceptions\n\
-         -X utf8: enable UTF-8 mode for operating system interfaces, overriding the default\n\
-             locale-aware mode. -X utf8=0 explicitly disables UTF-8 mode (even when it would\n\
-             otherwise activate automatically)\n\
 \n\
 --check-hash-based-pycs always|default|never:\n\
     control how Python invalidates hash-based .pyc files\n\
@@ -100,9 +96,6 @@ static const char usage_6[] =
 "PYTHONMALLOC: set the Python memory allocators and/or install debug hooks\n"
 "   on Python memory allocators. Use PYTHONMALLOC=debug to install debug\n"
 "   hooks.\n"
-"PYTHONCOERCECLOCALE: if this variable is set to 0, it disables the locale\n"
-"   coercion behavior. Use PYTHONCOERCECLOCALE=warn to request display of\n"
-"   locale coercion and locale compatibility warnings on stderr.\n"
 "PYTHONBREAKPOINT: if this variable is set to 0, it disables the default\n"
 "   debugger. It can be set to the callable of your debugger of choice.\n"
 "PYTHONDEVMODE: enable the development mode.\n";
@@ -1115,21 +1108,6 @@ config_read_env_vars(PyConfig *config)
 static const wchar_t *
 config_get_stdio_errors(void)
 {
-    const char *loc = setlocale(LC_CTYPE, NULL);
-    if (loc != NULL) {
-        /* surrogateescape is the default in the legacy C and POSIX locales */
-        if (strcmp(loc, "C") == 0 || strcmp(loc, "POSIX") == 0) {
-            return L"surrogateescape";
-        }
-
-#ifdef PY_COERCE_C_LOCALE
-        /* surrogateescape is the default in locale coercion target locales */
-        if (_Py_IsLocaleCoercionTarget(loc)) {
-            return L"surrogateescape";
-        }
-#endif
-    }
-
     return L"strict";
 }
 
@@ -1234,24 +1212,6 @@ config_init_stdio_encoding(PyConfig *config,
         PyMem_RawFree(pythonioencoding);
     }
 
-    /* UTF-8 Mode uses UTF-8/surrogateescape */
-    if (preconfig->utf8_mode) {
-        if (config->stdio_encoding == NULL) {
-            status = PyConfig_SetString(config, &config->stdio_encoding,
-                                        L"utf-8");
-            if (_PyStatus_EXCEPTION(status)) {
-                return status;
-            }
-        }
-        if (config->stdio_errors == NULL) {
-            status = PyConfig_SetString(config, &config->stdio_errors,
-                                        L"surrogateescape");
-            if (_PyStatus_EXCEPTION(status)) {
-                return status;
-            }
-        }
-    }
-
     /* Choose the default error handler based on the current locale. */
     if (config->stdio_encoding == NULL) {
         status = config_get_locale_encoding(config, &config->stdio_encoding);
@@ -1283,10 +1243,6 @@ config_init_fs_encoding(PyConfig *config, const PyPreConfig *preconfig)
         status = PyConfig_SetString(config, &config->filesystem_encoding, L"utf-8");
 #else
 
-        if (preconfig->utf8_mode) {
-            status = PyConfig_SetString(config, &config->filesystem_encoding,
-                                        L"utf-8");
-        }
         else if (_Py_GetForceASCII()) {
             status = PyConfig_SetString(config, &config->filesystem_encoding,
                                         L"ascii");

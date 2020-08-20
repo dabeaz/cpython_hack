@@ -62,8 +62,9 @@ typedef struct {
 
     /* Set the LC_CTYPE locale to the user preferred locale? If equals to 0,
        set coerce_c_locale and coerce_c_locale_warn to 0. */
+  /*
     int configure_locale;
-
+  */
     /* Coerce the LC_CTYPE locale if it's equal to "C"? (PEP 538)
 
        Set to 0 by PYTHONCOERCECLOCALE=0. Set to 1 by PYTHONCOERCECLOCALE=1.
@@ -75,15 +76,18 @@ typedef struct {
 
        Disable by default (set to 0). Set it to -1 to let Python decide if it
        should be enabled or not. */
+  /*
     int coerce_c_locale;
-
+  */
     /* Emit a warning if the LC_CTYPE locale is coerced?
 
        Set to 1 by PYTHONCOERCECLOCALE=warn.
 
        Disable by default (set to 0). Set it to -1 to let Python decide if it
        should be enabled or not. */
+  /*
     int coerce_c_locale_warn;
+  */
 
     /* Enable UTF-8 mode? (PEP 540)
 
@@ -96,8 +100,10 @@ typedef struct {
 
        If equals to -1, it is set to 1 if the LC_CTYPE locale is "C" or
        "POSIX", otherwise it is set to 0. Inherit Py_UTF8Mode value value. */
-    int utf8_mode;
 
+  /*
+    int utf8_mode;
+  */
     /* If non-zero, enable the Python Development Mode.
 
        Set to 1 by the -X dev command line option. Set by the PYTHONDEVMODE

@@ -8,8 +8,6 @@ extern "C" {
 #  error "Py_BUILD_CORE must be defined to include this header"
 #endif
 
-#include <locale.h>   /* struct lconv */
-
 PyAPI_DATA(int) _Py_HasFileSystemDefaultEncodeErrors;
 
 PyAPI_FUNC(int) _Py_DecodeUTF8Ex(
@@ -41,12 +39,6 @@ PyAPI_FUNC(int) _Py_GetForceASCII(void);
    so the "force ASCII" mode can be detected again on the new locale
    encoding. */
 PyAPI_FUNC(void) _Py_ResetForceASCII(void);
-
-
-PyAPI_FUNC(int) _Py_GetLocaleconvNumeric(
-    struct lconv *lc,
-    PyObject **decimal_point,
-    PyObject **thousands_sep);
 
 #ifdef __cplusplus
 }

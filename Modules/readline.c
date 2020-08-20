@@ -11,21 +11,6 @@
 #include <errno.h>
 #include <sys/time.h>
 
-#if defined(HAVE_SETLOCALE)
-/* GNU readline() mistakenly sets the LC_CTYPE locale.
- * This is evil.  Only the user or the app's main() should do this!
- * We must save and restore the locale around the rl_initialize() call.
- */
-#define SAVE_LOCALE
-#include <locale.h>
-#endif
-
-#ifdef SAVE_LOCALE
-#  define RESTORE_LOCALE(sl) { setlocale(LC_CTYPE, sl); free(sl); }
-#else
-#  define RESTORE_LOCALE(sl)
-#endif
-
 /* GNU readline definitions */
 #undef HAVE_CONFIG_H /* Else readline/chardefs.h includes strings.h */
 #include <readline/readline.h>
@@ -1063,12 +1048,6 @@ done:
 static int
 setup_readline(readlinestate *mod_state)
 {
-#ifdef SAVE_LOCALE
-    char *saved_locale = strdup(setlocale(LC_CTYPE, NULL));
-    if (!saved_locale) {
-        return -1;
-    }
-#endif
 
     /* The name must be defined before initialization */
     rl_readline_name = "python";
@@ -1142,7 +1121,6 @@ setup_readline(readlinestate *mod_state)
     else
         rl_initialize();
 
-    RESTORE_LOCALE(saved_locale)
     return 0;
 }
 
@@ -1228,13 +1206,6 @@ call_readline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
     char *p;
     int signal;
 
-#ifdef SAVE_LOCALE
-    char *saved_locale = strdup(setlocale(LC_CTYPE, NULL));
-    if (!saved_locale)
-        Py_FatalError("not enough memory to save locale");
-    _Py_SetLocaleFromEnv(LC_CTYPE);
-#endif
-
     if (sys_stdin != rl_instream || sys_stdout != rl_outstream) {
         rl_instream = sys_stdin;
         rl_outstream = sys_stdout;
@@ -1247,7 +1218,6 @@ call_readline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
 
     /* we got an interrupt signal */
     if (signal) {
-        RESTORE_LOCALE(saved_locale)
         return NULL;
     }
 
@@ -1256,7 +1226,6 @@ call_readline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
         p = PyMem_RawMalloc(1);
         if (p != NULL)
             *p = '\0';
-        RESTORE_LOCALE(saved_locale)
         return p;
     }
 
@@ -1288,7 +1257,6 @@ call_readline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
         p[n+1] = '\0';
     }
     free(q);
-    RESTORE_LOCALE(saved_locale)
     return p;
 }
 

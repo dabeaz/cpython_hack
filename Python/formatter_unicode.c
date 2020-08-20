@@ -697,50 +697,12 @@ static const char no_grouping[1] = {CHAR_MAX};
 static int
 get_locale_info(enum LocaleType type, LocaleInfo *locale_info)
 {
-    switch (type) {
-    case LT_CURRENT_LOCALE: {
-        struct lconv *lc = localeconv();
-        if (_Py_GetLocaleconvNumeric(lc,
-                                     &locale_info->decimal_point,
-                                     &locale_info->thousands_sep) < 0) {
-            return -1;
-        }
-
-        /* localeconv() grouping can become a dangling pointer or point
-           to a different string if another thread calls localeconv() during
-           the string formatting. Copy the string to avoid this risk. */
-        locale_info->grouping_buffer = _PyMem_Strdup(lc->grouping);
-        if (locale_info->grouping_buffer == NULL) {
-            PyErr_NoMemory();
-            return -1;
-        }
-        locale_info->grouping = locale_info->grouping_buffer;
-        break;
-    }
-    case LT_DEFAULT_LOCALE:
-    case LT_UNDERSCORE_LOCALE:
-    case LT_UNDER_FOUR_LOCALE:
-        locale_info->decimal_point = PyUnicode_FromOrdinal('.');
-        locale_info->thousands_sep = PyUnicode_FromOrdinal(
-            type == LT_DEFAULT_LOCALE ? ',' : '_');
-        if (!locale_info->decimal_point || !locale_info->thousands_sep)
-            return -1;
-        if (type != LT_UNDER_FOUR_LOCALE)
-            locale_info->grouping = "\3"; /* Group every 3 characters.  The
-                                         (implicit) trailing 0 means repeat
-                                         infinitely. */
-        else
-            locale_info->grouping = "\4"; /* Bin/oct/hex group every four. */
-        break;
-    case LT_NO_LOCALE:
-        locale_info->decimal_point = PyUnicode_FromOrdinal('.');
-        locale_info->thousands_sep = PyUnicode_New(0, 0);
-        if (!locale_info->decimal_point || !locale_info->thousands_sep)
-            return -1;
-        locale_info->grouping = no_grouping;
-        break;
-    }
-    return 0;
+  locale_info->decimal_point = PyUnicode_FromOrdinal('.');
+  locale_info->thousands_sep = PyUnicode_New(0, 0);
+  if (!locale_info->decimal_point || !locale_info->thousands_sep)
+    return -1;
+  locale_info->grouping = no_grouping;
+  return 0;
 }
 
 static void
