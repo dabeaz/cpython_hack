@@ -45,7 +45,6 @@ static PyStatus
 _PyRuntimeState_Init_impl(_PyRuntimeState *runtime)
 {
     memset(runtime, 0, sizeof(*runtime));
-    _PyEval_InitRuntimeState(&runtime->ceval);
     PyPreConfig_InitPythonConfig(&runtime->preconfig);
     runtime->gilstate.check_enabled = 1;
     runtime->interpreters.next_id = -1;
@@ -112,10 +111,6 @@ PyInterpreterState_New(void)
     /* Don't get runtime from tstate since tstate can be NULL */
     _PyRuntimeState *runtime = &_PyRuntime;
     interp->runtime = runtime;
-
-    if (_PyEval_InitState(&interp->ceval) < 0) {
-        goto out_of_memory;
-    }
 
     _PyGC_InitState(&interp->gc);
     PyConfig_InitPythonConfig(&interp->config);
@@ -208,8 +203,6 @@ PyInterpreterState_Delete(PyInterpreterState *interp)
     struct pyinterpreters *interpreters = &runtime->interpreters;
     zapthreads(interp, 0);
 
-    _PyEval_FiniState(&interp->ceval);
-
     /* Delete current thread. After this, many C API calls become crashy. */
     _PyThreadState_Swap(&runtime->gilstate, NULL);
 
@@ -241,7 +234,6 @@ PyInterpreterState *
 PyInterpreterState_Get(void)
 {
     PyThreadState *tstate = _PyThreadState_GET();
-    _Py_EnsureTstateNotNULL(tstate);
     PyInterpreterState *interp = tstate->interp;
     if (interp == NULL) {
         Py_FatalError("no current interpreter");
@@ -584,7 +576,6 @@ static void
 tstate_delete_common(PyThreadState *tstate,
                      struct _gilstate_runtime_state *gilstate)
 {
-    _Py_EnsureTstateNotNULL(tstate);
     PyInterpreterState *interp = tstate->interp;
     if (interp == NULL) {
         Py_FatalError("NULL interpreter");
@@ -625,7 +616,6 @@ PyThreadState_Delete(PyThreadState *tstate)
 void
 _PyThreadState_DeleteCurrent(PyThreadState *tstate)
 {
-    _Py_EnsureTstateNotNULL(tstate);
     struct _gilstate_runtime_state *gilstate = &tstate->interp->runtime->gilstate;
     tstate_delete_common(tstate, gilstate);
     _PyRuntimeGILState_SetThreadState(gilstate, NULL);
@@ -693,7 +683,6 @@ PyThreadState *
 PyThreadState_Get(void)
 {
     PyThreadState *tstate = _PyThreadState_GET();
-    _Py_EnsureTstateNotNULL(tstate);
     return tstate;
 }
 

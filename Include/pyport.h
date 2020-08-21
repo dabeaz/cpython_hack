@@ -167,32 +167,10 @@ typedef int Py_ssize_clean_t;
  *
  * Py_LOCAL_INLINE does the same thing, and also explicitly requests inlining,
  * for platforms that support that.
- *
- * If PY_LOCAL_AGGRESSIVE is defined before python.h is included, more
- * "aggressive" inlining/optimization is enabled for the entire module.  This
- * may lead to code bloat, and may slow things down for those reasons.  It may
- * also lead to errors, if the code relies on pointer aliasing.  Use with
- * care.
- *
- * NOTE: You can only use this for functions that are entirely local to a
- * module; functions that are exported via method tables, callbacks, etc,
- * should keep using static.
  */
 
-#if defined(_MSC_VER)
-#  if defined(PY_LOCAL_AGGRESSIVE)
-   /* enable more aggressive optimization for visual studio */
-#  pragma optimize("agtw", on)
-#endif
-   /* ignore warnings if the compiler decides not to inline a function */
-#  pragma warning(disable: 4710)
-   /* fastest possible local call under MSVC */
-#  define Py_LOCAL(type) static type __fastcall
-#  define Py_LOCAL_INLINE(type) static __inline type __fastcall
-#else
 #  define Py_LOCAL(type) static type
 #  define Py_LOCAL_INLINE(type) static inline type
-#endif
 
 /* Py_MEMCPY is kept for backwards compatibility,
  * see https://bugs.python.org/issue28126 */

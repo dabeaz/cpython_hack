@@ -7,7 +7,6 @@
    */
 
 /* enable more aggressive intra-module optimizations, where available */
-#define PY_LOCAL_AGGRESSIVE
 
 #include "Python.h"
 #include "pycore_abstract.h"      // _PyIndex_Check()
@@ -45,11 +44,6 @@ static PyObject * do_call_core(
     PyThreadState *tstate, PyObject *func,
     PyObject *callargs, PyObject *kwdict);
 
-#ifdef LLTRACE
-static int lltrace;
-static int prtrace(PyThreadState *, PyObject *, const char *);
-#endif
-
 static PyObject * import_name(PyThreadState *, PyFrameObject *,
                               PyObject *, PyObject *, PyObject *);
 static PyObject * import_from(PyThreadState *, PyObject *, PyObject *);
@@ -70,20 +64,6 @@ static void format_kwargs_error(PyThreadState *, PyObject *func, PyObject *kwarg
     "free variable '%.200s' referenced before assignment" \
     " in enclosing scope"
 
-/* Dynamic execution profile */
-#ifdef DYNAMIC_EXECUTION_PROFILE
-#ifdef DXPAIRS
-static long dxpairs[257][256];
-#define dxp dxpairs[256]
-#else
-static long dxp[256];
-#endif
-#endif
-
-/* per opcode cache */
-#define OPCACHE_MIN_RUNS 1024  /* create opcache when code executed this time */
-
-
 #ifndef NDEBUG
 /* Ensure that tstate is valid: sanity check for PyEval_AcquireThread() and
    PyEval_RestoreThread(). Detect if tstate memory was freed. It can happen
@@ -99,80 +79,10 @@ is_tstate_valid(PyThreadState *tstate)
 #endif
 
 
-/* This can set eval_breaker to 0 even though gil_drop_request became
-   1.  We believe this is all right because the eval loop will release
-   the GIL eventually anyway. */
-static inline void
-COMPUTE_EVAL_BREAKER(PyInterpreterState *interp,
-                     struct _ceval_runtime_state *ceval,
-                     struct _ceval_state *ceval2)
-{
-    ceval2->eval_breaker = ceval2->gil_drop_request | ceval->signals_pending | ceval2->pending.calls_to_do | ceval2->pending.async_exc;
-}
-
-static inline void
-SIGNAL_PENDING_CALLS(PyInterpreterState *interp)
-{
-    struct _ceval_runtime_state *ceval = &interp->runtime->ceval;
-    struct _ceval_state *ceval2 = &interp->ceval;
-    ceval2->pending.calls_to_do = 1;
-    COMPUTE_EVAL_BREAKER(interp, ceval, ceval2);
-}
-
-
-static inline void
-UNSIGNAL_PENDING_CALLS(PyInterpreterState *interp)
-{
-    struct _ceval_runtime_state *ceval = &interp->runtime->ceval;
-    struct _ceval_state *ceval2 = &interp->ceval;
-    ceval2->pending.calls_to_do = 0;    
-    COMPUTE_EVAL_BREAKER(interp, ceval, ceval2);
-}
-
-
-static inline void
-SIGNAL_PENDING_SIGNALS(PyInterpreterState *interp)
-{
-    struct _ceval_runtime_state *ceval = &interp->runtime->ceval;
-    struct _ceval_state *ceval2 = &interp->ceval;
-    ceval->signals_pending = 1;
-    /* eval_breaker is not set to 1 if thread_can_handle_signals() is false */
-    COMPUTE_EVAL_BREAKER(interp, ceval, ceval2);
-}
-
-static inline void
-SIGNAL_ASYNC_EXC(PyInterpreterState *interp)
-{
-    struct _ceval_state *ceval2 = &interp->ceval;
-    ceval2->pending.async_exc = 1;
-    ceval2->eval_breaker = 1;
-}
-
-
-static inline void
-UNSIGNAL_ASYNC_EXC(PyInterpreterState *interp)
-{
-    struct _ceval_runtime_state *ceval = &interp->runtime->ceval;
-    struct _ceval_state *ceval2 = &interp->ceval;
-    ceval2->pending.async_exc = 0;
-    COMPUTE_EVAL_BREAKER(interp, ceval, ceval2);
-}
-
-
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif
 
-// #include "ceval_gil.h"
-
-void _Py_NO_RETURN
-_Py_FatalError_TstateNULL(const char *func)
-{
-    _Py_FatalErrorFunc(func,
-                       "the function must be called with the GIL held, "
-                       "but the GIL is released "
-                       "(the current Python thread state is NULL)");
-}
 int
 _PyEval_ThreadsInitialized(_PyRuntimeState *runtime)
 {
@@ -184,246 +94,6 @@ PyEval_ThreadsInitialized(void)
 {
     _PyRuntimeState *runtime = &_PyRuntime;
     return _PyEval_ThreadsInitialized(runtime);
-}
-
-void
-PyEval_InitThreads(void)
-{
-    /* Do nothing: kept for backward compatibility */
-}
-
-/* This function is used to signal that async exceptions are waiting to be
-   raised. */
-
-void
-_PyEval_SignalAsyncExc(PyThreadState *tstate)
-{
-    assert(is_tstate_valid(tstate));
-    SIGNAL_ASYNC_EXC(tstate->interp);
-}
-
-/* Mechanism whereby asynchronously executing callbacks (e.g. UNIX
-   signal handlers or Mac I/O completion routines) can schedule calls
-   to a function to be called synchronously.
-   The synchronous function is called with one void* argument.
-   It should return 0 for success or -1 for failure -- failure should
-   be accompanied by an exception.
-
-   If registry succeeds, the registry function returns 0; if it fails
-   (e.g. due to too many pending calls) it returns -1 (without setting
-   an exception condition).
-
-   Note that because registry may occur from within signal handlers,
-   or other asynchronous events, calling malloc() is unsafe!
-
-   Any thread can schedule pending calls, but only the main thread
-   will execute them.
-   There is no facility to schedule calls to a particular thread, but
-   that should be easy to change, should that ever be required.  In
-   that case, the static variables here should go into the python
-   threadstate.
-*/
-
-void
-_PyEval_SignalReceived(PyInterpreterState *interp)
-{
-    /* bpo-30703: Function called when the C signal handler of Python gets a
-       signal. We cannot queue a callback using _PyEval_AddPendingCall() since
-       that function is not async-signal-safe. */
-    SIGNAL_PENDING_SIGNALS(interp);
-}
-
-/* Push one item onto the queue while holding the lock. */
-static int
-_push_pending_call(struct _pending_calls *pending,
-                   int (*func)(void *), void *arg)
-{
-    int i = pending->last;
-    int j = (i + 1) % NPENDINGCALLS;
-    if (j == pending->first) {
-        return -1; /* Queue full */
-    }
-    pending->calls[i].func = func;
-    pending->calls[i].arg = arg;
-    pending->last = j;
-    return 0;
-}
-
-/* Pop one item off the queue while holding the lock. */
-static void
-_pop_pending_call(struct _pending_calls *pending,
-                  int (**func)(void *), void **arg)
-{
-    int i = pending->first;
-    if (i == pending->last) {
-        return; /* Queue empty */
-    }
-
-    *func = pending->calls[i].func;
-    *arg = pending->calls[i].arg;
-    pending->first = (i + 1) % NPENDINGCALLS;
-}
-
-/* This implementation is thread-safe.  It allows
-   scheduling to be made from any thread, and even from an executing
-   callback.
- */
-
-int
-_PyEval_AddPendingCall(PyInterpreterState *interp,
-                       int (*func)(void *), void *arg)
-{
-    struct _pending_calls *pending = &interp->ceval.pending;
-
-    /* Ensure that _PyEval_InitPendingCalls() was called
-       and that _PyEval_FiniPendingCalls() is not called yet. */
-
-    int result = _push_pending_call(pending, func, arg);
-
-    /* signal main loop */
-    SIGNAL_PENDING_CALLS(interp);
-    return result;
-}
-
-int
-Py_AddPendingCall(int (*func)(void *), void *arg)
-{
-    /* Best-effort to support subinterpreters and calls with the GIL released.
-
-       First attempt _PyThreadState_GET() since it supports subinterpreters.
-
-       If the GIL is released, _PyThreadState_GET() returns NULL . In this
-       case, use PyGILState_GetThisThreadState() which works even if the GIL
-       is released.
-
-       Sadly, PyGILState_GetThisThreadState() doesn't support subinterpreters:
-       see bpo-10915 and bpo-15751.
-
-       Py_AddPendingCall() doesn't require the caller to hold the GIL. */
-    PyThreadState *tstate = _PyThreadState_GET();
-    PyInterpreterState *interp;
-    if (tstate != NULL) {
-        interp = tstate->interp;
-    }
-    else {
-        /* Last resort: use the main interpreter */
-        interp = _PyRuntime.interpreters.main;
-    }
-    return _PyEval_AddPendingCall(interp, func, arg);
-}
-
-static int
-handle_signals(PyThreadState *tstate)
-{
-    return 0;
-}
-
-static int
-make_pending_calls(PyThreadState *tstate)
-{
-    assert(is_tstate_valid(tstate));
-
-    /* don't perform recursive pending calls */
-    static int busy = 0;
-    if (busy) {
-        return 0;
-    }
-    busy = 1;
-
-    /* unsignal before starting to call callbacks, so that any callback
-       added in-between re-signals */
-    UNSIGNAL_PENDING_CALLS(tstate->interp);
-    int res = 0;
-
-    /* perform a bounded number of calls, in case of recursion */
-    struct _pending_calls *pending = &tstate->interp->ceval.pending;
-    for (int i=0; i<NPENDINGCALLS; i++) {
-        int (*func)(void *) = NULL;
-        void *arg = NULL;
-
-        /* pop one item off the queue while holding the lock */
-        _pop_pending_call(pending, &func, &arg);
-
-        /* having released the lock, perform the callback */
-        if (func == NULL) {
-            break;
-        }
-        res = func(arg);
-        if (res) {
-            goto error;
-        }
-    }
-
-    busy = 0;
-    return res;
-
-error:
-    busy = 0;
-    SIGNAL_PENDING_CALLS(tstate->interp);
-    return res;
-}
-
-void
-_Py_FinishPendingCalls(PyThreadState *tstate)
-{
-
-    struct _pending_calls *pending = &tstate->interp->ceval.pending;
-
-    if (!pending->calls_to_do) {
-        return;
-    }
-
-    if (make_pending_calls(tstate) < 0) {
-        PyObject *exc, *val, *tb;
-        _PyErr_Fetch(tstate, &exc, &val, &tb);
-        PyErr_BadInternalCall();
-        _PyErr_ChainExceptions(exc, val, tb);
-        _PyErr_Print(tstate);
-    }
-}
-
-/* Py_MakePendingCalls() is a simple wrapper for the sake
-   of backward-compatibility. */
-int
-Py_MakePendingCalls(void)
-{
-    PyThreadState *tstate = _PyThreadState_GET();
-
-    /* Python signal handler doesn't really queue a callback: it only signals
-       that a signal was received, see _PyEval_SignalReceived(). */
-    int res = handle_signals(tstate);
-    if (res != 0) {
-        return res;
-    }
-
-    res = make_pending_calls(tstate);
-    if (res != 0) {
-        return res;
-    }
-
-    return 0;
-}
-
-/* The interpreter's recursion limit */
-
-#ifndef Py_DEFAULT_RECURSION_LIMIT
-#define Py_DEFAULT_RECURSION_LIMIT 1000
-#endif
-
-void
-_PyEval_InitRuntimeState(struct _ceval_runtime_state *ceval)
-{
-}
-
-int
-_PyEval_InitState(struct _ceval_state *ceval)
-{
-    return 0;
-}
-
-void
-_PyEval_FiniState(struct _ceval_state *ceval)
-{
 }
 
 static int do_raise(PyThreadState *tstate, PyObject *exc, PyObject *cause);
@@ -461,51 +131,9 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
     return _PyEval_EvalFrame(tstate, f, throwflag);
 }
 
-
-/* Handle signals, pending calls, GIL drop request
-   and asynchronous exception */
-static int
-eval_frame_handle_pending(PyThreadState *tstate)
-{
-    _PyRuntimeState * const runtime = &_PyRuntime;
-    struct _ceval_runtime_state *ceval = &runtime->ceval;
-
-    /* Pending signals */
-    if (ceval->signals_pending) {
-        if (handle_signals(tstate) != 0) {
-            return -1;
-        }
-    }
-
-    /* Pending calls */
-    struct _ceval_state *ceval2 = &tstate->interp->ceval;
-    if (ceval2->pending.calls_to_do) {
-        if (make_pending_calls(tstate) != 0) {
-            return -1;
-        }
-    }
-
-    /* Check for asynchronous exception. */
-    if (tstate->async_exc != NULL) {
-        PyObject *exc = tstate->async_exc;
-        tstate->async_exc = NULL;
-        UNSIGNAL_ASYNC_EXC(tstate->interp);
-        _PyErr_SetNone(tstate, exc);
-        Py_DECREF(exc);
-        return -1;
-    }
-
-    return 0;
-}
-
 PyObject* _Py_HOT_FUNCTION
 _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
 {
-    _Py_EnsureTstateNotNULL(tstate);
-
-#ifdef DXPAIRS
-    int lastopcode = 0;
-#endif
     PyObject **stack_pointer;  /* Next free slot in value stack */
     const _Py_CODEUNIT *next_instr;
     int opcode;        /* Current opcode */
@@ -513,7 +141,6 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
     PyObject **fastlocals, **freevars;
     PyObject *retval = NULL;            /* Return value */
     struct _ceval_state * const ceval2 = &tstate->interp->ceval;
-    int * const eval_breaker = &ceval2->eval_breaker;
     PyCodeObject *co;
 
     /* when tracing we set things up so that
@@ -528,112 +155,6 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
     const _Py_CODEUNIT *first_instr;
     PyObject *names;
     PyObject *consts;
-    _PyOpcache *co_opcache;
-
-#ifdef LLTRACE
-    _Py_IDENTIFIER(__ltrace__);
-#endif
-
-/* Computed GOTOs, or
-       the-optimization-commonly-but-improperly-known-as-"threaded code"
-   using gcc's labels-as-values extension
-   (http://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html).
-
-   The traditional bytecode evaluation loop uses a "switch" statement, which
-   decent compilers will optimize as a single indirect branch instruction
-   combined with a lookup table of jump addresses. However, since the
-   indirect jump instruction is shared by all opcodes, the CPU will have a
-   hard time making the right prediction for where to jump next (actually,
-   it will be always wrong except in the uncommon case of a sequence of
-   several identical opcodes).
-
-   "Threaded code" in contrast, uses an explicit jump table and an explicit
-   indirect jump instruction at the end of each opcode. Since the jump
-   instruction is at a different address for each opcode, the CPU will make a
-   separate prediction for each of these instructions, which is equivalent to
-   predicting the second opcode of each opcode pair. These predictions have
-   a much better chance to turn out valid, especially in small bytecode loops.
-
-   A mispredicted branch on a modern CPU flushes the whole pipeline and
-   can cost several CPU cycles (depending on the pipeline depth),
-   and potentially many more instructions (depending on the pipeline width).
-   A correctly predicted branch, however, is nearly free.
-
-   At the time of this writing, the "threaded code" version is up to 15-20%
-   faster than the normal "switch" version, depending on the compiler and the
-   CPU architecture.
-
-   We disable the optimization if DYNAMIC_EXECUTION_PROFILE is defined,
-   because it would render the measurements invalid.
-
-
-   NOTE: care must be taken that the compiler doesn't try to "optimize" the
-   indirect jumps by sharing them between all opcodes. Such optimizations
-   can be disabled on gcc by using the -fno-gcse flag (or possibly
-   -fno-crossjumping).
-*/
-
-#ifdef DYNAMIC_EXECUTION_PROFILE
-#undef USE_COMPUTED_GOTOS
-#define USE_COMPUTED_GOTOS 0
-#endif
-
-#ifdef HAVE_COMPUTED_GOTOS
-    #ifndef USE_COMPUTED_GOTOS
-    #define USE_COMPUTED_GOTOS 1
-    #endif
-#else
-    #if defined(USE_COMPUTED_GOTOS) && USE_COMPUTED_GOTOS
-    #error "Computed gotos are not supported on this compiler."
-    #endif
-    #undef USE_COMPUTED_GOTOS
-    #define USE_COMPUTED_GOTOS 0
-#endif
-
-#if USE_COMPUTED_GOTOS
-/* Import the static jump table */
-#include "opcode_targets.h"
-
-#define TARGET(op) \
-    op: \
-    TARGET_##op
-
-#ifdef LLTRACE
-#define FAST_DISPATCH() \
-    { \
-        if (!lltrace && !_Py_TracingPossible(ceval2)) { \
-            f->f_lasti = INSTR_OFFSET(); \
-            NEXTOPARG(); \
-            goto *opcode_targets[opcode]; \
-        } \
-        goto fast_next_opcode; \
-    }
-#else
-#define FAST_DISPATCH() \
-    { \
-        if (!_Py_TracingPossible(ceval2)) { \
-            f->f_lasti = INSTR_OFFSET(); \
-            NEXTOPARG(); \
-            goto *opcode_targets[opcode]; \
-        } \
-        goto fast_next_opcode; \
-    }
-#endif
-
-#define DISPATCH() \
-    { \
-        if (!eval_breaker) { \
-            FAST_DISPATCH(); \
-        } \
-        continue; \
-    }
-
-#else
-#define TARGET(op) op
-#define FAST_DISPATCH() goto fast_next_opcode
-#define DISPATCH() continue
-#endif
-
 
 /* Tuple access macros */
 
@@ -653,51 +174,6 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
 #define JUMPTO(x)       (next_instr = first_instr + (x) / sizeof(_Py_CODEUNIT))
 #define JUMPBY(x)       (next_instr += (x) / sizeof(_Py_CODEUNIT))
 
-/* OpCode prediction macros
-    Some opcodes tend to come in pairs thus making it possible to
-    predict the second code when the first is run.  For example,
-    COMPARE_OP is often followed by POP_JUMP_IF_FALSE or POP_JUMP_IF_TRUE.
-
-    Verifying the prediction costs a single high-speed test of a register
-    variable against a constant.  If the pairing was good, then the
-    processor's own internal branch predication has a high likelihood of
-    success, resulting in a nearly zero-overhead transition to the
-    next opcode.  A successful prediction saves a trip through the eval-loop
-    including its unpredictable switch-case branch.  Combined with the
-    processor's internal branch prediction, a successful PREDICT has the
-    effect of making the two opcodes run as if they were a single new opcode
-    with the bodies combined.
-
-    If collecting opcode statistics, your choices are to either keep the
-    predictions turned-on and interpret the results as if some opcodes
-    had been combined or turn-off predictions so that the opcode frequency
-    counter updates for both opcodes.
-
-    Opcode prediction is disabled with threaded code, since the latter allows
-    the CPU to record separate branch prediction information for each
-    opcode.
-
-*/
-
-#define PREDICT_ID(op)          PRED_##op
-
-#if defined(DYNAMIC_EXECUTION_PROFILE) || USE_COMPUTED_GOTOS
-#define PREDICT(op)             if (0) goto PREDICT_ID(op)
-#else
-#define PREDICT(op) \
-    do { \
-        _Py_CODEUNIT word = *next_instr; \
-        opcode = _Py_OPCODE(word); \
-        if (opcode == op) { \
-            oparg = _Py_OPARG(word); \
-            next_instr++; \
-            goto PREDICT_ID(op); \
-        } \
-    } while(0)
-#endif
-#define PREDICTED(op)           PREDICT_ID(op):
-
-
 /* Stack manipulation macros */
 
 /* The stack can grow at most MAXINT deep, as co_nlocals and
@@ -716,35 +192,11 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
 #define BASIC_STACKADJ(n) (stack_pointer += n)
 #define BASIC_PUSH(v)     (*stack_pointer++ = (v))
 #define BASIC_POP()       (*--stack_pointer)
-
-#ifdef LLTRACE
-#define PUSH(v)         { (void)(BASIC_PUSH(v), \
-                          lltrace && prtrace(tstate, TOP(), "push")); \
-                          assert(STACK_LEVEL() <= co->co_stacksize); }
-#define POP()           ((void)(lltrace && prtrace(tstate, TOP(), "pop")), \
-                         BASIC_POP())
-#define STACK_GROW(n)   do { \
-                          assert(n >= 0); \
-                          (void)(BASIC_STACKADJ(n), \
-                          lltrace && prtrace(tstate, TOP(), "stackadj")); \
-                          assert(STACK_LEVEL() <= co->co_stacksize); \
-                        } while (0)
-#define STACK_SHRINK(n) do { \
-                            assert(n >= 0); \
-                            (void)(lltrace && prtrace(tstate, TOP(), "stackadj")); \
-                            (void)(BASIC_STACKADJ(-n)); \
-                            assert(STACK_LEVEL() <= co->co_stacksize); \
-                        } while (0)
-#define EXT_POP(STACK_POINTER) ((void)(lltrace && \
-                                prtrace(tstate, (STACK_POINTER)[-1], "ext_pop")), \
-                                *--(STACK_POINTER))
-#else
 #define PUSH(v)                BASIC_PUSH(v)
 #define POP()                  BASIC_POP()
 #define STACK_GROW(n)          BASIC_STACKADJ(n)
 #define STACK_SHRINK(n)        BASIC_STACKADJ(-n)
 #define EXT_POP(STACK_POINTER) (*--(STACK_POINTER))
-#endif
 
 /* Local variable macros */
 
@@ -788,21 +240,6 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
         Py_XDECREF(traceback); \
     } while(0)
 
-    /* macros for opcode cache */
-#define OPCACHE_CHECK() \
-    do { \
-        co_opcache = NULL; \
-        if (co->co_opcache != NULL) { \
-            unsigned char co_opt_offset = \
-                co->co_opcache_map[next_instr - first_instr]; \
-            if (co_opt_offset > 0) { \
-                assert(co_opt_offset <= co->co_opcache_size); \
-                co_opcache = &co->co_opcache[co_opt_offset - 1]; \
-                assert(co_opcache != NULL); \
-            } \
-        } \
-    } while (0)
-
 /* Start of code */
 
     /* push frame */
@@ -824,14 +261,6 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
 
        YIELD_FROM sets f_lasti to itself, in order to repeatedly yield
        multiple values.
-
-       When the PREDICT() macros are enabled, some opcode pairs follow in
-       direct succession without updating f->f_lasti.  A successful
-       prediction effectively links the two codes together as if they
-       were a single new opcode; accordingly,f->f_lasti will point to
-       the first code in the pair (for instance, GET_ITER followed by
-       FOR_ITER is effectively a single opcode and f->f_lasti will point
-       to the beginning of the combined pair.)
     */
     assert(f->f_lasti >= -1);
     next_instr = first_instr;
@@ -844,107 +273,25 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
     f->f_stacktop = NULL;       /* remains NULL unless yield suspends frame */
     f->f_executing = 1;
 
-    if (co->co_opcache_flag < OPCACHE_MIN_RUNS) {
-        co->co_opcache_flag++;
-        if (co->co_opcache_flag == OPCACHE_MIN_RUNS) {
-            if (_PyCode_InitOpcache(co) < 0) {
-                goto exit_eval_frame;
-            }
-        }
-    }
-
-#ifdef LLTRACE
-    lltrace = _PyDict_GetItemId(f->f_globals, &PyId___ltrace__) != NULL;
-#endif
-
     if (throwflag) /* support for generator.throw() */
         goto error;
 
 main_loop:
     for (;;) {
-        assert(stack_pointer >= f->f_valuestack); /* else underflow */
-        assert(STACK_LEVEL() <= co->co_stacksize);  /* else overflow */
-        assert(!_PyErr_Occurred(tstate));
-
-        /* Do periodic things.  Doing this every time through
-           the loop would add too much overhead, so we do it
-           only every Nth instruction.  We also do it if
-           ``pending.calls_to_do'' is set, i.e. when an asynchronous
-           event needs attention (e.g. a signal handler or
-           async I/O handler); see Py_AddPendingCall() and
-           Py_MakePendingCalls() above. */
-
-        if (eval_breaker) {
-            opcode = _Py_OPCODE(*next_instr);
-            if (opcode == SETUP_FINALLY ||
-                opcode == SETUP_WITH ||
-                opcode == BEFORE_ASYNC_WITH ||
-                opcode == YIELD_FROM) {
-                /* Few cases where we skip running signal handlers and other
-                   pending calls:
-                   - If we're about to enter the 'with:'. It will prevent
-                     emitting a resource warning in the common idiom
-                     'with open(path) as file:'.
-                   - If we're about to enter the 'async with:'.
-                   - If we're about to enter the 'try:' of a try/finally (not
-                     *very* useful, but might help in some cases and it's
-                     traditional)
-                   - If we're resuming a chain of nested 'yield from' or
-                     'await' calls, then each frame is parked with YIELD_FROM
-                     as its next opcode. If the user hit control-C we want to
-                     wait until we've reached the innermost frame before
-                     running the signal handler and raising KeyboardInterrupt
-                     (see bpo-30039).
-                */
-                goto fast_next_opcode;
-            }
-
-            if (eval_frame_handle_pending(tstate) != 0) {
-                goto error;
-            }
-        }
-
-    fast_next_opcode:
         f->f_lasti = INSTR_OFFSET();
 
         /* Extract opcode and argument */
 
         NEXTOPARG();
     dispatch_opcode:
-#ifdef DYNAMIC_EXECUTION_PROFILE
-#ifdef DXPAIRS
-        dxpairs[lastopcode][opcode]++;
-        lastopcode = opcode;
-#endif
-        dxp[opcode]++;
-#endif
-
-#ifdef LLTRACE
-        /* Instruction tracing */
-
-        if (lltrace) {
-            if (HAS_ARG(opcode)) {
-                printf("%d: %d, %d\n",
-                       f->f_lasti, opcode, oparg);
-            }
-            else {
-                printf("%d: %d\n",
-                       f->f_lasti, opcode);
-            }
-        }
-#endif
 
         switch (opcode) {
 
-        /* BEWARE!
-           It is essential that any operation that fails must goto error
-           and that all operation that succeed call [FAST_]DISPATCH() ! */
-
-        case TARGET(NOP): {
-            FAST_DISPATCH();
+        case NOP: {
+            continue;
         }
 
-        case TARGET(LOAD_FAST): {
+        case LOAD_FAST: {
             PyObject *value = GETLOCAL(oparg);
             if (value == NULL) {
                 format_exc_check_arg(tstate, PyExc_UnboundLocalError,
@@ -954,49 +301,47 @@ main_loop:
             }
             Py_INCREF(value);
             PUSH(value);
-            FAST_DISPATCH();
+            continue;
         }
 
-        case TARGET(LOAD_CONST): {
-            PREDICTED(LOAD_CONST);
+        case LOAD_CONST: {
             PyObject *value = GETITEM(consts, oparg);
             Py_INCREF(value);
             PUSH(value);
-            FAST_DISPATCH();
+            continue;
         }
 
-        case TARGET(STORE_FAST): {
-            PREDICTED(STORE_FAST);
+        case STORE_FAST: {
             PyObject *value = POP();
             SETLOCAL(oparg, value);
-            FAST_DISPATCH();
+            continue;
         }
 
-        case TARGET(POP_TOP): {
+        case POP_TOP: {
             PyObject *value = POP();
             Py_DECREF(value);
-            FAST_DISPATCH();
+            continue;
         }
 
-        case TARGET(ROT_TWO): {
+        case ROT_TWO: {
             PyObject *top = TOP();
             PyObject *second = SECOND();
             SET_TOP(second);
             SET_SECOND(top);
-            FAST_DISPATCH();
+            continue;
         }
 
-        case TARGET(ROT_THREE): {
+        case ROT_THREE: {
             PyObject *top = TOP();
             PyObject *second = SECOND();
             PyObject *third = THIRD();
             SET_TOP(second);
             SET_SECOND(third);
             SET_THIRD(top);
-            FAST_DISPATCH();
+            continue;
         }
 
-        case TARGET(ROT_FOUR): {
+        case ROT_FOUR: {
             PyObject *top = TOP();
             PyObject *second = SECOND();
             PyObject *third = THIRD();
@@ -1005,17 +350,17 @@ main_loop:
             SET_SECOND(third);
             SET_THIRD(fourth);
             SET_FOURTH(top);
-            FAST_DISPATCH();
+            continue;
         }
 
-        case TARGET(DUP_TOP): {
+        case DUP_TOP: {
             PyObject *top = TOP();
             Py_INCREF(top);
             PUSH(top);
-            FAST_DISPATCH();
+            continue;
         }
 
-        case TARGET(DUP_TOP_TWO): {
+        case DUP_TOP_TWO: {
             PyObject *top = TOP();
             PyObject *second = SECOND();
             Py_INCREF(top);
@@ -1023,58 +368,58 @@ main_loop:
             STACK_GROW(2);
             SET_TOP(top);
             SET_SECOND(second);
-            FAST_DISPATCH();
+            continue;
         }
 
-        case TARGET(UNARY_POSITIVE): {
+        case UNARY_POSITIVE: {
             PyObject *value = TOP();
             PyObject *res = PyNumber_Positive(value);
             Py_DECREF(value);
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(UNARY_NEGATIVE): {
+        case UNARY_NEGATIVE: {
             PyObject *value = TOP();
             PyObject *res = PyNumber_Negative(value);
             Py_DECREF(value);
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(UNARY_NOT): {
+        case UNARY_NOT: {
             PyObject *value = TOP();
             int err = PyObject_IsTrue(value);
             Py_DECREF(value);
             if (err == 0) {
                 Py_INCREF(Py_True);
                 SET_TOP(Py_True);
-                DISPATCH();
+                continue;
             }
             else if (err > 0) {
                 Py_INCREF(Py_False);
                 SET_TOP(Py_False);
-                DISPATCH();
+                continue;
             }
             STACK_SHRINK(1);
             goto error;
         }
 
-        case TARGET(UNARY_INVERT): {
+        case UNARY_INVERT: {
             PyObject *value = TOP();
             PyObject *res = PyNumber_Invert(value);
             Py_DECREF(value);
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BINARY_POWER): {
+        case BINARY_POWER: {
             PyObject *exp = POP();
             PyObject *base = TOP();
             PyObject *res = PyNumber_Power(base, exp, Py_None);
@@ -1083,10 +428,10 @@ main_loop:
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BINARY_MULTIPLY): {
+        case BINARY_MULTIPLY: {
             PyObject *right = POP();
             PyObject *left = TOP();
             PyObject *res = PyNumber_Multiply(left, right);
@@ -1095,10 +440,10 @@ main_loop:
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BINARY_MATRIX_MULTIPLY): {
+        case BINARY_MATRIX_MULTIPLY: {
             PyObject *right = POP();
             PyObject *left = TOP();
             PyObject *res = PyNumber_MatrixMultiply(left, right);
@@ -1107,10 +452,10 @@ main_loop:
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BINARY_TRUE_DIVIDE): {
+        case BINARY_TRUE_DIVIDE: {
             PyObject *divisor = POP();
             PyObject *dividend = TOP();
             PyObject *quotient = PyNumber_TrueDivide(dividend, divisor);
@@ -1119,10 +464,10 @@ main_loop:
             SET_TOP(quotient);
             if (quotient == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BINARY_FLOOR_DIVIDE): {
+        case BINARY_FLOOR_DIVIDE: {
             PyObject *divisor = POP();
             PyObject *dividend = TOP();
             PyObject *quotient = PyNumber_FloorDivide(dividend, divisor);
@@ -1131,10 +476,10 @@ main_loop:
             SET_TOP(quotient);
             if (quotient == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BINARY_MODULO): {
+        case BINARY_MODULO: {
             PyObject *divisor = POP();
             PyObject *dividend = TOP();
             PyObject *res;
@@ -1151,10 +496,10 @@ main_loop:
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BINARY_ADD): {
+        case BINARY_ADD: {
             PyObject *right = POP();
             PyObject *left = TOP();
             PyObject *sum;
@@ -1177,10 +522,10 @@ main_loop:
             SET_TOP(sum);
             if (sum == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BINARY_SUBTRACT): {
+        case BINARY_SUBTRACT: {
             PyObject *right = POP();
             PyObject *left = TOP();
             PyObject *diff = PyNumber_Subtract(left, right);
@@ -1189,10 +534,10 @@ main_loop:
             SET_TOP(diff);
             if (diff == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BINARY_SUBSCR): {
+        case BINARY_SUBSCR: {
             PyObject *sub = POP();
             PyObject *container = TOP();
             PyObject *res = PyObject_GetItem(container, sub);
@@ -1201,10 +546,10 @@ main_loop:
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BINARY_LSHIFT): {
+        case BINARY_LSHIFT: {
             PyObject *right = POP();
             PyObject *left = TOP();
             PyObject *res = PyNumber_Lshift(left, right);
@@ -1213,10 +558,10 @@ main_loop:
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BINARY_RSHIFT): {
+        case BINARY_RSHIFT: {
             PyObject *right = POP();
             PyObject *left = TOP();
             PyObject *res = PyNumber_Rshift(left, right);
@@ -1225,10 +570,10 @@ main_loop:
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BINARY_AND): {
+        case BINARY_AND: {
             PyObject *right = POP();
             PyObject *left = TOP();
             PyObject *res = PyNumber_And(left, right);
@@ -1237,10 +582,10 @@ main_loop:
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BINARY_XOR): {
+        case BINARY_XOR: {
             PyObject *right = POP();
             PyObject *left = TOP();
             PyObject *res = PyNumber_Xor(left, right);
@@ -1249,10 +594,10 @@ main_loop:
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BINARY_OR): {
+        case BINARY_OR: {
             PyObject *right = POP();
             PyObject *left = TOP();
             PyObject *res = PyNumber_Or(left, right);
@@ -1261,10 +606,10 @@ main_loop:
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(LIST_APPEND): {
+        case LIST_APPEND: {
             PyObject *v = POP();
             PyObject *list = PEEK(oparg);
             int err;
@@ -1272,11 +617,10 @@ main_loop:
             Py_DECREF(v);
             if (err != 0)
                 goto error;
-            PREDICT(JUMP_ABSOLUTE);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(SET_ADD): {
+        case SET_ADD: {
             PyObject *v = POP();
             PyObject *set = PEEK(oparg);
             int err;
@@ -1284,11 +628,10 @@ main_loop:
             Py_DECREF(v);
             if (err != 0)
                 goto error;
-            PREDICT(JUMP_ABSOLUTE);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(INPLACE_POWER): {
+        case INPLACE_POWER: {
             PyObject *exp = POP();
             PyObject *base = TOP();
             PyObject *res = PyNumber_InPlacePower(base, exp, Py_None);
@@ -1297,10 +640,10 @@ main_loop:
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(INPLACE_MULTIPLY): {
+        case INPLACE_MULTIPLY: {
             PyObject *right = POP();
             PyObject *left = TOP();
             PyObject *res = PyNumber_InPlaceMultiply(left, right);
@@ -1309,10 +652,10 @@ main_loop:
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(INPLACE_MATRIX_MULTIPLY): {
+        case INPLACE_MATRIX_MULTIPLY: {
             PyObject *right = POP();
             PyObject *left = TOP();
             PyObject *res = PyNumber_InPlaceMatrixMultiply(left, right);
@@ -1321,10 +664,10 @@ main_loop:
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(INPLACE_TRUE_DIVIDE): {
+        case INPLACE_TRUE_DIVIDE: {
             PyObject *divisor = POP();
             PyObject *dividend = TOP();
             PyObject *quotient = PyNumber_InPlaceTrueDivide(dividend, divisor);
@@ -1333,10 +676,10 @@ main_loop:
             SET_TOP(quotient);
             if (quotient == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(INPLACE_FLOOR_DIVIDE): {
+        case INPLACE_FLOOR_DIVIDE: {
             PyObject *divisor = POP();
             PyObject *dividend = TOP();
             PyObject *quotient = PyNumber_InPlaceFloorDivide(dividend, divisor);
@@ -1345,10 +688,10 @@ main_loop:
             SET_TOP(quotient);
             if (quotient == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(INPLACE_MODULO): {
+        case INPLACE_MODULO: {
             PyObject *right = POP();
             PyObject *left = TOP();
             PyObject *mod = PyNumber_InPlaceRemainder(left, right);
@@ -1357,10 +700,10 @@ main_loop:
             SET_TOP(mod);
             if (mod == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(INPLACE_ADD): {
+        case INPLACE_ADD: {
             PyObject *right = POP();
             PyObject *left = TOP();
             PyObject *sum;
@@ -1376,10 +719,10 @@ main_loop:
             SET_TOP(sum);
             if (sum == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(INPLACE_SUBTRACT): {
+        case INPLACE_SUBTRACT: {
             PyObject *right = POP();
             PyObject *left = TOP();
             PyObject *diff = PyNumber_InPlaceSubtract(left, right);
@@ -1388,10 +731,10 @@ main_loop:
             SET_TOP(diff);
             if (diff == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(INPLACE_LSHIFT): {
+        case INPLACE_LSHIFT: {
             PyObject *right = POP();
             PyObject *left = TOP();
             PyObject *res = PyNumber_InPlaceLshift(left, right);
@@ -1400,10 +743,10 @@ main_loop:
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(INPLACE_RSHIFT): {
+        case INPLACE_RSHIFT: {
             PyObject *right = POP();
             PyObject *left = TOP();
             PyObject *res = PyNumber_InPlaceRshift(left, right);
@@ -1412,10 +755,10 @@ main_loop:
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(INPLACE_AND): {
+        case INPLACE_AND: {
             PyObject *right = POP();
             PyObject *left = TOP();
             PyObject *res = PyNumber_InPlaceAnd(left, right);
@@ -1424,10 +767,10 @@ main_loop:
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(INPLACE_XOR): {
+        case INPLACE_XOR: {
             PyObject *right = POP();
             PyObject *left = TOP();
             PyObject *res = PyNumber_InPlaceXor(left, right);
@@ -1436,10 +779,10 @@ main_loop:
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(INPLACE_OR): {
+        case INPLACE_OR: {
             PyObject *right = POP();
             PyObject *left = TOP();
             PyObject *res = PyNumber_InPlaceOr(left, right);
@@ -1448,10 +791,10 @@ main_loop:
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(STORE_SUBSCR): {
+        case STORE_SUBSCR: {
             PyObject *sub = TOP();
             PyObject *container = SECOND();
             PyObject *v = THIRD();
@@ -1464,10 +807,10 @@ main_loop:
             Py_DECREF(sub);
             if (err != 0)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(DELETE_SUBSCR): {
+        case DELETE_SUBSCR: {
             PyObject *sub = TOP();
             PyObject *container = SECOND();
             int err;
@@ -1478,10 +821,10 @@ main_loop:
             Py_DECREF(sub);
             if (err != 0)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(PRINT_EXPR): {
+        case PRINT_EXPR: {
             _Py_IDENTIFIER(displayhook);
             PyObject *value = POP();
             PyObject *hook = _PySys_GetObjectId(&PyId_displayhook);
@@ -1497,10 +840,10 @@ main_loop:
             if (res == NULL)
                 goto error;
             Py_DECREF(res);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(RAISE_VARARGS): {
+        case RAISE_VARARGS: {
             PyObject *cause = NULL, *exc = NULL;
             switch (oparg) {
             case 2:
@@ -1522,7 +865,7 @@ main_loop:
             goto error;
         }
 
-        case TARGET(RETURN_VALUE): {
+        case RETURN_VALUE: {
             retval = POP();
             assert(f->f_iblock == 0);
             assert(EMPTY());
@@ -1530,7 +873,7 @@ main_loop:
         }
 
 
-        case TARGET(YIELD_FROM): {
+        case YIELD_FROM: {
             PyObject *v = POP();
             PyObject *receiver = TOP();
             int err;
@@ -1551,7 +894,7 @@ main_loop:
                     goto error;
                 Py_DECREF(receiver);
                 SET_TOP(val);
-                DISPATCH();
+                continue;
             }
             /* receiver remains on stack, retval is value to be yielded */
             f->f_stacktop = stack_pointer;
@@ -1561,14 +904,14 @@ main_loop:
             goto exiting;
         }
 
-        case TARGET(YIELD_VALUE): {
+        case YIELD_VALUE: {
             retval = POP();
 
             f->f_stacktop = stack_pointer;
             goto exiting;
         }
 
-        case TARGET(POP_EXCEPT): {
+        case POP_EXCEPT: {
             PyObject *type, *value, *traceback;
             _PyErr_StackItem *exc_info;
             PyTryBlock *b = PyFrame_BlockPop(f);
@@ -1589,16 +932,15 @@ main_loop:
             Py_XDECREF(type);
             Py_XDECREF(value);
             Py_XDECREF(traceback);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(POP_BLOCK): {
-            PREDICTED(POP_BLOCK);
+        case POP_BLOCK: {
             PyFrame_BlockPop(f);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(RERAISE): {
+        case RERAISE: {
             PyObject *exc = POP();
             PyObject *val = POP();
             PyObject *tb = POP();
@@ -1607,14 +949,14 @@ main_loop:
             goto exception_unwind;
         }
 
-        case TARGET(LOAD_ASSERTION_ERROR): {
+        case LOAD_ASSERTION_ERROR: {
             PyObject *value = PyExc_AssertionError;
             Py_INCREF(value);
             PUSH(value);
-            FAST_DISPATCH();
+            continue;
         }
 
-        case TARGET(LOAD_BUILD_CLASS): {
+        case LOAD_BUILD_CLASS: {
             _Py_IDENTIFIER(__build_class__);
 
             PyObject *bc;
@@ -1642,10 +984,10 @@ main_loop:
                 }
             }
             PUSH(bc);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(STORE_NAME): {
+        case STORE_NAME: {
             PyObject *name = GETITEM(names, oparg);
             PyObject *v = POP();
             PyObject *ns = f->f_locals;
@@ -1663,10 +1005,10 @@ main_loop:
             Py_DECREF(v);
             if (err != 0)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(DELETE_NAME): {
+        case DELETE_NAME: {
             PyObject *name = GETITEM(names, oparg);
             PyObject *ns = f->f_locals;
             int err;
@@ -1682,11 +1024,10 @@ main_loop:
                                      name);
                 goto error;
             }
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(UNPACK_SEQUENCE): {
-            PREDICTED(UNPACK_SEQUENCE);
+        case UNPACK_SEQUENCE: {
             PyObject *seq = POP(), *item, **items;
             if (PyTuple_CheckExact(seq) &&
                 PyTuple_GET_SIZE(seq) == oparg) {
@@ -1713,10 +1054,10 @@ main_loop:
                 goto error;
             }
             Py_DECREF(seq);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(UNPACK_EX): {
+        case UNPACK_EX: {
             int totalargs = 1 + (oparg & 0xFF) + (oparg >> 8);
             PyObject *seq = POP();
 
@@ -1728,10 +1069,10 @@ main_loop:
                 goto error;
             }
             Py_DECREF(seq);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(STORE_ATTR): {
+        case STORE_ATTR: {
             PyObject *name = GETITEM(names, oparg);
             PyObject *owner = TOP();
             PyObject *v = SECOND();
@@ -1742,10 +1083,10 @@ main_loop:
             Py_DECREF(owner);
             if (err != 0)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(DELETE_ATTR): {
+        case DELETE_ATTR: {
             PyObject *name = GETITEM(names, oparg);
             PyObject *owner = POP();
             int err;
@@ -1753,10 +1094,10 @@ main_loop:
             Py_DECREF(owner);
             if (err != 0)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(STORE_GLOBAL): {
+        case STORE_GLOBAL: {
             PyObject *name = GETITEM(names, oparg);
             PyObject *v = POP();
             int err;
@@ -1764,10 +1105,10 @@ main_loop:
             Py_DECREF(v);
             if (err != 0)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(DELETE_GLOBAL): {
+        case DELETE_GLOBAL: {
             PyObject *name = GETITEM(names, oparg);
             int err;
             err = PyDict_DelItem(f->f_globals, name);
@@ -1778,10 +1119,10 @@ main_loop:
                 }
                 goto error;
             }
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(LOAD_NAME): {
+        case LOAD_NAME: {
             PyObject *name = GETITEM(names, oparg);
             PyObject *locals = f->f_locals;
             PyObject *v;
@@ -1842,32 +1183,15 @@ main_loop:
                 }
             }
             PUSH(v);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(LOAD_GLOBAL): {
+        case LOAD_GLOBAL: {
             PyObject *name;
             PyObject *v;
             if (PyDict_CheckExact(f->f_globals)
                 && PyDict_CheckExact(f->f_builtins))
             {
-                OPCACHE_CHECK();
-                if (co_opcache != NULL && co_opcache->optimized > 0) {
-                    _PyOpcache_LoadGlobal *lg = &co_opcache->u.lg;
-
-                    if (lg->globals_ver ==
-                            ((PyDictObject *)f->f_globals)->ma_version_tag
-                        && lg->builtins_ver ==
-                           ((PyDictObject *)f->f_builtins)->ma_version_tag)
-                    {
-                        PyObject *ptr = lg->ptr;
-                        assert(ptr != NULL);
-                        Py_INCREF(ptr);
-                        PUSH(ptr);
-                        DISPATCH();
-                    }
-                }
-
                 name = GETITEM(names, oparg);
                 v = _PyDict_LoadGlobal((PyDictObject *)f->f_globals,
                                        (PyDictObject *)f->f_builtins,
@@ -1881,18 +1205,6 @@ main_loop:
                     }
                     goto error;
                 }
-
-                if (co_opcache != NULL) {
-                    _PyOpcache_LoadGlobal *lg = &co_opcache->u.lg;
-
-                    co_opcache->optimized = 1;
-                    lg->globals_ver =
-                        ((PyDictObject *)f->f_globals)->ma_version_tag;
-                    lg->builtins_ver =
-                        ((PyDictObject *)f->f_builtins)->ma_version_tag;
-                    lg->ptr = v; /* borrowed */
-                }
-
                 Py_INCREF(v);
             }
             else {
@@ -1920,14 +1232,14 @@ main_loop:
                 }
             }
             PUSH(v);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(DELETE_FAST): {
+        case DELETE_FAST: {
             PyObject *v = GETLOCAL(oparg);
             if (v != NULL) {
                 SETLOCAL(oparg, NULL);
-                DISPATCH();
+                continue;
             }
             format_exc_check_arg(
                 tstate, PyExc_UnboundLocalError,
@@ -1937,26 +1249,26 @@ main_loop:
             goto error;
         }
 
-        case TARGET(DELETE_DEREF): {
+        case DELETE_DEREF: {
             PyObject *cell = freevars[oparg];
             PyObject *oldobj = PyCell_GET(cell);
             if (oldobj != NULL) {
                 PyCell_SET(cell, NULL);
                 Py_DECREF(oldobj);
-                DISPATCH();
+                continue;
             }
             format_exc_unbound(tstate, co, oparg);
             goto error;
         }
 
-        case TARGET(LOAD_CLOSURE): {
+        case LOAD_CLOSURE: {
             PyObject *cell = freevars[oparg];
             Py_INCREF(cell);
             PUSH(cell);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(LOAD_CLASSDEREF): {
+        case LOAD_CLASSDEREF: {
             PyObject *name, *value, *locals = f->f_locals;
             Py_ssize_t idx;
             assert(locals);
@@ -1992,10 +1304,10 @@ main_loop:
                 Py_INCREF(value);
             }
             PUSH(value);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(LOAD_DEREF): {
+        case LOAD_DEREF: {
             PyObject *cell = freevars[oparg];
             PyObject *value = PyCell_GET(cell);
             if (value == NULL) {
@@ -2004,19 +1316,19 @@ main_loop:
             }
             Py_INCREF(value);
             PUSH(value);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(STORE_DEREF): {
+        case STORE_DEREF: {
             PyObject *v = POP();
             PyObject *cell = freevars[oparg];
             PyObject *oldobj = PyCell_GET(cell);
             PyCell_SET(cell, v);
             Py_XDECREF(oldobj);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BUILD_STRING): {
+        case BUILD_STRING: {
             PyObject *str;
             PyObject *empty = PyUnicode_New(0, 0);
             if (empty == NULL) {
@@ -2031,10 +1343,10 @@ main_loop:
                 Py_DECREF(item);
             }
             PUSH(str);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BUILD_TUPLE): {
+        case BUILD_TUPLE: {
             PyObject *tup = PyTuple_New(oparg);
             if (tup == NULL)
                 goto error;
@@ -2043,10 +1355,10 @@ main_loop:
                 PyTuple_SET_ITEM(tup, oparg, item);
             }
             PUSH(tup);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BUILD_LIST): {
+        case BUILD_LIST: {
             PyObject *list =  PyList_New(oparg);
             if (list == NULL)
                 goto error;
@@ -2055,10 +1367,10 @@ main_loop:
                 PyList_SET_ITEM(list, oparg, item);
             }
             PUSH(list);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(LIST_TO_TUPLE): {
+        case LIST_TO_TUPLE: {
             PyObject *list = POP();
             PyObject *tuple = PyList_AsTuple(list);
             Py_DECREF(list);
@@ -2066,10 +1378,10 @@ main_loop:
                 goto error;
             }
             PUSH(tuple);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(LIST_EXTEND): {
+        case LIST_EXTEND: {
             PyObject *iterable = POP();
             PyObject *list = PEEK(oparg);
             PyObject *none_val = _PyList_Extend((PyListObject *)list, iterable);
@@ -2087,10 +1399,10 @@ main_loop:
             }
             Py_DECREF(none_val);
             Py_DECREF(iterable);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(SET_UPDATE): {
+        case SET_UPDATE: {
             PyObject *iterable = POP();
             PyObject *set = PEEK(oparg);
             int err = _PySet_Update(set, iterable);
@@ -2098,10 +1410,10 @@ main_loop:
             if (err < 0) {
                 goto error;
             }
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BUILD_SET): {
+        case BUILD_SET: {
             PyObject *set = PySet_New(NULL);
             int err = 0;
             int i;
@@ -2119,10 +1431,10 @@ main_loop:
                 goto error;
             }
             PUSH(set);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BUILD_MAP): {
+        case BUILD_MAP: {
             Py_ssize_t i;
             PyObject *map = _PyDict_NewPresized((Py_ssize_t)oparg);
             if (map == NULL)
@@ -2143,10 +1455,10 @@ main_loop:
                 Py_DECREF(POP());
             }
             PUSH(map);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(SETUP_ANNOTATIONS): {
+        case SETUP_ANNOTATIONS: {
             _Py_IDENTIFIER(__annotations__);
             int err;
             PyObject *ann_dict;
@@ -2202,10 +1514,10 @@ main_loop:
                     Py_DECREF(ann_dict);
                 }
             }
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BUILD_CONST_KEY_MAP): {
+        case BUILD_CONST_KEY_MAP: {
             Py_ssize_t i;
             PyObject *map;
             PyObject *keys = TOP();
@@ -2235,10 +1547,10 @@ main_loop:
                 Py_DECREF(POP());
             }
             PUSH(map);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(DICT_UPDATE): {
+        case DICT_UPDATE: {
             PyObject *update = POP();
             PyObject *dict = PEEK(oparg);
             if (PyDict_Update(dict, update) < 0) {
@@ -2251,10 +1563,10 @@ main_loop:
                 goto error;
             }
             Py_DECREF(update);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(DICT_MERGE): {
+        case DICT_MERGE: {
             PyObject *update = POP();
             PyObject *dict = PEEK(oparg);
 
@@ -2264,11 +1576,10 @@ main_loop:
                 goto error;
             }
             Py_DECREF(update);
-            PREDICT(CALL_FUNCTION_EX);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(MAP_ADD): {
+        case MAP_ADD: {
             PyObject *value = TOP();
             PyObject *key = SECOND();
             PyObject *map;
@@ -2281,11 +1592,10 @@ main_loop:
             Py_DECREF(key);
             if (err != 0)
                 goto error;
-            PREDICT(JUMP_ABSOLUTE);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(LOAD_ATTR): {
+        case LOAD_ATTR: {
             PyObject *name = GETITEM(names, oparg);
             PyObject *owner = TOP();
             PyObject *res = PyObject_GetAttr(owner, name);
@@ -2293,10 +1603,10 @@ main_loop:
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(COMPARE_OP): {
+        case COMPARE_OP: {
             assert(oparg <= Py_GE);
             PyObject *right = POP();
             PyObject *left = TOP();
@@ -2306,12 +1616,10 @@ main_loop:
             Py_DECREF(right);
             if (res == NULL)
                 goto error;
-            PREDICT(POP_JUMP_IF_FALSE);
-            PREDICT(POP_JUMP_IF_TRUE);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(IS_OP): {
+        case IS_OP: {
             PyObject *right = POP();
             PyObject *left = TOP();
             int res = (left == right)^oparg;
@@ -2320,12 +1628,10 @@ main_loop:
             SET_TOP(b);
             Py_DECREF(left);
             Py_DECREF(right);
-            PREDICT(POP_JUMP_IF_FALSE);
-            PREDICT(POP_JUMP_IF_TRUE);
-            FAST_DISPATCH();
+            continue;
         }
 
-        case TARGET(CONTAINS_OP): {
+        case CONTAINS_OP: {
             PyObject *right = POP();
             PyObject *left = POP();
             int res = PySequence_Contains(right, left);
@@ -2337,15 +1643,13 @@ main_loop:
             PyObject *b = (res^oparg) ? Py_True : Py_False;
             Py_INCREF(b);
             PUSH(b);
-            PREDICT(POP_JUMP_IF_FALSE);
-            PREDICT(POP_JUMP_IF_TRUE);
-            FAST_DISPATCH();
+            continue;
         }
 
 #define CANNOT_CATCH_MSG "catching classes that do not inherit from "\
                          "BaseException is not allowed"
 
-        case TARGET(JUMP_IF_NOT_EXC_MATCH): {
+        case JUMP_IF_NOT_EXC_MATCH: {
             PyObject *right = POP();
             PyObject *left = POP();
             if (PyTuple_Check(right)) {
@@ -2383,10 +1687,10 @@ main_loop:
             else {
                 goto error;
             }
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(IMPORT_NAME): {
+        case IMPORT_NAME: {
             PyObject *name = GETITEM(names, oparg);
             PyObject *fromlist = POP();
             PyObject *level = TOP();
@@ -2397,10 +1701,10 @@ main_loop:
             SET_TOP(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(IMPORT_STAR): {
+        case IMPORT_STAR: {
             PyObject *from = POP(), *locals;
             int err;
             if (PyFrame_FastToLocalsWithError(f) < 0) {
@@ -2420,10 +1724,10 @@ main_loop:
             Py_DECREF(from);
             if (err != 0)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(IMPORT_FROM): {
+        case IMPORT_FROM: {
             PyObject *name = GETITEM(names, oparg);
             PyObject *from = TOP();
             PyObject *res;
@@ -2431,26 +1735,25 @@ main_loop:
             PUSH(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(JUMP_FORWARD): {
+        case JUMP_FORWARD: {
             JUMPBY(oparg);
-            FAST_DISPATCH();
+            continue;
         }
 
-        case TARGET(POP_JUMP_IF_FALSE): {
-            PREDICTED(POP_JUMP_IF_FALSE);
+        case POP_JUMP_IF_FALSE: {
             PyObject *cond = POP();
             int err;
             if (cond == Py_True) {
                 Py_DECREF(cond);
-                FAST_DISPATCH();
+                continue;
             }
             if (cond == Py_False) {
                 Py_DECREF(cond);
                 JUMPTO(oparg);
-                FAST_DISPATCH();
+                continue;
             }
             err = PyObject_IsTrue(cond);
             Py_DECREF(cond);
@@ -2460,21 +1763,20 @@ main_loop:
                 JUMPTO(oparg);
             else
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(POP_JUMP_IF_TRUE): {
-            PREDICTED(POP_JUMP_IF_TRUE);
+        case POP_JUMP_IF_TRUE: {
             PyObject *cond = POP();
             int err;
             if (cond == Py_False) {
                 Py_DECREF(cond);
-                FAST_DISPATCH();
+                continue;
             }
             if (cond == Py_True) {
                 Py_DECREF(cond);
                 JUMPTO(oparg);
-                FAST_DISPATCH();
+                continue;
             }
             err = PyObject_IsTrue(cond);
             Py_DECREF(cond);
@@ -2485,20 +1787,20 @@ main_loop:
                 ;
             else
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(JUMP_IF_FALSE_OR_POP): {
+        case JUMP_IF_FALSE_OR_POP: {
             PyObject *cond = TOP();
             int err;
             if (cond == Py_True) {
                 STACK_SHRINK(1);
                 Py_DECREF(cond);
-                FAST_DISPATCH();
+                continue;
             }
             if (cond == Py_False) {
                 JUMPTO(oparg);
-                FAST_DISPATCH();
+                continue;
             }
             err = PyObject_IsTrue(cond);
             if (err > 0) {
@@ -2509,20 +1811,20 @@ main_loop:
                 JUMPTO(oparg);
             else
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(JUMP_IF_TRUE_OR_POP): {
+        case JUMP_IF_TRUE_OR_POP: {
             PyObject *cond = TOP();
             int err;
             if (cond == Py_False) {
                 STACK_SHRINK(1);
                 Py_DECREF(cond);
-                FAST_DISPATCH();
+                continue;
             }
             if (cond == Py_True) {
                 JUMPTO(oparg);
-                FAST_DISPATCH();
+                continue;
             }
             err = PyObject_IsTrue(cond);
             if (err > 0) {
@@ -2534,27 +1836,15 @@ main_loop:
             }
             else
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(JUMP_ABSOLUTE): {
-            PREDICTED(JUMP_ABSOLUTE);
+        case JUMP_ABSOLUTE: {
             JUMPTO(oparg);
-#if FAST_LOOPS
-            /* Enabling this path speeds-up all while and for-loops by bypassing
-               the per-loop checks for signals.  By default, this should be turned-off
-               because it prevents detection of a control-break in tight loops like
-               "while 1: pass".  Compile with this option turned-on when you need
-               the speed-up and do not need break checking inside tight loops (ones
-               that contain only instructions ending with FAST_DISPATCH).
-            */
-            FAST_DISPATCH();
-#else
-            DISPATCH();
-#endif
+            continue;
         }
 
-        case TARGET(GET_ITER): {
+        case GET_ITER: {
             /* before: [obj]; after [getiter(obj)] */
             PyObject *iterable = TOP();
             PyObject *iter = PyObject_GetIter(iterable);
@@ -2562,12 +1852,10 @@ main_loop:
             SET_TOP(iter);
             if (iter == NULL)
                 goto error;
-            PREDICT(FOR_ITER);
-            PREDICT(CALL_FUNCTION);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(GET_YIELD_FROM_ITER): {
+        case GET_YIELD_FROM_ITER: {
             /* before: [obj]; after [getiter(obj)] */
             PyObject *iterable = TOP();
             PyObject *iter;
@@ -2580,20 +1868,16 @@ main_loop:
                 if (iter == NULL)
                     goto error;
             }
-            PREDICT(LOAD_CONST);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(FOR_ITER): {
-            PREDICTED(FOR_ITER);
+        case FOR_ITER: {
             /* before: [iter]; after: [iter, iter()] *or* [] */
             PyObject *iter = TOP();
             PyObject *next = (*Py_TYPE(iter)->tp_iternext)(iter);
             if (next != NULL) {
                 PUSH(next);
-                PREDICT(STORE_FAST);
-                PREDICT(UNPACK_SEQUENCE);
-                DISPATCH();
+                continue;
             }
             if (_PyErr_Occurred(tstate)) {
                 if (!_PyErr_ExceptionMatches(tstate, PyExc_StopIteration)) {
@@ -2605,17 +1889,16 @@ main_loop:
             STACK_SHRINK(1);
             Py_DECREF(iter);
             JUMPBY(oparg);
-            PREDICT(POP_BLOCK);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(SETUP_FINALLY): {
+        case SETUP_FINALLY: {
             PyFrame_BlockSetup(f, SETUP_FINALLY, INSTR_OFFSET() + oparg,
                                STACK_LEVEL());
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(SETUP_WITH): {
+        case SETUP_WITH: {
             _Py_IDENTIFIER(__enter__);
             _Py_IDENTIFIER(__exit__);
             PyObject *mgr = TOP();
@@ -2641,10 +1924,10 @@ main_loop:
                                STACK_LEVEL());
 
             PUSH(res);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(WITH_EXCEPT_START): {
+        case WITH_EXCEPT_START: {
             /* At the top of the stack are 7 values:
                - (TOP, SECOND, THIRD) = exc_info()
                - (FOURTH, FIFTH, SIXTH) = previous exception for EXCEPT_HANDLER
@@ -2669,10 +1952,10 @@ main_loop:
                 goto error;
 
             PUSH(res);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(LOAD_METHOD): {
+        case LOAD_METHOD: {
             /* Designed to work in tandem with CALL_METHOD. */
             PyObject *name = GETITEM(names, oparg);
             PyObject *obj = TOP();
@@ -2706,10 +1989,10 @@ main_loop:
                 Py_DECREF(obj);
                 PUSH(meth);
             }
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(CALL_METHOD): {
+        case CALL_METHOD: {
             /* Designed to work in tamdem with LOAD_METHOD. */
             PyObject **sp, *res, *meth;
 
@@ -2755,11 +2038,10 @@ main_loop:
             PUSH(res);
             if (res == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(CALL_FUNCTION): {
-            PREDICTED(CALL_FUNCTION);
+        case CALL_FUNCTION: {
             PyObject **sp, *res;
             sp = stack_pointer;
             res = call_function(tstate, &sp, oparg, NULL);
@@ -2768,10 +2050,10 @@ main_loop:
             if (res == NULL) {
                 goto error;
             }
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(CALL_FUNCTION_KW): {
+        case CALL_FUNCTION_KW: {
             PyObject **sp, *res, *names;
 
             names = POP();
@@ -2787,11 +2069,10 @@ main_loop:
             if (res == NULL) {
                 goto error;
             }
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(CALL_FUNCTION_EX): {
-            PREDICTED(CALL_FUNCTION_EX);
+        case CALL_FUNCTION_EX: {
             PyObject *func, *callargs, *kwargs = NULL, *result;
             if (oparg & 0x01) {
                 kwargs = POP();
@@ -2833,10 +2114,10 @@ main_loop:
             if (result == NULL) {
                 goto error;
             }
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(MAKE_FUNCTION): {
+        case MAKE_FUNCTION: {
             PyObject *qualname = POP();
             PyObject *codeobj = POP();
             PyFunctionObject *func = (PyFunctionObject *)
@@ -2866,10 +2147,10 @@ main_loop:
             }
 
             PUSH((PyObject *)func);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(BUILD_SLICE): {
+        case BUILD_SLICE: {
             PyObject *start, *stop, *step, *slice;
             if (oparg == 3)
                 step = POP();
@@ -2884,10 +2165,10 @@ main_loop:
             SET_TOP(slice);
             if (slice == NULL)
                 goto error;
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(FORMAT_VALUE): {
+        case FORMAT_VALUE: {
             /* Handles f-string value formatting. */
             PyObject *result;
             PyObject *fmt_spec;
@@ -2944,20 +2225,16 @@ main_loop:
             }
 
             PUSH(result);
-            DISPATCH();
+            continue;
         }
 
-        case TARGET(EXTENDED_ARG): {
+        case EXTENDED_ARG: {
             int oldoparg = oparg;
             NEXTOPARG();
             oparg |= oldoparg << 8;
             goto dispatch_opcode;
         }
 
-
-#if USE_COMPUTED_GOTOS
-        _unknown_opcode:
-#endif
         default:
             fprintf(stderr,
                 "XXX lineno: %d, opcode: %d\n",
@@ -3065,7 +2342,6 @@ exception_unwind:
 exiting:
 
     /* pop frame */
-exit_eval_frame:
     f->f_executing = 0;
     tstate->frame = f->f_back;
 
@@ -4387,50 +3663,6 @@ unicode_concatenate(PyThreadState *tstate, PyObject *v, PyObject *w,
     PyUnicode_Append(&res, w);
     return res;
 }
-
-#ifdef DYNAMIC_EXECUTION_PROFILE
-
-static PyObject *
-getarray(long a[256])
-{
-    int i;
-    PyObject *l = PyList_New(256);
-    if (l == NULL) return NULL;
-    for (i = 0; i < 256; i++) {
-        PyObject *x = PyLong_FromLong(a[i]);
-        if (x == NULL) {
-            Py_DECREF(l);
-            return NULL;
-        }
-        PyList_SET_ITEM(l, i, x);
-    }
-    for (i = 0; i < 256; i++)
-        a[i] = 0;
-    return l;
-}
-
-PyObject *
-_Py_GetDXProfile(PyObject *self, PyObject *args)
-{
-#ifndef DXPAIRS
-    return getarray(dxp);
-#else
-    int i;
-    PyObject *l = PyList_New(257);
-    if (l == NULL) return NULL;
-    for (i = 0; i < 257; i++) {
-        PyObject *x = getarray(dxpairs[i]);
-        if (x == NULL) {
-            Py_DECREF(l);
-            return NULL;
-        }
-        PyList_SET_ITEM(l, i, x);
-    }
-    return l;
-#endif
-}
-
-#endif
 
 Py_ssize_t
 _PyEval_RequestCodeExtraIndex(freefunc free)

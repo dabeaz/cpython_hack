@@ -981,9 +981,6 @@ Py_FinalizeEx(void)
     // Wrap up existing "threading"-module-created, non-daemon threads.
     wait_for_thread_shutdown(tstate);
 
-    // Make any remaining pending calls.
-    _Py_FinishPendingCalls(tstate);
-
     /* The interpreter is still entirely intact at this point, and the
      * exit funcs may be relying on that.  In particular, if some thread
      * or exit func is still waiting to do an import, the import machinery

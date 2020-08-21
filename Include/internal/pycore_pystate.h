@@ -38,6 +38,7 @@ _PyThreadState_GET(void)
 #undef PyThreadState_GET
 #define PyThreadState_GET() _PyThreadState_GET()
 
+#if 0
 PyAPI_FUNC(void) _Py_NO_RETURN _Py_FatalError_TstateNULL(const char *func);
 
 static inline void
@@ -52,6 +53,7 @@ _Py_EnsureFuncTstateNotNULL(const char *func, PyThreadState *tstate)
 #define _Py_EnsureTstateNotNULL(tstate) \
     _Py_EnsureFuncTstateNotNULL(__func__, tstate)
 
+#endif
 
 /* Get the current interpreter state.
 

@@ -324,12 +324,6 @@ pymain_run_file(const PyConfig *config, PyCompilerFlags *cf)
         return 1;
     }
 
-    /* call pending calls like signal handlers (SIGINT) */
-    if (Py_MakePendingCalls() == -1) {
-        fclose(fp);
-        return pymain_exit_err_print();
-    }
-
     PyObject *unicode, *bytes = NULL;
     const char *filename_str;
 
@@ -425,11 +419,6 @@ pymain_run_stdin(PyConfig *config, PyCompilerFlags *cf)
         if (pymain_run_interactive_hook(&exitcode)) {
             return exitcode;
         }
-    }
-
-    /* call pending calls like signal handlers (SIGINT) */
-    if (Py_MakePendingCalls() == -1) {
-        return pymain_exit_err_print();
     }
     int run = PyRun_AnyFileExFlags(stdin, "<stdin>", 0, cf);
     return (run != 0);
