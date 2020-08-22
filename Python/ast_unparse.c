@@ -199,10 +199,6 @@ append_ast_arg(_PyUnicodeWriter *writer, arg_ty arg)
     if (-1 == _PyUnicodeWriter_WriteStr(writer, arg->arg)) {
         return -1;
     }
-    if (arg->annotation) {
-        APPEND_STR(": ");
-        APPEND_EXPR(arg->annotation, PR_TEST);
-    }
     return 0;
 }
 

@@ -30,7 +30,6 @@ typedef struct {
     PyObject *func_dict;        /* The __dict__ attribute, a dict or NULL */
     PyObject *func_weakreflist; /* List of weak references */
     PyObject *func_module;      /* The __module__ attribute, can be anything */
-    PyObject *func_annotations; /* Annotations, a dict or NULL */
     PyObject *func_qualname;    /* The qualified name */
     vectorcallfunc vectorcall;
 

@@ -13,7 +13,6 @@ typedef struct {
     PyObject *Add_type;
     PyObject *And_singleton;
     PyObject *And_type;
-    PyObject *AnnAssign_type;
     PyObject *Assert_type;
     PyObject *Assign_type;
     PyObject *Attribute_type;
@@ -49,7 +48,6 @@ typedef struct {
     PyObject *For_type;
     PyObject *FormattedValue_type;
     PyObject *FunctionDef_type;
-    PyObject *FunctionType_type;
     PyObject *GeneratorExp_type;
     PyObject *Global_type;
     PyObject *GtE_singleton;
@@ -132,11 +130,9 @@ typedef struct {
     PyObject *_attributes;
     PyObject *_fields;
     PyObject *alias_type;
-    PyObject *annotation;
     PyObject *arg;
     PyObject *arg_type;
     PyObject *args;
-    PyObject *argtypes;
     PyObject *arguments_type;
     PyObject *asname;
     PyObject *ast;
@@ -195,9 +191,7 @@ typedef struct {
     PyObject *optional_vars;
     PyObject *orelse;
     PyObject *posonlyargs;
-    PyObject *returns;
     PyObject *right;
-    PyObject *simple;
     PyObject *slice;
     PyObject *step;
     PyObject *stmt_type;
@@ -223,7 +217,6 @@ static int astmodule_clear(PyObject *module)
     Py_CLEAR(astmodulestate(module)->Add_type);
     Py_CLEAR(astmodulestate(module)->And_singleton);
     Py_CLEAR(astmodulestate(module)->And_type);
-    Py_CLEAR(astmodulestate(module)->AnnAssign_type);
     Py_CLEAR(astmodulestate(module)->Assert_type);
     Py_CLEAR(astmodulestate(module)->Assign_type);
     Py_CLEAR(astmodulestate(module)->Attribute_type);
@@ -259,7 +252,6 @@ static int astmodule_clear(PyObject *module)
     Py_CLEAR(astmodulestate(module)->For_type);
     Py_CLEAR(astmodulestate(module)->FormattedValue_type);
     Py_CLEAR(astmodulestate(module)->FunctionDef_type);
-    Py_CLEAR(astmodulestate(module)->FunctionType_type);
     Py_CLEAR(astmodulestate(module)->GeneratorExp_type);
     Py_CLEAR(astmodulestate(module)->Global_type);
     Py_CLEAR(astmodulestate(module)->GtE_singleton);
@@ -342,11 +334,9 @@ static int astmodule_clear(PyObject *module)
     Py_CLEAR(astmodulestate(module)->_attributes);
     Py_CLEAR(astmodulestate(module)->_fields);
     Py_CLEAR(astmodulestate(module)->alias_type);
-    Py_CLEAR(astmodulestate(module)->annotation);
     Py_CLEAR(astmodulestate(module)->arg);
     Py_CLEAR(astmodulestate(module)->arg_type);
     Py_CLEAR(astmodulestate(module)->args);
-    Py_CLEAR(astmodulestate(module)->argtypes);
     Py_CLEAR(astmodulestate(module)->arguments_type);
     Py_CLEAR(astmodulestate(module)->asname);
     Py_CLEAR(astmodulestate(module)->ast);
@@ -405,9 +395,7 @@ static int astmodule_clear(PyObject *module)
     Py_CLEAR(astmodulestate(module)->optional_vars);
     Py_CLEAR(astmodulestate(module)->orelse);
     Py_CLEAR(astmodulestate(module)->posonlyargs);
-    Py_CLEAR(astmodulestate(module)->returns);
     Py_CLEAR(astmodulestate(module)->right);
-    Py_CLEAR(astmodulestate(module)->simple);
     Py_CLEAR(astmodulestate(module)->slice);
     Py_CLEAR(astmodulestate(module)->step);
     Py_CLEAR(astmodulestate(module)->stmt_type);
@@ -432,7 +420,6 @@ static int astmodule_traverse(PyObject *module, visitproc visit, void* arg)
     Py_VISIT(astmodulestate(module)->Add_type);
     Py_VISIT(astmodulestate(module)->And_singleton);
     Py_VISIT(astmodulestate(module)->And_type);
-    Py_VISIT(astmodulestate(module)->AnnAssign_type);
     Py_VISIT(astmodulestate(module)->Assert_type);
     Py_VISIT(astmodulestate(module)->Assign_type);
     Py_VISIT(astmodulestate(module)->Attribute_type);
@@ -468,7 +455,6 @@ static int astmodule_traverse(PyObject *module, visitproc visit, void* arg)
     Py_VISIT(astmodulestate(module)->For_type);
     Py_VISIT(astmodulestate(module)->FormattedValue_type);
     Py_VISIT(astmodulestate(module)->FunctionDef_type);
-    Py_VISIT(astmodulestate(module)->FunctionType_type);
     Py_VISIT(astmodulestate(module)->GeneratorExp_type);
     Py_VISIT(astmodulestate(module)->Global_type);
     Py_VISIT(astmodulestate(module)->GtE_singleton);
@@ -551,11 +537,9 @@ static int astmodule_traverse(PyObject *module, visitproc visit, void* arg)
     Py_VISIT(astmodulestate(module)->_attributes);
     Py_VISIT(astmodulestate(module)->_fields);
     Py_VISIT(astmodulestate(module)->alias_type);
-    Py_VISIT(astmodulestate(module)->annotation);
     Py_VISIT(astmodulestate(module)->arg);
     Py_VISIT(astmodulestate(module)->arg_type);
     Py_VISIT(astmodulestate(module)->args);
-    Py_VISIT(astmodulestate(module)->argtypes);
     Py_VISIT(astmodulestate(module)->arguments_type);
     Py_VISIT(astmodulestate(module)->asname);
     Py_VISIT(astmodulestate(module)->ast);
@@ -614,9 +598,7 @@ static int astmodule_traverse(PyObject *module, visitproc visit, void* arg)
     Py_VISIT(astmodulestate(module)->optional_vars);
     Py_VISIT(astmodulestate(module)->orelse);
     Py_VISIT(astmodulestate(module)->posonlyargs);
-    Py_VISIT(astmodulestate(module)->returns);
     Py_VISIT(astmodulestate(module)->right);
-    Py_VISIT(astmodulestate(module)->simple);
     Py_VISIT(astmodulestate(module)->slice);
     Py_VISIT(astmodulestate(module)->step);
     Py_VISIT(astmodulestate(module)->stmt_type);
@@ -660,10 +642,8 @@ static int init_identifiers(void)
     if ((state->__module__ = PyUnicode_InternFromString("__module__")) == NULL) return 0;
     if ((state->_attributes = PyUnicode_InternFromString("_attributes")) == NULL) return 0;
     if ((state->_fields = PyUnicode_InternFromString("_fields")) == NULL) return 0;
-    if ((state->annotation = PyUnicode_InternFromString("annotation")) == NULL) return 0;
     if ((state->arg = PyUnicode_InternFromString("arg")) == NULL) return 0;
     if ((state->args = PyUnicode_InternFromString("args")) == NULL) return 0;
-    if ((state->argtypes = PyUnicode_InternFromString("argtypes")) == NULL) return 0;
     if ((state->asname = PyUnicode_InternFromString("asname")) == NULL) return 0;
     if ((state->ast = PyUnicode_InternFromString("ast")) == NULL) return 0;
     if ((state->attr = PyUnicode_InternFromString("attr")) == NULL) return 0;
@@ -712,9 +692,7 @@ static int init_identifiers(void)
     if ((state->optional_vars = PyUnicode_InternFromString("optional_vars")) == NULL) return 0;
     if ((state->orelse = PyUnicode_InternFromString("orelse")) == NULL) return 0;
     if ((state->posonlyargs = PyUnicode_InternFromString("posonlyargs")) == NULL) return 0;
-    if ((state->returns = PyUnicode_InternFromString("returns")) == NULL) return 0;
     if ((state->right = PyUnicode_InternFromString("right")) == NULL) return 0;
-    if ((state->simple = PyUnicode_InternFromString("simple")) == NULL) return 0;
     if ((state->slice = PyUnicode_InternFromString("slice")) == NULL) return 0;
     if ((state->step = PyUnicode_InternFromString("step")) == NULL) return 0;
     if ((state->target = PyUnicode_InternFromString("target")) == NULL) return 0;
@@ -738,10 +716,6 @@ static const char * const Interactive_fields[]={
 static const char * const Expression_fields[]={
     "body",
 };
-static const char * const FunctionType_fields[]={
-    "argtypes",
-    "returns",
-};
 static const char * const stmt_attributes[] = {
     "lineno",
     "col_offset",
@@ -754,7 +728,6 @@ static const char * const FunctionDef_fields[]={
     "args",
     "body",
     "decorator_list",
-    "returns",
 };
 static const char * const ClassDef_fields[]={
     "name",
@@ -777,12 +750,6 @@ static const char * const AugAssign_fields[]={
     "target",
     "op",
     "value",
-};
-static const char * const AnnAssign_fields[]={
-    "target",
-    "annotation",
-    "value",
-    "simple",
 };
 static const char * const For_fields[]={
     "target",
@@ -993,7 +960,6 @@ static const char * const arg_attributes[] = {
 };
 static const char * const arg_fields[]={
     "arg",
-    "annotation",
 };
 static PyObject* ast2obj_keyword(void*);
 static const char * const keyword_attributes[] = {
@@ -1337,8 +1303,7 @@ static int init_types(void)
     state->mod_type = make_type("mod", state->AST_type, NULL, 0,
         "mod = Module(stmt* body)\n"
         "    | Interactive(stmt* body)\n"
-        "    | Expression(expr body)\n"
-        "    | FunctionType(expr* argtypes, expr returns)");
+        "    | Expression(expr body)");
     if (!state->mod_type) return 0;
     if (!add_attributes(state->mod_type, NULL, 0)) return 0;
     state->Module_type = make_type("Module", state->mod_type, Module_fields, 1,
@@ -1352,18 +1317,13 @@ static int init_types(void)
                                        Expression_fields, 1,
         "Expression(expr body)");
     if (!state->Expression_type) return 0;
-    state->FunctionType_type = make_type("FunctionType", state->mod_type,
-                                         FunctionType_fields, 2,
-        "FunctionType(expr* argtypes, expr returns)");
-    if (!state->FunctionType_type) return 0;
     state->stmt_type = make_type("stmt", state->AST_type, NULL, 0,
-        "stmt = FunctionDef(identifier name, arguments args, stmt* body, expr* decorator_list, expr? returns)\n"
+        "stmt = FunctionDef(identifier name, arguments args, stmt* body, expr* decorator_list)\n"
         "     | ClassDef(identifier name, expr* bases, keyword* keywords, stmt* body, expr* decorator_list)\n"
         "     | Return(expr? value)\n"
         "     | Delete(expr* targets)\n"
         "     | Assign(expr* targets, expr value)\n"
         "     | AugAssign(expr target, operator op, expr value)\n"
-        "     | AnnAssign(expr target, expr annotation, expr? value, int simple)\n"
         "     | For(expr target, expr iter, stmt* body, stmt* orelse)\n"
         "     | While(expr test, stmt* body, stmt* orelse)\n"
         "     | If(expr test, stmt* body, stmt* orelse)\n"
@@ -1387,12 +1347,9 @@ static int init_types(void)
         -1)
         return 0;
     state->FunctionDef_type = make_type("FunctionDef", state->stmt_type,
-                                        FunctionDef_fields, 5,
-        "FunctionDef(identifier name, arguments args, stmt* body, expr* decorator_list, expr? returns)");
+                                        FunctionDef_fields, 4,
+        "FunctionDef(identifier name, arguments args, stmt* body, expr* decorator_list)");
     if (!state->FunctionDef_type) return 0;
-    if (PyObject_SetAttr(state->FunctionDef_type, state->returns, Py_None) ==
-        -1)
-        return 0;
     state->ClassDef_type = make_type("ClassDef", state->stmt_type,
                                      ClassDef_fields, 5,
         "ClassDef(identifier name, expr* bases, keyword* keywords, stmt* body, expr* decorator_list)");
@@ -1412,12 +1369,6 @@ static int init_types(void)
                                       AugAssign_fields, 3,
         "AugAssign(expr target, operator op, expr value)");
     if (!state->AugAssign_type) return 0;
-    state->AnnAssign_type = make_type("AnnAssign", state->stmt_type,
-                                      AnnAssign_fields, 4,
-        "AnnAssign(expr target, expr annotation, expr? value, int simple)");
-    if (!state->AnnAssign_type) return 0;
-    if (PyObject_SetAttr(state->AnnAssign_type, state->value, Py_None) == -1)
-        return 0;
     state->For_type = make_type("For", state->stmt_type, For_fields, 4,
         "For(expr target, expr iter, stmt* body, stmt* orelse)");
     if (!state->For_type) return 0;
@@ -1872,12 +1823,10 @@ static int init_types(void)
         return 0;
     if (PyObject_SetAttr(state->arguments_type, state->kwarg, Py_None) == -1)
         return 0;
-    state->arg_type = make_type("arg", state->AST_type, arg_fields, 2,
-        "arg(identifier arg, expr? annotation)");
+    state->arg_type = make_type("arg", state->AST_type, arg_fields, 1,
+        "arg(identifier arg)");
     if (!state->arg_type) return 0;
     if (!add_attributes(state->arg_type, arg_attributes, 4)) return 0;
-    if (PyObject_SetAttr(state->arg_type, state->annotation, Py_None) == -1)
-        return 0;
     if (PyObject_SetAttr(state->arg_type, state->end_lineno, Py_None) == -1)
         return 0;
     if (PyObject_SetAttr(state->arg_type, state->end_col_offset, Py_None) == -1)
@@ -1969,28 +1918,10 @@ Expression(expr_ty body)
     return p;
 }
 
-mod_ty
-FunctionType(asdl_seq * argtypes, expr_ty returns)
-{
-    mod_ty p;
-    if (!returns) {
-        PyErr_SetString(PyExc_ValueError,
-                        "field 'returns' is required for FunctionType");
-        return NULL;
-    }
-    p = (mod_ty)malloc(sizeof(*p));
-    if (!p)
-        return (mod_ty) PyErr_NoMemory();
-    p->kind = FunctionType_kind;
-    p->v.FunctionType.argtypes = argtypes;
-    p->v.FunctionType.returns = returns;
-    return p;
-}
-
 stmt_ty
 FunctionDef(identifier name, arguments_ty args, asdl_seq * body, asdl_seq *
-            decorator_list, expr_ty returns, int lineno, int col_offset, int
-            end_lineno, int end_col_offset)
+            decorator_list, int lineno, int col_offset, int end_lineno, int
+            end_col_offset)
 {
     stmt_ty p;
     if (!name) {
@@ -2011,7 +1942,6 @@ FunctionDef(identifier name, arguments_ty args, asdl_seq * body, asdl_seq *
     p->v.FunctionDef.args = args;
     p->v.FunctionDef.body = body;
     p->v.FunctionDef.decorator_list = decorator_list;
-    p->v.FunctionDef.returns = returns;
     p->lineno = lineno;
     p->col_offset = col_offset;
     p->end_lineno = end_lineno;
@@ -2130,36 +2060,6 @@ AugAssign(expr_ty target, operator_ty op, expr_ty value, int lineno, int
     p->v.AugAssign.target = target;
     p->v.AugAssign.op = op;
     p->v.AugAssign.value = value;
-    p->lineno = lineno;
-    p->col_offset = col_offset;
-    p->end_lineno = end_lineno;
-    p->end_col_offset = end_col_offset;
-    return p;
-}
-
-stmt_ty
-AnnAssign(expr_ty target, expr_ty annotation, expr_ty value, int simple, int
-          lineno, int col_offset, int end_lineno, int end_col_offset)
-{
-    stmt_ty p;
-    if (!target) {
-        PyErr_SetString(PyExc_ValueError,
-                        "field 'target' is required for AnnAssign");
-        return NULL;
-    }
-    if (!annotation) {
-        PyErr_SetString(PyExc_ValueError,
-                        "field 'annotation' is required for AnnAssign");
-        return NULL;
-    }
-    p = (stmt_ty)malloc(sizeof(*p));
-    if (!p)
-        return (stmt_ty) PyErr_NoMemory();
-    p->kind = AnnAssign_kind;
-    p->v.AnnAssign.target = target;
-    p->v.AnnAssign.annotation = annotation;
-    p->v.AnnAssign.value = value;
-    p->v.AnnAssign.simple = simple;
     p->lineno = lineno;
     p->col_offset = col_offset;
     p->end_lineno = end_lineno;
@@ -3170,8 +3070,8 @@ arguments(asdl_seq * posonlyargs, asdl_seq * args, arg_ty vararg, asdl_seq *
 }
 
 arg_ty
-arg(identifier arg, expr_ty annotation, int lineno, int col_offset, int
-    end_lineno, int end_col_offset)
+arg(identifier arg, int lineno, int col_offset, int end_lineno, int
+    end_col_offset)
 {
     arg_ty p;
     if (!arg) {
@@ -3183,7 +3083,6 @@ arg(identifier arg, expr_ty annotation, int lineno, int col_offset, int
     if (!p)
         return (arg_ty) PyErr_NoMemory();
     p->arg = arg;
-    p->annotation = annotation;
     p->lineno = lineno;
     p->col_offset = col_offset;
     p->end_lineno = end_lineno;
@@ -3289,23 +3188,6 @@ ast2obj_mod(void* _o)
             goto failed;
         Py_DECREF(value);
         break;
-    case FunctionType_kind:
-        tp = (PyTypeObject *)astmodulestate_global->FunctionType_type;
-        result = PyType_GenericNew(tp, NULL, NULL);
-        if (!result) goto failed;
-        value = ast2obj_list(o->v.FunctionType.argtypes, ast2obj_expr);
-        if (!value) goto failed;
-        if (PyObject_SetAttr(result, astmodulestate_global->argtypes, value) ==
-            -1)
-            goto failed;
-        Py_DECREF(value);
-        value = ast2obj_expr(o->v.FunctionType.returns);
-        if (!value) goto failed;
-        if (PyObject_SetAttr(result, astmodulestate_global->returns, value) ==
-            -1)
-            goto failed;
-        Py_DECREF(value);
-        break;
     }
     return result;
 failed:
@@ -3348,12 +3230,6 @@ ast2obj_stmt(void* _o)
         if (!value) goto failed;
         if (PyObject_SetAttr(result, astmodulestate_global->decorator_list,
             value) == -1)
-            goto failed;
-        Py_DECREF(value);
-        value = ast2obj_expr(o->v.FunctionDef.returns);
-        if (!value) goto failed;
-        if (PyObject_SetAttr(result, astmodulestate_global->returns, value) ==
-            -1)
             goto failed;
         Py_DECREF(value);
         break;
@@ -3444,34 +3320,6 @@ ast2obj_stmt(void* _o)
         value = ast2obj_expr(o->v.AugAssign.value);
         if (!value) goto failed;
         if (PyObject_SetAttr(result, astmodulestate_global->value, value) == -1)
-            goto failed;
-        Py_DECREF(value);
-        break;
-    case AnnAssign_kind:
-        tp = (PyTypeObject *)astmodulestate_global->AnnAssign_type;
-        result = PyType_GenericNew(tp, NULL, NULL);
-        if (!result) goto failed;
-        value = ast2obj_expr(o->v.AnnAssign.target);
-        if (!value) goto failed;
-        if (PyObject_SetAttr(result, astmodulestate_global->target, value) ==
-            -1)
-            goto failed;
-        Py_DECREF(value);
-        value = ast2obj_expr(o->v.AnnAssign.annotation);
-        if (!value) goto failed;
-        if (PyObject_SetAttr(result, astmodulestate_global->annotation, value)
-            == -1)
-            goto failed;
-        Py_DECREF(value);
-        value = ast2obj_expr(o->v.AnnAssign.value);
-        if (!value) goto failed;
-        if (PyObject_SetAttr(result, astmodulestate_global->value, value) == -1)
-            goto failed;
-        Py_DECREF(value);
-        value = ast2obj_int(o->v.AnnAssign.simple);
-        if (!value) goto failed;
-        if (PyObject_SetAttr(result, astmodulestate_global->simple, value) ==
-            -1)
             goto failed;
         Py_DECREF(value);
         break;
@@ -4495,12 +4343,6 @@ ast2obj_arg(void* _o)
     if (PyObject_SetAttr(result, astmodulestate_global->arg, value) == -1)
         goto failed;
     Py_DECREF(value);
-    value = ast2obj_expr(o->annotation);
-    if (!value) goto failed;
-    if (PyObject_SetAttr(result, astmodulestate_global->annotation, value) ==
-        -1)
-        goto failed;
-    Py_DECREF(value);
     value = ast2obj_int(o->lineno);
     if (!value) goto failed;
     if (PyObject_SetAttr(result, astmodulestate_global->lineno, value) < 0)
@@ -4770,67 +4612,6 @@ obj2ast_mod(PyObject* obj, mod_ty* out)
         if (*out == NULL) goto failed;
         return 0;
     }
-    tp = astmodulestate_global->FunctionType_type;
-    isinstance = PyObject_IsInstance(obj, tp);
-    if (isinstance == -1) {
-        return 1;
-    }
-    if (isinstance) {
-        asdl_seq* argtypes;
-        expr_ty returns;
-
-        if (_PyObject_LookupAttr(obj, astmodulestate_global->argtypes, &tmp) <
-            0) {
-            return 1;
-        }
-        if (tmp == NULL) {
-            PyErr_SetString(PyExc_TypeError, "required field \"argtypes\" missing from FunctionType");
-            return 1;
-        }
-        else {
-            int res;
-            Py_ssize_t len;
-            Py_ssize_t i;
-            if (!PyList_Check(tmp)) {
-                PyErr_Format(PyExc_TypeError, "FunctionType field \"argtypes\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
-                goto failed;
-            }
-            len = PyList_GET_SIZE(tmp);
-            argtypes = _Py_asdl_seq_new(len);
-            if (argtypes == NULL) goto failed;
-            for (i = 0; i < len; i++) {
-                expr_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
-                Py_INCREF(tmp2);
-                res = obj2ast_expr(tmp2, &val);
-                Py_DECREF(tmp2);
-                if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
-                    PyErr_SetString(PyExc_RuntimeError, "FunctionType field \"argtypes\" changed size during iteration");
-                    goto failed;
-                }
-                asdl_seq_SET(argtypes, i, val);
-            }
-            Py_CLEAR(tmp);
-        }
-        if (_PyObject_LookupAttr(obj, astmodulestate_global->returns, &tmp) <
-            0) {
-            return 1;
-        }
-        if (tmp == NULL) {
-            PyErr_SetString(PyExc_TypeError, "required field \"returns\" missing from FunctionType");
-            return 1;
-        }
-        else {
-            int res;
-            res = obj2ast_expr(tmp, &returns);
-            if (res != 0) goto failed;
-            Py_CLEAR(tmp);
-        }
-        *out = FunctionType(argtypes, returns);
-        if (*out == NULL) goto failed;
-        return 0;
-    }
 
     PyErr_Format(PyExc_TypeError, "expected some sort of mod, but got %R", obj);
     failed:
@@ -4919,7 +4700,6 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
         arguments_ty args;
         asdl_seq* body;
         asdl_seq* decorator_list;
-        expr_ty returns;
 
         if (_PyObject_LookupAttr(obj, astmodulestate_global->name, &tmp) < 0) {
             return 1;
@@ -5014,21 +4794,7 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
             }
             Py_CLEAR(tmp);
         }
-        if (_PyObject_LookupAttr(obj, astmodulestate_global->returns, &tmp) <
-            0) {
-            return 1;
-        }
-        if (tmp == NULL || tmp == Py_None) {
-            Py_CLEAR(tmp);
-            returns = NULL;
-        }
-        else {
-            int res;
-            res = obj2ast_expr(tmp, &returns);
-            if (res != 0) goto failed;
-            Py_CLEAR(tmp);
-        }
-        *out = FunctionDef(name, args, body, decorator_list, returns, lineno,
+        *out = FunctionDef(name, args, body, decorator_list, lineno,
                            col_offset, end_lineno, end_col_offset);
         if (*out == NULL) goto failed;
         return 0;
@@ -5381,77 +5147,6 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
         }
         *out = AugAssign(target, op, value, lineno, col_offset, end_lineno,
                          end_col_offset);
-        if (*out == NULL) goto failed;
-        return 0;
-    }
-    tp = astmodulestate_global->AnnAssign_type;
-    isinstance = PyObject_IsInstance(obj, tp);
-    if (isinstance == -1) {
-        return 1;
-    }
-    if (isinstance) {
-        expr_ty target;
-        expr_ty annotation;
-        expr_ty value;
-        int simple;
-
-        if (_PyObject_LookupAttr(obj, astmodulestate_global->target, &tmp) < 0)
-            {
-            return 1;
-        }
-        if (tmp == NULL) {
-            PyErr_SetString(PyExc_TypeError, "required field \"target\" missing from AnnAssign");
-            return 1;
-        }
-        else {
-            int res;
-            res = obj2ast_expr(tmp, &target);
-            if (res != 0) goto failed;
-            Py_CLEAR(tmp);
-        }
-        if (_PyObject_LookupAttr(obj, astmodulestate_global->annotation, &tmp)
-            < 0) {
-            return 1;
-        }
-        if (tmp == NULL) {
-            PyErr_SetString(PyExc_TypeError, "required field \"annotation\" missing from AnnAssign");
-            return 1;
-        }
-        else {
-            int res;
-            res = obj2ast_expr(tmp, &annotation);
-            if (res != 0) goto failed;
-            Py_CLEAR(tmp);
-        }
-        if (_PyObject_LookupAttr(obj, astmodulestate_global->value, &tmp) < 0) {
-            return 1;
-        }
-        if (tmp == NULL || tmp == Py_None) {
-            Py_CLEAR(tmp);
-            value = NULL;
-        }
-        else {
-            int res;
-            res = obj2ast_expr(tmp, &value);
-            if (res != 0) goto failed;
-            Py_CLEAR(tmp);
-        }
-        if (_PyObject_LookupAttr(obj, astmodulestate_global->simple, &tmp) < 0)
-            {
-            return 1;
-        }
-        if (tmp == NULL) {
-            PyErr_SetString(PyExc_TypeError, "required field \"simple\" missing from AnnAssign");
-            return 1;
-        }
-        else {
-            int res;
-            res = obj2ast_int(tmp, &simple);
-            if (res != 0) goto failed;
-            Py_CLEAR(tmp);
-        }
-        *out = AnnAssign(target, annotation, value, simple, lineno, col_offset,
-                         end_lineno, end_col_offset);
         if (*out == NULL) goto failed;
         return 0;
     }
@@ -8588,7 +8283,6 @@ obj2ast_arg(PyObject* obj, arg_ty* out)
 {
     PyObject* tmp = NULL;
     identifier arg;
-    expr_ty annotation;
     int lineno;
     int col_offset;
     int end_lineno;
@@ -8604,20 +8298,6 @@ obj2ast_arg(PyObject* obj, arg_ty* out)
     else {
         int res;
         res = obj2ast_identifier(tmp, &arg);
-        if (res != 0) goto failed;
-        Py_CLEAR(tmp);
-    }
-    if (_PyObject_LookupAttr(obj, astmodulestate_global->annotation, &tmp) < 0)
-        {
-        return 1;
-    }
-    if (tmp == NULL || tmp == Py_None) {
-        Py_CLEAR(tmp);
-        annotation = NULL;
-    }
-    else {
-        int res;
-        res = obj2ast_expr(tmp, &annotation);
         if (res != 0) goto failed;
         Py_CLEAR(tmp);
     }
@@ -8676,7 +8356,7 @@ obj2ast_arg(PyObject* obj, arg_ty* out)
         if (res != 0) goto failed;
         Py_CLEAR(tmp);
     }
-    *out = arg(arg, annotation, lineno, col_offset, end_lineno, end_col_offset);
+    *out = arg(arg, lineno, col_offset, end_lineno, end_col_offset);
     return 0;
 failed:
     Py_XDECREF(tmp);
@@ -8904,11 +8584,6 @@ PyInit__ast(void)
         goto error;
     }
     Py_INCREF(astmodulestate(m)->Expression_type);
-    if (PyModule_AddObject(m, "FunctionType",
-        astmodulestate_global->FunctionType_type) < 0) {
-        goto error;
-    }
-    Py_INCREF(astmodulestate(m)->FunctionType_type);
     if (PyModule_AddObject(m, "stmt", astmodulestate_global->stmt_type) < 0) {
         goto error;
     }
@@ -8943,11 +8618,6 @@ PyInit__ast(void)
         goto error;
     }
     Py_INCREF(astmodulestate(m)->AugAssign_type);
-    if (PyModule_AddObject(m, "AnnAssign",
-        astmodulestate_global->AnnAssign_type) < 0) {
-        goto error;
-    }
-    Py_INCREF(astmodulestate(m)->AnnAssign_type);
     if (PyModule_AddObject(m, "For", astmodulestate_global->For_type) < 0) {
         goto error;
     }

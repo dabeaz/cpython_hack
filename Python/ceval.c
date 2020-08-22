@@ -1458,65 +1458,6 @@ main_loop:
             continue;
         }
 
-        case SETUP_ANNOTATIONS: {
-            _Py_IDENTIFIER(__annotations__);
-            int err;
-            PyObject *ann_dict;
-            if (f->f_locals == NULL) {
-                _PyErr_Format(tstate, PyExc_SystemError,
-                              "no locals found when setting up annotations");
-                goto error;
-            }
-            /* check if __annotations__ in locals()... */
-            if (PyDict_CheckExact(f->f_locals)) {
-                ann_dict = _PyDict_GetItemIdWithError(f->f_locals,
-                                             &PyId___annotations__);
-                if (ann_dict == NULL) {
-                    if (_PyErr_Occurred(tstate)) {
-                        goto error;
-                    }
-                    /* ...if not, create a new one */
-                    ann_dict = PyDict_New();
-                    if (ann_dict == NULL) {
-                        goto error;
-                    }
-                    err = _PyDict_SetItemId(f->f_locals,
-                                            &PyId___annotations__, ann_dict);
-                    Py_DECREF(ann_dict);
-                    if (err != 0) {
-                        goto error;
-                    }
-                }
-            }
-            else {
-                /* do the same if locals() is not a dict */
-                PyObject *ann_str = _PyUnicode_FromId(&PyId___annotations__);
-                if (ann_str == NULL) {
-                    goto error;
-                }
-                ann_dict = PyObject_GetItem(f->f_locals, ann_str);
-                if (ann_dict == NULL) {
-                    if (!_PyErr_ExceptionMatches(tstate, PyExc_KeyError)) {
-                        goto error;
-                    }
-                    _PyErr_Clear(tstate);
-                    ann_dict = PyDict_New();
-                    if (ann_dict == NULL) {
-                        goto error;
-                    }
-                    err = PyObject_SetItem(f->f_locals, ann_str, ann_dict);
-                    Py_DECREF(ann_dict);
-                    if (err != 0) {
-                        goto error;
-                    }
-                }
-                else {
-                    Py_DECREF(ann_dict);
-                }
-            }
-            continue;
-        }
-
         case BUILD_CONST_KEY_MAP: {
             Py_ssize_t i;
             PyObject *map;
@@ -2132,10 +2073,6 @@ main_loop:
             if (oparg & 0x08) {
                 assert(PyTuple_CheckExact(TOP()));
                 func ->func_closure = POP();
-            }
-            if (oparg & 0x04) {
-                assert(PyDict_CheckExact(TOP()));
-                func->func_annotations = POP();
             }
             if (oparg & 0x02) {
                 assert(PyDict_CheckExact(TOP()));

@@ -1558,7 +1558,7 @@ builtin_compile_impl(PyObject *module, PyObject *source, PyObject *filename,
     const char *str;
     int compile_mode = -1;
     int is_ast;
-    int start[] = {Py_file_input, Py_eval_input, Py_single_input, Py_func_type_input};
+    int start[] = {Py_file_input, Py_eval_input, Py_single_input };
     PyObject *result;
 
     PyCompilerFlags cf = _PyCompilerFlags_INIT;
@@ -1592,20 +1592,9 @@ builtin_compile_impl(PyObject *module, PyObject *source, PyObject *filename,
         compile_mode = 1;
     else if (strcmp(mode, "single") == 0)
         compile_mode = 2;
-    else if (strcmp(mode, "func_type") == 0) {
-        if (!(flags & PyCF_ONLY_AST)) {
-            PyErr_SetString(PyExc_ValueError,
-                            "compile() mode 'func_type' requires flag PyCF_ONLY_AST");
-            goto error;
-        }
-        compile_mode = 3;
-    }
     else {
         const char *msg;
-        if (flags & PyCF_ONLY_AST)
-            msg = "compile() mode must be 'exec', 'eval', 'single' or 'func_type'";
-        else
-            msg = "compile() mode must be 'exec', 'eval' or 'single'";
+	msg = "compile() mode must be 'exec', 'eval' or 'single'";
         PyErr_SetString(PyExc_ValueError, msg);
         goto error;
     }

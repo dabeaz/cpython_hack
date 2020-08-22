@@ -601,9 +601,6 @@ astfold_arguments(arguments_ty node_,  _PyASTOptimizeState *state)
 static int
 astfold_arg(arg_ty node_, _PyASTOptimizeState *state)
 {
-    if (!(state->ff_features & CO_FUTURE_ANNOTATIONS)) {
-        CALL_OPT(astfold_expr, expr_ty, node_->annotation);
-    }
     return 1;
 }
 
@@ -615,9 +612,6 @@ astfold_stmt(stmt_ty node_, _PyASTOptimizeState *state)
         CALL(astfold_arguments, arguments_ty, node_->v.FunctionDef.args);
         CALL(astfold_body, asdl_seq, node_->v.FunctionDef.body);
         CALL_SEQ(astfold_expr, expr_ty, node_->v.FunctionDef.decorator_list);
-        if (!(state->ff_features & CO_FUTURE_ANNOTATIONS)) {
-            CALL_OPT(astfold_expr, expr_ty, node_->v.FunctionDef.returns);
-        }
         break;
     case ClassDef_kind:
         CALL_SEQ(astfold_expr, expr_ty, node_->v.ClassDef.bases);
@@ -638,13 +632,6 @@ astfold_stmt(stmt_ty node_, _PyASTOptimizeState *state)
     case AugAssign_kind:
         CALL(astfold_expr, expr_ty, node_->v.AugAssign.target);
         CALL(astfold_expr, expr_ty, node_->v.AugAssign.value);
-        break;
-    case AnnAssign_kind:
-        CALL(astfold_expr, expr_ty, node_->v.AnnAssign.target);
-        if (!(state->ff_features & CO_FUTURE_ANNOTATIONS)) {
-            CALL(astfold_expr, expr_ty, node_->v.AnnAssign.annotation);
-        }
-        CALL_OPT(astfold_expr, expr_ty, node_->v.AnnAssign.value);
         break;
     case For_kind:
         CALL(astfold_expr, expr_ty, node_->v.For.target);

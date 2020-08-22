@@ -16,8 +16,6 @@ _PyPegen_parse(Parser *p)
         result = interactive_rule(p);
     } else if (p->start_rule == Py_eval_input) {
         result = eval_rule(p);
-    } else if (p->start_rule == Py_func_type_input) {
-        result = func_type_rule(p);
     } else if (p->start_rule == Py_fstring_input) {
         result = fstring_rule(p);
     }
@@ -30,20 +28,7 @@ _PyPegen_parse(Parser *p)
 file[mod_ty]: a=[statements] ENDMARKER { _PyPegen_make_module(p, a) }
 interactive[mod_ty]: a=statement_newline { Interactive(a) }
 eval[mod_ty]: a=expressions NEWLINE* ENDMARKER { Expression(a) }
-func_type[mod_ty]: '(' a=[type_expressions] ')' '->' b=expression NEWLINE* ENDMARKER { FunctionType(a, b) }
 fstring[expr_ty]: star_expressions
-
-# type_expressions allow */** but ignore them
-type_expressions[asdl_seq*]:
-    | a=','.expression+ ',' '*' b=expression ',' '**' c=expression {
-        _PyPegen_seq_append_to_end(p, CHECK(_PyPegen_seq_append_to_end(p, a, b)), c) }
-    | a=','.expression+ ',' '*' b=expression { _PyPegen_seq_append_to_end(p, a, b) }
-    | a=','.expression+ ',' '**' b=expression { _PyPegen_seq_append_to_end(p, a, b) }
-    | '*' a=expression ',' '**' b=expression {
-        _PyPegen_seq_append_to_end(p, CHECK(_PyPegen_singleton_seq(p, a)), b) }
-    | '*' a=expression { _PyPegen_singleton_seq(p, a) }
-    | '**' a=expression { _PyPegen_singleton_seq(p, a) }
-    | ','.expression+
 
 statements[asdl_seq*]: a=statement+ { _PyPegen_seq_flatten(p, a) }
 statement[asdl_seq*]: a=compound_stmt { _PyPegen_singleton_seq(p, a) } | simple_stmt
@@ -82,15 +67,6 @@ compound_stmt[stmt_ty]:
 
 # NOTE: annotated_rhs may start with 'yield'; yield_expr must start with 'yield'
 assignment[stmt_ty]:
-    | a=NAME ':' b=expression c=['=' d=annotated_rhs { d }] {
-        CHECK_VERSION(
-            6,
-            "Variable annotation syntax is",
-            _Py_AnnAssign(CHECK(_PyPegen_set_expr_context(p, a, Store)), b, c, 1, EXTRA)
-        ) }
-    | a=('(' b=single_target ')' { b }
-         | single_subscript_attribute_target) ':' b=expression c=['=' d=annotated_rhs { d }] {
-        CHECK_VERSION(6, "Variable annotations syntax is", _Py_AnnAssign(a, b, c, 0, EXTRA)) }
     | a=(z=star_targets '=' { z })+ b=(yield_expr | star_expressions) !'=' {
          _Py_Assign(a, b, EXTRA) }
     | a=single_target b=augassign c=(yield_expr | star_expressions) {
@@ -167,7 +143,7 @@ for_stmt[stmt_ty]:
 
 with_stmt[stmt_ty]:
     | 'with' '(' a=','.with_item+ ','? ')' ':' b=block {
-        _Py_With(a, b, NULL, EXTRA) }
+        _Py_With(a, b, EXTRA) }
     | 'with' a=','.with_item+ ':' b=block {
         _Py_With(a, b, EXTRA) }
 
@@ -195,10 +171,10 @@ function_def[stmt_ty]:
     | function_def_raw
 
 function_def_raw[stmt_ty]:
-    | 'def' n=NAME '(' params=[params] ')' a=['->' z=expression { z }] ':' b=block {
+    | 'def' n=NAME '(' params=[params] ')' ':' b=block {
         _Py_FunctionDef(n->v.Name.id,
                         (params) ? params : CHECK(_PyPegen_empty_arguments(p)),
-                        b, NULL, a, EXTRA) }
+                        b, NULL, EXTRA) }
 
 params[arguments_ty]:
     | invalid_parameters
@@ -255,7 +231,7 @@ param_with_default[NameDefaultPair*]:
 param_maybe_default[NameDefaultPair*]:
     | a=param c=default? ',' { _PyPegen_name_default_pair(p, a, c) }
     | a=param c=default? &')' { _PyPegen_name_default_pair(p, a, c) }
-param[arg_ty]: a=NAME b=annotation? { _Py_arg(a->v.Name.id, b, EXTRA) }
+param[arg_ty]: a=NAME b=annotation? { _Py_arg(a->v.Name.id, EXTRA) }
 
 annotation[expr_ty]: ':' a=expression { a }
 default[expr_ty]: '=' a=expression { a }
@@ -350,12 +326,12 @@ lambda_param_no_default[arg_ty]:
     | a=lambda_param ',' { a }
     | a=lambda_param &':' { a }
 lambda_param_with_default[NameDefaultPair*]:
-    | a=lambda_param c=default ',' { _PyPegen_name_default_pair(p, a, c, NULL) }
-    | a=lambda_param c=default &':' { _PyPegen_name_default_pair(p, a, c, NULL) }
+    | a=lambda_param c=default ',' { _PyPegen_name_default_pair(p, a, c) }
+    | a=lambda_param c=default &':' { _PyPegen_name_default_pair(p, a, c) }
 lambda_param_maybe_default[NameDefaultPair*]:
-    | a=lambda_param c=default? ',' { _PyPegen_name_default_pair(p, a, c, NULL) }
-    | a=lambda_param c=default? &':' { _PyPegen_name_default_pair(p, a, c, NULL) }
-lambda_param[arg_ty]: a=NAME { _Py_arg(a->v.Name.id, NULL, NULL, EXTRA) }
+    | a=lambda_param c=default? ',' { _PyPegen_name_default_pair(p, a, c) }
+    | a=lambda_param c=default? &':' { _PyPegen_name_default_pair(p, a, c) }
+lambda_param[arg_ty]: a=NAME { _Py_arg(a->v.Name.id, EXTRA) }
 
 disjunction[expr_ty] (memo):
     | a=conjunction b=('or' c=conjunction { c })+ { _Py_BoolOp(

@@ -49,7 +49,6 @@ PyFunction_NewWithQualName(PyObject *code, PyObject *globals, PyObject *qualname
 
     op->func_dict = NULL;
     op->func_module = NULL;
-    op->func_annotations = NULL;
 
     /* __module__: If module name is in globals, use it.
        Otherwise, use None. */
@@ -201,37 +200,6 @@ PyFunction_SetClosure(PyObject *op, PyObject *closure)
     return 0;
 }
 
-PyObject *
-PyFunction_GetAnnotations(PyObject *op)
-{
-    if (!PyFunction_Check(op)) {
-        PyErr_BadInternalCall();
-        return NULL;
-    }
-    return ((PyFunctionObject *) op) -> func_annotations;
-}
-
-int
-PyFunction_SetAnnotations(PyObject *op, PyObject *annotations)
-{
-    if (!PyFunction_Check(op)) {
-        PyErr_BadInternalCall();
-        return -1;
-    }
-    if (annotations == Py_None)
-        annotations = NULL;
-    else if (annotations && PyDict_Check(annotations)) {
-        Py_INCREF(annotations);
-    }
-    else {
-        PyErr_SetString(PyExc_SystemError,
-                        "non-dict annotations");
-        return -1;
-    }
-    Py_XSETREF(((PyFunctionObject *)op)->func_annotations, annotations);
-    return 0;
-}
-
 /* Methods */
 
 #define OFF(x) offsetof(PyFunctionObject, x)
@@ -379,44 +347,12 @@ func_set_kwdefaults(PyFunctionObject *op, PyObject *value, void *Py_UNUSED(ignor
     return 0;
 }
 
-static PyObject *
-func_get_annotations(PyFunctionObject *op, void *Py_UNUSED(ignored))
-{
-    if (op->func_annotations == NULL) {
-        op->func_annotations = PyDict_New();
-        if (op->func_annotations == NULL)
-            return NULL;
-    }
-    Py_INCREF(op->func_annotations);
-    return op->func_annotations;
-}
-
-static int
-func_set_annotations(PyFunctionObject *op, PyObject *value, void *Py_UNUSED(ignored))
-{
-    if (value == Py_None)
-        value = NULL;
-    /* Legal to del f.func_annotations.
-     * Can only set func_annotations to NULL (through C api)
-     * or a dict. */
-    if (value != NULL && !PyDict_Check(value)) {
-        PyErr_SetString(PyExc_TypeError,
-            "__annotations__ must be set to a dict object");
-        return -1;
-    }
-    Py_XINCREF(value);
-    Py_XSETREF(op->func_annotations, value);
-    return 0;
-}
-
 static PyGetSetDef func_getsetlist[] = {
     {"__code__", (getter)func_get_code, (setter)func_set_code},
     {"__defaults__", (getter)func_get_defaults,
      (setter)func_set_defaults},
     {"__kwdefaults__", (getter)func_get_kwdefaults,
      (setter)func_set_kwdefaults},
-    {"__annotations__", (getter)func_get_annotations,
-     (setter)func_set_annotations},
     {"__dict__", PyObject_GenericGetDict, PyObject_GenericSetDict},
     {"__name__", (getter)func_get_name, (setter)func_set_name},
     {"__qualname__", (getter)func_get_qualname, (setter)func_set_qualname},
@@ -617,7 +553,6 @@ func_clear(PyFunctionObject *op)
     Py_CLEAR(op->func_doc);
     Py_CLEAR(op->func_dict);
     Py_CLEAR(op->func_closure);
-    Py_CLEAR(op->func_annotations);
     Py_CLEAR(op->func_qualname);
     return 0;
 }
@@ -652,7 +587,6 @@ func_traverse(PyFunctionObject *f, visitproc visit, void *arg)
     Py_VISIT(f->func_name);
     Py_VISIT(f->func_dict);
     Py_VISIT(f->func_closure);
-    Py_VISIT(f->func_annotations);
     Py_VISIT(f->func_qualname);
     return 0;
 }

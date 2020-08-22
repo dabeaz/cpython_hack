@@ -84,6 +84,7 @@ Halfway there.  It all gets more difficult from here...
 - Day 70 (8/19/2020). _weakref module. Weak.  
 - Day 71 (8/20/2020). There's no locale like no locale.
 - Day 72 (8/21/2020). The gotos do not compute.
+- Day 73 (8/22/2020). Hints. Take a hint. 
 
 Copyright and License Information
 ---------------------------------

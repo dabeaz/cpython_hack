@@ -74,8 +74,6 @@ validate_args(asdl_seq *args)
     Py_ssize_t i;
     for (i = 0; i < asdl_seq_LEN(args); i++) {
         arg_ty arg = asdl_seq_GET(args, i);
-        if (arg->annotation && !validate_expr(arg->annotation, Load))
-            return 0;
     }
     return 1;
 }
@@ -101,16 +99,8 @@ validate_arguments(arguments_ty args)
     if (!validate_args(args->posonlyargs) || !validate_args(args->args)) {
         return 0;
     }
-    if (args->vararg && args->vararg->annotation
-        && !validate_expr(args->vararg->annotation, Load)) {
-            return 0;
-    }
     if (!validate_args(args->kwonlyargs))
         return 0;
-    if (args->kwarg && args->kwarg->annotation
-        && !validate_expr(args->kwarg->annotation, Load)) {
-            return 0;
-    }
     if (asdl_seq_LEN(args->defaults) > asdl_seq_LEN(args->posonlyargs) + asdl_seq_LEN(args->args)) {
         PyErr_SetString(PyExc_ValueError, "more positional defaults than args on arguments");
         return 0;
@@ -351,9 +341,7 @@ validate_stmt(stmt_ty stmt)
     case FunctionDef_kind:
         return validate_body(stmt->v.FunctionDef.body, "FunctionDef") &&
             validate_arguments(stmt->v.FunctionDef.args) &&
-            validate_exprs(stmt->v.FunctionDef.decorator_list, Load, 0) &&
-            (!stmt->v.FunctionDef.returns ||
-             validate_expr(stmt->v.FunctionDef.returns, Load));
+	  validate_exprs(stmt->v.FunctionDef.decorator_list, Load, 0);
     case ClassDef_kind:
         return validate_body(stmt->v.ClassDef.body, "ClassDef") &&
             validate_exprs(stmt->v.ClassDef.bases, Load, 0) &&
@@ -369,17 +357,6 @@ validate_stmt(stmt_ty stmt)
     case AugAssign_kind:
         return validate_expr(stmt->v.AugAssign.target, Store) &&
             validate_expr(stmt->v.AugAssign.value, Load);
-    case AnnAssign_kind:
-        if (stmt->v.AnnAssign.target->kind != Name_kind &&
-            stmt->v.AnnAssign.simple) {
-            PyErr_SetString(PyExc_TypeError,
-                            "AnnAssign with simple non-Name target");
-            return 0;
-        }
-        return validate_expr(stmt->v.AnnAssign.target, Store) &&
-               (!stmt->v.AnnAssign.value ||
-                validate_expr(stmt->v.AnnAssign.value, Load)) &&
-               validate_expr(stmt->v.AnnAssign.annotation, Load);
     case For_kind:
         return validate_expr(stmt->v.For.target, Store) &&
             validate_expr(stmt->v.For.iter, Load) &&

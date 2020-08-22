@@ -316,9 +316,6 @@ static void fstring_shift_comprehension(expr_ty parent, comprehension_ty comp, i
 }
 
 static void fstring_shift_argument(expr_ty parent, arg_ty arg, int lineno, int col_offset) {
-    if (arg->annotation != NULL){
-        shift_expr(parent, arg->annotation, lineno, col_offset);
-    }
     arg->col_offset = arg->col_offset + col_offset;
     arg->end_col_offset = arg->end_col_offset + col_offset;
     arg->lineno = arg->lineno + lineno;

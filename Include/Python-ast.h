@@ -45,8 +45,7 @@ typedef struct _alias *alias_ty;
 typedef struct _withitem *withitem_ty;
 
 
-enum _mod_kind {Module_kind=1, Interactive_kind=2, Expression_kind=3,
-                 FunctionType_kind=4};
+enum _mod_kind {Module_kind=1, Interactive_kind=2, Expression_kind=3};
 struct _mod {
     enum _mod_kind kind;
     union {
@@ -62,21 +61,15 @@ struct _mod {
             expr_ty body;
         } Expression;
 
-        struct {
-            asdl_seq *argtypes;
-            expr_ty returns;
-        } FunctionType;
-
     } v;
 };
 
 enum _stmt_kind {FunctionDef_kind=1, ClassDef_kind=2, Return_kind=3,
-                  Delete_kind=4, Assign_kind=5, AugAssign_kind=6,
-                  AnnAssign_kind=7, For_kind=8, While_kind=9, If_kind=10,
-                  With_kind=11, Raise_kind=12, Try_kind=13, Assert_kind=14,
-                  Import_kind=15, ImportFrom_kind=16, Global_kind=17,
-                  Nonlocal_kind=18, Expr_kind=19, Pass_kind=20, Break_kind=21,
-                  Continue_kind=22};
+                  Delete_kind=4, Assign_kind=5, AugAssign_kind=6, For_kind=7,
+                  While_kind=8, If_kind=9, With_kind=10, Raise_kind=11,
+                  Try_kind=12, Assert_kind=13, Import_kind=14,
+                  ImportFrom_kind=15, Global_kind=16, Nonlocal_kind=17,
+                  Expr_kind=18, Pass_kind=19, Break_kind=20, Continue_kind=21};
 struct _stmt {
     enum _stmt_kind kind;
     union {
@@ -85,7 +78,6 @@ struct _stmt {
             arguments_ty args;
             asdl_seq *body;
             asdl_seq *decorator_list;
-            expr_ty returns;
         } FunctionDef;
 
         struct {
@@ -114,13 +106,6 @@ struct _stmt {
             operator_ty op;
             expr_ty value;
         } AugAssign;
-
-        struct {
-            expr_ty target;
-            expr_ty annotation;
-            expr_ty value;
-            int simple;
-        } AnnAssign;
 
         struct {
             expr_ty target;
@@ -380,7 +365,6 @@ struct _arguments {
 
 struct _arg {
     identifier arg;
-    expr_ty annotation;
     int lineno;
     int col_offset;
     int end_lineno;
@@ -414,12 +398,10 @@ mod_ty _Py_Module(asdl_seq * body);
 mod_ty _Py_Interactive(asdl_seq * body);
 #define Expression(a0) _Py_Expression(a0)
 mod_ty _Py_Expression(expr_ty body);
-#define FunctionType(a0, a1) _Py_FunctionType(a0, a1)
-mod_ty _Py_FunctionType(asdl_seq * argtypes, expr_ty returns);
-#define FunctionDef(a0, a1, a2, a3, a4, a5, a6, a7, a8) _Py_FunctionDef(a0, a1, a2, a3, a4, a5, a6, a7, a8)
+#define FunctionDef(a0, a1, a2, a3, a4, a5, a6, a7) _Py_FunctionDef(a0, a1, a2, a3, a4, a5, a6, a7)
 stmt_ty _Py_FunctionDef(identifier name, arguments_ty args, asdl_seq * body,
-                        asdl_seq * decorator_list, expr_ty returns, int lineno,
-                        int col_offset, int end_lineno, int end_col_offset);
+                        asdl_seq * decorator_list, int lineno, int col_offset,
+                        int end_lineno, int end_col_offset);
 #define ClassDef(a0, a1, a2, a3, a4, a5, a6, a7, a8) _Py_ClassDef(a0, a1, a2, a3, a4, a5, a6, a7, a8)
 stmt_ty _Py_ClassDef(identifier name, asdl_seq * bases, asdl_seq * keywords,
                      asdl_seq * body, asdl_seq * decorator_list, int lineno,
@@ -436,10 +418,6 @@ stmt_ty _Py_Assign(asdl_seq * targets, expr_ty value, int lineno, int
 #define AugAssign(a0, a1, a2, a3, a4, a5, a6) _Py_AugAssign(a0, a1, a2, a3, a4, a5, a6)
 stmt_ty _Py_AugAssign(expr_ty target, operator_ty op, expr_ty value, int
                       lineno, int col_offset, int end_lineno, int
-                      end_col_offset);
-#define AnnAssign(a0, a1, a2, a3, a4, a5, a6, a7) _Py_AnnAssign(a0, a1, a2, a3, a4, a5, a6, a7)
-stmt_ty _Py_AnnAssign(expr_ty target, expr_ty annotation, expr_ty value, int
-                      simple, int lineno, int col_offset, int end_lineno, int
                       end_col_offset);
 #define For(a0, a1, a2, a3, a4, a5, a6, a7) _Py_For(a0, a1, a2, a3, a4, a5, a6, a7)
 stmt_ty _Py_For(expr_ty target, expr_ty iter, asdl_seq * body, asdl_seq *
@@ -583,9 +561,9 @@ excepthandler_ty _Py_ExceptHandler(expr_ty type, identifier name, asdl_seq *
 arguments_ty _Py_arguments(asdl_seq * posonlyargs, asdl_seq * args, arg_ty
                            vararg, asdl_seq * kwonlyargs, asdl_seq *
                            kw_defaults, arg_ty kwarg, asdl_seq * defaults);
-#define arg(a0, a1, a2, a3, a4, a5) _Py_arg(a0, a1, a2, a3, a4, a5)
-arg_ty _Py_arg(identifier arg, expr_ty annotation, int lineno, int col_offset,
-               int end_lineno, int end_col_offset);
+#define arg(a0, a1, a2, a3, a4) _Py_arg(a0, a1, a2, a3, a4)
+arg_ty _Py_arg(identifier arg, int lineno, int col_offset, int end_lineno, int
+               end_col_offset);
 #define keyword(a0, a1, a2, a3, a4, a5) _Py_keyword(a0, a1, a2, a3, a4, a5)
 keyword_ty _Py_keyword(identifier arg, expr_ty value, int lineno, int
                        col_offset, int end_lineno, int end_col_offset);

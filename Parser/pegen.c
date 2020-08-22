@@ -1787,7 +1787,6 @@ _PyPegen_function_def_decorators(Parser *p, asdl_seq *decorators, stmt_ty functi
     assert(function_def != NULL);
     return _Py_FunctionDef(function_def->v.FunctionDef.name, function_def->v.FunctionDef.args,
                            function_def->v.FunctionDef.body, decorators,
-                           function_def->v.FunctionDef.returns,
                            function_def->col_offset, function_def->end_lineno,
                            function_def->lineno,
                            function_def->end_col_offset);

@@ -203,9 +203,7 @@ static int symtable_visit_alias(struct symtable *st, alias_ty);
 static int symtable_visit_comprehension(struct symtable *st, comprehension_ty);
 static int symtable_visit_keyword(struct symtable *st, keyword_ty);
 static int symtable_visit_params(struct symtable *st, asdl_seq *args);
-static int symtable_visit_argannotations(struct symtable *st, asdl_seq *args);
 static int symtable_implicit_arg(struct symtable *st, int pos);
-static int symtable_visit_annotations(struct symtable *st, arguments_ty, expr_ty);
 static int symtable_visit_withitem(struct symtable *st, withitem_ty item);
 
 
@@ -309,10 +307,6 @@ PySymtable_BuildObject(mod_ty mod, PyObject *filename, PyFutureFeatures *future)
                         (stmt_ty)asdl_seq_GET(seq, i)))
                 goto error;
         break;
-    case FunctionType_kind:
-        PyErr_SetString(PyExc_RuntimeError,
-                        "this compiler does not handle FunctionTypes");
-        goto error;
     }
     if (!symtable_exit_block(st)) {
         PySymtable_Free(st);
@@ -1164,9 +1158,6 @@ symtable_visit_stmt(struct symtable *st, stmt_ty s)
             VISIT_SEQ(st, expr, s->v.FunctionDef.args->defaults);
         if (s->v.FunctionDef.args->kw_defaults)
             VISIT_SEQ_WITH_NULL(st, expr, s->v.FunctionDef.args->kw_defaults);
-        if (!symtable_visit_annotations(st, s->v.FunctionDef.args,
-                                        s->v.FunctionDef.returns))
-            VISIT_QUIT(st, 0);
         if (s->v.FunctionDef.decorator_list)
             VISIT_SEQ(st, expr, s->v.FunctionDef.decorator_list);
         if (!symtable_enter_block(st, s->v.FunctionDef.name,
@@ -1209,44 +1200,6 @@ symtable_visit_stmt(struct symtable *st, stmt_ty s)
     case Assign_kind:
         VISIT_SEQ(st, expr, s->v.Assign.targets);
         VISIT(st, expr, s->v.Assign.value);
-        break;
-    case AnnAssign_kind:
-        if (s->v.AnnAssign.target->kind == Name_kind) {
-            expr_ty e_name = s->v.AnnAssign.target;
-            long cur = symtable_lookup(st, e_name->v.Name.id);
-            if (cur < 0) {
-                VISIT_QUIT(st, 0);
-            }
-            if ((cur & (DEF_GLOBAL | DEF_NONLOCAL))
-                && (st->st_cur->ste_symbols != st->st_global)
-                && s->v.AnnAssign.simple) {
-                PyErr_Format(PyExc_SyntaxError,
-                             cur & DEF_GLOBAL ? GLOBAL_ANNOT : NONLOCAL_ANNOT,
-                             e_name->v.Name.id);
-                PyErr_SyntaxLocationObject(st->st_filename,
-                                           s->lineno,
-                                           s->col_offset + 1);
-                VISIT_QUIT(st, 0);
-            }
-            if (s->v.AnnAssign.simple &&
-                !symtable_add_def(st, e_name->v.Name.id,
-                                  DEF_ANNOT | DEF_LOCAL)) {
-                VISIT_QUIT(st, 0);
-            }
-            else {
-                if (s->v.AnnAssign.value
-                    && !symtable_add_def(st, e_name->v.Name.id, DEF_LOCAL)) {
-                    VISIT_QUIT(st, 0);
-                }
-            }
-        }
-        else {
-            VISIT(st, expr, s->v.AnnAssign.target);
-        }
-        VISIT(st, expr, s->v.AnnAssign.annotation);
-        if (s->v.AnnAssign.value) {
-            VISIT(st, expr, s->v.AnnAssign.value);
-        }
         break;
     case AugAssign_kind:
         VISIT(st, expr, s->v.AugAssign.target);
@@ -1635,41 +1588,6 @@ symtable_visit_params(struct symtable *st, asdl_seq *args)
             return 0;
     }
 
-    return 1;
-}
-
-static int
-symtable_visit_argannotations(struct symtable *st, asdl_seq *args)
-{
-    int i;
-
-    if (!args)
-        return -1;
-
-    for (i = 0; i < asdl_seq_LEN(args); i++) {
-        arg_ty arg = (arg_ty)asdl_seq_GET(args, i);
-        if (arg->annotation)
-            VISIT(st, expr, arg->annotation);
-    }
-
-    return 1;
-}
-
-static int
-symtable_visit_annotations(struct symtable *st, arguments_ty a, expr_ty returns)
-{
-    if (a->posonlyargs && !symtable_visit_argannotations(st, a->posonlyargs))
-        return 0;
-    if (a->args && !symtable_visit_argannotations(st, a->args))
-        return 0;
-    if (a->vararg && a->vararg->annotation)
-        VISIT(st, expr, a->vararg->annotation);
-    if (a->kwarg && a->kwarg->annotation)
-        VISIT(st, expr, a->kwarg->annotation);
-    if (a->kwonlyargs && !symtable_visit_argannotations(st, a->kwonlyargs))
-        return 0;
-    if (returns)
-        VISIT(st, expr, returns);
     return 1;
 }
 
