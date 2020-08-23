@@ -2774,16 +2774,6 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
         type->tp_getset = subtype_getsets_dict_only;
     else
         type->tp_getset = NULL;
-
-    /* Special case some slots */
-    #if 0
-    if (type->tp_dictoffset != 0 || nslots > 0) {
-        if (base->tp_getattr == NULL && base->tp_getattro == NULL)
-            type->tp_getattro = PyObject_GenericGetAttr;
-        if (base->tp_setattr == NULL && base->tp_setattro == NULL)
-            type->tp_setattro = PyObject_GenericSetAttr;
-    }
-    #endif
     
     type->tp_dealloc = subtype_dealloc;
 
@@ -2828,11 +2818,7 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
 
     /* Put the proper slots in place */
     fixup_slot_dispatchers(type);
-
-    if (type->tp_dictoffset) {
-        et->ht_cached_keys = _PyDict_NewKeysForClass();
-    }
-
+    
     if (set_names(type) < 0)
         goto error;
 
@@ -3025,11 +3011,7 @@ PyType_FromModuleAndSpec(PyObject *module, PyType_Spec *spec, PyObject *bases)
 
     if (PyType_Ready(type) < 0)
         goto fail;
-
-    if (type->tp_dictoffset) {
-        res->ht_cached_keys = _PyDict_NewKeysForClass();
-    }
-
+    
     if (weaklistoffset) {
         type->tp_weaklistoffset = weaklistoffset;
         if (PyDict_DelItemString((PyObject *)type->tp_dict, "__weaklistoffset__") < 0)
@@ -3449,9 +3431,6 @@ type_dealloc(PyTypeObject *type)
     Py_XDECREF(et->ht_name);
     Py_XDECREF(et->ht_qualname);
     Py_XDECREF(et->ht_slots);
-    if (et->ht_cached_keys) {
-        _PyDictKeys_DecRef(et->ht_cached_keys);
-    }
     Py_XDECREF(et->ht_module);
     Py_TYPE(type)->tp_free((PyObject *)type);
 }
@@ -3595,10 +3574,8 @@ type___sizeof___impl(PyTypeObject *self)
 {
     Py_ssize_t size;
     if (self->tp_flags & Py_TPFLAGS_HEAPTYPE) {
-        PyHeapTypeObject* et = (PyHeapTypeObject*)self;
+      //        PyHeapTypeObject* et = (PyHeapTypeObject*)self;
         size = sizeof(PyHeapTypeObject);
-        if (et->ht_cached_keys)
-            size += _PyDict_KeysSize(et->ht_cached_keys);
     }
     else
         size = sizeof(PyTypeObject);
@@ -3649,7 +3626,7 @@ type_traverse(PyTypeObject *type, visitproc visit, void *arg)
 static int
 type_clear(PyTypeObject *type)
 {
-    PyDictKeysObject *cached_keys;
+  // PyDictKeysObject *cached_keys;
     /* Because of type_is_gc(), the collector only calls this
        for heaptypes. */
     _PyObject_ASSERT((PyObject *)type, type->tp_flags & Py_TPFLAGS_HEAPTYPE);
@@ -3684,11 +3661,6 @@ type_clear(PyTypeObject *type)
     */
 
     PyType_Modified(type);
-    cached_keys = ((PyHeapTypeObject *)type)->ht_cached_keys;
-    if (cached_keys != NULL) {
-        ((PyHeapTypeObject *)type)->ht_cached_keys = NULL;
-        _PyDictKeys_DecRef(cached_keys);
-    }
     if (type->tp_dict) {
         PyDict_Clear(type->tp_dict);
     }
@@ -5269,16 +5241,6 @@ PyType_Ready(PyTypeObject *type)
     }
 
     type->tp_flags |= Py_TPFLAGS_READYING;
-
-#ifdef Py_TRACE_REFS
-    /* PyType_Ready is the closest thing we have to a choke point
-     * for type objects, so is the best place I can think of to try
-     * to get type objects into the doubly-linked list of all objects.
-     * Still, not all type objects go through PyType_Ready.
-     */
-    _Py_AddToAllObjects((PyObject *)type, 0);
-#endif
-
     if (type->tp_name == NULL) {
         PyErr_Format(PyExc_SystemError,
                      "Type does not define the tp_name field.");

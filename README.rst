@@ -85,7 +85,8 @@ Halfway there.  It all gets more difficult from here...
 - Day 71 (8/20/2020). There's no locale like no locale.
 - Day 72 (8/21/2020). The gotos do not compute.
 - Day 73 (8/22/2020). Hints. Take a hint. 
-
+- Day 74 (8/23/2020). Split key dicts had to split.
+  
 Copyright and License Information
 ---------------------------------
 
