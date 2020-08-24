@@ -593,16 +593,7 @@ frame_dealloc(PyFrameObject *f)
         co->co_zombieframe = f;
     }
     else {
-        PyInterpreterState *interp = _PyInterpreterState_GET();
-        struct _Py_frame_state *state = &interp->frame;
-        if (state->numfree < PyFrame_MAXFREELIST) {
-            ++state->numfree;
-            f->f_back = state->free_list;
-            state->free_list = f;
-        }
-        else {
-            PyObject_GC_Del(f);
-        }
+	PyObject_GC_Del(f);
     }
 
     Py_DECREF(co);
@@ -780,31 +771,10 @@ frame_alloc(PyCodeObject *code)
     Py_ssize_t ncells = PyTuple_GET_SIZE(code->co_cellvars);
     Py_ssize_t nfrees = PyTuple_GET_SIZE(code->co_freevars);
     Py_ssize_t extras = code->co_stacksize + code->co_nlocals + ncells + nfrees;
-    PyInterpreterState *interp = _PyInterpreterState_GET();
-    struct _Py_frame_state *state = &interp->frame;
-    if (state->free_list == NULL)
-    {
-        f = PyObject_GC_NewVar(PyFrameObject, &PyFrame_Type, extras);
-        if (f == NULL) {
-            return NULL;
-        }
+    f = PyObject_GC_NewVar(PyFrameObject, &PyFrame_Type, extras);
+    if (f == NULL) {
+      return NULL;
     }
-    else {
-        assert(state->numfree > 0);
-        --state->numfree;
-        f = state->free_list;
-        state->free_list = state->free_list->f_back;
-        if (Py_SIZE(f) < extras) {
-            PyFrameObject *new_f = PyObject_GC_Resize(PyFrameObject, f, extras);
-            if (new_f == NULL) {
-                PyObject_GC_Del(f);
-                return NULL;
-            }
-            f = new_f;
-        }
-        _Py_NewReference((PyObject *)f);
-    }
-
     f->f_code = code;
     extras = code->co_nlocals + ncells + nfrees;
     f->f_valuestack = f->f_localsplus + extras;
@@ -1163,37 +1133,10 @@ PyFrame_LocalsToFast(PyFrameObject *f, int clear)
     PyErr_Restore(error_type, error_value, error_traceback);
 }
 
-/* Clear out the free list */
-void
-_PyFrame_ClearFreeList(PyThreadState *tstate)
-{
-    struct _Py_frame_state *state = &tstate->interp->frame;
-    while (state->free_list != NULL) {
-        PyFrameObject *f = state->free_list;
-        state->free_list = state->free_list->f_back;
-        PyObject_GC_Del(f);
-        --state->numfree;
-    }
-    assert(state->numfree == 0);
-}
-
 void
 _PyFrame_Fini(PyThreadState *tstate)
 {
-    _PyFrame_ClearFreeList(tstate);
 }
-
-/* Print summary info about the state of the optimized allocator */
-void
-_PyFrame_DebugMallocStats(FILE *out)
-{
-    PyInterpreterState *interp = _PyInterpreterState_GET();
-    struct _Py_frame_state *state = &interp->frame;
-    _PyDebugAllocatorStats(out,
-                           "free PyFrameObject",
-                           state->numfree, sizeof(PyFrameObject));
-}
-
 
 PyCodeObject *
 PyFrame_GetCode(PyFrameObject *frame)

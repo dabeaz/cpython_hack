@@ -354,9 +354,6 @@ class int "PyObject *" "&PyLong_Type"
 [clinic start generated code]*/
 /*[clinic end generated code: output=da39a3ee5e6b4b0d input=ec0275e3422a36e3]*/
 
-#define NSMALLPOSINTS           _PY_NSMALLPOSINTS
-#define NSMALLNEGINTS           _PY_NSMALLNEGINTS
-
 _Py_IDENTIFIER(little);
 _Py_IDENTIFIER(big);
 
@@ -368,39 +365,6 @@ _Py_IDENTIFIER(big);
 
 PyObject *_PyLong_Zero = NULL;
 PyObject *_PyLong_One = NULL;
-
-#if NSMALLNEGINTS + NSMALLPOSINTS > 0
-#define IS_SMALL_INT(ival) (-NSMALLNEGINTS <= (ival) && (ival) < NSMALLPOSINTS)
-#define IS_SMALL_UINT(ival) ((ival) < NSMALLPOSINTS)
-
-static PyObject *
-get_small_int(sdigit ival)
-{
-    assert(IS_SMALL_INT(ival));
-    PyInterpreterState *interp = _PyInterpreterState_GET();
-    PyObject *v = (PyObject*)interp->small_ints[ival + NSMALLNEGINTS];
-    Py_INCREF(v);
-    return v;
-}
-
-static PyLongObject *
-maybe_small_long(PyLongObject *v)
-{
-    if (v && Py_ABS(Py_SIZE(v)) <= 1) {
-        sdigit ival = MEDIUM_VALUE(v);
-        if (IS_SMALL_INT(ival)) {
-            Py_DECREF(v);
-            return (PyLongObject *)get_small_int(ival);
-        }
-    }
-    return v;
-}
-#else
-#define IS_SMALL_INT(ival) 0
-#define IS_SMALL_UINT(ival) 0
-#define get_small_int(ival) (Py_UNREACHABLE(), NULL)
-#define maybe_small_long(val) (val)
-#endif
 
 /* If a freshly-allocated int is already shared, it must
    be a small integer, so negating it must go to PyLong_FromLong */
@@ -501,12 +465,6 @@ _PyLong_Copy(PyLongObject *src)
     i = Py_SIZE(src);
     if (i < 0)
         i = -(i);
-    if (i < 2) {
-        sdigit ival = MEDIUM_VALUE(src);
-        if (IS_SMALL_INT(ival)) {
-            return get_small_int(ival);
-        }
-    }
     result = _PyLong_New(i);
     if (result != NULL) {
         Py_SET_SIZE(result, Py_SIZE(src));
@@ -527,10 +485,6 @@ PyLong_FromLong(long ival)
     unsigned long t;  /* unsigned so >> doesn't propagate sign bit */
     int ndigits = 0;
     int sign;
-
-    if (IS_SMALL_INT(ival)) {
-        return get_small_int((sdigit)ival);
-    }
 
     if (ival < 0) {
         /* negate: can't write this as abs_ival = -ival since that
@@ -591,9 +545,6 @@ PyLong_FromLong(long ival)
 
 #define PYLONG_FROM_UINT(INT_TYPE, ival) \
     do { \
-        if (IS_SMALL_UINT(ival)) { \
-            return get_small_int((sdigit)(ival)); \
-        } \
         /* Count the number of Python digits. */ \
         Py_ssize_t ndigits = 0; \
         INT_TYPE t = (ival); \
@@ -1376,10 +1327,6 @@ PyLong_FromLongLong(long long ival)
     int ndigits = 0;
     int negative = 0;
 
-    if (IS_SMALL_INT(ival)) {
-        return get_small_int((sdigit)ival);
-    }
-
     if (ival < 0) {
         /* avoid signed overflow on negation;  see comments
            in PyLong_FromLong above. */
@@ -1422,10 +1369,6 @@ PyLong_FromSsize_t(Py_ssize_t ival)
     size_t t;  /* unsigned so >> doesn't propagate sign bit */
     int ndigits = 0;
     int negative = 0;
-
-    if (IS_SMALL_INT(ival)) {
-        return get_small_int((sdigit)ival);
-    }
 
     if (ival < 0) {
         /* avoid signed overflow when ival = SIZE_T_MIN */
@@ -2785,7 +2728,6 @@ digit beyond the first.
         goto onError;
     }
     long_normalize(z);
-    z = maybe_small_long(z);
     if (z == NULL) {
         return NULL;
     }
@@ -2931,7 +2873,7 @@ long_divrem(PyLongObject *a, PyLongObject *b,
             return -1;
         }
     }
-    *pdiv = maybe_small_long(z);
+    *pdiv = z;
     return 0;
 }
 
@@ -3399,7 +3341,7 @@ x_sub(PyLongObject *a, PyLongObject *b)
     if (sign < 0) {
         Py_SET_SIZE(z, -Py_SIZE(z));
     }
-    return maybe_small_long(long_normalize(z));
+    return long_normalize(z);
 }
 
 static PyObject *
@@ -4646,8 +4588,6 @@ long_invert(PyLongObject *v)
     if (x == NULL)
         return NULL;
     _PyLong_Negate(&x);
-    /* No need for maybe_small_long here, since any small
-       longs will have been caught in the Py_SIZE <= 1 fast path. */
     return (PyObject *)x;
 }
 
@@ -4746,7 +4686,7 @@ long_rshift1(PyLongObject *a, Py_ssize_t wordshift, digit remshift)
             if (i+1 < newsize)
                 z->ob_digit[i] |= (a->ob_digit[j+1] << hishift) & himask;
         }
-        z = maybe_small_long(long_normalize(z));
+        z = long_normalize(z);
     }
     return (PyObject *)z;
 }
@@ -4819,7 +4759,7 @@ long_lshift1(PyLongObject *a, Py_ssize_t wordshift, digit remshift)
     else
         assert(!accum);
     z = long_normalize(z);
-    return (PyObject *) maybe_small_long(z);
+    return (PyObject *) z;
 }
 
 static PyObject *
@@ -4995,7 +4935,7 @@ long_bitwise(PyLongObject *a,
 
     Py_DECREF(a);
     Py_DECREF(b);
-    return (PyObject *)maybe_small_long(long_normalize(z));
+    return (PyObject *) long_normalize(z);
 }
 
 static PyObject *

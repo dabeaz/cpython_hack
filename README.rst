@@ -86,6 +86,9 @@ Halfway there.  It all gets more difficult from here...
 - Day 72 (8/21/2020). The gotos do not compute.
 - Day 73 (8/22/2020). Hints. Take a hint. 
 - Day 74 (8/23/2020). Split key dicts had to split.
+- Day 75 (8/24/2020). Special cases aren't special enough to break the rules.
+
+How will it end?  Or is this just the start?
   
 Copyright and License Information
 ---------------------------------

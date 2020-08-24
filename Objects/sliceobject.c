@@ -98,12 +98,6 @@ PyObject _Py_EllipsisObject = {
 
 void _PySlice_Fini(PyThreadState *tstate)
 {
-    PyInterpreterState *interp = tstate->interp;
-    PySliceObject *obj = interp->slice_cache;
-    if (obj != NULL) {
-        interp->slice_cache = NULL;
-        PyObject_GC_Del(obj);
-    }
 }
 
 /* start, stop, and step are python objects with None indicating no
@@ -115,14 +109,9 @@ PySlice_New(PyObject *start, PyObject *stop, PyObject *step)
 {
     PyInterpreterState *interp = _PyInterpreterState_GET();
     PySliceObject *obj;
-    if (interp->slice_cache != NULL) {
-        obj = interp->slice_cache;
-        interp->slice_cache = NULL;
-        _Py_NewReference((PyObject *)obj);
-    } else {
-        obj = PyObject_GC_New(PySliceObject, &PySlice_Type);
-        if (obj == NULL)
-            return NULL;
+    obj = PyObject_GC_New(PySliceObject, &PySlice_Type);
+    if (obj == NULL) {
+      return NULL;
     }
 
     if (step == NULL) step = Py_None;
@@ -314,12 +303,7 @@ slice_dealloc(PySliceObject *r)
     Py_DECREF(r->step);
     Py_DECREF(r->start);
     Py_DECREF(r->stop);
-    if (interp->slice_cache == NULL) {
-        interp->slice_cache = r;
-    }
-    else {
-        PyObject_GC_Del(r);
-    }
+    PyObject_GC_Del(r);
 }
 
 static PyObject *

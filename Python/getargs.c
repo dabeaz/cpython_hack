@@ -1567,11 +1567,6 @@ PyArg_ValidateKeywordArguments(PyObject *kwargs)
         PyErr_BadInternalCall();
         return 0;
     }
-    if (!_PyDict_HasOnlyStringKeys(kwargs)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "keywords must be strings");
-        return 0;
-    }
     return 1;
 }
 

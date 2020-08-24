@@ -140,17 +140,7 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
     int oparg;         /* Current opcode argument, if any */
     PyObject **fastlocals, **freevars;
     PyObject *retval = NULL;            /* Return value */
-    struct _ceval_state * const ceval2 = &tstate->interp->ceval;
     PyCodeObject *co;
-
-    /* when tracing we set things up so that
-
-           not (instr_lb <= current_bytecode_offset < instr_ub)
-
-       is true when the line being executed has changed.  The
-       initial values are such as to make this false the first
-       time it is tested. */
-    int instr_ub = -1, instr_lb = 0, instr_prev = -1;
 
     const _Py_CODEUNIT *first_instr;
     PyObject *names;
@@ -2248,17 +2238,8 @@ exception_unwind:
                 PUSH(val);
                 PUSH(exc);
                 JUMPTO(handler);
-                if (_Py_TracingPossible(ceval2)) {
-                    int needs_new_execution_window = (f->f_lasti < instr_lb || f->f_lasti >= instr_ub);
-                    int needs_line_update = (f->f_lasti == instr_lb || f->f_lasti < instr_prev);
-                    /* Make sure that we trace line after exception if we are in a new execution
-                     * window or we don't need a line update and we are not in the first instruction
-                     * of the line. */
-                    if (needs_new_execution_window || (!needs_line_update && instr_lb > 0)) {
-                        instr_prev = INT_MAX;
-                    }
-                }
                 /* Resume normal execution */
+		
                 goto main_loop;
             }
         } /* unwind stack */

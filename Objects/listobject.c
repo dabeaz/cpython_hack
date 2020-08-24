@@ -452,31 +452,8 @@ list_preallocate_exact(PyListObject *self, Py_ssize_t size)
 }
 
 void
-_PyList_ClearFreeList(PyThreadState *tstate)
-{
-    struct _Py_list_state *state = &tstate->interp->list;
-    while (state->numfree) {
-        PyListObject *op = state->free_list[--state->numfree];
-        assert(PyList_CheckExact(op));
-        PyObject_GC_Del(op);
-    }
-}
-
-void
 _PyList_Fini(PyThreadState *tstate)
 {
-    _PyList_ClearFreeList(tstate);
-}
-
-/* Print summary info about the state of the optimized allocator */
-void
-_PyList_DebugMallocStats(FILE *out)
-{
-    PyInterpreterState *interp = _PyInterpreterState_GET();
-    struct _Py_list_state *state = &interp->list;
-    _PyDebugAllocatorStats(out,
-                           "free PyListObject",
-                           state->numfree, sizeof(PyListObject));
 }
 
 PyObject *
@@ -487,20 +464,12 @@ PyList_New(Py_ssize_t size)
         return NULL;
     }
 
-    PyInterpreterState *interp = _PyInterpreterState_GET();
-    struct _Py_list_state *state = &interp->list;
     PyListObject *op;
-    if (state->numfree) {
-        state->numfree--;
-        op = state->free_list[state->numfree];
-        _Py_NewReference((PyObject *)op);
+    op = PyObject_GC_New(PyListObject, &PyList_Type);
+    if (op == NULL) {
+      return NULL;
     }
-    else {
-        op = PyObject_GC_New(PyListObject, &PyList_Type);
-        if (op == NULL) {
-            return NULL;
-        }
-    }
+    
     if (size <= 0) {
         op->ob_item = NULL;
     }
@@ -683,14 +652,7 @@ list_dealloc(PyListObject *op)
         }
         PyMem_FREE(op->ob_item);
     }
-    PyInterpreterState *interp = _PyInterpreterState_GET();
-    struct _Py_list_state *state = &interp->list;
-    if (state->numfree < PyList_MAXFREELIST && PyList_CheckExact(op)) {
-        state->free_list[state->numfree++] = op;
-    }
-    else {
-        Py_TYPE(op)->tp_free((PyObject *)op);
-    }
+    Py_TYPE(op)->tp_free((PyObject *)op);
     Py_TRASHCAN_END
 }
 

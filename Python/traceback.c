@@ -919,33 +919,7 @@ const char*
 _Py_DumpTracebackThreads(int fd, PyInterpreterState *interp,
                          PyThreadState *current_tstate)
 {
-    PyThreadState *tstate;
-    unsigned int nthreads;
-    assert(interp != NULL);
-
-    /* Get the current interpreter from the current thread */
-    tstate = PyInterpreterState_ThreadHead(interp);
-    if (tstate == NULL)
-        return "unable to get the thread head state";
-
-    /* Dump the traceback of each thread */
-    tstate = PyInterpreterState_ThreadHead(interp);
-    nthreads = 0;
-    
-    do
-    {
-        if (nthreads != 0)
-            PUTS(fd, "\n");
-        if (nthreads >= MAX_NTHREADS) {
-            PUTS(fd, "...\n");
-            break;
-        }
-        write_thread_id(fd, tstate, tstate == current_tstate);
-        dump_traceback(fd, tstate, 0);
-        tstate = PyThreadState_Next(tstate);
-        nthreads++;
-    } while (tstate != NULL);
-
-    return NULL;
+  dump_traceback(fd, current_tstate, 0);
+  return NULL;
 }
 

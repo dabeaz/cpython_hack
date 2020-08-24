@@ -1204,11 +1204,7 @@ Py_EndInterpreter(PyThreadState *tstate)
     wait_for_thread_shutdown(tstate);
 
     call_py_exitfuncs(tstate);
-
-    if (tstate != interp->tstate_head || tstate->next != NULL) {
-        Py_FatalError("not the last thread");
-    }
-
+    
     _PyImport_Cleanup(tstate);
     finalize_interp_clear(tstate);
     finalize_interp_delete(tstate);

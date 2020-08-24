@@ -321,26 +321,6 @@ exit:
     return return_value;
 }
 
-PyDoc_STRVAR(sys__current_frames__doc__,
-"_current_frames($module, /)\n"
-"--\n"
-"\n"
-"Return a dict mapping each thread\'s thread id to its current stack frame.\n"
-"\n"
-"This function should be used for specialized purposes only.");
-
-#define SYS__CURRENT_FRAMES_METHODDEF    \
-    {"_current_frames", (PyCFunction)sys__current_frames, METH_NOARGS, sys__current_frames__doc__},
-
-static PyObject *
-sys__current_frames_impl(PyObject *module);
-
-static PyObject *
-sys__current_frames(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    return sys__current_frames_impl(module);
-}
-
 PyDoc_STRVAR(sys__clear_type_cache__doc__,
 "_clear_type_cache($module, /)\n"
 "--\n"
@@ -903,21 +883,6 @@ sys__getframe_impl(PyObject *module, int depth)
     return (PyObject*)f;
 }
 
-/*[clinic input]
-sys._current_frames
-
-Return a dict mapping each thread's thread id to its current stack frame.
-
-This function should be used for specialized purposes only.
-[clinic start generated code]*/
-
-static PyObject *
-sys__current_frames_impl(PyObject *module)
-/*[clinic end generated code: output=d2a41ac0a0a3809a input=2a9049c5f5033691]*/
-{
-    return _PyThread_CurrentFrames();
-}
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -980,7 +945,6 @@ sys_getandroidapilevel_impl(PyObject *module)
 static PyMethodDef sys_methods[] = {
     /* Might as well keep this in alphabetic order */
     SYS__CLEAR_TYPE_CACHE_METHODDEF
-    SYS__CURRENT_FRAMES_METHODDEF
     SYS_DISPLAYHOOK_METHODDEF
     SYS_EXC_INFO_METHODDEF
     SYS_EXCEPTHOOK_METHODDEF

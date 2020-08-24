@@ -16,38 +16,7 @@ struct _Py_parser_state {
         int atbol;
     } listnode;
 };
-
-struct _pending_calls {
-    /* Request for running pending calls. */
-    int calls_to_do;
-    /* Request for looking at the `async_exc` field of the current
-       thread state.
-       Guarded by the GIL. */
-    int async_exc;
-#define NPENDINGCALLS 32
-    struct {
-        int (*func)(void *);
-        void *arg;
-    } calls[NPENDINGCALLS];
-    int first;
-    int last;
-};
-
-struct _ceval_state {
-    /* Records whether tracing is on for any thread.  Counts the number
-       of threads for which tstate->c_tracefunc is non-NULL, so if the
-       value is 0, we know we don't have to check this thread's
-       c_tracefunc.  This speeds up the if statement in
-       _PyEval_EvalFrameDefault() after fast_next_opcode. */
-    int tracing_possible;
-    /* This single variable consolidates all requests to break out of
-       the fast path in the eval loop. */
-    int eval_breaker;
-    /* Request for dropping the GIL */
-    int gil_drop_request;
-    struct _pending_calls pending;
-};
-
+  
 /* fs_codec.encoding is initialized to NULL.
    Later, it is set to a non-NULL string by _PyUnicode_InitEncodings(). */
 struct _Py_unicode_fs_codec {
@@ -61,89 +30,16 @@ struct _Py_unicode_state {
     struct _Py_unicode_fs_codec fs_codec;
 };
 
-/* Speed optimization to avoid frequent malloc/free of small tuples */
-#ifndef PyTuple_MAXSAVESIZE
-   // Largest tuple to save on free list
-#  define PyTuple_MAXSAVESIZE 20
-#endif
-#ifndef PyTuple_MAXFREELIST
-   // Maximum number of tuples of each size to save
-#  define PyTuple_MAXFREELIST 2000
-#endif
-
-struct _Py_tuple_state {
-#if PyTuple_MAXSAVESIZE > 0
-    /* Entries 1 up to PyTuple_MAXSAVESIZE are free lists,
-       entry 0 is the empty tuple () of which at most one instance
-       will be allocated. */
-    PyTupleObject *free_list[PyTuple_MAXSAVESIZE];
-    int numfree[PyTuple_MAXSAVESIZE];
-#endif
-};
-
-/* Empty list reuse scheme to save calls to malloc and free */
-#ifndef PyList_MAXFREELIST
-#  define PyList_MAXFREELIST 80
-#endif
-
-struct _Py_list_state {
-    PyListObject *free_list[PyList_MAXFREELIST];
-    int numfree;
-};
-
-struct _Py_float_state {
-    /* Special free list
-       free_list is a singly-linked list of available PyFloatObjects,
-       linked via abuse of their ob_type members. */
-    int numfree;
-    PyFloatObject *free_list;
-};
-
-struct _Py_frame_state {
-    PyFrameObject *free_list;
-    /* number of frames currently in free_list */
-    int numfree;
-};
-
-#ifndef _PyAsyncGen_MAXFREELIST
-#  define _PyAsyncGen_MAXFREELIST 80
-#endif
-
-struct _Py_async_gen_state {
-    /* Freelists boost performance 6-10%; they also reduce memory
-       fragmentation, as _PyAsyncGenWrappedValue and PyAsyncGenASend
-       are short-living objects that are instantiated for every
-       __anext__() call. */
-    struct _PyAsyncGenWrappedValue* value_freelist[_PyAsyncGen_MAXFREELIST];
-    int value_numfree;
-
-    struct PyAsyncGenASend* asend_freelist[_PyAsyncGen_MAXFREELIST];
-    int asend_numfree;
-};
-
 /* interpreter state */
-
-#define _PY_NSMALLPOSINTS           257
-#define _PY_NSMALLNEGINTS           5
 
 // The PyInterpreterState typedef is in Include/pystate.h.
 struct _is {
-
-    struct _is *next;
-    struct _ts *tstate_head;
-
     /* Reference to the _PyRuntime global variable. This field exists
        to not have to pass runtime in addition to tstate to a function.
        Get runtime from tstate: tstate->interp->runtime. */
     struct pyruntimestate *runtime;
-
-    int64_t id;
-    int64_t id_refcount;
-    int requires_idref;
-
     int finalizing;
-
-    struct _ceval_state ceval;
+  
     struct _gc_runtime_state gc;
 
     PyObject *modules;
@@ -151,15 +47,7 @@ struct _is {
     PyObject *sysdict;
     PyObject *builtins;
     PyObject *importlib;
-
-    /* Used in Modules/_threadmodule.c. */
-    long num_threads;
-    /* Support for runtime thread stack size tuning.
-       A value of 0 means using the platform's default stack size
-       or the size specified by the THREAD_STACK_SIZE macro. */
-    /* Used in Python/thread.c. */
-    size_t pythread_stacksize;
-
+  
     PyObject *codec_search_path;
     PyObject *codec_search_cache;
     PyObject *codec_error_registry;
@@ -177,39 +65,12 @@ struct _is {
 
     Py_ssize_t co_extra_user_count;
     freefunc co_extra_freefuncs[MAX_CO_EXTRA_USERS];
-
-#ifdef HAVE_FORK
-    PyObject *before_forkers;
-    PyObject *after_forkers_parent;
-    PyObject *after_forkers_child;
-#endif
+  
     /* AtExit module */
     void (*pyexitfunc)(PyObject *);
     PyObject *pyexitmodule;
-
-    uint64_t tstate_next_unique_id;
-
-  /* struct _warnings_runtime_state warnings;*/
-
+  
     struct _Py_parser_state parser;
-
-#if _PY_NSMALLNEGINTS + _PY_NSMALLPOSINTS > 0
-    /* Small integers are preallocated in this array so that they
-       can be shared.
-       The integers that are preallocated are those in the range
-       -_PY_NSMALLNEGINTS (inclusive) to _PY_NSMALLPOSINTS (not inclusive).
-    */
-    PyLongObject* small_ints[_PY_NSMALLNEGINTS + _PY_NSMALLPOSINTS];
-#endif
-    struct _Py_tuple_state tuple;
-    struct _Py_list_state list;
-    struct _Py_float_state float_state;
-    struct _Py_frame_state frame;
-    struct _Py_async_gen_state async_gen;
-
-    /* Using a cache is very effective since typically only a single slice is
-       created and then deleted again. */
-    PySliceObject *slice_cache;
 };
 
 /* Used by _PyImport_Cleanup() */
