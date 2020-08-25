@@ -69,9 +69,6 @@ PyAPI_FUNC(const char *) PyExceptionClass_Name(PyObject *);
 
 PyAPI_DATA(PyObject *) PyExc_BaseException;
 PyAPI_DATA(PyObject *) PyExc_Exception;
-#if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03050000
-PyAPI_DATA(PyObject *) PyExc_StopAsyncIteration;
-#endif
 PyAPI_DATA(PyObject *) PyExc_StopIteration;
 PyAPI_DATA(PyObject *) PyExc_GeneratorExit;
 PyAPI_DATA(PyObject *) PyExc_ArithmeticError;
@@ -120,7 +117,6 @@ PyAPI_DATA(PyObject *) PyExc_ConnectionRefusedError;
 PyAPI_DATA(PyObject *) PyExc_ConnectionResetError;
 PyAPI_DATA(PyObject *) PyExc_FileExistsError;
 PyAPI_DATA(PyObject *) PyExc_FileNotFoundError;
-PyAPI_DATA(PyObject *) PyExc_InterruptedError;
 PyAPI_DATA(PyObject *) PyExc_IsADirectoryError;
 PyAPI_DATA(PyObject *) PyExc_NotADirectoryError;
 PyAPI_DATA(PyObject *) PyExc_PermissionError;

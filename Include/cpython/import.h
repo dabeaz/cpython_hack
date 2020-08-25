@@ -28,7 +28,6 @@ struct _inittab {
     PyObject* (*initfunc)(void);
 };
 PyAPI_DATA(struct _inittab *) PyImport_Inittab;
-PyAPI_FUNC(int) PyImport_ExtendInittab(struct _inittab *newtab);
 
 struct _frozen {
     const char *name;                 /* ASCII encoded string */

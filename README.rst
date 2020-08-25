@@ -89,6 +89,8 @@ Halfway there.  It all gets more difficult from here...
 - Day 75 (8/24/2020). Special cases aren't special enough to break the rules.
 
 How will it end?  Or is this just the start?
+
+- Day 76 (8/25/2020). Some import cleanup.
   
 Copyright and License Information
 ---------------------------------

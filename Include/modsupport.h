@@ -227,7 +227,7 @@ PyAPI_FUNC(PyObject *) _PyModule_CreateInitialized(struct PyModuleDef*,
 PyAPI_FUNC(PyObject *) PyModule_FromDefAndSpec2(PyModuleDef *def,
                                                 PyObject *spec,
                                                 int module_api_version);
-
+  
 #ifdef Py_LIMITED_API
 #define PyModule_FromDefAndSpec(module, spec) \
     PyModule_FromDefAndSpec2(module, spec, PYTHON_ABI_VERSION)

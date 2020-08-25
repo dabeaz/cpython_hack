@@ -54,7 +54,7 @@ struct _is {
     int codecs_initialized;
 
     struct _Py_unicode_state unicode;
-
+  
     PyConfig config;
     PyObject *dict;  /* Stores per-interpreter state */
 

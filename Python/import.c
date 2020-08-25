@@ -23,10 +23,9 @@
 extern "C" {
 #endif
 
-#define CACHEDIR "__pycache__"
-
 /* Forward references */
 static PyObject *import_add_module(PyThreadState *tstate, PyObject *name);
+static int exec_builtin_or_dynamic(PyObject *mod);
 
 /* See _PyImport_FixupExtensionObject() below */
 static PyObject *extensions = NULL;
@@ -39,54 +38,7 @@ static struct _inittab *inittab_copy = NULL;
 
 _Py_IDENTIFIER(__path__);
 _Py_IDENTIFIER(__spec__);
-
-PyDoc_STRVAR(_imp__fix_co_filename__doc__,
-"_fix_co_filename($module, code, path, /)\n"
-"--\n"
-"\n"
-"Changes code.co_filename to specify the passed-in file path.\n"
-"\n"
-"  code\n"
-"    Code object to change.\n"
-"  path\n"
-"    File path to use.");
-
-#define _IMP__FIX_CO_FILENAME_METHODDEF    \
-    {"_fix_co_filename", (PyCFunction)(void(*)(void))_imp__fix_co_filename, METH_FASTCALL, _imp__fix_co_filename__doc__},
-
-static PyObject *
-_imp__fix_co_filename_impl(PyObject *module, PyCodeObject *code,
-                           PyObject *path);
-
-static PyObject *
-_imp__fix_co_filename(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
-{
-    PyObject *return_value = NULL;
-    PyCodeObject *code;
-    PyObject *path;
-
-    if (!_PyArg_CheckPositional("_fix_co_filename", nargs, 2, 2)) {
-        goto exit;
-    }
-    if (!PyObject_TypeCheck(args[0], &PyCode_Type)) {
-        _PyArg_BadArgument("_fix_co_filename", "argument 1", (&PyCode_Type)->tp_name, args[0]);
-        goto exit;
-    }
-    code = (PyCodeObject *)args[0];
-    if (!PyUnicode_Check(args[1])) {
-        _PyArg_BadArgument("_fix_co_filename", "argument 2", "str", args[1]);
-        goto exit;
-    }
-    if (PyUnicode_READY(args[1]) == -1) {
-        goto exit;
-    }
-    path = args[1];
-    return_value = _imp__fix_co_filename_impl(module, code, path);
-
-exit:
-    return return_value;
-}
-
+  
 PyDoc_STRVAR(_imp_create_builtin__doc__,
 "create_builtin($module, spec, /)\n"
 "--\n"
@@ -95,25 +47,7 @@ PyDoc_STRVAR(_imp_create_builtin__doc__,
 
 #define _IMP_CREATE_BUILTIN_METHODDEF    \
     {"create_builtin", (PyCFunction)_imp_create_builtin, METH_O, _imp_create_builtin__doc__},
-
-PyDoc_STRVAR(_imp_extension_suffixes__doc__,
-"extension_suffixes($module, /)\n"
-"--\n"
-"\n"
-"Returns the list of file suffixes used to identify extension modules.");
-
-#define _IMP_EXTENSION_SUFFIXES_METHODDEF    \
-    {"extension_suffixes", (PyCFunction)_imp_extension_suffixes, METH_NOARGS, _imp_extension_suffixes__doc__},
-
-static PyObject *
-_imp_extension_suffixes_impl(PyObject *module);
-
-static PyObject *
-_imp_extension_suffixes(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    return _imp_extension_suffixes_impl(module);
-}
-
+  
 PyDoc_STRVAR(_imp_init_frozen__doc__,
 "init_frozen($module, name, /)\n"
 "--\n"
@@ -301,54 +235,7 @@ _imp_exec_builtin(PyObject *module, PyObject *mod)
 exit:
     return return_value;
 }
-
-PyDoc_STRVAR(_imp_source_hash__doc__,
-"source_hash($module, /, key, source)\n"
-"--\n"
-"\n");
-
-#define _IMP_SOURCE_HASH_METHODDEF    \
-    {"source_hash", (PyCFunction)(void(*)(void))_imp_source_hash, METH_FASTCALL|METH_KEYWORDS, _imp_source_hash__doc__},
-
-static PyObject *
-_imp_source_hash_impl(PyObject *module, long key, Py_buffer *source);
-
-static PyObject *
-_imp_source_hash(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *kwnames)
-{
-    PyObject *return_value = NULL;
-    static const char * const _keywords[] = {"key", "source", NULL};
-    static _PyArg_Parser _parser = {NULL, _keywords, "source_hash", 0};
-    PyObject *argsbuf[2];
-    long key;
-    Py_buffer source = {NULL, NULL};
-
-    args = _PyArg_UnpackKeywords(args, nargs, NULL, kwnames, &_parser, 2, 2, 0, argsbuf);
-    if (!args) {
-        goto exit;
-    }
-    key = PyLong_AsLong(args[0]);
-    if (key == -1 && PyErr_Occurred()) {
-        goto exit;
-    }
-    if (PyObject_GetBuffer(args[1], &source, PyBUF_SIMPLE) != 0) {
-        goto exit;
-    }
-    if (!PyBuffer_IsContiguous(&source, 'C')) {
-        _PyArg_BadArgument("source_hash", "argument 'source'", "contiguous buffer", args[1]);
-        goto exit;
-    }
-    return_value = _imp_source_hash_impl(module, key, &source);
-
-exit:
-    /* Cleanup for source */
-    if (source.obj) {
-       PyBuffer_Release(&source);
-    }
-
-    return return_value;
-}
-
+  
 /* Initialize things */
 
 PyStatus
@@ -652,7 +539,6 @@ _PyImport_Cleanup(PyThreadState *tstate)
            importing order.  First clear modules imported later. */
         for (i = PyList_GET_SIZE(weaklist) - 1; i >= 0; i--) {
             PyObject *tup = PyList_GET_ITEM(weaklist, i);
-            PyObject *name = PyTuple_GET_ITEM(tup, 0);
             PyObject *mod = PyWeakref_GET_OBJECT(PyTuple_GET_ITEM(tup, 1));
             if (mod == Py_None)
                 continue;
@@ -1101,68 +987,6 @@ PyImport_ExecCodeModuleObject(PyObject *name, PyObject *co, PyObject *pathname,
     }
     return res;
 }
-
-
-static void
-update_code_filenames(PyCodeObject *co, PyObject *oldname, PyObject *newname)
-{
-    PyObject *constants, *tmp;
-    Py_ssize_t i, n;
-
-    if (PyUnicode_Compare(co->co_filename, oldname))
-        return;
-
-    Py_INCREF(newname);
-    Py_XSETREF(co->co_filename, newname);
-
-    constants = co->co_consts;
-    n = PyTuple_GET_SIZE(constants);
-    for (i = 0; i < n; i++) {
-        tmp = PyTuple_GET_ITEM(constants, i);
-        if (PyCode_Check(tmp))
-            update_code_filenames((PyCodeObject *)tmp,
-                                  oldname, newname);
-    }
-}
-
-static void
-update_compiled_module(PyCodeObject *co, PyObject *newname)
-{
-    PyObject *oldname;
-
-    if (PyUnicode_Compare(co->co_filename, newname) == 0)
-        return;
-
-    oldname = co->co_filename;
-    Py_INCREF(oldname);
-    update_code_filenames(co, oldname, newname);
-    Py_DECREF(oldname);
-}
-
-/*[clinic input]
-_imp._fix_co_filename
-
-    code: object(type="PyCodeObject *", subclass_of="&PyCode_Type")
-        Code object to change.
-
-    path: unicode
-        File path to use.
-    /
-
-Changes code.co_filename to specify the passed-in file path.
-[clinic start generated code]*/
-
-static PyObject *
-_imp__fix_co_filename_impl(PyObject *module, PyCodeObject *code,
-                           PyObject *path)
-/*[clinic end generated code: output=1d002f100235587d input=895ba50e78b82f05]*/
-
-{
-    update_compiled_module(code, path);
-
-    Py_RETURN_NONE;
-}
-
 
 /* Forward */
 static const struct _frozen * find_frozen(PyObject *);
@@ -1732,11 +1556,6 @@ import_find_and_load(PyThreadState *tstate, PyObject *abs_name)
     _Py_IDENTIFIER(_find_and_load);
     PyObject *mod = NULL;
     PyInterpreterState *interp = tstate->interp;
-    static int import_level;
-
-    PyObject *sys_path = PySys_GetObject("path");
-    PyObject *sys_meta_path = PySys_GetObject("meta_path");
-    PyObject *sys_path_hooks = PySys_GetObject("path_hooks");
 
     /* XOptions is initialized after first some imports.
      * So we can't have negative cache before completed initialization.
@@ -1778,7 +1597,6 @@ PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
         _PyErr_SetString(tstate, PyExc_ValueError, "Empty module name");
         goto error;
     }
-
     /* The below code is importlib.__import__() & _gcd_import(), ported to C
        for added performance. */
 
@@ -1918,34 +1736,6 @@ PyImport_ImportModuleLevel(const char *name, PyObject *globals, PyObject *locals
     return mod;
 }
 
-
-/* Re-import a module of any kind and return its module object, WITH
-   INCREMENTED REFERENCE COUNT */
-
-PyObject *
-PyImport_ReloadModule(PyObject *m)
-{
-    _Py_IDENTIFIER(importlib);
-    _Py_IDENTIFIER(reload);
-    PyObject *reloaded_module = NULL;
-    PyObject *importlib = _PyImport_GetModuleId(&PyId_importlib);
-    if (importlib == NULL) {
-        if (PyErr_Occurred()) {
-            return NULL;
-        }
-
-        importlib = PyImport_ImportModule("importlib");
-        if (importlib == NULL) {
-            return NULL;
-        }
-    }
-
-    reloaded_module = _PyObject_CallMethodIdOneArg(importlib, &PyId_reload, m);
-    Py_DECREF(importlib);
-    return reloaded_module;
-}
-
-
 /* Higher-level import emulator which emulates the "import" statement
    more accurately -- it invokes the __import__() function from the
    builtins of the current globals.  This means that the import is
@@ -2031,24 +1821,6 @@ PyImport_Import(PyObject *module_name)
     Py_XDECREF(import);
 
     return r;
-}
-
-/*[clinic input]
-_imp.extension_suffixes
-
-Returns the list of file suffixes used to identify extension modules.
-[clinic start generated code]*/
-
-static PyObject *
-_imp_extension_suffixes_impl(PyObject *module)
-/*[clinic end generated code: output=0bf346e25a8f0cd3 input=ecdeeecfcb6f839e]*/
-{
-    PyObject *list;
-
-    list = PyList_New(0);
-    if (list == NULL)
-        return NULL;
-    return list;
 }
 
 /*[clinic input]
@@ -2186,40 +1958,10 @@ _imp_exec_builtin_impl(PyObject *module, PyObject *mod)
     return exec_builtin_or_dynamic(mod);
 }
 
-/*[clinic input]
-_imp.source_hash
-
-    key: long
-    source: Py_buffer
-[clinic start generated code]*/
-
-static PyObject *
-_imp_source_hash_impl(PyObject *module, long key, Py_buffer *source)
-/*[clinic end generated code: output=edb292448cf399ea input=9aaad1e590089789]*/
-{
-    union {
-        uint64_t x;
-        char data[sizeof(uint64_t)];
-    } hash;
-    hash.x = _Py_KeyedHash((uint64_t)key, source->buf, source->len);
-#if !PY_LITTLE_ENDIAN
-    // Force to little-endian. There really ought to be a succinct standard way
-    // to do this.
-    for (size_t i = 0; i < sizeof(hash.data)/2; i++) {
-        char tmp = hash.data[i];
-        hash.data[i] = hash.data[sizeof(hash.data) - i - 1];
-        hash.data[sizeof(hash.data) - i - 1] = tmp;
-    }
-#endif
-    return PyBytes_FromStringAndSize(hash.data, sizeof(hash.data));
-}
-
-
 PyDoc_STRVAR(doc_imp,
 "(Extremely) low-level import machinery bits as used by importlib and imp.");
 
 static PyMethodDef imp_methods[] = {
-    _IMP_EXTENSION_SUFFIXES_METHODDEF
     _IMP_GET_FROZEN_OBJECT_METHODDEF
     _IMP_IS_FROZEN_PACKAGE_METHODDEF
     _IMP_CREATE_BUILTIN_METHODDEF
@@ -2227,8 +1969,6 @@ static PyMethodDef imp_methods[] = {
     _IMP_IS_BUILTIN_METHODDEF
     _IMP_IS_FROZEN_METHODDEF
     _IMP_EXEC_BUILTIN_METHODDEF
-    _IMP__FIX_CO_FILENAME_METHODDEF
-    _IMP_SOURCE_HASH_METHODDEF
     {NULL, NULL}  /* sentinel */
 };
 
@@ -2262,73 +2002,6 @@ PyInit__imp(void)
   failure:
     Py_XDECREF(m);
     return NULL;
-}
-
-
-/* API for embedding applications that want to add their own entries
-   to the table of built-in modules.  This should normally be called
-   *before* Py_Initialize().  When the table resize fails, -1 is
-   returned and the existing table is unchanged.
-
-   After a similar function by Just van Rossum. */
-
-int
-PyImport_ExtendInittab(struct _inittab *newtab)
-{
-    struct _inittab *p;
-    size_t i, n;
-    int res = 0;
-
-    /* Count the number of entries in both tables */
-    for (n = 0; newtab[n].name != NULL; n++)
-        ;
-    if (n == 0)
-        return 0; /* Nothing to do */
-    for (i = 0; PyImport_Inittab[i].name != NULL; i++)
-        ;
-
-    /* Force default raw memory allocator to get a known allocator to be able
-       to release the memory in _PyImport_Fini2() */
-    PyMemAllocatorEx old_alloc;
-    _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-
-    /* Allocate new memory for the combined table */
-    p = NULL;
-    if (i + n <= SIZE_MAX / sizeof(struct _inittab) - 1) {
-        size_t size = sizeof(struct _inittab) * (i + n + 1);
-        p = PyMem_RawRealloc(inittab_copy, size);
-    }
-    if (p == NULL) {
-        res = -1;
-        goto done;
-    }
-
-    /* Copy the tables into the new memory at the first call
-       to PyImport_ExtendInittab(). */
-    if (inittab_copy != PyImport_Inittab) {
-        memcpy(p, PyImport_Inittab, (i+1) * sizeof(struct _inittab));
-    }
-    memcpy(p + i, newtab, (n + 1) * sizeof(struct _inittab));
-    PyImport_Inittab = inittab_copy = p;
-
-done:
-    PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-    return res;
-}
-
-/* Shorthand to add a single entry given a name and a function */
-
-int
-PyImport_AppendInittab(const char *name, PyObject* (*initfunc)(void))
-{
-    struct _inittab newtab[2];
-
-    memset(newtab, '\0', sizeof newtab);
-
-    newtab[0].name = name;
-    newtab[0].initfunc = initfunc;
-
-    return PyImport_ExtendInittab(newtab);
 }
 
 #ifdef __cplusplus

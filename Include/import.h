@@ -81,11 +81,6 @@ PyAPI_FUNC(int) PyImport_ImportFrozenModule(
     const char *name            /* UTF-8 encoded string */
     );
 
-PyAPI_FUNC(int) PyImport_AppendInittab(
-    const char *name,           /* ASCII encoded string */
-    PyObject* (*initfunc)(void)
-    );
-
 #ifndef Py_LIMITED_API
 #  define Py_CPYTHON_IMPORT_H
 #  include  "cpython/import.h"

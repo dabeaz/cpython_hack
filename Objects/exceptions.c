@@ -485,13 +485,6 @@ SimpleExtendsException(PyExc_Exception, TypeError,
 
 
 /*
- *    StopAsyncIteration extends Exception
- */
-SimpleExtendsException(PyExc_Exception, StopAsyncIteration,
-                       "Signal the end from iterator.__anext__().");
-
-
-/*
  *    StopIteration extends Exception
  */
 
@@ -1183,8 +1176,6 @@ MiddlingExtendsException(PyExc_OSError, IsADirectoryError, OSError,
                          "Operation doesn't work on directories.");
 MiddlingExtendsException(PyExc_OSError, NotADirectoryError, OSError,
                          "Operation only works on directories.");
-MiddlingExtendsException(PyExc_OSError, InterruptedError, OSError,
-                         "Interrupted by signal.");
 MiddlingExtendsException(PyExc_OSError, PermissionError, OSError,
                          "Not enough permissions.");
 MiddlingExtendsException(PyExc_OSError, ProcessLookupError, OSError,
@@ -2282,7 +2273,6 @@ _PyExc_Init(void)
     PRE_INIT(BaseException);
     PRE_INIT(Exception);
     PRE_INIT(TypeError);
-    PRE_INIT(StopAsyncIteration);
     PRE_INIT(StopIteration);
     PRE_INIT(GeneratorExit);
     PRE_INIT(SystemExit);
@@ -2330,7 +2320,6 @@ _PyExc_Init(void)
     PRE_INIT(FileNotFoundError);
     PRE_INIT(IsADirectoryError);
     PRE_INIT(NotADirectoryError);
-    PRE_INIT(InterruptedError);
     PRE_INIT(PermissionError);
     PRE_INIT(ProcessLookupError);
     PRE_INIT(TimeoutError);
@@ -2363,7 +2352,6 @@ _PyExc_Init(void)
     ADD_ERRNO(FileNotFoundError, ENOENT);
     ADD_ERRNO(IsADirectoryError, EISDIR);
     ADD_ERRNO(NotADirectoryError, ENOTDIR);
-    ADD_ERRNO(InterruptedError, EINTR);
     ADD_ERRNO(PermissionError, EACCES);
     ADD_ERRNO(PermissionError, EPERM);
     ADD_ERRNO(ProcessLookupError, ESRCH);
@@ -2405,7 +2393,6 @@ _PyBuiltins_AddExceptions(PyObject *bltinmod)
     POST_INIT(BaseException);
     POST_INIT(Exception);
     POST_INIT(TypeError);
-    POST_INIT(StopAsyncIteration);
     POST_INIT(StopIteration);
     POST_INIT(GeneratorExit);
     POST_INIT(SystemExit);
@@ -2454,7 +2441,6 @@ _PyBuiltins_AddExceptions(PyObject *bltinmod)
     POST_INIT(FileNotFoundError);
     POST_INIT(IsADirectoryError);
     POST_INIT(NotADirectoryError);
-    POST_INIT(InterruptedError);
     POST_INIT(PermissionError);
     POST_INIT(ProcessLookupError);
     POST_INIT(TimeoutError);
