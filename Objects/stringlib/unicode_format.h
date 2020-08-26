@@ -1044,6 +1044,7 @@ formatteriter_next(formatteriterobject *it)
         else
             conversion_str = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND,
                                                        &conversion, 1);
+
         if (conversion_str == NULL)
             goto done;
 

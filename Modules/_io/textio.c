@@ -826,7 +826,6 @@ _textiowrapper_set_decoder(textio *self, PyObject *codec_info,
         Py_CLEAR(self->decoder);
         self->decoder = incrementalDecoder;
     }
-
     return 0;
 }
 
@@ -888,7 +887,7 @@ _textiowrapper_set_encoder(textio *self, PyObject *codec_info,
         }
     }
     Py_XDECREF(res);
-
+    
     return 0;
 }
 

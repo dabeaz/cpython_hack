@@ -47,10 +47,11 @@ struct _is {
     PyObject *sysdict;
     PyObject *builtins;
     PyObject *importlib;
-  
     PyObject *codec_search_path;
     PyObject *codec_search_cache;
+  #if 0    
     PyObject *codec_error_registry;
+  #endif
     int codecs_initialized;
 
     struct _Py_unicode_state unicode;

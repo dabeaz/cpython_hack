@@ -237,8 +237,6 @@ typedef struct {
     union {
         void *any;
         Py_UCS1 *latin1;
-        Py_UCS2 *ucs2;
-        Py_UCS4 *ucs4;
     } data;                     /* Canonical, smallest-form Unicode buffer */
 } PyUnicodeObject;
 
@@ -330,8 +328,6 @@ enum PyUnicode_Kind {
    these will work correctly. */
 
 #define PyUnicode_1BYTE_DATA(op) ((Py_UCS1*)PyUnicode_DATA(op))
-#define PyUnicode_2BYTE_DATA(op) ((Py_UCS2*)PyUnicode_DATA(op))
-#define PyUnicode_4BYTE_DATA(op) ((Py_UCS4*)PyUnicode_DATA(op))
 
 /* Return one of the PyUnicode_*_KIND values defined above. */
 #define PyUnicode_KIND(op) \
@@ -365,33 +361,14 @@ enum PyUnicode_Kind {
    code point value which should be written to that location. */
 #define PyUnicode_WRITE(kind, data, index, value) \
     do { \
-        switch ((kind)) { \
-        case PyUnicode_1BYTE_KIND: { \
             ((Py_UCS1 *)(data))[(index)] = (Py_UCS1)(value); \
-            break; \
-        } \
-        case PyUnicode_2BYTE_KIND: { \
-            ((Py_UCS2 *)(data))[(index)] = (Py_UCS2)(value); \
-            break; \
-        } \
-        default: { \
-            assert((kind) == PyUnicode_4BYTE_KIND); \
-            ((Py_UCS4 *)(data))[(index)] = (Py_UCS4)(value); \
-        } \
-        } \
     } while (0)
 
 /* Read a code point from the string's canonical representation.  No checks
    or ready calls are performed. */
 #define PyUnicode_READ(kind, data, index) \
     ((Py_UCS4) \
-    ((kind) == PyUnicode_1BYTE_KIND ? \
-        ((const Py_UCS1 *)(data))[(index)] : \
-        ((kind) == PyUnicode_2BYTE_KIND ? \
-            ((const Py_UCS2 *)(data))[(index)] : \
-            ((const Py_UCS4 *)(data))[(index)] \
-        ) \
-    ))
+     ((const Py_UCS1 *)(data))[(index)])
 
 /* PyUnicode_READ_CHAR() is less efficient than PyUnicode_READ() because it
    calls PyUnicode_KIND() and might call it twice.  For single reads, use
@@ -401,13 +378,7 @@ enum PyUnicode_Kind {
     (assert(PyUnicode_Check(unicode)),          \
      assert(PyUnicode_IS_READY(unicode)),       \
      (Py_UCS4)                                  \
-        (PyUnicode_KIND((unicode)) == PyUnicode_1BYTE_KIND ? \
-            ((const Py_UCS1 *)(PyUnicode_DATA((unicode))))[(index)] : \
-            (PyUnicode_KIND((unicode)) == PyUnicode_2BYTE_KIND ? \
-                ((const Py_UCS2 *)(PyUnicode_DATA((unicode))))[(index)] : \
-                ((const Py_UCS4 *)(PyUnicode_DATA((unicode))))[(index)] \
-            ) \
-        ))
+     ((const Py_UCS1 *)(PyUnicode_DATA((unicode))))[(index)])
 
 /* Returns the length of the unicode string. The caller has to make sure that
    the string has it's canonical representation set before calling
@@ -436,14 +407,7 @@ enum PyUnicode_Kind {
    string based on op.  This is always an approximation but more efficient
    than iterating over the string. */
 #define PyUnicode_MAX_CHAR_VALUE(op) \
-    (assert(PyUnicode_IS_READY(op)),                                    \
-     (PyUnicode_IS_ASCII(op) ?                                          \
-      (0x7f) :                                                          \
-      (PyUnicode_KIND(op) == PyUnicode_1BYTE_KIND ?                     \
-       (0xffU) :                                                        \
-       (PyUnicode_KIND(op) == PyUnicode_2BYTE_KIND ?                    \
-        (0xffffU) :                                                     \
-        (0x10ffffU)))))
+  (assert(PyUnicode_IS_READY(op)), 0xffU)
 
 /* === Public API ========================================================= */
 

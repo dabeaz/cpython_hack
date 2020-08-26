@@ -2018,6 +2018,7 @@ long_to_decimal_string_internal(PyObject *aa,
         Py_UCS1 *p;
         WRITE_UNICODE_DIGITS(Py_UCS1);
     }
+    #if 0
     else if (kind == PyUnicode_2BYTE_KIND) {
         Py_UCS2 *p;
         WRITE_UNICODE_DIGITS(Py_UCS2);
@@ -2027,6 +2028,8 @@ long_to_decimal_string_internal(PyObject *aa,
         assert (kind == PyUnicode_4BYTE_KIND);
         WRITE_UNICODE_DIGITS(Py_UCS4);
     }
+    #endif
+    
 #undef WRITE_DIGITS
 #undef WRITE_UNICODE_DIGITS
 
@@ -2195,6 +2198,7 @@ long_format_binary(PyObject *aa, int base, int alternate,
         Py_UCS1 *p;
         WRITE_UNICODE_DIGITS(Py_UCS1);
     }
+    #if 0
     else if (kind == PyUnicode_2BYTE_KIND) {
         Py_UCS2 *p;
         WRITE_UNICODE_DIGITS(Py_UCS2);
@@ -2204,6 +2208,7 @@ long_format_binary(PyObject *aa, int base, int alternate,
         assert (kind == PyUnicode_4BYTE_KIND);
         WRITE_UNICODE_DIGITS(Py_UCS4);
     }
+    #endif
 #undef WRITE_DIGITS
 #undef WRITE_UNICODE_DIGITS
 

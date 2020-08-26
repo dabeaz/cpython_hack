@@ -1472,7 +1472,6 @@ init_sys_streams(PyThreadState *tstate)
         S_ISDIR(sb.st_mode)) {
         return _PyStatus_ERR("<stdin> is a directory, cannot continue");
     }
-
     /* Hack to avoid a nasty recursion issue when Python is invoked
        in verbose mode: pre-import the Latin-1 and UTF-8 codecs */
     if ((m = PyImport_ImportModule("encodings.utf_8")) == NULL) {
@@ -1484,7 +1483,7 @@ init_sys_streams(PyThreadState *tstate)
         goto error;
     }
     Py_DECREF(m);
-
+    
     if (!(iomod = PyImport_ImportModule("io"))) {
         goto error;
     }

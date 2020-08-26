@@ -283,6 +283,7 @@ exit:
     return return_value;
 }
 
+
 PyDoc_STRVAR(_codecs_escape_decode__doc__,
 "escape_decode($module, data, errors=None, /)\n"
 "--\n"
@@ -470,150 +471,6 @@ _codecs_utf_8_decode(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
     }
 skip_optional:
     return_value = _codecs_utf_8_decode_impl(module, &data, errors, final);
-
-exit:
-    /* Cleanup for data */
-    if (data.obj) {
-       PyBuffer_Release(&data);
-    }
-
-    return return_value;
-}
-
-PyDoc_STRVAR(_codecs_unicode_escape_decode__doc__,
-"unicode_escape_decode($module, data, errors=None, /)\n"
-"--\n"
-"\n");
-
-#define _CODECS_UNICODE_ESCAPE_DECODE_METHODDEF    \
-    {"unicode_escape_decode", (PyCFunction)(void(*)(void))_codecs_unicode_escape_decode, METH_FASTCALL, _codecs_unicode_escape_decode__doc__},
-
-static PyObject *
-_codecs_unicode_escape_decode_impl(PyObject *module, Py_buffer *data,
-                                   const char *errors);
-
-static PyObject *
-_codecs_unicode_escape_decode(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
-{
-    PyObject *return_value = NULL;
-    Py_buffer data = {NULL, NULL};
-    const char *errors = NULL;
-
-    if (!_PyArg_CheckPositional("unicode_escape_decode", nargs, 1, 2)) {
-        goto exit;
-    }
-    if (PyUnicode_Check(args[0])) {
-        Py_ssize_t len;
-        const char *ptr = PyUnicode_AsUTF8AndSize(args[0], &len);
-        if (ptr == NULL) {
-            goto exit;
-        }
-        PyBuffer_FillInfo(&data, args[0], (void *)ptr, len, 1, 0);
-    }
-    else { /* any bytes-like object */
-        if (PyObject_GetBuffer(args[0], &data, PyBUF_SIMPLE) != 0) {
-            goto exit;
-        }
-        if (!PyBuffer_IsContiguous(&data, 'C')) {
-            _PyArg_BadArgument("unicode_escape_decode", "argument 1", "contiguous buffer", args[0]);
-            goto exit;
-        }
-    }
-    if (nargs < 2) {
-        goto skip_optional;
-    }
-    if (args[1] == Py_None) {
-        errors = NULL;
-    }
-    else if (PyUnicode_Check(args[1])) {
-        Py_ssize_t errors_length;
-        errors = PyUnicode_AsUTF8AndSize(args[1], &errors_length);
-        if (errors == NULL) {
-            goto exit;
-        }
-        if (strlen(errors) != (size_t)errors_length) {
-            PyErr_SetString(PyExc_ValueError, "embedded null character");
-            goto exit;
-        }
-    }
-    else {
-        _PyArg_BadArgument("unicode_escape_decode", "argument 2", "str or None", args[1]);
-        goto exit;
-    }
-skip_optional:
-    return_value = _codecs_unicode_escape_decode_impl(module, &data, errors);
-
-exit:
-    /* Cleanup for data */
-    if (data.obj) {
-       PyBuffer_Release(&data);
-    }
-
-    return return_value;
-}
-
-PyDoc_STRVAR(_codecs_raw_unicode_escape_decode__doc__,
-"raw_unicode_escape_decode($module, data, errors=None, /)\n"
-"--\n"
-"\n");
-
-#define _CODECS_RAW_UNICODE_ESCAPE_DECODE_METHODDEF    \
-    {"raw_unicode_escape_decode", (PyCFunction)(void(*)(void))_codecs_raw_unicode_escape_decode, METH_FASTCALL, _codecs_raw_unicode_escape_decode__doc__},
-
-static PyObject *
-_codecs_raw_unicode_escape_decode_impl(PyObject *module, Py_buffer *data,
-                                       const char *errors);
-
-static PyObject *
-_codecs_raw_unicode_escape_decode(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
-{
-    PyObject *return_value = NULL;
-    Py_buffer data = {NULL, NULL};
-    const char *errors = NULL;
-
-    if (!_PyArg_CheckPositional("raw_unicode_escape_decode", nargs, 1, 2)) {
-        goto exit;
-    }
-    if (PyUnicode_Check(args[0])) {
-        Py_ssize_t len;
-        const char *ptr = PyUnicode_AsUTF8AndSize(args[0], &len);
-        if (ptr == NULL) {
-            goto exit;
-        }
-        PyBuffer_FillInfo(&data, args[0], (void *)ptr, len, 1, 0);
-    }
-    else { /* any bytes-like object */
-        if (PyObject_GetBuffer(args[0], &data, PyBUF_SIMPLE) != 0) {
-            goto exit;
-        }
-        if (!PyBuffer_IsContiguous(&data, 'C')) {
-            _PyArg_BadArgument("raw_unicode_escape_decode", "argument 1", "contiguous buffer", args[0]);
-            goto exit;
-        }
-    }
-    if (nargs < 2) {
-        goto skip_optional;
-    }
-    if (args[1] == Py_None) {
-        errors = NULL;
-    }
-    else if (PyUnicode_Check(args[1])) {
-        Py_ssize_t errors_length;
-        errors = PyUnicode_AsUTF8AndSize(args[1], &errors_length);
-        if (errors == NULL) {
-            goto exit;
-        }
-        if (strlen(errors) != (size_t)errors_length) {
-            PyErr_SetString(PyExc_ValueError, "embedded null character");
-            goto exit;
-        }
-    }
-    else {
-        _PyArg_BadArgument("raw_unicode_escape_decode", "argument 2", "str or None", args[1]);
-        goto exit;
-    }
-skip_optional:
-    return_value = _codecs_raw_unicode_escape_decode_impl(module, &data, errors);
 
 exit:
     /* Cleanup for data */
@@ -947,122 +804,6 @@ exit:
     return return_value;
 }
 
-PyDoc_STRVAR(_codecs_unicode_escape_encode__doc__,
-"unicode_escape_encode($module, str, errors=None, /)\n"
-"--\n"
-"\n");
-
-#define _CODECS_UNICODE_ESCAPE_ENCODE_METHODDEF    \
-    {"unicode_escape_encode", (PyCFunction)(void(*)(void))_codecs_unicode_escape_encode, METH_FASTCALL, _codecs_unicode_escape_encode__doc__},
-
-static PyObject *
-_codecs_unicode_escape_encode_impl(PyObject *module, PyObject *str,
-                                   const char *errors);
-
-static PyObject *
-_codecs_unicode_escape_encode(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
-{
-    PyObject *return_value = NULL;
-    PyObject *str;
-    const char *errors = NULL;
-
-    if (!_PyArg_CheckPositional("unicode_escape_encode", nargs, 1, 2)) {
-        goto exit;
-    }
-    if (!PyUnicode_Check(args[0])) {
-        _PyArg_BadArgument("unicode_escape_encode", "argument 1", "str", args[0]);
-        goto exit;
-    }
-    if (PyUnicode_READY(args[0]) == -1) {
-        goto exit;
-    }
-    str = args[0];
-    if (nargs < 2) {
-        goto skip_optional;
-    }
-    if (args[1] == Py_None) {
-        errors = NULL;
-    }
-    else if (PyUnicode_Check(args[1])) {
-        Py_ssize_t errors_length;
-        errors = PyUnicode_AsUTF8AndSize(args[1], &errors_length);
-        if (errors == NULL) {
-            goto exit;
-        }
-        if (strlen(errors) != (size_t)errors_length) {
-            PyErr_SetString(PyExc_ValueError, "embedded null character");
-            goto exit;
-        }
-    }
-    else {
-        _PyArg_BadArgument("unicode_escape_encode", "argument 2", "str or None", args[1]);
-        goto exit;
-    }
-skip_optional:
-    return_value = _codecs_unicode_escape_encode_impl(module, str, errors);
-
-exit:
-    return return_value;
-}
-
-PyDoc_STRVAR(_codecs_raw_unicode_escape_encode__doc__,
-"raw_unicode_escape_encode($module, str, errors=None, /)\n"
-"--\n"
-"\n");
-
-#define _CODECS_RAW_UNICODE_ESCAPE_ENCODE_METHODDEF    \
-    {"raw_unicode_escape_encode", (PyCFunction)(void(*)(void))_codecs_raw_unicode_escape_encode, METH_FASTCALL, _codecs_raw_unicode_escape_encode__doc__},
-
-static PyObject *
-_codecs_raw_unicode_escape_encode_impl(PyObject *module, PyObject *str,
-                                       const char *errors);
-
-static PyObject *
-_codecs_raw_unicode_escape_encode(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
-{
-    PyObject *return_value = NULL;
-    PyObject *str;
-    const char *errors = NULL;
-
-    if (!_PyArg_CheckPositional("raw_unicode_escape_encode", nargs, 1, 2)) {
-        goto exit;
-    }
-    if (!PyUnicode_Check(args[0])) {
-        _PyArg_BadArgument("raw_unicode_escape_encode", "argument 1", "str", args[0]);
-        goto exit;
-    }
-    if (PyUnicode_READY(args[0]) == -1) {
-        goto exit;
-    }
-    str = args[0];
-    if (nargs < 2) {
-        goto skip_optional;
-    }
-    if (args[1] == Py_None) {
-        errors = NULL;
-    }
-    else if (PyUnicode_Check(args[1])) {
-        Py_ssize_t errors_length;
-        errors = PyUnicode_AsUTF8AndSize(args[1], &errors_length);
-        if (errors == NULL) {
-            goto exit;
-        }
-        if (strlen(errors) != (size_t)errors_length) {
-            PyErr_SetString(PyExc_ValueError, "embedded null character");
-            goto exit;
-        }
-    }
-    else {
-        _PyArg_BadArgument("raw_unicode_escape_encode", "argument 2", "str or None", args[1]);
-        goto exit;
-    }
-skip_optional:
-    return_value = _codecs_raw_unicode_escape_encode_impl(module, str, errors);
-
-exit:
-    return return_value;
-}
-
 PyDoc_STRVAR(_codecs_latin_1_encode__doc__,
 "latin_1_encode($module, str, errors=None, /)\n"
 "--\n"
@@ -1273,94 +1014,6 @@ exit:
     return return_value;
 }
 
-
-
-PyDoc_STRVAR(_codecs_register_error__doc__,
-"register_error($module, errors, handler, /)\n"
-"--\n"
-"\n"
-"Register the specified error handler under the name errors.\n"
-"\n"
-"handler must be a callable object, that will be called with an exception\n"
-"instance containing information about the location of the encoding/decoding\n"
-"error and must return a (replacement, new position) tuple.");
-
-#define _CODECS_REGISTER_ERROR_METHODDEF    \
-    {"register_error", (PyCFunction)(void(*)(void))_codecs_register_error, METH_FASTCALL, _codecs_register_error__doc__},
-
-static PyObject *
-_codecs_register_error_impl(PyObject *module, const char *errors,
-                            PyObject *handler);
-
-static PyObject *
-_codecs_register_error(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
-{
-    PyObject *return_value = NULL;
-    const char *errors;
-    PyObject *handler;
-
-    if (!_PyArg_CheckPositional("register_error", nargs, 2, 2)) {
-        goto exit;
-    }
-    if (!PyUnicode_Check(args[0])) {
-        _PyArg_BadArgument("register_error", "argument 1", "str", args[0]);
-        goto exit;
-    }
-    Py_ssize_t errors_length;
-    errors = PyUnicode_AsUTF8AndSize(args[0], &errors_length);
-    if (errors == NULL) {
-        goto exit;
-    }
-    if (strlen(errors) != (size_t)errors_length) {
-        PyErr_SetString(PyExc_ValueError, "embedded null character");
-        goto exit;
-    }
-    handler = args[1];
-    return_value = _codecs_register_error_impl(module, errors, handler);
-
-exit:
-    return return_value;
-}
-
-PyDoc_STRVAR(_codecs_lookup_error__doc__,
-"lookup_error($module, name, /)\n"
-"--\n"
-"\n"
-"lookup_error(errors) -> handler\n"
-"\n"
-"Return the error handler for the specified error handling name or raise a\n"
-"LookupError, if no handler exists under this name.");
-
-#define _CODECS_LOOKUP_ERROR_METHODDEF    \
-    {"lookup_error", (PyCFunction)_codecs_lookup_error, METH_O, _codecs_lookup_error__doc__},
-
-static PyObject *
-_codecs_lookup_error_impl(PyObject *module, const char *name);
-
-static PyObject *
-_codecs_lookup_error(PyObject *module, PyObject *arg)
-{
-    PyObject *return_value = NULL;
-    const char *name;
-
-    if (!PyUnicode_Check(arg)) {
-        _PyArg_BadArgument("lookup_error", "argument", "str", arg);
-        goto exit;
-    }
-    Py_ssize_t name_length;
-    name = PyUnicode_AsUTF8AndSize(arg, &name_length);
-    if (name == NULL) {
-        goto exit;
-    }
-    if (strlen(name) != (size_t)name_length) {
-        PyErr_SetString(PyExc_ValueError, "embedded null character");
-        goto exit;
-    }
-    return_value = _codecs_lookup_error_impl(module, name);
-
-exit:
-    return return_value;
-}
 
 #ifndef _CODECS_CODE_PAGE_DECODE_METHODDEF
     #define _CODECS_CODE_PAGE_DECODE_METHODDEF
@@ -1603,40 +1256,6 @@ _codecs_utf_8_decode_impl(PyObject *module, Py_buffer *data,
 }
 
 /*[clinic input]
-_codecs.unicode_escape_decode
-    data: Py_buffer(accept={str, buffer})
-    errors: str(accept={str, NoneType}) = None
-    /
-[clinic start generated code]*/
-
-static PyObject *
-_codecs_unicode_escape_decode_impl(PyObject *module, Py_buffer *data,
-                                   const char *errors)
-/*[clinic end generated code: output=3ca3c917176b82ab input=8328081a3a569bd6]*/
-{
-    PyObject *decoded = PyUnicode_DecodeUnicodeEscape(data->buf, data->len,
-                                                      errors);
-    return codec_tuple(decoded, data->len);
-}
-
-/*[clinic input]
-_codecs.raw_unicode_escape_decode
-    data: Py_buffer(accept={str, buffer})
-    errors: str(accept={str, NoneType}) = None
-    /
-[clinic start generated code]*/
-
-static PyObject *
-_codecs_raw_unicode_escape_decode_impl(PyObject *module, Py_buffer *data,
-                                       const char *errors)
-/*[clinic end generated code: output=c98eeb56028070a6 input=d2f5159ce3b3392f]*/
-{
-    PyObject *decoded = PyUnicode_DecodeRawUnicodeEscape(data->buf, data->len,
-                                                         errors);
-    return codec_tuple(decoded, data->len);
-}
-
-/*[clinic input]
 _codecs.latin_1_decode
     data: Py_buffer
     errors: str(accept={str, NoneType}) = None
@@ -1665,28 +1284,6 @@ _codecs_ascii_decode_impl(PyObject *module, Py_buffer *data,
 /*[clinic end generated code: output=2627d72058d42429 input=e428a267a04b4481]*/
 {
     PyObject *decoded = PyUnicode_DecodeASCII(data->buf, data->len, errors);
-    return codec_tuple(decoded, data->len);
-}
-
-/*[clinic input]
-_codecs.charmap_decode
-    data: Py_buffer
-    errors: str(accept={str, NoneType}) = None
-    mapping: object = None
-    /
-[clinic start generated code]*/
-
-static PyObject *
-_codecs_charmap_decode_impl(PyObject *module, Py_buffer *data,
-                            const char *errors, PyObject *mapping)
-/*[clinic end generated code: output=2c335b09778cf895 input=15b69df43458eb40]*/
-{
-    PyObject *decoded;
-
-    if (mapping == Py_None)
-        mapping = NULL;
-
-    decoded = PyUnicode_DecodeCharmap(data->buf, data->len, mapping, errors);
     return codec_tuple(decoded, data->len);
 }
 
@@ -1733,38 +1330,6 @@ _codecs_utf_8_encode_impl(PyObject *module, PyObject *str,
 */
 
 /*[clinic input]
-_codecs.unicode_escape_encode
-    str: unicode
-    errors: str(accept={str, NoneType}) = None
-    /
-[clinic start generated code]*/
-
-static PyObject *
-_codecs_unicode_escape_encode_impl(PyObject *module, PyObject *str,
-                                   const char *errors)
-/*[clinic end generated code: output=66271b30bc4f7a3c input=8c4de07597054e33]*/
-{
-    return codec_tuple(PyUnicode_AsUnicodeEscapeString(str),
-                       PyUnicode_GET_LENGTH(str));
-}
-
-/*[clinic input]
-_codecs.raw_unicode_escape_encode
-    str: unicode
-    errors: str(accept={str, NoneType}) = None
-    /
-[clinic start generated code]*/
-
-static PyObject *
-_codecs_raw_unicode_escape_encode_impl(PyObject *module, PyObject *str,
-                                       const char *errors)
-/*[clinic end generated code: output=a66a806ed01c830a input=4aa6f280d78e4574]*/
-{
-    return codec_tuple(PyUnicode_AsRawUnicodeEscapeString(str),
-                       PyUnicode_GET_LENGTH(str));
-}
-
-/*[clinic input]
 _codecs.latin_1_encode
     str: unicode
     errors: str(accept={str, NoneType}) = None
@@ -1796,82 +1361,8 @@ _codecs_ascii_encode_impl(PyObject *module, PyObject *str,
                        PyUnicode_GET_LENGTH(str));
 }
 
-/*[clinic input]
-_codecs.charmap_encode
-    str: unicode
-    errors: str(accept={str, NoneType}) = None
-    mapping: object = None
-    /
-[clinic start generated code]*/
-
-static PyObject *
-_codecs_charmap_encode_impl(PyObject *module, PyObject *str,
-                            const char *errors, PyObject *mapping)
-/*[clinic end generated code: output=047476f48495a9e9 input=2a98feae73dadce8]*/
-{
-    if (mapping == Py_None)
-        mapping = NULL;
-
-    return codec_tuple(_PyUnicode_EncodeCharmap(str, mapping, errors),
-                       PyUnicode_GET_LENGTH(str));
-}
-
-/*[clinic input]
-_codecs.charmap_build
-    map: unicode
-    /
-[clinic start generated code]*/
-
-static PyObject *
-_codecs_charmap_build_impl(PyObject *module, PyObject *map)
-/*[clinic end generated code: output=bb073c27031db9ac input=d91a91d1717dbc6d]*/
-{
-    return PyUnicode_BuildEncodingMap(map);
-}
-
 
 /* --- Error handler registry --------------------------------------------- */
-
-/*[clinic input]
-_codecs.register_error
-    errors: str
-    handler: object
-    /
-
-Register the specified error handler under the name errors.
-
-handler must be a callable object, that will be called with an exception
-instance containing information about the location of the encoding/decoding
-error and must return a (replacement, new position) tuple.
-[clinic start generated code]*/
-
-static PyObject *
-_codecs_register_error_impl(PyObject *module, const char *errors,
-                            PyObject *handler)
-/*[clinic end generated code: output=fa2f7d1879b3067d input=5e6709203c2e33fe]*/
-{
-    if (PyCodec_RegisterError(errors, handler))
-        return NULL;
-    Py_RETURN_NONE;
-}
-
-/*[clinic input]
-_codecs.lookup_error
-    name: str
-    /
-
-lookup_error(errors) -> handler
-
-Return the error handler for the specified error handling name or raise a
-LookupError, if no handler exists under this name.
-[clinic start generated code]*/
-
-static PyObject *
-_codecs_lookup_error_impl(PyObject *module, const char *name)
-/*[clinic end generated code: output=087f05dc0c9a98cc input=4775dd65e6235aba]*/
-{
-    return PyCodec_LookupError(name);
-}
 
 /* --- Module API --------------------------------------------------------- */
 
@@ -1884,22 +1375,13 @@ static PyMethodDef _codecs_functions[] = {
     _CODECS_ESCAPE_DECODE_METHODDEF
     _CODECS_UTF_8_ENCODE_METHODDEF
     _CODECS_UTF_8_DECODE_METHODDEF
-    _CODECS_UNICODE_ESCAPE_ENCODE_METHODDEF
-    _CODECS_UNICODE_ESCAPE_DECODE_METHODDEF
-    _CODECS_RAW_UNICODE_ESCAPE_ENCODE_METHODDEF
-    _CODECS_RAW_UNICODE_ESCAPE_DECODE_METHODDEF
     _CODECS_LATIN_1_ENCODE_METHODDEF
     _CODECS_LATIN_1_DECODE_METHODDEF
     _CODECS_ASCII_ENCODE_METHODDEF
     _CODECS_ASCII_DECODE_METHODDEF
-    _CODECS_CHARMAP_ENCODE_METHODDEF
-    _CODECS_CHARMAP_DECODE_METHODDEF
-    _CODECS_CHARMAP_BUILD_METHODDEF
     _CODECS_READBUFFER_ENCODE_METHODDEF
     _CODECS_CODE_PAGE_ENCODE_METHODDEF
     _CODECS_CODE_PAGE_DECODE_METHODDEF
-    _CODECS_REGISTER_ERROR_METHODDEF
-    _CODECS_LOOKUP_ERROR_METHODDEF
     _CODECS__FORGET_CODEC_METHODDEF
     {NULL, NULL}                /* sentinel */
 };

@@ -139,7 +139,6 @@ PyInterpreterState_Clear(PyInterpreterState *interp)
     PyConfig_Clear(&interp->config);
     Py_CLEAR(interp->codec_search_path);
     Py_CLEAR(interp->codec_search_cache);
-    Py_CLEAR(interp->codec_error_registry);
     Py_CLEAR(interp->modules);
     Py_CLEAR(interp->modules_by_index);
     Py_CLEAR(interp->sysdict);

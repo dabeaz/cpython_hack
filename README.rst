@@ -91,7 +91,8 @@ Halfway there.  It all gets more difficult from here...
 How will it end?  Or is this just the start?
 
 - Day 76 (8/25/2020). Some import cleanup.
-  
+- Day 77 (8/26/2020). The encoding exorcism has started.
+
 Copyright and License Information
 ---------------------------------
 

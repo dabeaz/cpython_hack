@@ -1101,7 +1101,7 @@ try:
     xmlcharrefreplace_errors = lookup_error("xmlcharrefreplace")
     backslashreplace_errors = lookup_error("backslashreplace")
     namereplace_errors = lookup_error("namereplace")
-except LookupError:
+except (NameError, LookupError):
     # In --disable-unicode builds, these error handler are missing
     strict_errors = None
     ignore_errors = None

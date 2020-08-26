@@ -35,9 +35,17 @@ decode_utf8(const char **sPtr, const char *end)
     return PyUnicode_DecodeUTF8(t, s - t, NULL);
 }
 
+static PyObject *decode_bytes_with_escapes(Parser *p, const char *s, Py_ssize_t len, Token *t);
+
 static PyObject *
 decode_unicode_with_escapes(Parser *parser, const char *s, size_t len, Token *t)
 {
+  PyObject *result;
+  PyObject *temp = decode_bytes_with_escapes(parser, s, len, t);
+  result = PyUnicode_DecodeLatin1(PyBytes_AsString(temp), PyBytes_Size(temp), NULL);
+  Py_XDECREF(temp);
+  return result;
+#if 0  
     PyObject *v, *u;
     char *buf;
     char *p;
@@ -109,6 +117,7 @@ decode_unicode_with_escapes(Parser *parser, const char *s, size_t len, Token *t)
     }
     Py_XDECREF(u);
     return v;
+    #endif
 }
 
 static PyObject *
@@ -247,7 +256,7 @@ _PyPegen_parsestr(Parser *p, int *bytesmode, int *rawmode, PyObject **result,
             *result = PyUnicode_DecodeUTF8Stateful(s, len, NULL, NULL);
         }
         else {
-            *result = decode_unicode_with_escapes(p, s, len, t);
+	    *result = decode_unicode_with_escapes(p, s, len, t);
         }
     }
     return *result == NULL ? -1 : 0;
