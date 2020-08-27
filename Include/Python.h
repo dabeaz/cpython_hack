@@ -65,7 +65,7 @@
 #include "descrobject.h"
 #include "weakrefobject.h"
 #include "structseq.h"
-#include "codecs.h"
+// #include "codecs.h"
 #include "pyerrors.h"
 #include "cpython/initconfig.h"
 #include "pystate.h"

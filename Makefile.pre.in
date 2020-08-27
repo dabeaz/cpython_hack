@@ -323,7 +323,6 @@ PYTHON_OBJS=	\
 		Python/ast_unparse.o \
 		Python/bltinmodule.o \
 		Python/ceval.o \
-		Python/codecs.o \
 		Python/compile.o \
 		Python/errors.o \
 		Python/frozenmain.o \
@@ -834,8 +833,6 @@ BYTESTR_DEPS = \
 		$(srcdir)/Objects/stringlib/transmogrify.h
 
 UNICODE_DEPS = \
-		$(srcdir)/Objects/stringlib/asciilib.h \
-		$(srcdir)/Objects/stringlib/codecs.h \
 		$(srcdir)/Objects/stringlib/count.h \
 		$(srcdir)/Objects/stringlib/fastsearch.h \
 		$(srcdir)/Objects/stringlib/find.h \
@@ -845,8 +842,6 @@ UNICODE_DEPS = \
 		$(srcdir)/Objects/stringlib/replace.h \
 		$(srcdir)/Objects/stringlib/split.h \
 		$(srcdir)/Objects/stringlib/ucs1lib.h \
-		$(srcdir)/Objects/stringlib/ucs2lib.h \
-		$(srcdir)/Objects/stringlib/ucs4lib.h \
 		$(srcdir)/Objects/stringlib/undef.h \
 		$(srcdir)/Objects/stringlib/unicode_format.h \
 		$(srcdir)/Objects/stringlib/unicodedefs.h
@@ -898,7 +893,6 @@ PYTHON_HEADERS= \
 		$(srcdir)/Include/ceval.h \
 		$(srcdir)/Include/classobject.h \
 		$(srcdir)/Include/code.h \
-		$(srcdir)/Include/codecs.h \
 		$(srcdir)/Include/compile.h \
 		$(srcdir)/Include/descrobject.h \
 		$(srcdir)/Include/dictobject.h \

@@ -39,7 +39,6 @@ extern "C" {
 
 /* Forward declarations */
 static PyStatus add_main_module(PyInterpreterState *interp);
-static PyStatus init_import_site(void);
 static PyStatus init_set_builtins_open(void);
 static PyStatus init_sys_streams(PyThreadState *tstate);
 static void call_py_exitfuncs(PyThreadState *tstate);
@@ -1215,7 +1214,7 @@ Py_EndInterpreter(PyThreadState *tstate)
 static PyStatus
 add_main_module(PyInterpreterState *interp)
 {
-    PyObject *m, *d, *loader, *ann_dict;
+  PyObject *m, *d, *loader;
     m = PyImport_AddModule("__main__");
     if (m == NULL)
         return _PyStatus_ERR("can't create __main__ module");
@@ -1258,33 +1257,8 @@ add_main_module(PyInterpreterState *interp)
 static int
 is_valid_fd(int fd)
 {
-/* dup() is faster than fstat(): fstat() can require input/output operations,
-   whereas dup() doesn't. There is a low risk of EMFILE/ENFILE at Python
-   startup. Problem: dup() doesn't check if the file descriptor is valid on
-   some platforms.
-
-   bpo-30225: On macOS Tiger, when stdout is redirected to a pipe and the other
-   side of the pipe is closed, dup(1) succeed, whereas fstat(1, &st) fails with
-   EBADF. FreeBSD has similar issue (bpo-32849).
-
-   Only use dup() on platforms where dup() is enough to detect invalid FD in
-   corner cases: on Linux and Windows (bpo-32849). */
-#if defined(__linux__)
-    if (fd < 0) {
-        return 0;
-    }
-    int fd2;
-
-    fd2 = dup(fd);
-    if (fd2 >= 0) {
-        close(fd2);
-    }
-
-    return (fd2 >= 0);
-#else
     struct stat st;
     return (fstat(fd, &st) == 0);
-#endif
 }
 
 /* returns Py_None if the fd is not valid */
@@ -1455,10 +1429,9 @@ static PyStatus
 init_sys_streams(PyThreadState *tstate)
 {
     PyObject *iomod = NULL;
-    PyObject *m;
     PyObject *std = NULL;
     int fd;
-    PyObject * encoding_attr;
+
     PyStatus res = _PyStatus_OK();
     const PyConfig *config = _PyInterpreterState_GetConfig(tstate->interp);
 
@@ -1472,17 +1445,6 @@ init_sys_streams(PyThreadState *tstate)
         S_ISDIR(sb.st_mode)) {
         return _PyStatus_ERR("<stdin> is a directory, cannot continue");
     }
-    /* Hack to avoid a nasty recursion issue when Python is invoked
-       in verbose mode: pre-import the Latin-1 and UTF-8 codecs */
-    if ((m = PyImport_ImportModule("encodings.utf_8")) == NULL) {
-        goto error;
-    }
-    Py_DECREF(m);
-
-    if (!(m = PyImport_ImportModule("encodings.latin_1"))) {
-        goto error;
-    }
-    Py_DECREF(m);
     
     if (!(iomod = PyImport_ImportModule("io"))) {
         goto error;
@@ -1513,39 +1475,6 @@ init_sys_streams(PyThreadState *tstate)
     PySys_SetObject("__stdout__", std);
     _PySys_SetObjectId(&PyId_stdout, std);
     Py_DECREF(std);
-
-#if 1 /* Disable this if you have trouble debugging bootstrap stuff */
-    /* Set sys.stderr, replaces the preliminary stderr */
-    fd = fileno(stderr);
-    std = create_stdio(config, iomod, fd, 1, "<stderr>",
-                       config->stdio_encoding,
-                       L"backslashreplace");
-    if (std == NULL)
-        goto error;
-
-    /* Same as hack above, pre-import stderr's codec to avoid recursion
-       when import.c tries to write to stderr in verbose mode. */
-    encoding_attr = PyObject_GetAttrString(std, "encoding");
-    if (encoding_attr != NULL) {
-        const char *std_encoding = PyUnicode_AsUTF8(encoding_attr);
-        if (std_encoding != NULL) {
-            PyObject *codec_info = _PyCodec_Lookup(std_encoding);
-            Py_XDECREF(codec_info);
-        }
-        Py_DECREF(encoding_attr);
-    }
-    _PyErr_Clear(tstate);  /* Not a fatal error if codec isn't available */
-
-    if (PySys_SetObject("__stderr__", std) < 0) {
-        Py_DECREF(std);
-        goto error;
-    }
-    if (_PySys_SetObjectId(&PyId_stderr, std) < 0) {
-        Py_DECREF(std);
-        goto error;
-    }
-    Py_DECREF(std);
-#endif
 
     goto done;
 
@@ -1895,72 +1824,6 @@ Py_FdIsInteractive(FILE *fp, const char *filename)
            (strcmp(filename, "???") == 0);
 }
 
-
-/* Wrappers around sigaction() or signal(). */
-
-PyOS_sighandler_t
-PyOS_getsig(int sig)
-{
-#ifdef HAVE_SIGACTION
-    struct sigaction context;
-    if (sigaction(sig, NULL, &context) == -1)
-        return SIG_ERR;
-    return context.sa_handler;
-#else
-    PyOS_sighandler_t handler;
-/* Special signal handling for the secure CRT in Visual Studio 2005 */
-#if defined(_MSC_VER) && _MSC_VER >= 1400
-    switch (sig) {
-    /* Only these signals are valid */
-    case SIGINT:
-    case SIGILL:
-    case SIGFPE:
-    case SIGSEGV:
-    case SIGTERM:
-    case SIGBREAK:
-    case SIGABRT:
-        break;
-    /* Don't call signal() with other values or it will assert */
-    default:
-        return SIG_ERR;
-    }
-#endif /* _MSC_VER && _MSC_VER >= 1400 */
-    handler = signal(sig, SIG_IGN);
-    if (handler != SIG_ERR)
-        signal(sig, handler);
-    return handler;
-#endif
-}
-
-/*
- * All of the code in this function must only use async-signal-safe functions,
- * listed at `man 7 signal` or
- * http://www.opengroup.org/onlinepubs/009695399/functions/xsh_chap02_04.html.
- */
-PyOS_sighandler_t
-PyOS_setsig(int sig, PyOS_sighandler_t handler)
-{
-#ifdef HAVE_SIGACTION
-    /* Some code in Modules/signalmodule.c depends on sigaction() being
-     * used here if HAVE_SIGACTION is defined.  Fix that if this code
-     * changes to invalidate that assumption.
-     */
-    struct sigaction context, ocontext;
-    context.sa_handler = handler;
-    sigemptyset(&context.sa_mask);
-    context.sa_flags = 0;
-    if (sigaction(sig, &context, &ocontext) == -1)
-        return SIG_ERR;
-    return ocontext.sa_handler;
-#else
-    PyOS_sighandler_t oldhandler;
-    oldhandler = signal(sig, handler);
-#ifdef HAVE_SIGINTERRUPT
-    siginterrupt(sig, 1);
-#endif
-    return oldhandler;
-#endif
-}
 
 #ifdef __cplusplus
 }

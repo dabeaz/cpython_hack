@@ -8,6 +8,8 @@
 #include "pycore_interp.h"        // _PyInterpreterState.float_state
 #include "pycore_pystate.h"       // _PyInterpreterState_GET()
 
+PyAPI_DATA(const char *) Py_hexdigits;
+
 #include <ctype.h>
 #include <float.h>
 

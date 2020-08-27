@@ -52,10 +52,8 @@ OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "ucnhash.h"
 #include "stringlib/eq.h"
 
-/* Uncomment to display statistics on interned strings at exit when
-   using Valgrind or Insecure++. */
-/* #define INTERNED_STATS 1 */
 
+const char *Py_hexdigits = "0123456789abcdef";
 
 /*[clinic input]
 class str "PyObject *" "&PyUnicode_Type"
@@ -290,13 +288,6 @@ static int unicode_modifiable(PyObject *unicode);
 
 static PyObject *
 _PyUnicode_FromUCS1(const Py_UCS1 *s, Py_ssize_t size);
-
-static void
-raise_encode_exception(PyObject **exceptionObject,
-                       const char *encoding,
-                       PyObject *unicode,
-                       Py_ssize_t startpos, Py_ssize_t endpos,
-                       const char *reason);
 
 /* Same for linebreaks */
 static const unsigned char ascii_linebreak[] = {
@@ -2235,46 +2226,6 @@ PyUnicode_New(Py_ssize_t size, Py_UCS4 maxchar)
     return obj;
 }
 
-  
-#if 0 &&  SIZEOF_WCHAR_T == 2
-/* Helper function to convert a 16-bits wchar_t representation to UCS4, this
-   will decode surrogate pairs, the other conversions are implemented as macros
-   for efficiency.
-
-   This function assumes that unicode can hold one more code point than wstr
-   characters for a terminating null character. */
-static void
-unicode_convert_wchar_to_ucs4(const wchar_t *begin, const wchar_t *end,
-                              PyObject *unicode)
-{
-    const wchar_t *iter;
-    Py_UCS4 *ucs4_out;
-
-    assert(unicode != NULL);
-    assert(_PyUnicode_CHECK(unicode));
-    assert(_PyUnicode_KIND(unicode) == PyUnicode_4BYTE_KIND);
-    ucs4_out = PyUnicode_4BYTE_DATA(unicode);
-
-    for (iter = begin; iter < end; ) {
-        assert(ucs4_out < (PyUnicode_4BYTE_DATA(unicode) +
-                           _PyUnicode_GET_LENGTH(unicode)));
-        if (Py_UNICODE_IS_HIGH_SURROGATE(iter[0])
-            && (iter+1) < end
-            && Py_UNICODE_IS_LOW_SURROGATE(iter[1]))
-        {
-            *ucs4_out++ = Py_UNICODE_JOIN_SURROGATES(iter[0], iter[1]);
-            iter += 2;
-        }
-        else {
-            *ucs4_out++ = *iter;
-            iter++;
-        }
-    }
-    assert(ucs4_out == (PyUnicode_4BYTE_DATA(unicode) +
-                        _PyUnicode_GET_LENGTH(unicode)));
-
-}
-#endif
 
 static int
 unicode_check_modifiable(PyObject *unicode)
@@ -4163,46 +4114,6 @@ PyUnicode_DecodeLatin1(const char *s,
     return _PyUnicode_FromUCS1((const unsigned char*)s, size);
 }
 
-/* create or adjust a UnicodeEncodeError */
-static void
-make_encode_exception(PyObject **exceptionObject,
-                      const char *encoding,
-                      PyObject *unicode,
-                      Py_ssize_t startpos, Py_ssize_t endpos,
-                      const char *reason)
-{
-    if (*exceptionObject == NULL) {
-        *exceptionObject = PyObject_CallFunction(
-            PyExc_UnicodeEncodeError, "sOnns",
-            encoding, unicode, startpos, endpos, reason);
-    }
-    else {
-        if (PyUnicodeEncodeError_SetStart(*exceptionObject, startpos))
-            goto onError;
-        if (PyUnicodeEncodeError_SetEnd(*exceptionObject, endpos))
-            goto onError;
-        if (PyUnicodeEncodeError_SetReason(*exceptionObject, reason))
-            goto onError;
-        return;
-      onError:
-        Py_CLEAR(*exceptionObject);
-    }
-}
-
-/* raises a UnicodeEncodeError */
-static void
-raise_encode_exception(PyObject **exceptionObject,
-                       const char *encoding,
-                       PyObject *unicode,
-                       Py_ssize_t startpos, Py_ssize_t endpos,
-                       const char *reason)
-{
-    make_encode_exception(exceptionObject,
-                          encoding, unicode, startpos, endpos, reason);
-    if (*exceptionObject != NULL)
-        PyCodec_StrictErrors(*exceptionObject);
-}
-
 static PyObject *
 unicode_encode_ucs1(PyObject *unicode,
                     const char *errors,
@@ -4437,7 +4348,6 @@ PyUnicode_EncodeDecimal(Py_UNICODE *s,
     data = PyUnicode_DATA(unicode);
 
     for (i=0; i < length; ) {
-        PyObject *exc;
         Py_UCS4 ch;
         int decimal;
         Py_ssize_t startpos;
@@ -4462,11 +4372,7 @@ PyUnicode_EncodeDecimal(Py_UNICODE *s,
         }
 
         startpos = i;
-        exc = NULL;
-        raise_encode_exception(&exc, "decimal", unicode,
-                               startpos, startpos+1,
-                               "invalid decimal Unicode string");
-        Py_XDECREF(exc);
+        PyErr_SetString(PyExc_ValueError, "invalid decimal string");
         Py_DECREF(unicode);
         return -1;
     }
@@ -7256,13 +7162,6 @@ PyUnicode_Substring(PyObject *self, Py_ssize_t start, Py_ssize_t end)
         _Py_RETURN_UNICODE_EMPTY();
 
     length = end - start;
-    #if 0
-    if (PyUnicode_IS_ASCII(self)) {
-        data = PyUnicode_1BYTE_DATA(self);
-        return _PyUnicode_FromASCII((const char*)(data + start), length);
-    }
-    else
-      #endif
       {
         kind = PyUnicode_KIND(self);
         data = PyUnicode_1BYTE_DATA(self);
@@ -10393,19 +10292,6 @@ _PyUnicode_InitEncodings(PyThreadState *tstate)
     return _PyStatus_OK();
 }
 
-
-static void
-_PyUnicode_FiniEncodings(struct _Py_unicode_fs_codec *fs_codec)
-{
-    PyMem_RawFree(fs_codec->encoding);
-    fs_codec->encoding = NULL;
-    fs_codec->utf8 = 0;
-    PyMem_RawFree(fs_codec->errors);
-    fs_codec->errors = NULL;
-    fs_codec->error_handler = _Py_ERROR_UNKNOWN;
-}
-
-
 void
 _PyUnicode_Fini(PyThreadState *tstate)
 {
@@ -10419,8 +10305,6 @@ _PyUnicode_Fini(PyThreadState *tstate)
 #endif
         unicode_clear_static_strings();
     }
-
-    _PyUnicode_FiniEncodings(&tstate->interp->unicode.fs_codec);
 }
 
 

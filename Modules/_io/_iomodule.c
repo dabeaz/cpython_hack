@@ -1061,10 +1061,7 @@ PyInit__io(void)
     /* TextIOWrapper */
     PyTextIOWrapper_Type.tp_base = &PyTextIOBase_Type;
     ADD_TYPE(&PyTextIOWrapper_Type);
-
-    /* IncrementalNewlineDecoder */
-    ADD_TYPE(&PyIncrementalNewlineDecoder_Type);
-
+    
     /* Interned strings */
 #define ADD_INTERNED(name) \
     if (!_PyIO_str_ ## name && \

@@ -7,6 +7,8 @@
 #include "pycore_object.h"
 #include "bytesobject.h"
 
+PyAPI_DATA(const char *) Py_hexdigits;
+
 /*[clinic input]
 class bytearray "PyByteArrayObject *" "&PyByteArray_Type"
 [clinic start generated code]*/

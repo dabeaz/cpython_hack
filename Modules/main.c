@@ -541,26 +541,6 @@ pymain_free(void)
 }
 
 
-static int
-exit_sigint(void)
-{
-    /* bpo-1054041: We need to exit via the
-     * SIG_DFL handler for SIGINT if KeyboardInterrupt went unhandled.
-     * If we don't, a calling process such as a shell may not know
-     * about the user's ^C.  https://www.cons.org/cracauer/sigint.html */
-#if defined(HAVE_GETPID) && !defined(MS_WINDOWS)
-    if (PyOS_setsig(SIGINT, SIG_DFL) == SIG_ERR) {
-        perror("signal");  /* Impossible in normal environments. */
-    } else {
-        kill(getpid(), SIGINT);
-    }
-    /* If setting SIG_DFL failed, or kill failed to terminate us,
-     * there isn't much else we can do aside from an error code. */
-#endif  /* HAVE_GETPID && !MS_WINDOWS */
-    return SIGINT + 128;
-}
-
-
 static void _Py_NO_RETURN
 pymain_exit_error(PyStatus status)
 {
@@ -588,11 +568,6 @@ Py_RunMain(void)
     }
 
     pymain_free();
-
-    if (_Py_UnhandledKeyboardInterrupt) {
-        exitcode = exit_sigint();
-    }
-
     return exitcode;
 }
 

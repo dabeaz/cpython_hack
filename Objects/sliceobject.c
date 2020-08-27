@@ -107,7 +107,6 @@ void _PySlice_Fini(PyThreadState *tstate)
 PyObject *
 PySlice_New(PyObject *start, PyObject *stop, PyObject *step)
 {
-    PyInterpreterState *interp = _PyInterpreterState_GET();
     PySliceObject *obj;
     obj = PyObject_GC_New(PySliceObject, &PySlice_Type);
     if (obj == NULL) {
@@ -298,7 +297,6 @@ Create a slice object.  This is used for extended slicing (e.g. a[0:10:2]).");
 static void
 slice_dealloc(PySliceObject *r)
 {
-    PyInterpreterState *interp = _PyInterpreterState_GET();
     _PyObject_GC_UNTRACK(r);
     Py_DECREF(r->step);
     Py_DECREF(r->start);

@@ -13,7 +13,7 @@
 #include "unicodeobject.h"
 #include "bytesobject.h"
 #include "fileobject.h"
-#include "codecs.h"
+// #include "codecs.h"
 #include "abstract.h"
 
 /* Alternate tab spacing */

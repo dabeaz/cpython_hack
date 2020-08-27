@@ -9,6 +9,8 @@
 #include "pycore_pymem.h"         // PYMEM_CLEANBYTE
 #include <stddef.h>
 
+PyAPI_DATA(const char *) Py_hexdigits;
+
 /*[clinic input]
 class bytes "PyBytesObject *" "&PyBytes_Type"
 [clinic start generated code]*/

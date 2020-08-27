@@ -17,19 +17,6 @@ struct _Py_parser_state {
     } listnode;
 };
   
-/* fs_codec.encoding is initialized to NULL.
-   Later, it is set to a non-NULL string by _PyUnicode_InitEncodings(). */
-struct _Py_unicode_fs_codec {
-    char *encoding;   // Filesystem encoding (encoded to UTF-8)
-    int utf8;         // encoding=="utf-8"?
-    char *errors;     // Filesystem errors (encoded to UTF-8)
-    _Py_error_handler error_handler;
-};
-
-struct _Py_unicode_state {
-    struct _Py_unicode_fs_codec fs_codec;
-};
-
 /* interpreter state */
 
 // The PyInterpreterState typedef is in Include/pystate.h.
@@ -47,14 +34,6 @@ struct _is {
     PyObject *sysdict;
     PyObject *builtins;
     PyObject *importlib;
-    PyObject *codec_search_path;
-    PyObject *codec_search_cache;
-  #if 0    
-    PyObject *codec_error_registry;
-  #endif
-    int codecs_initialized;
-
-    struct _Py_unicode_state unicode;
   
     PyConfig config;
     PyObject *dict;  /* Stores per-interpreter state */

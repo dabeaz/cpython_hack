@@ -52,8 +52,7 @@ import _io
 
 from _io import (DEFAULT_BUFFER_SIZE, BlockingIOError, UnsupportedOperation,
                  open, open_code, FileIO, BufferedReader,
-                 BufferedWriter, BufferedRWPair, BufferedRandom,
-                 IncrementalNewlineDecoder, TextIOWrapper)
+                 BufferedWriter, BufferedRWPair, BufferedRandom, TextIOWrapper)
 
 OpenWrapper = _io.open # for compatibility with _pyio
 

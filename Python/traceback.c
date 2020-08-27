@@ -3,6 +3,8 @@
 
 #include "Python.h"
 
+PyAPI_DATA(const char *) Py_hexdigits;
+
 #include "code.h"
 #include "frameobject.h"          // PyFrame_GetBack()
 #include "structmember.h"         // PyMemberDef

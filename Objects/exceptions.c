@@ -2677,7 +2677,6 @@ _check_for_legacy_statements(PySyntaxErrorObject *self, Py_ssize_t start)
     static PyObject *print_prefix = NULL;
     static PyObject *exec_prefix = NULL;
     Py_ssize_t text_len = PyUnicode_GET_LENGTH(self->text), match;
-    int kind = PyUnicode_KIND(self->text);
     const void *data = PyUnicode_DATA(self->text);
 
     /* Ignore leading whitespace */
