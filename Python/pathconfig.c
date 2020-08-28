@@ -683,69 +683,6 @@ _PyPathConfig_ComputeSysPath0(const PyWideStringList *argv, PyObject **path0_p)
 }
 
 
-#define WCSTOK wcstok
-
-/* Search for a prefix value in an environment file (pyvenv.cfg).
-
-   - If found, copy it into *value_p: string which must be freed by
-     PyMem_RawFree().
-   - If not found, *value_p is set to NULL.
-*/
-PyStatus
-_Py_FindEnvConfigValue(FILE *env_file, const wchar_t *key,
-                       wchar_t **value_p)
-{
-    *value_p = NULL;
-
-    char buffer[MAXPATHLEN * 2 + 1];  /* allow extra for key, '=', etc. */
-    buffer[Py_ARRAY_LENGTH(buffer)-1] = '\0';
-
-    while (!feof(env_file)) {
-        char * p = fgets(buffer, Py_ARRAY_LENGTH(buffer) - 1, env_file);
-
-        if (p == NULL) {
-            break;
-        }
-
-        size_t n = strlen(p);
-        if (p[n - 1] != '\n') {
-            /* line has overflowed - bail */
-            break;
-        }
-        if (p[0] == '#') {
-            /* Comment - skip */
-            continue;
-        }
-
-        wchar_t *tmpbuffer = _Py_DecodeUTF8_surrogateescape(buffer, n, NULL);
-        if (tmpbuffer) {
-            wchar_t * state;
-            wchar_t * tok = WCSTOK(tmpbuffer, L" \t\r\n", &state);
-            if ((tok != NULL) && !wcscmp(tok, key)) {
-                tok = WCSTOK(NULL, L" \t", &state);
-                if ((tok != NULL) && !wcscmp(tok, L"=")) {
-                    tok = WCSTOK(NULL, L"\r\n", &state);
-                    if (tok != NULL) {
-                        *value_p = _PyMem_RawWcsdup(tok);
-                        PyMem_RawFree(tmpbuffer);
-
-                        if (*value_p == NULL) {
-                            return _PyStatus_NO_MEMORY();
-                        }
-
-                        /* found */
-                        return _PyStatus_OK();
-                    }
-                }
-            }
-            PyMem_RawFree(tmpbuffer);
-        }
-    }
-
-    /* not found */
-    return _PyStatus_OK();
-}
-
 #ifdef __cplusplus
 }
 #endif

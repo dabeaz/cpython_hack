@@ -121,13 +121,16 @@ static PyModuleDef readlinemodule;
 static PyObject *
 encode(PyObject *b)
 {
-    return PyUnicode_EncodeLocale(b, "surrogateescape");
+  return PyUnicode_AsBytes(b);
 }
 
 static PyObject *
 decode(const char *s)
 {
+  return PyUnicode_FromString(s);
+  #if 0
     return PyUnicode_DecodeLocale(s, "surrogateescape");
+    #endif
 }
 
 

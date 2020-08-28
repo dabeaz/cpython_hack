@@ -93,7 +93,8 @@ How will it end?  Or is this just the start?
 - Day 76 (8/25/2020). Some import cleanup.
 - Day 77 (8/26/2020). The encoding exorcism has started.
 - Day 78 (8/27/2020). Codecs. Cancelled.
-  
+- Day 79 (8/28/2020). Continued codecs clobbering.
+
 Copyright and License Information
 ---------------------------------
 

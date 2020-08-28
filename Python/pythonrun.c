@@ -78,7 +78,8 @@ PyRun_InteractiveLoopFlags(FILE *fp, const char *filename_str, PyCompilerFlags *
     PyCompilerFlags local_flags = _PyCompilerFlags_INIT;
     int nomem_count = 0;
 
-    filename = PyUnicode_DecodeFSDefault(filename_str);
+    filename = PyUnicode_FromString(filename_str);
+    
     if (filename == NULL) {
         PyErr_Print();
         return -1;
@@ -147,7 +148,7 @@ PyRun_InteractiveOneObjectEx(FILE *fp, PyObject *filename,
         if (v && v != Py_None) {
             oenc = _PyObject_GetAttrId(v, &PyId_encoding);
             if (oenc)
-                enc = PyUnicode_AsUTF8(oenc);
+                enc = PyUnicode_AsChar(oenc);
             if (!enc)
                 PyErr_Clear();
         }
@@ -158,7 +159,7 @@ PyRun_InteractiveOneObjectEx(FILE *fp, PyObject *filename,
         if (v == NULL)
             PyErr_Clear();
         else if (PyUnicode_Check(v)) {
-            ps1 = PyUnicode_AsUTF8(v);
+            ps1 = PyUnicode_AsChar(v);
             if (ps1 == NULL) {
                 PyErr_Clear();
                 ps1 = "";
@@ -171,7 +172,7 @@ PyRun_InteractiveOneObjectEx(FILE *fp, PyObject *filename,
         if (w == NULL)
             PyErr_Clear();
         else if (PyUnicode_Check(w)) {
-            ps2 = PyUnicode_AsUTF8(w);
+            ps2 = PyUnicode_AsChar(w);
             if (ps2 == NULL) {
                 PyErr_Clear();
                 ps2 = "";
@@ -224,7 +225,8 @@ PyRun_InteractiveOneFlags(FILE *fp, const char *filename_str, PyCompilerFlags *f
     PyObject *filename;
     int res;
 
-    filename = PyUnicode_DecodeFSDefault(filename_str);
+    filename = PyUnicode_FromString(filename_str);
+    
     if (filename == NULL) {
         PyErr_Print();
         return -1;
@@ -240,7 +242,8 @@ set_main_loader(PyObject *d, const char *filename, const char *loader_name)
     PyObject *filename_obj, *bootstrap, *loader_type = NULL, *loader;
     int result = 0;
 
-    filename_obj = PyUnicode_DecodeFSDefault(filename);
+    filename_obj = PyUnicode_FromString(filename);
+    
     if (filename_obj == NULL)
         return -1;
     PyInterpreterState *interp = _PyInterpreterState_GET();
@@ -282,7 +285,8 @@ PyRun_SimpleFileExFlags(FILE *fp, const char *filename, int closeit,
     d = PyModule_GetDict(m);
     if (PyDict_GetItemString(d, "__file__") == NULL) {
         PyObject *f;
-        f = PyUnicode_DecodeFSDefault(filename);
+	f = PyUnicode_FromString(filename);
+	
         if (f == NULL)
             goto done;
         if (PyDict_SetItemString(d, "__file__", f) < 0) {
@@ -424,7 +428,7 @@ static void
 print_error_text(PyObject *f, Py_ssize_t offset, PyObject *text_obj)
 {
     /* Convert text to a char pointer; return if error */
-    const char *text = PyUnicode_AsUTF8(text_obj);
+    const char *text = PyUnicode_AsChar(text_obj);
     if (text == NULL)
         return;
 
@@ -938,7 +942,8 @@ PyRun_FileExFlags(FILE *fp, const char *filename_str, int start, PyObject *globa
     mod_ty mod;
     PyObject *filename;
 
-    filename = PyUnicode_DecodeFSDefault(filename_str);
+    filename = PyUnicode_FromString(filename_str);
+    
     if (filename == NULL)
         goto exit;
 
@@ -1056,7 +1061,8 @@ Py_CompileStringExFlags(const char *str, const char *filename_str, int start,
                         PyCompilerFlags *flags, int optimize)
 {
     PyObject *filename, *co;
-    filename = PyUnicode_DecodeFSDefault(filename_str);
+    filename = PyUnicode_FromString(filename_str);
+    
     if (filename == NULL)
         return NULL;
     co = Py_CompileStringObject(str, filename, start, flags, optimize);
@@ -1082,7 +1088,7 @@ _Py_SourceAsString(PyObject *cmd, const char *funcname, const char *what, PyComp
     *cmd_copy = NULL;
     if (PyUnicode_Check(cmd)) {
         cf->cf_flags |= PyCF_IGNORE_COOKIE;
-        str = PyUnicode_AsUTF8AndSize(cmd, &size);
+        str = PyUnicode_AsCharAndSize(cmd, &size);
         if (str == NULL)
             return NULL;
     }
@@ -1147,7 +1153,8 @@ Py_SymtableString(const char *str, const char *filename_str, int start)
     PyObject *filename;
     struct symtable *st;
 
-    filename = PyUnicode_DecodeFSDefault(filename_str);
+    filename = PyUnicode_FromString(filename_str);
+    
     if (filename == NULL)
         return NULL;
     st = Py_SymtableStringObject(str, filename, start);

@@ -360,7 +360,7 @@ _Py_FindSourceFile(PyObject *filename, char* namebuf, size_t namelen, PyObject *
     Py_ssize_t len;
     PyObject* result;
 
-    filebytes = PyUnicode_EncodeFSDefault(filename);
+    filebytes = PyUnicode_AsBytes(filename);
     if (filebytes == NULL) {
         PyErr_Clear();
         return NULL;
@@ -388,7 +388,7 @@ _Py_FindSourceFile(PyObject *filename, char* namebuf, size_t namelen, PyObject *
         }
         if (!PyUnicode_Check(v))
             continue;
-        path = PyUnicode_EncodeFSDefault(v);
+        path = PyUnicode_AsBytes(v);
         if (path == NULL) {
             PyErr_Clear();
             continue;
@@ -733,7 +733,7 @@ _Py_DumpHexadecimal(int fd, unsigned long value, Py_ssize_t width)
 void
 _Py_DumpASCII(int fd, PyObject *text)
 {
-    PyASCIIObject *ascii = (PyASCIIObject *)text;
+    PyCompactUnicodeObject *ascii = (PyCompactUnicodeObject *)text;
     Py_ssize_t i, size;
     int truncated;
     int kind;
@@ -747,16 +747,13 @@ _Py_DumpASCII(int fd, PyObject *text)
     size = ascii->length;
     kind = ascii->state.kind;
     if (kind == PyUnicode_WCHAR_KIND) {
-        wstr = ((PyASCIIObject *)text)->wstr;
+        wstr = ((PyCompactUnicodeObject *)text)->wstr;
         if (wstr == NULL)
             return;
         size = ((PyCompactUnicodeObject *)text)->wstr_length;
     }
     else if (ascii->state.compact) {
-        if (ascii->state.ascii)
-            data = ((PyASCIIObject*)text) + 1;
-        else
-            data = ((PyCompactUnicodeObject*)text) + 1;
+      data = ((PyCompactUnicodeObject*)text) + 1;
     }
     else {
         data = ((PyUnicodeObject *)text)->data.any;

@@ -249,7 +249,7 @@ PyMember_SetOne(char *addr, PyMemberDef *l, PyObject *v)
         const char *string;
         Py_ssize_t len;
 
-        string = PyUnicode_AsUTF8AndSize(v, &len);
+        string = PyUnicode_AsCharAndSize(v, &len);
         if (string == NULL || len != 1) {
             PyErr_BadArgument();
             return -1;

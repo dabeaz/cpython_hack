@@ -939,7 +939,7 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
                 PyBuffer_FillInfo(p, NULL, NULL, 0, 1, 0);
             else if (PyUnicode_Check(arg)) {
                 Py_ssize_t len;
-                sarg = PyUnicode_AsUTF8AndSize(arg, &len);
+                sarg = PyUnicode_AsCharAndSize(arg, &len);
                 if (sarg == NULL)
                     return converterr(CONV_UNICODE,
                                       arg, msgbuf, bufsize);
@@ -967,7 +967,7 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
             }
             else if (PyUnicode_Check(arg)) {
                 Py_ssize_t len;
-                sarg = PyUnicode_AsUTF8AndSize(arg, &len);
+                sarg = PyUnicode_AsCharAndSize(arg, &len);
                 if (sarg == NULL)
                     return converterr(CONV_UNICODE,
                                       arg, msgbuf, bufsize);
@@ -992,7 +992,7 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
             if (c == 'z' && arg == Py_None)
                 *p = NULL;
             else if (PyUnicode_Check(arg)) {
-                sarg = PyUnicode_AsUTF8AndSize(arg, &len);
+                sarg = PyUnicode_AsCharAndSize(arg, &len);
                 if (sarg == NULL)
                     return converterr(CONV_UNICODE,
                                       arg, msgbuf, bufsize);
@@ -1100,10 +1100,8 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
         }
         else if (PyUnicode_Check(arg)) {
             /* Encode object; use default error handling */
-            s = PyUnicode_AsEncodedString(arg,
-                                          encoding,
-                                          NULL);
-            if (s == NULL)
+	  s = PyUnicode_AsBytes(arg);
+	  if (s == NULL)
                 return converterr("(encoding failed)",
                                   arg, msgbuf, bufsize);
             assert(PyBytes_Check(s));

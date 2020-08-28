@@ -53,20 +53,7 @@
     do {Py_ssize_t i_; Py_UNICODE *t_ = (target); Py_UNICODE v_ = (value);\
         for (i_ = 0; i_ < (length); i_++) t_[i_] = v_;\
     } while (0)
-
-/* macros to work with surrogates */
-#define Py_UNICODE_IS_SURROGATE(ch) (0xD800 <= (ch) && (ch) <= 0xDFFF)
-#define Py_UNICODE_IS_HIGH_SURROGATE(ch) (0xD800 <= (ch) && (ch) <= 0xDBFF)
-#define Py_UNICODE_IS_LOW_SURROGATE(ch) (0xDC00 <= (ch) && (ch) <= 0xDFFF)
-/* Join two surrogate characters and return a single Py_UCS4 value. */
-#define Py_UNICODE_JOIN_SURROGATES(high, low)  \
-    (((((Py_UCS4)(high) & 0x03FF) << 10) |      \
-      ((Py_UCS4)(low) & 0x03FF)) + 0x10000)
-/* high surrogate = top 10 bits added to D800 */
-#define Py_UNICODE_HIGH_SURROGATE(ch) (0xD800 - (0x10000 >> 10) + ((ch) >> 10))
-/* low surrogate = bottom 10 bits added to DC00 */
-#define Py_UNICODE_LOW_SURROGATE(ch) (0xDC00 + ((ch) & 0x3FF))
-
+  
 /* Check if substring matches at given offset.  The offset must be
    valid, and the substring must not be empty. */
 
@@ -215,16 +202,23 @@ typedef struct {
         unsigned int :24;
     } state;
     wchar_t *wstr;              /* wchar_t representation (null-terminated) */
-} PyASCIIObject;
+} OldPyASCIIObject;
 
 /* Non-ASCII strings allocated through PyUnicode_New use the
    PyCompactUnicodeObject structure. state.compact is set, and the data
    immediately follow the structure. */
 typedef struct {
-    PyASCIIObject _base;
-    Py_ssize_t utf8_length;     /* Number of bytes in utf8, excluding the
-                                 * terminating \0. */
-    char *utf8;                 /* UTF-8 representation (null-terminated) */
+    PyObject_HEAD
+    Py_ssize_t length;          /* Number of code points in the string */
+    Py_hash_t hash;             /* Hash value; -1 if not set */
+    struct {
+        unsigned int interned:2;
+        unsigned int kind:3;
+        unsigned int compact:1;
+        unsigned int ready:1;
+        unsigned int :25;
+    } state;
+    wchar_t *wstr;              /* wchar_t representation (null-terminated) */
     Py_ssize_t wstr_length;     /* Number of code points in wstr, possible
                                  * surrogates count as two code points. */
 } PyCompactUnicodeObject;
@@ -246,8 +240,8 @@ PyAPI_FUNC(int) _PyUnicode_CheckConsistency(
 
 /* Fast access macros */
 #define PyUnicode_WSTR_LENGTH(op) \
-    (PyUnicode_IS_COMPACT_ASCII(op) ?                  \
-     ((PyASCIIObject*)op)->length :                    \
+    (PyUnicode_IS_COMPACT(op) ?                  \
+     ((PyCompactUnicodeObject*)op)->length :                    \
      ((PyCompactUnicodeObject*)op)->wstr_length)
 
 /* Returns the deprecated Py_UNICODE representation's size in code units
@@ -258,10 +252,10 @@ PyAPI_FUNC(int) _PyUnicode_CheckConsistency(
 /* Py_DEPRECATED(3.3) */
 #define PyUnicode_GET_SIZE(op)                       \
     (assert(PyUnicode_Check(op)),                    \
-     (((PyASCIIObject *)(op))->wstr) ?               \
+     (((PyCompactUnicodeObject *)(op))->wstr) ?               \
       PyUnicode_WSTR_LENGTH(op) :                    \
       ((void)PyUnicode_AsUnicode(_PyObject_CAST(op)),\
-       assert(((PyASCIIObject *)(op))->wstr),        \
+       assert(((PyCompactUnicodeObject *)(op))->wstr),        \
        PyUnicode_WSTR_LENGTH(op)))
 
 /* Py_DEPRECATED(3.3) */
@@ -276,7 +270,7 @@ PyAPI_FUNC(int) _PyUnicode_CheckConsistency(
 /* Py_DEPRECATED(3.3) */
 #define PyUnicode_AS_UNICODE(op) \
     (assert(PyUnicode_Check(op)), \
-     (((PyASCIIObject *)(op))->wstr) ? (((PyASCIIObject *)(op))->wstr) : \
+     (((PyCompactUnicodeObject *)(op))->wstr) ? (((PyCompactUnicodeObject *)(op))->wstr) : \
       PyUnicode_AsUnicode(_PyObject_CAST(op)))
 
 /* Py_DEPRECATED(3.3) */
@@ -293,23 +287,10 @@ PyAPI_FUNC(int) _PyUnicode_CheckConsistency(
 #define SSTATE_INTERNED_MORTAL 1
 #define SSTATE_INTERNED_IMMORTAL 2
 
-/* Return true if the string contains only ASCII characters, or 0 if not. The
-   string may be compact (PyUnicode_IS_COMPACT_ASCII) or not, but must be
-   ready. */
-#define PyUnicode_IS_ASCII(op)                   \
-    (assert(PyUnicode_Check(op)),                \
-     assert(PyUnicode_IS_READY(op)),             \
-     ((PyASCIIObject*)op)->state.ascii)
-
 /* Return true if the string is compact or 0 if not.
    No type checks or Ready calls are performed. */
 #define PyUnicode_IS_COMPACT(op) \
-    (((PyASCIIObject*)(op))->state.compact)
-
-/* Return true if the string is a compact ASCII string (use PyASCIIObject
-   structure), or 0 if not.  No type checks or Ready calls are performed. */
-#define PyUnicode_IS_COMPACT_ASCII(op)                 \
-    (((PyASCIIObject*)op)->state.ascii && PyUnicode_IS_COMPACT(op))
+    (((PyCompactUnicodeObject*)(op))->state.compact)
 
 enum PyUnicode_Kind {
 /* String contains only wstr byte characters.  This is only possible
@@ -333,13 +314,11 @@ enum PyUnicode_Kind {
 #define PyUnicode_KIND(op) \
     (assert(PyUnicode_Check(op)), \
      assert(PyUnicode_IS_READY(op)),            \
-     ((PyASCIIObject *)(op))->state.kind)
+     ((PyCompactUnicodeObject *)(op))->state.kind)
 
 /* Return a void pointer to the raw unicode buffer. */
 #define _PyUnicode_COMPACT_DATA(op)                     \
-    (PyUnicode_IS_ASCII(op) ?                   \
-     ((void*)((PyASCIIObject*)(op) + 1)) :              \
-     ((void*)((PyCompactUnicodeObject*)(op) + 1)))
+  ((void*)((PyCompactUnicodeObject*)(op) + 1))
 
 #define _PyUnicode_NONCOMPACT_DATA(op)                  \
     (assert(((PyUnicodeObject*)(op))->data.any),        \
@@ -386,13 +365,13 @@ enum PyUnicode_Kind {
 #define PyUnicode_GET_LENGTH(op)                \
     (assert(PyUnicode_Check(op)),               \
      assert(PyUnicode_IS_READY(op)),            \
-     ((PyASCIIObject *)(op))->length)
+     ((PyCompactUnicodeObject *)(op))->length)
 
 
 /* Fast check to determine whether an object is ready. Equivalent to
    PyUnicode_IS_COMPACT(op) || ((PyUnicodeObject*)(op))->data.any) */
 
-#define PyUnicode_IS_READY(op) (((PyASCIIObject*)op)->state.ready)
+#define PyUnicode_IS_READY(op) (((PyCompactUnicodeObject*)op)->state.ready)
 
 /* PyUnicode_READY() does less work than _PyUnicode_Ready() in the best
    case.  If the canonical representation is not yet set, it will still call
@@ -683,51 +662,12 @@ PyAPI_FUNC(int) _PyUnicode_FormatAdvancedWriter(
     Py_ssize_t start,
     Py_ssize_t end);
 
-/* --- Manage the default encoding ---------------------------------------- */
-
-/* Returns a pointer to the default encoding (UTF-8) of the
-   Unicode object unicode and the size of the encoded representation
-   in bytes stored in *size.
-
-   In case of an error, no *size is set.
-
-   This function caches the UTF-8 encoded string in the unicodeobject
-   and subsequent calls will return the same string.  The memory is released
-   when the unicodeobject is deallocated.
-
-   _PyUnicode_AsStringAndSize is a #define for PyUnicode_AsUTF8AndSize to
-   support the previous internal function with the same behaviour.
-*/
-
-PyAPI_FUNC(const char *) PyUnicode_AsUTF8AndSize(
+/* Return a raw char * to internal String data.  Used to be UTF-8 */
+PyAPI_FUNC(const char *) PyUnicode_AsCharAndSize(
     PyObject *unicode,
     Py_ssize_t *size);
 
-#define _PyUnicode_AsStringAndSize PyUnicode_AsUTF8AndSize
-
-/* Returns a pointer to the default encoding (UTF-8) of the
-   Unicode object unicode.
-
-   Like PyUnicode_AsUTF8AndSize(), this also caches the UTF-8 representation
-   in the unicodeobject.
-
-   _PyUnicode_AsString is a #define for PyUnicode_AsUTF8 to
-   support the previous internal function with the same behaviour.
-
-   Use of this API is DEPRECATED since no size information can be
-   extracted from the returned data.
-
-   *** This API is for interpreter INTERNAL USE ONLY and will likely
-   *** be removed or changed for Python 3.1.
-
-   *** If you need to access the Unicode object as UTF-8 bytes string,
-   *** please use PyUnicode_AsUTF8String() instead.
-
-*/
-
-PyAPI_FUNC(const char *) PyUnicode_AsUTF8(PyObject *unicode);
-
-#define _PyUnicode_AsString PyUnicode_AsUTF8
+PyAPI_FUNC(const char *) PyUnicode_AsChar(PyObject *unicode);
 
 /* --- UTF-8 Codecs ------------------------------------------------------- */
 

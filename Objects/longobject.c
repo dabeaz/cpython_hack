@@ -2796,7 +2796,7 @@ PyLong_FromUnicodeObject(PyObject *u, int base)
         return NULL;
     assert(PyUnicode_IS_ASCII(asciidig));
     /* Simply get a pointer to existing ASCII characters. */
-    buffer = PyUnicode_AsUTF8AndSize(asciidig, &buflen);
+    buffer = PyUnicode_AsCharAndSize(asciidig, &buflen);
     assert(buffer != NULL);
 
     result = PyLong_FromString(buffer, &end, base);

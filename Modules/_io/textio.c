@@ -458,7 +458,7 @@ _io_TextIOWrapper_write_impl(textio *self, PyObject *text)
   PyObject *bytes, *result;
   CHECK_ATTACHED(self);
   CHECK_CLOSED(self);
-  bytes = PyUnicode_AsLatin1String(text);
+  bytes = PyUnicode_AsBytes(text);
   if (bytes == NULL) {
     return NULL;
   }
@@ -497,7 +497,7 @@ _io_TextIOWrapper_read_impl(textio *self, Py_ssize_t n)
     if (PyBytes_AsStringAndSize(bytes, &s, &len) < 0) {
       return NULL;
     }
-    return PyUnicode_DecodeLatin1(s, len, NULL);
+    return PyUnicode_FromStringAndSize(s, len);
   }
   return NULL;
 }
@@ -559,7 +559,7 @@ _textiowrapper_readline(textio *self, Py_ssize_t limit)
   if (PyBytes_AsStringAndSize(bytes, &s, &len) < 0) {
     return NULL;
   }
-  return PyUnicode_DecodeLatin1(s, len, NULL);
+  return PyUnicode_FromStringAndSize(s, len);
 }
 
 /*[clinic input]
@@ -961,7 +961,7 @@ _io_TextIOWrapper___init__(PyObject *self, PyObject *args, PyObject *kwargs)
         }
         else if (PyUnicode_Check(fastargs[1])) {
             Py_ssize_t encoding_length;
-            encoding = PyUnicode_AsUTF8AndSize(fastargs[1], &encoding_length);
+            encoding = PyUnicode_AsCharAndSize(fastargs[1], &encoding_length);
             if (encoding == NULL) {
                 goto exit;
             }
@@ -990,7 +990,7 @@ _io_TextIOWrapper___init__(PyObject *self, PyObject *args, PyObject *kwargs)
         }
         else if (PyUnicode_Check(fastargs[3])) {
             Py_ssize_t newline_length;
-            newline = PyUnicode_AsUTF8AndSize(fastargs[3], &newline_length);
+            newline = PyUnicode_AsCharAndSize(fastargs[3], &newline_length);
             if (newline == NULL) {
                 goto exit;
             }

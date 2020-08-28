@@ -295,7 +295,7 @@ float___getformat__(PyTypeObject *type, PyObject *arg)
         goto exit;
     }
     Py_ssize_t typestr_length;
-    typestr = PyUnicode_AsUTF8AndSize(arg, &typestr_length);
+    typestr = PyUnicode_AsCharAndSize(arg, &typestr_length);
     if (typestr == NULL) {
         goto exit;
     }
@@ -349,7 +349,7 @@ float___set_format__(PyTypeObject *type, PyObject *const *args, Py_ssize_t nargs
         goto exit;
     }
     Py_ssize_t typestr_length;
-    typestr = PyUnicode_AsUTF8AndSize(args[0], &typestr_length);
+    typestr = PyUnicode_AsCharAndSize(args[0], &typestr_length);
     if (typestr == NULL) {
         goto exit;
     }
@@ -362,7 +362,7 @@ float___set_format__(PyTypeObject *type, PyObject *const *args, Py_ssize_t nargs
         goto exit;
     }
     Py_ssize_t fmt_length;
-    fmt = PyUnicode_AsUTF8AndSize(args[1], &fmt_length);
+    fmt = PyUnicode_AsCharAndSize(args[1], &fmt_length);
     if (fmt == NULL) {
         goto exit;
     }
@@ -482,7 +482,7 @@ PyFloat_FromString(PyObject *v)
             return NULL;
         assert(PyUnicode_IS_ASCII(s_buffer));
         /* Simply get a pointer to existing ASCII characters. */
-        s = PyUnicode_AsUTF8AndSize(s_buffer, &len);
+        s = PyUnicode_AsCharAndSize(s_buffer, &len);
         assert(s != NULL);
     }
     else if (PyBytes_Check(v)) {
@@ -625,7 +625,7 @@ float_repr(PyFloatObject *v)
                                 NULL);
     if (!buf)
         return PyErr_NoMemory();
-    result = _PyUnicode_FromASCII(buf, strlen(buf));
+    result = PyUnicode_FromStringAndSize(buf, strlen(buf));
     PyMem_Free(buf);
     return result;
 }
@@ -1598,7 +1598,7 @@ float_fromhex(PyTypeObject *type, PyObject *string)
      * exp+4*ndigits and exp-4*ndigits are within the range of a long.
      */
 
-    s = PyUnicode_AsUTF8AndSize(string, &length);
+    s = PyUnicode_AsCharAndSize(string, &length);
     if (s == NULL)
         return NULL;
     s_end = s + length;

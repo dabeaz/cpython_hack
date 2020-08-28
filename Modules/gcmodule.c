@@ -2358,7 +2358,7 @@ _PyGC_DumpShutdownStats(PyThreadState *tstate)
         if (gcstate->debug & DEBUG_UNCOLLECTABLE) {
             PyObject *repr = NULL, *bytes = NULL;
             repr = PyObject_Repr(gcstate->garbage);
-            if (!repr || !(bytes = PyUnicode_EncodeFSDefault(repr)))
+            if (!repr || !(bytes = PyUnicode_AsBytes(repr)))
                 PyErr_WriteUnraisable(gcstate->garbage);
             else {
                 PySys_WriteStderr(

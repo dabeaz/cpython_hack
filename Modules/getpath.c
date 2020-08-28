@@ -641,57 +641,6 @@ calculate_set_prefix(PyCalculatePath *calculate, _PyPathConfig *pathconfig)
 }
 
 
-static PyStatus
-calculate_pybuilddir(const wchar_t *argv0_path,
-                     wchar_t *exec_prefix, size_t exec_prefix_len,
-                     int *found)
-{
-    PyStatus status;
-
-    /* Check to see if argv[0] is in the build directory. "pybuilddir.txt"
-       is written by setup.py and contains the relative path to the location
-       of shared library modules.
-
-       Filename: <argv0_path> / "pybuilddir.txt" */
-    wchar_t *filename = joinpath2(argv0_path, L"pybuilddir.txt");
-    if (filename == NULL) {
-        return _PyStatus_NO_MEMORY();
-    }
-
-    FILE *fp = _Py_wfopen(filename, L"rb");
-    PyMem_RawFree(filename);
-    if (fp == NULL) {
-        errno = 0;
-        return _PyStatus_OK();
-    }
-
-    char buf[MAXPATHLEN + 1];
-    size_t n = fread(buf, 1, Py_ARRAY_LENGTH(buf) - 1, fp);
-    buf[n] = '\0';
-    fclose(fp);
-
-    size_t dec_len;
-    wchar_t *pybuilddir = _Py_DecodeUTF8_surrogateescape(buf, n, &dec_len);
-    if (!pybuilddir) {
-        return DECODE_LOCALE_ERR("pybuilddir.txt", dec_len);
-    }
-
-    /* Path: <argv0_path> / <pybuilddir content> */
-    if (safe_wcscpy(exec_prefix, argv0_path, exec_prefix_len) < 0) {
-        PyMem_RawFree(pybuilddir);
-        return PATHLEN_ERR();
-    }
-    status = joinpath(exec_prefix, pybuilddir, exec_prefix_len);
-    PyMem_RawFree(pybuilddir);
-    if (_PyStatus_EXCEPTION(status)) {
-        return status;
-    }
-
-    *found = -1;
-    return _PyStatus_OK();
-}
-
-
 /* search_for_exec_prefix requires that argv0_path be no more than
    MAXPATHLEN bytes long.
 */
@@ -727,18 +676,7 @@ search_for_exec_prefix(PyCalculatePath *calculate, _PyPathConfig *pathconfig,
         *found = 1;
         return _PyStatus_OK();
     }
-
-    /* Check for pybuilddir.txt */
-    assert(*found == 0);
-    status = calculate_pybuilddir(calculate->argv0_path,
-                                  exec_prefix, exec_prefix_len, found);
-    if (_PyStatus_EXCEPTION(status)) {
-        return status;
-    }
-    if (*found) {
-        return _PyStatus_OK();
-    }
-
+    
     /* Search from argv0_path, until root is found */
     status = copy_absolute(exec_prefix, calculate->argv0_path, exec_prefix_len);
     if (_PyStatus_EXCEPTION(status)) {
@@ -1205,92 +1143,6 @@ calculate_argv0_path(PyCalculatePath *calculate,
     return _PyStatus_OK();
 }
 
-
-static PyStatus
-calculate_open_pyenv(PyCalculatePath *calculate, FILE **env_file_p)
-{
-    *env_file_p = NULL;
-
-    const wchar_t *env_cfg = L"pyvenv.cfg";
-
-    /* Filename: <argv0_path> / "pyvenv.cfg" */
-    wchar_t *filename = joinpath2(calculate->argv0_path, env_cfg);
-    if (filename == NULL) {
-        return _PyStatus_NO_MEMORY();
-    }
-
-    *env_file_p = _Py_wfopen(filename, L"r");
-    PyMem_RawFree(filename);
-
-    if (*env_file_p != NULL) {
-        return _PyStatus_OK();
-
-    }
-
-    /* fopen() failed: reset errno */
-    errno = 0;
-
-    /* Path: <basename(argv0_path)> / "pyvenv.cfg" */
-    wchar_t *parent = _PyMem_RawWcsdup(calculate->argv0_path);
-    if (parent == NULL) {
-        return _PyStatus_NO_MEMORY();
-    }
-    reduce(parent);
-
-    filename = joinpath2(parent, env_cfg);
-    PyMem_RawFree(parent);
-    if (filename == NULL) {
-        return _PyStatus_NO_MEMORY();
-    }
-
-    *env_file_p = _Py_wfopen(filename, L"r");
-    PyMem_RawFree(filename);
-
-    if (*env_file_p == NULL) {
-        /* fopen() failed: reset errno */
-        errno = 0;
-    }
-    return _PyStatus_OK();
-}
-
-
-/* Search for an "pyvenv.cfg" environment configuration file, first in the
-   executable's directory and then in the parent directory.
-   If found, open it for use when searching for prefixes.
-
-   Write the 'home' variable of pyvenv.cfg into calculate->argv0_path. */
-static PyStatus
-calculate_read_pyenv(PyCalculatePath *calculate)
-{
-    PyStatus status;
-    FILE *env_file = NULL;
-
-    status = calculate_open_pyenv(calculate, &env_file);
-    if (_PyStatus_EXCEPTION(status)) {
-        return status;
-    }
-    if (env_file == NULL) {
-        /* pyvenv.cfg not found */
-        return _PyStatus_OK();
-    }
-
-    /* Look for a 'home' variable and set argv0_path to it, if found */
-    wchar_t *home = NULL;
-    status = _Py_FindEnvConfigValue(env_file, L"home", &home);
-    if (_PyStatus_EXCEPTION(status)) {
-        fclose(env_file);
-        return status;
-    }
-
-    if (home) {
-        PyMem_RawFree(calculate->argv0_path);
-        calculate->argv0_path = home;
-    }
-    fclose(env_file);
-    return _PyStatus_OK();
-}
-
-
 static PyStatus
 calculate_zip_path(PyCalculatePath *calculate)
 {
@@ -1506,14 +1358,6 @@ calculate_path(PyCalculatePath *calculate, _PyPathConfig *pathconfig)
     if (_PyStatus_EXCEPTION(status)) {
         return status;
     }
-
-    /* If a pyvenv.cfg configure file is found,
-       argv0_path is overriden with its 'home' variable. */
-    status = calculate_read_pyenv(calculate);
-    if (_PyStatus_EXCEPTION(status)) {
-        return status;
-    }
-
     status = calculate_prefix(calculate, pathconfig);
     if (_PyStatus_EXCEPTION(status)) {
         return status;
@@ -1523,7 +1367,7 @@ calculate_path(PyCalculatePath *calculate, _PyPathConfig *pathconfig)
     if (_PyStatus_EXCEPTION(status)) {
         return status;
     }
-
+    
     status = calculate_exec_prefix(calculate, pathconfig);
     if (_PyStatus_EXCEPTION(status)) {
         return status;

@@ -61,7 +61,6 @@ get_integer(PyObject *str, Py_ssize_t *ppos, Py_ssize_t end,
 {
     Py_ssize_t accumulator, digitval, pos = *ppos;
     int numdigits;
-    int kind = PyUnicode_KIND(str);
     const void *data = PyUnicode_DATA(str);
 
     accumulator = numdigits = 0;
@@ -136,24 +135,6 @@ typedef struct {
     Py_UCS4 type;
 } InternalFormatSpec;
 
-#if 0
-/* Occasionally useful for debugging. Should normally be commented out. */
-static void
-DEBUG_PRINT_FORMAT_SPEC(InternalFormatSpec *format)
-{
-    printf("internal format spec: fill_char %d\n", format->fill_char);
-    printf("internal format spec: align %d\n", format->align);
-    printf("internal format spec: alternate %d\n", format->alternate);
-    printf("internal format spec: sign %d\n", format->sign);
-    printf("internal format spec: width %zd\n", format->width);
-    printf("internal format spec: thousands_separators %d\n",
-           format->thousands_separators);
-    printf("internal format spec: precision %zd\n", format->precision);
-    printf("internal format spec: type %c\n", format->type);
-    printf("\n");
-}
-#endif
-
 
 /*
   ptr points to the start of the format_spec, end points just past its end.
@@ -169,7 +150,6 @@ parse_internal_render_format_spec(PyObject *format_spec,
                                   char default_align)
 {
     Py_ssize_t pos = start;
-    int kind = PyUnicode_KIND(format_spec);
     const void *data = PyUnicode_DATA(format_spec);
     /* end-pos is used throughout this code to specify the length of
        the input string */
@@ -442,7 +422,6 @@ parse_number(PyObject *s, Py_ssize_t pos, Py_ssize_t end,
              Py_ssize_t *n_remainder, int *has_decimal)
 {
     Py_ssize_t remainder;
-    int kind = PyUnicode_KIND(s);
     const void *data = PyUnicode_DATA(s);
 
     while (pos<end && Py_ISDIGIT(PyUnicode_READ(kind, data, pos)))
@@ -602,7 +581,6 @@ fill_number(_PyUnicodeWriter *writer, const NumberFieldWidths *spec,
 {
     /* Used to keep track of digits, decimal, and remainder. */
     Py_ssize_t d_pos = d_start;
-    const unsigned int kind = writer->kind;
     const void *data = writer->data;
     Py_ssize_t r;
 
@@ -1068,7 +1046,7 @@ format_float_internal(PyObject *value,
 
     /* Since there is no unicode version of PyOS_double_to_string,
        just use the 8 bit version and then convert to unicode. */
-    unicode_tmp = _PyUnicode_FromASCII(buf, n_digits);
+    unicode_tmp = PyUnicode_FromStringAndSize(buf, n_digits);
     PyMem_Free(buf);
     if (unicode_tmp == NULL)
         goto done;

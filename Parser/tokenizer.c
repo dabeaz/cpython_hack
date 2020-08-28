@@ -278,30 +278,6 @@ check_bom(int get_char(struct tok_state *),
             unget_char(ch1, tok);
             return 1;
         }
-#if 0
-    /* Disable support for UTF-16 BOMs until a decision
-       is made whether this needs to be supported.  */
-    } else if (ch1 == 0xFE) {
-        ch2 = get_char(tok);
-        if (ch2 != 0xFF) {
-            unget_char(ch2, tok);
-            unget_char(ch1, tok);
-            return 1;
-        }
-        if (!set_readline(tok, "utf-16-be"))
-            return 0;
-        tok->decoding_state = STATE_NORMAL;
-    } else if (ch1 == 0xFF) {
-        ch2 = get_char(tok);
-        if (ch2 != 0xFE) {
-            unget_char(ch2, tok);
-            unget_char(ch1, tok);
-            return 1;
-        }
-        if (!set_readline(tok, "utf-16-le"))
-            return 0;
-        tok->decoding_state = STATE_NORMAL;
-#endif
     } else {
         unget_char(ch1, tok);
         return 1;
@@ -353,7 +329,7 @@ fp_readl(char *s, int size, struct tok_state *tok)
     }
     if (PyUnicode_CheckExact(bufobj))
     {
-        buf = PyUnicode_AsUTF8AndSize(bufobj, &buflen);
+        buf = PyUnicode_AsCharAndSize(bufobj, &buflen);
         if (buf == NULL) {
             goto error;
         }
@@ -596,11 +572,11 @@ buf_setreadl(struct tok_state *tok, const char* enc) {
 
 static PyObject *
 translate_into_utf8(const char* str, const char* enc) {
-    PyObject *utf8;
-    PyObject* buf = PyUnicode_Decode(str, strlen(str), enc, NULL);
+  PyObject *utf8;
+    PyObject *buf = PyUnicode_FromStringAndSize(str, strlen(str));
     if (buf == NULL)
         return NULL;
-    utf8 = PyUnicode_AsUTF8String(buf);
+    utf8 = PyUnicode_AsBytes(buf);
     Py_DECREF(buf);
     return utf8;
 }
@@ -1045,8 +1021,7 @@ syntaxerror(struct tok_state *tok, const char *format, ...)
         goto error;
     }
 
-    errtext = PyUnicode_DecodeUTF8(tok->line_start, tok->cur - tok->line_start,
-                                   "replace");
+    errtext = PyUnicode_FromStringAndSize(tok->line_start, tok->cur - tok->line_start);
     if (!errtext) {
         goto error;
     }
@@ -1054,8 +1029,7 @@ syntaxerror(struct tok_state *tok, const char *format, ...)
     Py_ssize_t line_len = strcspn(tok->line_start, "\n");
     if (line_len != tok->cur - tok->line_start) {
         Py_DECREF(errtext);
-        errtext = PyUnicode_DecodeUTF8(tok->line_start, line_len,
-                                       "replace");
+        errtext = PyUnicode_FromStringAndSize(tok->line_start, line_len);
     }
     if (!errtext) {
         goto error;
@@ -1091,7 +1065,7 @@ verify_identifier(struct tok_state *tok)
     PyObject *s;
     if (tok->decoding_erred)
         return 0;
-    s = PyUnicode_DecodeUTF8(tok->start, tok->cur - tok->start, NULL);
+    s = PyUnicode_FromStringAndSize(tok->start, tok->cur - tok->start);
     if (s == NULL) {
         if (PyErr_ExceptionMatches(PyExc_UnicodeDecodeError)) {
             tok->done = E_DECODE;
@@ -1114,7 +1088,7 @@ verify_identifier(struct tok_state *tok)
             /* Determine the offset in UTF-8 encoded input */
             Py_SETREF(s, PyUnicode_Substring(s, 0, invalid + 1));
             if (s != NULL) {
-                Py_SETREF(s, PyUnicode_AsUTF8String(s));
+	      Py_SETREF(s, PyUnicode_AsBytes(s));
             }
             if (s == NULL) {
                 tok->done = E_ERROR;

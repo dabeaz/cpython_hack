@@ -379,17 +379,7 @@ stdprinter_write(PyStdPrinter_Object *self, PyObject *args)
         return NULL;
     }
 
-    /* Encode Unicode to UTF-8/surrogateescape */
-    str = PyUnicode_AsUTF8AndSize(unicode, &n);
-    if (str == NULL) {
-        PyErr_Clear();
-        bytes = _PyUnicode_AsUTF8String(unicode, "backslashreplace");
-        if (bytes == NULL)
-            return NULL;
-        str = PyBytes_AS_STRING(bytes);
-        n = PyBytes_GET_SIZE(bytes);
-    }
-
+    str = PyUnicode_AsCharAndSize(unicode, &n);
     n = _Py_write(self->fd, str, n);
     /* save errno, it can be modified indirectly by Py_XDECREF() */
     err = errno;

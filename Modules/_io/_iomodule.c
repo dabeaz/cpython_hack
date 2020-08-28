@@ -19,10 +19,6 @@
 #include <sys/stat.h>
 #endif /* HAVE_SYS_STAT_H */
 
-#ifdef MS_WINDOWS
-#include <windows.h>
-#endif
-
 /* Various interned strings */
 
 PyObject *_PyIO_str_close = NULL;
@@ -362,13 +358,6 @@ _io_open_impl(PyObject *module, PyObject *file, const char *mode,
     /* Create the Raw file stream */
     {
         PyObject *RawIO_class = (PyObject *)&PyFileIO_Type;
-#ifdef MS_WINDOWS
-        const PyConfig *config = _Py_GetConfig();
-        if (!config->legacy_windows_stdio && _PyIO_get_console_type(path_or_fd) != '\0') {
-            RawIO_class = (PyObject *)&PyWindowsConsoleIO_Type;
-            encoding = "utf-8";
-        }
-#endif
         raw = PyObject_CallFunction(RawIO_class, "OsOO",
                                     path_or_fd, rawmode,
                                     closefd ? Py_True : Py_False,
@@ -805,7 +794,7 @@ _io_open(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *kw
             goto exit;
         }
         Py_ssize_t mode_length;
-        mode = PyUnicode_AsUTF8AndSize(args[1], &mode_length);
+        mode = PyUnicode_AsCharAndSize(args[1], &mode_length);
         if (mode == NULL) {
             goto exit;
         }
@@ -832,7 +821,7 @@ _io_open(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *kw
         }
         else if (PyUnicode_Check(args[3])) {
             Py_ssize_t encoding_length;
-            encoding = PyUnicode_AsUTF8AndSize(args[3], &encoding_length);
+            encoding = PyUnicode_AsCharAndSize(args[3], &encoding_length);
             if (encoding == NULL) {
                 goto exit;
             }
@@ -855,7 +844,7 @@ _io_open(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *kw
         }
         else if (PyUnicode_Check(args[4])) {
             Py_ssize_t errors_length;
-            errors = PyUnicode_AsUTF8AndSize(args[4], &errors_length);
+            errors = PyUnicode_AsCharAndSize(args[4], &errors_length);
             if (errors == NULL) {
                 goto exit;
             }
@@ -878,7 +867,7 @@ _io_open(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *kw
         }
         else if (PyUnicode_Check(args[5])) {
             Py_ssize_t newline_length;
-            newline = PyUnicode_AsUTF8AndSize(args[5], &newline_length);
+            newline = PyUnicode_AsCharAndSize(args[5], &newline_length);
             if (newline == NULL) {
                 goto exit;
             }
@@ -1035,12 +1024,6 @@ PyInit__io(void)
     PyStringIO_Type.tp_base = &PyTextIOBase_Type;
     ADD_TYPE(&PyStringIO_Type);
     */
-
-#ifdef MS_WINDOWS
-    /* WindowsConsoleIO */
-    PyWindowsConsoleIO_Type.tp_base = &PyRawIOBase_Type;
-    ADD_TYPE(&PyWindowsConsoleIO_Type);
-#endif
 
     /* BufferedReader */
     PyBufferedReader_Type.tp_base = &PyBufferedIOBase_Type;

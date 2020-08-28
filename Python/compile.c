@@ -365,7 +365,8 @@ PyAST_CompileEx(mod_ty mod, const char *filename_str, PyCompilerFlags *flags,
 {
     PyObject *filename;
     PyCodeObject *co;
-    filename = PyUnicode_DecodeFSDefault(filename_str);
+    filename = PyUnicode_FromString(filename_str);
+    
     if (filename == NULL)
         return NULL;
     co = PyAST_CompileObject(mod, filename, flags, optimize);
@@ -1780,12 +1781,12 @@ get_ref_type(struct compiler *c, PyObject *name)
         _Py_FatalErrorFormat(__func__,
            "unknown scope for %.100s in %.100s(%s)\n"
            "symbols: %s\nlocals: %s\nglobals: %s",
-           PyUnicode_AsUTF8(name),
-           PyUnicode_AsUTF8(c->u->u_name),
-           PyUnicode_AsUTF8(PyObject_Repr(c->u->u_ste->ste_id)),
-           PyUnicode_AsUTF8(PyObject_Repr(c->u->u_ste->ste_symbols)),
-           PyUnicode_AsUTF8(PyObject_Repr(c->u->u_varnames)),
-           PyUnicode_AsUTF8(PyObject_Repr(c->u->u_names)));
+           PyUnicode_AsChar(name),
+           PyUnicode_AsChar(c->u->u_name),
+           PyUnicode_AsChar(PyObject_Repr(c->u->u_ste->ste_id)),
+           PyUnicode_AsChar(PyObject_Repr(c->u->u_ste->ste_symbols)),
+           PyUnicode_AsChar(PyObject_Repr(c->u->u_varnames)),
+           PyUnicode_AsChar(PyObject_Repr(c->u->u_names)));
     }
 
     return scope;
@@ -1831,11 +1832,11 @@ compiler_make_closure(struct compiler *c, PyCodeObject *co, Py_ssize_t flags, Py
                 _Py_FatalErrorFormat(__func__,
                     "lookup %s in %s %d %d\n"
                     "freevars of %s: %s\n",
-                    PyUnicode_AsUTF8(PyObject_Repr(name)),
-                    PyUnicode_AsUTF8(c->u->u_name),
+                    PyUnicode_AsChar(PyObject_Repr(name)),
+                    PyUnicode_AsChar(c->u->u_name),
                     reftype, arg,
-                    PyUnicode_AsUTF8(co->co_name),
-                    PyUnicode_AsUTF8(PyObject_Repr(co->co_freevars)));
+                    PyUnicode_AsChar(co->co_name),
+                    PyUnicode_AsChar(PyObject_Repr(co->co_freevars)));
             }
             ADDOP_I(c, LOAD_CLOSURE, arg);
         }
@@ -3839,7 +3840,7 @@ validate_keywords(struct compiler *c, asdl_seq *keywords)
                     return -1;
                 }
                 c->u->u_col_offset = other->col_offset;
-                compiler_error(c, PyUnicode_AsUTF8(msg));
+                compiler_error(c, PyUnicode_AsChar(msg));
                 Py_DECREF(msg);
                 return -1;
             }

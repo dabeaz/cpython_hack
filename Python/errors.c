@@ -661,7 +661,7 @@ PyErr_SetFromErrnoWithFilenameObjects(PyObject *exc, PyObject *filenameObject, P
     
     if (i != 0) {
         const char *s = strerror(i);
-        message = PyUnicode_DecodeLocale(s, "surrogateescape");
+	message = PyUnicode_FromString(s);
     }
     else {
         /* Sometimes errno didn't get set */
@@ -698,7 +698,7 @@ PyErr_SetFromErrnoWithFilenameObjects(PyObject *exc, PyObject *filenameObject, P
 PyObject *
 PyErr_SetFromErrnoWithFilename(PyObject *exc, const char *filename)
 {
-    PyObject *name = filename ? PyUnicode_DecodeFSDefault(filename) : NULL;
+    PyObject *name = filename ? PyUnicode_FromString(filename) : NULL;
     PyObject *result = PyErr_SetFromErrnoWithFilenameObjects(exc, name, NULL);
     Py_XDECREF(name);
     return result;
@@ -1393,7 +1393,7 @@ PyErr_SyntaxLocationEx(const char *filename, int lineno, int col_offset)
     PyThreadState *tstate = _PyThreadState_GET();
     PyObject *fileobj;
     if (filename != NULL) {
-        fileobj = PyUnicode_DecodeFSDefault(filename);
+	fileobj = PyUnicode_FromString(filename);
         if (fileobj == NULL) {
             _PyErr_Clear(tstate);
         }

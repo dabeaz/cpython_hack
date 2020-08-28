@@ -104,7 +104,7 @@ typedef uint16_t Py_UCS2;
 typedef uint8_t Py_UCS1;
 
 #ifdef __cplusplus
-extern "C" {
+eFxtern "C" {
 #endif
 
 
@@ -143,24 +143,6 @@ PyAPI_FUNC(PyObject*) PyUnicode_Substring(
     PyObject *str,
     Py_ssize_t start,
     Py_ssize_t end);
-#endif
-
-#if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03030000
-/* Copy the string into a UCS4 buffer including the null character if copy_null
-   is set. Return NULL and raise an exception on error. Raise a SystemError if
-   the buffer is smaller than the string. Return buffer on success.
-
-   buflen is the length of the buffer in (Py_UCS4) characters. */
-PyAPI_FUNC(Py_UCS4*) PyUnicode_AsUCS4(
-    PyObject *unicode,
-    Py_UCS4* buffer,
-    Py_ssize_t buflen,
-    int copy_null);
-
-/* Copy the string into a UCS4 buffer. A new buffer is allocated using
- * PyMem_Malloc; if this fails, NULL is returned with a memory error
-   exception set. */
-PyAPI_FUNC(Py_UCS4*) PyUnicode_AsUCS4Copy(PyObject *unicode);
 #endif
 
 #if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03030000
@@ -264,7 +246,7 @@ PyAPI_FUNC(PyObject *) PyUnicode_InternFromString(
 
 /* Use only if you know it's a string */
 #define PyUnicode_CHECK_INTERNED(op) \
-    (((PyASCIIObject *)(op))->state.interned)
+    (((PyCompactUnicodeObject *)(op))->state.interned)
 
 /* --- wchar_t support for platforms which support it --------------------- */
 
@@ -365,13 +347,6 @@ PyAPI_FUNC(PyObject*) PyUnicode_AsEncodedString(
     const char *errors          /* error handling */
     );
 
-  
-/* Build an encoding map. */
-
-PyAPI_FUNC(PyObject*) PyUnicode_BuildEncodingMap(
-    PyObject* string            /* 256 character map */
-   );
-
 /* --- UTF-8 Codecs ------------------------------------------------------- */
 
 PyAPI_FUNC(PyObject*) PyUnicode_DecodeUTF8(
@@ -387,126 +362,11 @@ PyAPI_FUNC(PyObject*) PyUnicode_DecodeUTF8Stateful(
     Py_ssize_t *consumed        /* bytes consumed */
     );
 
-PyAPI_FUNC(PyObject*) PyUnicode_AsUTF8String(
-    PyObject *unicode           /* Unicode object */
-    );
-
-/* --- Unicode-Escape Codecs ---------------------------------------------- */
-
-PyAPI_FUNC(PyObject*) PyUnicode_DecodeUnicodeEscape(
-    const char *string,         /* Unicode-Escape encoded string */
-    Py_ssize_t length,          /* size of string */
-    const char *errors          /* error handling */
-    );
-
-PyAPI_FUNC(PyObject*) PyUnicode_AsUnicodeEscapeString(
-    PyObject *unicode           /* Unicode object */
-    );
-
-/* --- Raw-Unicode-Escape Codecs ------------------------------------------ */
-
-PyAPI_FUNC(PyObject*) PyUnicode_DecodeRawUnicodeEscape(
-    const char *string,         /* Raw-Unicode-Escape encoded string */
-    Py_ssize_t length,          /* size of string */
-    const char *errors          /* error handling */
-    );
-
-PyAPI_FUNC(PyObject*) PyUnicode_AsRawUnicodeEscapeString(
-    PyObject *unicode           /* Unicode object */
-    );
-
 /* --- Latin-1 Codecs -----------------------------------------------------
 
    Note: Latin-1 corresponds to the first 256 Unicode ordinals. */
 
-PyAPI_FUNC(PyObject*) PyUnicode_DecodeLatin1(
-    const char *string,         /* Latin-1 encoded string */
-    Py_ssize_t length,          /* size of string */
-    const char *errors          /* error handling */
-    );
-
-PyAPI_FUNC(PyObject*) PyUnicode_AsLatin1String(
-    PyObject *unicode           /* Unicode object */
-    );
-
-/* --- ASCII Codecs -------------------------------------------------------
-
-   Only 7-bit ASCII data is excepted. All other codes generate errors.
-
-*/
-
-PyAPI_FUNC(PyObject*) PyUnicode_DecodeASCII(
-    const char *string,         /* ASCII encoded string */
-    Py_ssize_t length,          /* size of string */
-    const char *errors          /* error handling */
-    );
-
-PyAPI_FUNC(PyObject*) PyUnicode_AsASCIIString(
-    PyObject *unicode           /* Unicode object */
-    );
-
-/* --- Character Map Codecs -----------------------------------------------
-
-   This codec uses mappings to encode and decode characters.
-
-   Decoding mappings must map byte ordinals (integers in the range from 0 to
-   255) to Unicode strings, integers (which are then interpreted as Unicode
-   ordinals) or None.  Unmapped data bytes (ones which cause a LookupError)
-   as well as mapped to None, 0xFFFE or '\ufffe' are treated as "undefined
-   mapping" and cause an error.
-
-   Encoding mappings must map Unicode ordinal integers to bytes objects,
-   integers in the range from 0 to 255 or None.  Unmapped character
-   ordinals (ones which cause a LookupError) as well as mapped to
-   None are treated as "undefined mapping" and cause an error.
-
-*/
-
-PyAPI_FUNC(PyObject*) PyUnicode_DecodeCharmap(
-    const char *string,         /* Encoded string */
-    Py_ssize_t length,          /* size of string */
-    PyObject *mapping,          /* decoding mapping */
-    const char *errors          /* error handling */
-    );
-
-PyAPI_FUNC(PyObject*) PyUnicode_AsCharmapString(
-    PyObject *unicode,          /* Unicode object */
-    PyObject *mapping           /* encoding mapping */
-    );
-
-/* --- Locale encoding --------------------------------------------------- */
-
-#if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03030000
-/* Decode a string from the current locale encoding. The decoder is strict if
-   *surrogateescape* is equal to zero, otherwise it uses the 'surrogateescape'
-   error handler (PEP 383) to escape undecodable bytes. If a byte sequence can
-   be decoded as a surrogate character and *surrogateescape* is not equal to
-   zero, the byte sequence is escaped using the 'surrogateescape' error handler
-   instead of being decoded. *str* must end with a null character but cannot
-   contain embedded null characters. */
-
-PyAPI_FUNC(PyObject*) PyUnicode_DecodeLocaleAndSize(
-    const char *str,
-    Py_ssize_t len,
-    const char *errors);
-
-/* Similar to PyUnicode_DecodeLocaleAndSize(), but compute the string
-   length using strlen(). */
-
-PyAPI_FUNC(PyObject*) PyUnicode_DecodeLocale(
-    const char *str,
-    const char *errors);
-
-/* Encode a Unicode object to the current locale encoding. The encoder is
-   strict is *surrogateescape* is equal to zero, otherwise the
-   "surrogateescape" error handler is used. Return a bytes object. The string
-   cannot contain embedded null characters. */
-
-PyAPI_FUNC(PyObject*) PyUnicode_EncodeLocale(
-    PyObject *unicode,
-    const char *errors
-    );
-#endif
+PyAPI_FUNC(PyObject*) PyUnicode_AsBytes(PyObject *unicode);
 
 /* --- File system encoding ---------------------------------------------- */
 
@@ -519,42 +379,6 @@ PyAPI_FUNC(int) PyUnicode_FSConverter(PyObject*, void*);
    PyUnicode_DecodeFSDefaultAndSize(); str objects are output as-is. */
 
 PyAPI_FUNC(int) PyUnicode_FSDecoder(PyObject*, void*);
-
-/* Decode a null-terminated string using Py_FileSystemDefaultEncoding
-   and the "surrogateescape" error handler.
-
-   If Py_FileSystemDefaultEncoding is not set, fall back to the locale
-   encoding.
-
-   Use PyUnicode_DecodeFSDefaultAndSize() if the string length is known.
-*/
-
-PyAPI_FUNC(PyObject*) PyUnicode_DecodeFSDefault(
-    const char *s               /* encoded string */
-    );
-
-/* Decode a string using Py_FileSystemDefaultEncoding
-   and the "surrogateescape" error handler.
-
-   If Py_FileSystemDefaultEncoding is not set, fall back to the locale
-   encoding.
-*/
-
-PyAPI_FUNC(PyObject*) PyUnicode_DecodeFSDefaultAndSize(
-    const char *s,               /* encoded string */
-    Py_ssize_t size              /* size */
-    );
-
-/* Encode a Unicode object to Py_FileSystemDefaultEncoding with the
-   "surrogateescape" error handler, and return bytes.
-
-   If Py_FileSystemDefaultEncoding is not set, fall back to the locale
-   encoding.
-*/
-
-PyAPI_FUNC(PyObject*) PyUnicode_EncodeFSDefault(
-    PyObject *unicode
-    );
 
 /* --- Methods & Slots ----------------------------------------------------
 

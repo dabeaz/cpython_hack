@@ -564,28 +564,9 @@ w_complex_object(PyObject *v, char flag, WFILE *p)
         w_pstring(PyBytes_AS_STRING(v), PyBytes_GET_SIZE(v), p);
     }
     else if (PyUnicode_CheckExact(v)) {
-        if (p->version >= 4 && PyUnicode_IS_ASCII(v)) {
-            int is_short = PyUnicode_GET_LENGTH(v) < 256;
-            if (is_short) {
-                if (PyUnicode_CHECK_INTERNED(v))
-                    W_TYPE(TYPE_SHORT_ASCII_INTERNED, p);
-                else
-                    W_TYPE(TYPE_SHORT_ASCII, p);
-                w_short_pstring(PyUnicode_1BYTE_DATA(v),
-                                PyUnicode_GET_LENGTH(v), p);
-            }
-            else {
-                if (PyUnicode_CHECK_INTERNED(v))
-                    W_TYPE(TYPE_ASCII_INTERNED, p);
-                else
-                    W_TYPE(TYPE_ASCII, p);
-                w_pstring(PyUnicode_1BYTE_DATA(v),
-                          PyUnicode_GET_LENGTH(v), p);
-            }
-        }
-        else {
-            PyObject *utf8;
-            utf8 = PyUnicode_AsEncodedString(v, "utf8", "surrogatepass");
+      {
+	PyObject *utf8;
+            utf8 = PyUnicode_AsBytes(v);
             if (utf8 == NULL) {
                 p->depth--;
                 p->error = WFERR_UNMARSHALLABLE;
@@ -1247,7 +1228,7 @@ r_object(RFILE *p)
             buffer = r_string(n, p);
             if (buffer == NULL)
                 break;
-            v = PyUnicode_DecodeUTF8(buffer, n, "surrogatepass");
+            v = PyUnicode_FromStringAndSize(buffer, n);
         }
         else {
             v = PyUnicode_New(0, 0);

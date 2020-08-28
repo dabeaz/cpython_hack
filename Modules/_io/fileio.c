@@ -1186,7 +1186,7 @@ _io_FileIO___init__(PyObject *self, PyObject *args, PyObject *kwargs)
             goto exit;
         }
         Py_ssize_t mode_length;
-        mode = PyUnicode_AsUTF8AndSize(fastargs[1], &mode_length);
+        mode = PyUnicode_AsCharAndSize(fastargs[1], &mode_length);
         if (mode == NULL) {
             goto exit;
         }

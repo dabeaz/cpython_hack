@@ -224,7 +224,7 @@ pymain_run_command(wchar_t *command, PyCompilerFlags *cf)
         goto error;
     }
 
-    bytes = PyUnicode_AsUTF8String(unicode);
+    bytes = PyUnicode_AsBytes(unicode);
     Py_DECREF(unicode);
     if (bytes == NULL) {
         goto error;
@@ -329,7 +329,7 @@ pymain_run_file(const PyConfig *config, PyCompilerFlags *cf)
 
     unicode = PyUnicode_FromWideChar(filename, wcslen(filename));
     if (unicode != NULL) {
-        bytes = PyUnicode_EncodeFSDefault(unicode);
+        bytes = PyUnicode_AsBytes(unicode);
         Py_DECREF(unicode);
     }
     if (bytes != NULL) {

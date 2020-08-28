@@ -243,7 +243,7 @@ PyModule_FromDefAndSpec2(struct PyModuleDef* def, PyObject *spec, int module_api
     if (nameobj == NULL) {
         return NULL;
     }
-    name = PyUnicode_AsUTF8(nameobj);
+    name = PyUnicode_AsChar(nameobj);
     if (name == NULL) {
         goto error;
     }
@@ -484,7 +484,7 @@ PyModule_GetName(PyObject *m)
     if (name == NULL)
         return NULL;
     Py_DECREF(name);   /* module dict has still a reference */
-    return PyUnicode_AsUTF8(name);
+    return PyUnicode_AsChar(name);
 }
 
 PyObject*

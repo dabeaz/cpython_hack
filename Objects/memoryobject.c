@@ -1197,7 +1197,7 @@ cast_to_1D(PyMemoryViewObject *mv, PyObject *format)
     assert(view->strides == mv->ob_array + view->ndim);
     assert(view->suboffsets == mv->ob_array + 2*view->ndim);
 
-    asciifmt = PyUnicode_AsASCIIString(format);
+    asciifmt = PyUnicode_AsBytes(format);
     if (asciifmt == NULL)
         return ret;
 

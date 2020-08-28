@@ -877,7 +877,7 @@ bytearray_decode(PyByteArrayObject *self, PyObject *const *args, Py_ssize_t narg
             goto exit;
         }
         Py_ssize_t encoding_length;
-        encoding = PyUnicode_AsUTF8AndSize(args[0], &encoding_length);
+        encoding = PyUnicode_AsCharAndSize(args[0], &encoding_length);
         if (encoding == NULL) {
             goto exit;
         }
@@ -894,7 +894,7 @@ bytearray_decode(PyByteArrayObject *self, PyObject *const *args, Py_ssize_t narg
         goto exit;
     }
     Py_ssize_t errors_length;
-    errors = PyUnicode_AsUTF8AndSize(args[1], &errors_length);
+    errors = PyUnicode_AsCharAndSize(args[1], &errors_length);
     if (errors == NULL) {
         goto exit;
     }
@@ -1776,7 +1776,7 @@ bytearray_init(PyByteArrayObject *self, PyObject *args, PyObject *kwds)
                             "string argument without an encoding");
             return -1;
         }
-        encoded = PyUnicode_AsEncodedString(arg, encoding, errors);
+        encoded = PyUnicode_AsBytes(arg);
         if (encoded == NULL)
             return -1;
         assert(PyBytes_Check(encoded));
@@ -3080,7 +3080,7 @@ _common_reduce(PyByteArrayObject *self, int proto)
         /* use str based reduction for backwards compatibility with Python 2.x */
         PyObject *latin1;
         if (Py_SIZE(self))
-            latin1 = PyUnicode_DecodeLatin1(buf, Py_SIZE(self), NULL);
+	  latin1 = PyUnicode_FromStringAndSize(buf, Py_SIZE(self));
         else
             latin1 = PyUnicode_FromString("");
         return Py_BuildValue("(O(Ns)N)", Py_TYPE(self), latin1, "latin-1", dict);

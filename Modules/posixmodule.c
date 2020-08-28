@@ -1789,7 +1789,11 @@ posix_getcwd(int use_bytes)
         obj = PyBytes_FromStringAndSize(buf, strlen(buf));
     }
     else {
+      #if 0
         obj = PyUnicode_DecodeFSDefault(buf);
+	#else
+	obj = PyUnicode_FromString(buf);
+	#endif
     }
     PyMem_RawFree(buf);
 
@@ -1903,7 +1907,12 @@ _posix_listdir(path_t *path, PyObject *list)
              (ep->d_name[1] == '.' && NAMLEN(ep) == 2)))
             continue;
         if (return_str)
+	  #if 0
             v = PyUnicode_DecodeFSDefaultAndSize(ep->d_name, NAMLEN(ep));
+	#else
+	v = PyUnicode_FromStringAndSize(ep->d_name, NAMLEN(ep));
+	#endif
+	
         else
             v = PyBytes_FromStringAndSize(ep->d_name, NAMLEN(ep));
         if (v == NULL) {
@@ -2573,7 +2582,10 @@ os_strerror_impl(PyObject *module, int code)
                         "strerror() argument out of range");
         return NULL;
     }
+    return PyUnicode_FromString(message);
+    #if 0
     return PyUnicode_DecodeLocale(message, "surrogateescape");
+    #endif
 }
 
 

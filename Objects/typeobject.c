@@ -283,7 +283,7 @@ object___dir__(PyObject *self, PyObject *Py_UNUSED(ignored))
 
 #define MCACHE_HASH_METHOD(type, name)                                  \
         MCACHE_HASH((type)->tp_version_tag,                     \
-                    ((PyASCIIObject *)(name))->hash)
+                    ((PyCompactUnicodeObject *)(name))->hash)
 #define MCACHE_CACHEABLE_NAME(name)                             \
         PyUnicode_CheckExact(name) &&                           \
         PyUnicode_IS_READY(name) &&                             \
@@ -737,7 +737,7 @@ type_set_name(PyTypeObject *type, PyObject *value, void *context)
         return -1;
     }
 
-    tp_name = PyUnicode_AsUTF8AndSize(value, &name_size);
+    tp_name = PyUnicode_AsCharAndSize(value, &name_size);
     if (tp_name == NULL)
         return -1;
     if (strlen(tp_name) != (size_t)name_size) {
@@ -1855,7 +1855,7 @@ consistent method resolution\norder (MRO) for bases");
         const char *name_str = NULL;
         if (name != NULL) {
             if (PyUnicode_Check(name)) {
-                name_str = PyUnicode_AsUTF8(name);
+                name_str = PyUnicode_AsChar(name);
             }
             else {
                 name_str = "?";
@@ -2640,7 +2640,7 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
     type->tp_as_sequence = &et->as_sequence;
     type->tp_as_mapping = &et->as_mapping;
     type->tp_as_buffer = &et->as_buffer;
-    type->tp_name = PyUnicode_AsUTF8AndSize(name, &name_size);
+    type->tp_name = PyUnicode_AsCharAndSize(name, &name_size);
     if (!type->tp_name)
         goto error;
     if (strlen(type->tp_name) != (size_t)name_size) {
@@ -2712,7 +2712,7 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
             const char *doc_str;
             char *tp_doc;
 
-            doc_str = PyUnicode_AsUTF8(doc);
+            doc_str = PyUnicode_AsChar(doc);
             if (doc_str == NULL)
                 goto error;
             /* Silently truncate the docstring if it contains null bytes. */
@@ -3115,7 +3115,7 @@ find_name_in_mro(PyTypeObject *type, PyObject *name, int *error)
     Py_hash_t hash;
 
     if (!PyUnicode_CheckExact(name) ||
-        (hash = ((PyASCIIObject *) name)->hash) == -1)
+        (hash = ((PyCompactUnicodeObject *) name)->hash) == -1)
     {
         hash = PyObject_Hash(name);
         if (hash == -1) {
@@ -3215,7 +3215,7 @@ _PyType_Lookup(PyTypeObject *type, PyObject *name)
         method_cache[h].version = type->tp_version_tag;
         method_cache[h].value = res;  /* borrowed */
         Py_INCREF(name);
-        assert(((PyASCIIObject *)(name))->hash != -1);
+        assert(((PyCompactUnicodeObject *)(name))->hash != -1);
 #if MCACHE_STATS
         if (method_cache[h].name != Py_None && method_cache[h].name != name)
             method_cache_collisions++;

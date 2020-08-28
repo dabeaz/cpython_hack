@@ -868,7 +868,8 @@ PyImport_ExecCodeModuleWithPathnames(const char *name, PyObject *co,
         return NULL;
 
     if (cpathname != NULL) {
-        cpathobj = PyUnicode_DecodeFSDefault(cpathname);
+	cpathobj = PyUnicode_FromString(cpathname);
+	
         if (cpathobj == NULL)
             goto error;
     }
@@ -876,7 +877,8 @@ PyImport_ExecCodeModuleWithPathnames(const char *name, PyObject *co,
         cpathobj = NULL;
 
     if (pathname != NULL) {
-        pathobj = PyUnicode_DecodeFSDefault(pathname);
+	pathobj = PyUnicode_FromString(pathname);
+	
         if (pathobj == NULL)
             goto error;
     }
@@ -1114,7 +1116,7 @@ _imp_create_builtin(PyObject *module, PyObject *spec)
         return mod;
     }
 
-    namestr = PyUnicode_AsUTF8(name);
+    namestr = PyUnicode_AsChar(name);
     if (namestr == NULL) {
         Py_DECREF(name);
         return NULL;
@@ -1244,6 +1246,7 @@ PyImport_ImportFrozenModuleObject(PyObject *name)
 
     if (p == NULL)
         return 0;
+
     if (p->code == NULL) {
         _PyErr_Format(tstate, PyExc_ImportError,
                       "Excluded frozen object named %R",

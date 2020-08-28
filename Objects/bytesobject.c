@@ -654,7 +654,7 @@ bytes_decode(PyBytesObject *self, PyObject *const *args, Py_ssize_t nargs, PyObj
             goto exit;
         }
         Py_ssize_t encoding_length;
-        encoding = PyUnicode_AsUTF8AndSize(args[0], &encoding_length);
+        encoding = PyUnicode_AsCharAndSize(args[0], &encoding_length);
         if (encoding == NULL) {
             goto exit;
         }
@@ -671,7 +671,7 @@ bytes_decode(PyBytesObject *self, PyObject *const *args, Py_ssize_t nargs, PyObj
         goto exit;
     }
     Py_ssize_t errors_length;
-    errors = PyUnicode_AsUTF8AndSize(args[1], &errors_length);
+    errors = PyUnicode_AsCharAndSize(args[1], &errors_length);
     if (errors == NULL) {
         goto exit;
     }
@@ -1570,7 +1570,6 @@ _PyBytes_FormatEx(const char *format, Py_ssize_t format_len,
                 temp = PyObject_ASCII(v);
                 if (temp == NULL)
                     goto error;
-                assert(PyUnicode_IS_ASCII(temp));
                 pbuf = (const char *)PyUnicode_1BYTE_DATA(temp);
                 len = PyUnicode_GET_LENGTH(temp);
                 if (prec >= 0 && len > prec)
@@ -3061,21 +3060,6 @@ _PyBytes_FromHex(PyObject *string, int use_bytearray)
     if (PyUnicode_READY(string))
         return NULL;
     hexlen = PyUnicode_GET_LENGTH(string);
-
-    if (!PyUnicode_IS_ASCII(string)) {
-        const void *data = PyUnicode_DATA(string);
-        unsigned int kind = PyUnicode_KIND(string);
-        Py_ssize_t i;
-
-        /* search for the first non-ASCII character */
-        for (i = 0; i < hexlen; i++) {
-            if (PyUnicode_READ(kind, data, i) >= 128)
-                break;
-        }
-        invalid_char = i;
-        goto error;
-    }
-
     assert(PyUnicode_KIND(string) == PyUnicode_1BYTE_KIND);
     str = PyUnicode_1BYTE_DATA(string);
 
@@ -3244,7 +3228,7 @@ bytes_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
                             "encoding without a string argument");
             return NULL;
         }
-        new = PyUnicode_AsEncodedString(x, encoding, errors);
+        new = PyUnicode_AsBytes(x);
         if (new == NULL)
             return NULL;
         assert(PyBytes_Check(new));

@@ -225,7 +225,7 @@ builtin_compile(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObj
         goto exit;
     }
     Py_ssize_t mode_length;
-    mode = PyUnicode_AsUTF8AndSize(args[2], &mode_length);
+    mode = PyUnicode_AsCharAndSize(args[2], &mode_length);
     if (mode == NULL) {
         goto exit;
     }
@@ -2811,8 +2811,8 @@ builtin_input_impl(PyObject *module, PyObject *prompt)
             tty = 0;
             goto _readline_errors;
         }
-        stdin_encoding_str = PyUnicode_AsUTF8(stdin_encoding);
-        stdin_errors_str = PyUnicode_AsUTF8(stdin_errors);
+        stdin_encoding_str = PyUnicode_AsChar(stdin_encoding);
+        stdin_errors_str = PyUnicode_AsChar(stdin_errors);
         if (!stdin_encoding_str || !stdin_errors_str)
             goto _readline_errors;
         tmp = _PyObject_CallMethodIdNoArgs(fout, &PyId_flush);
@@ -2832,15 +2832,14 @@ builtin_input_impl(PyObject *module, PyObject *prompt)
                 tty = 0;
                 goto _readline_errors;
             }
-            stdout_encoding_str = PyUnicode_AsUTF8(stdout_encoding);
-            stdout_errors_str = PyUnicode_AsUTF8(stdout_errors);
+            stdout_encoding_str = PyUnicode_AsChar(stdout_encoding);
+            stdout_errors_str = PyUnicode_AsChar(stdout_errors);
             if (!stdout_encoding_str || !stdout_errors_str)
                 goto _readline_errors;
             stringpo = PyObject_Str(prompt);
             if (stringpo == NULL)
                 goto _readline_errors;
-            po = PyUnicode_AsEncodedString(stringpo,
-                stdout_encoding_str, stdout_errors_str);
+            po = PyUnicode_AsBytes(stringpo);
             Py_CLEAR(stdout_encoding);
             Py_CLEAR(stdout_errors);
             Py_CLEAR(stringpo);
@@ -2876,8 +2875,7 @@ builtin_input_impl(PyObject *module, PyObject *prompt)
                 len--;   /* strip trailing '\n' */
                 if (len != 0 && s[len-1] == '\r')
                     len--;   /* strip trailing '\r' */
-                result = PyUnicode_Decode(s, len, stdin_encoding_str,
-                                                  stdin_errors_str);
+		result = PyUnicode_FromStringAndSize(s, len);
             }
         }
         Py_DECREF(stdin_encoding);

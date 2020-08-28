@@ -46,7 +46,7 @@ _PyPegen_check_barry_as_flufl(Parser *p) {
 PyObject *
 _PyPegen_new_identifier(Parser *p, char *n)
 {
-    PyObject *id = PyUnicode_DecodeUTF8(n, strlen(n), NULL);
+  PyObject *id = PyUnicode_FromStringAndSize(n, strlen(n));
     if (!id) {
         goto error;
     }
@@ -54,38 +54,6 @@ _PyPegen_new_identifier(Parser *p, char *n)
     assert(PyUnicode_IS_READY(id));
     /* Check whether there are non-ASCII characters in the
        identifier; if so, normalize to NFKC. */
-    if (!PyUnicode_IS_ASCII(id))
-    {
-        PyObject *id2;
-        if (!init_normalization(p))
-        {
-            Py_DECREF(id);
-            goto error;
-        }
-        PyObject *form = PyUnicode_InternFromString("NFKC");
-        if (form == NULL)
-        {
-            Py_DECREF(id);
-            goto error;
-        }
-        PyObject *args[2] = {form, id};
-        id2 = _PyObject_FastCall(p->normalize, args, 2);
-        Py_DECREF(id);
-        Py_DECREF(form);
-        if (!id2) {
-            goto error;
-        }
-        if (!PyUnicode_Check(id2))
-        {
-            PyErr_Format(PyExc_TypeError,
-                         "unicodedata.normalize() must return a string, not "
-                         "%.200s",
-                         _PyType_Name(Py_TYPE(id2)));
-            Py_DECREF(id2);
-            goto error;
-        }
-        id = id2;
-    }
     PyUnicode_InternInPlace(&id);
     return id;
 
@@ -103,16 +71,16 @@ _create_dummy_identifier(Parser *p)
 static inline Py_ssize_t
 byte_offset_to_character_offset(PyObject *line, int col_offset)
 {
-    const char *str = PyUnicode_AsUTF8(line);
+    const char *str = PyUnicode_AsChar(line);
     if (!str) {
         return 0;
     }
-    PyObject *text = PyUnicode_DecodeUTF8(str, col_offset, "replace");
+    PyObject *text = PyUnicode_FromStringAndSize(str, col_offset);
     if (!text) {
         return 0;
     }
     Py_ssize_t size = PyUnicode_GET_LENGTH(text);
-    str = PyUnicode_AsUTF8(text);
+    str = PyUnicode_AsChar(text);
     if (str != NULL && (int)strlen(str) == col_offset) {
         size = strlen(str);
     }
@@ -363,7 +331,7 @@ _PyPegen_raise_error_known_location(Parser *p, PyObject *errtype,
         if (size && p->tok->buf[size-1] == '\n') {
             size--;
         }
-        error_line = PyUnicode_DecodeUTF8(p->tok->buf, size, "replace");
+        error_line = PyUnicode_FromStringAndSize(p->tok->buf, size);
         if (!error_line) {
             goto error;
         }
@@ -391,17 +359,6 @@ error:
     Py_XDECREF(error_line);
     return NULL;
 }
-
-#if 0
-static const char *
-token_name(int type)
-{
-    if (0 <= type && type <= N_TOKENS) {
-        return _PyParser_TokenNames[type];
-    }
-    return "<Huh?>";
-}
-#endif
 
 // Here, mark is the start of the node, while p->mark is the end.
 // If node==NULL, they should be the same.
@@ -469,66 +426,12 @@ _get_keyword_or_name_type(Parser *p, const char *name, int name_len)
     return NAME;
 }
 
-static int
-growable_comment_array_init(growable_comment_array *arr, size_t initial_size) {
-    assert(initial_size > 0);
-    arr->items = PyMem_Malloc(initial_size * sizeof(*arr->items));
-    arr->size = initial_size;
-    arr->num_items = 0;
-
-    return arr->items != NULL;
-}
-
-static int
-growable_comment_array_add(growable_comment_array *arr, int lineno, char *comment) {
-    if (arr->num_items >= arr->size) {
-        size_t new_size = arr->size * 2;
-        void *new_items_array = PyMem_Realloc(arr->items, new_size * sizeof(*arr->items));
-        if (!new_items_array) {
-            return 0;
-        }
-        arr->items = new_items_array;
-        arr->size = new_size;
-    }
-
-    arr->items[arr->num_items].lineno = lineno;
-    arr->items[arr->num_items].comment = comment;  // Take ownership
-    arr->num_items++;
-    return 1;
-}
-
-static void
-growable_comment_array_deallocate(growable_comment_array *arr) {
-    for (unsigned i = 0; i < arr->num_items; i++) {
-        PyMem_Free(arr->items[i].comment);
-    }
-    PyMem_Free(arr->items);
-}
-
 int
 _PyPegen_fill_token(Parser *p)
 {
     const char *start, *end;
     int type = PyTokenizer_Get(p->tok, &start, &end);
-
-    // Record and skip '# type: ignore' comments
-    while (type == TYPE_IGNORE) {
-        Py_ssize_t len = end - start;
-        char *tag = PyMem_Malloc(len + 1);
-        if (tag == NULL) {
-            PyErr_NoMemory();
-            return -1;
-        }
-        strncpy(tag, start, len);
-        tag[len] = '\0';
-        // Ownership of tag passes to the growable array
-        if (!growable_comment_array_add(&p->type_ignore_comments, p->tok->lineno, tag)) {
-            PyErr_NoMemory();
-            return -1;
-        }
-        type = PyTokenizer_Get(p->tok, &start, &end);
-    }
-
+    
     if (type == ENDMARKER && p->start_rule == Py_single_input && p->parsing_started) {
         type = NEWLINE; /* Add an extra newline */
         p->parsing_started = 0;
@@ -927,7 +830,6 @@ _PyPegen_Parser_Free(Parser *p)
         PyMem_Free(p->tokens[i]);
     }
     PyMem_Free(p->tokens);
-    growable_comment_array_deallocate(&p->type_ignore_comments);
     PyMem_Free(p);
 }
 
@@ -979,13 +881,6 @@ _PyPegen_Parser_New(struct tok_state *tok, int start_rule, int flags,
         PyMem_Free(p);
         return (Parser *) PyErr_NoMemory();
     }
-    if (!growable_comment_array_init(&p->type_ignore_comments, 10)) {
-        PyMem_Free(p->tokens[0]);
-        PyMem_Free(p->tokens);
-        PyMem_Free(p);
-        return (Parser *) PyErr_NoMemory();
-    }
-
     p->mark = 0;
     p->fill = 0;
     p->size = 1;
@@ -1248,11 +1143,11 @@ _PyPegen_join_names_with_dot(Parser *p, expr_ty first_name, expr_ty second_name)
     if (PyUnicode_READY(second_identifier) == -1) {
         return NULL;
     }
-    const char *first_str = PyUnicode_AsUTF8(first_identifier);
+    const char *first_str = PyUnicode_AsChar(first_identifier);
     if (!first_str) {
         return NULL;
     }
-    const char *second_str = PyUnicode_AsUTF8(second_identifier);
+    const char *second_str = PyUnicode_AsChar(second_identifier);
     if (!second_str) {
         return NULL;
     }
@@ -1275,7 +1170,7 @@ _PyPegen_join_names_with_dot(Parser *p, expr_ty first_name, expr_ty second_name)
     s += strlen(second_str);
     *s = '\0';
 
-    PyObject *uni = PyUnicode_DecodeUTF8(PyBytes_AS_STRING(str), PyBytes_GET_SIZE(str), NULL);
+    PyObject *uni = PyUnicode_FromStringAndSize(PyBytes_AS_STRING(str), PyBytes_GET_SIZE(str));
     Py_DECREF(str);
     if (!uni) {
         return NULL;

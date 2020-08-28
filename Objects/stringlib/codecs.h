@@ -1,10 +1,13 @@
 /* stringlib: codec implementations */
 
+#if 0
+
 #if !STRINGLIB_IS_UNICODE
 # error "codecs.h is specific to Unicode"
 #endif
 
 #include "pycore_bitutils.h"      // _Py_bswap32()
+
 
 /* Mask to quickly check whether a C 'long' contains a
    non-ASCII, UTF8-encoded char. */
@@ -822,4 +825,5 @@ STRINGLIB(utf32_encode)(const STRINGLIB_CHAR *in,
 #endif
 }
 
+#endif
 #endif

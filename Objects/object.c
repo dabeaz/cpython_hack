@@ -161,10 +161,6 @@ int
 PyObject_Print(PyObject *op, FILE *fp, int flags)
 {
     int ret = 0;
-#if 0
-    if (PyErr_CheckSignals())
-        return -1;
-#endif
     clearerr(fp); /* Clear any previous error condition */
     if (op == NULL) {
         fprintf(fp, "<nil>");
@@ -190,7 +186,7 @@ PyObject_Print(PyObject *op, FILE *fp, int flags)
             }
             else if (PyUnicode_Check(s)) {
                 PyObject *t;
-                t = PyUnicode_AsEncodedString(s, "utf-8", "backslashreplace");
+                t = PyUnicode_AsBytes(s);
                 if (t == NULL) {
                     ret = -1;
                 }
@@ -288,10 +284,6 @@ PyObject *
 PyObject_Repr(PyObject *v)
 {
     PyObject *res;
-#if 0
-    if (PyErr_CheckSignals())
-        return NULL;
-#endif
     if (v == NULL)
         return PyUnicode_FromString("<NULL>");
     if (Py_TYPE(v)->tp_repr == NULL)
@@ -324,10 +316,6 @@ PyObject *
 PyObject_Str(PyObject *v)
 {
     PyObject *res;
-#if 0
-    if (PyErr_CheckSignals())
-        return NULL;
-#endif
     if (v == NULL)
         return PyUnicode_FromString("<NULL>");
     if (PyUnicode_CheckExact(v)) {
@@ -368,25 +356,7 @@ PyObject_ASCII(PyObject *v)
     PyObject *repr, *ascii, *res;
 
     repr = PyObject_Repr(v);
-    if (repr == NULL)
-        return NULL;
-
-    if (PyUnicode_IS_ASCII(repr))
-        return repr;
-
-    /* repr is guaranteed to be a PyUnicode object by PyObject_Repr */
-    ascii = _PyUnicode_AsASCIIString(repr, "backslashreplace");
-    Py_DECREF(repr);
-    if (ascii == NULL)
-        return NULL;
-
-    res = PyUnicode_DecodeASCII(
-        PyBytes_AS_STRING(ascii),
-        PyBytes_GET_SIZE(ascii),
-        NULL);
-
-    Py_DECREF(ascii);
-    return res;
+    return repr;
 }
 
 PyObject *
@@ -732,7 +702,7 @@ PyObject_GetAttr(PyObject *v, PyObject *name)
     if (tp->tp_getattro != NULL)
         return (*tp->tp_getattro)(v, name);
     if (tp->tp_getattr != NULL) {
-        const char *name_str = PyUnicode_AsUTF8(name);
+        const char *name_str = PyUnicode_AsChar(name);
         if (name_str == NULL)
             return NULL;
         return (*tp->tp_getattr)(v, (char *)name_str);
@@ -770,7 +740,7 @@ _PyObject_LookupAttr(PyObject *v, PyObject *name, PyObject **result)
         *result = (*tp->tp_getattro)(v, name);
     }
     else if (tp->tp_getattr != NULL) {
-        const char *name_str = PyUnicode_AsUTF8(name);
+        const char *name_str = PyUnicode_AsChar(name);
         if (name_str == NULL) {
             *result = NULL;
             return -1;
@@ -839,7 +809,7 @@ PyObject_SetAttr(PyObject *v, PyObject *name, PyObject *value)
         return err;
     }
     if (tp->tp_setattr != NULL) {
-        const char *name_str = PyUnicode_AsUTF8(name);
+        const char *name_str = PyUnicode_AsChar(name);
         if (name_str == NULL) {
             Py_DECREF(name);
             return -1;

@@ -247,10 +247,6 @@ static int
 all_name_chars(PyObject *o)
 {
     const unsigned char *s, *e;
-
-    if (!PyUnicode_IS_ASCII(o))
-        return 0;
-
     s = PyUnicode_1BYTE_DATA(o);
     e = s + PyUnicode_GET_LENGTH(o);
     for (; s != e; s++) {
@@ -522,7 +518,8 @@ PyCode_NewEmpty(const char *filename, const char *funcname, int firstlineno)
     funcname_ob = PyUnicode_FromString(funcname);
     if (funcname_ob == NULL)
         goto failed;
-    filename_ob = PyUnicode_DecodeFSDefault(filename);
+    filename_ob = PyUnicode_FromString(filename);
+    
     if (filename_ob == NULL)
         goto failed;
 
