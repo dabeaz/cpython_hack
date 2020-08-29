@@ -236,9 +236,6 @@ sys_intern(PyObject *module, PyObject *arg)
         _PyArg_BadArgument("intern", "argument", "str", arg);
         goto exit;
     }
-    if (PyUnicode_READY(arg) == -1) {
-        goto exit;
-    }
     s = arg;
     return_value = sys_intern_impl(module, s);
 

@@ -246,7 +246,7 @@ PyAPI_FUNC(PyObject *) PyUnicode_InternFromString(
 
 /* Use only if you know it's a string */
 #define PyUnicode_CHECK_INTERNED(op) \
-    (((PyCompactUnicodeObject *)(op))->state.interned)
+    (((PyUnicodeObject *)(op))->state.interned)
 
 /* --- wchar_t support for platforms which support it --------------------- */
 

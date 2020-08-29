@@ -754,9 +754,6 @@ bytes_fromhex(PyTypeObject *type, PyObject *arg)
         _PyArg_BadArgument("fromhex", "argument", "str", arg);
         goto exit;
     }
-    if (PyUnicode_READY(arg) == -1) {
-        goto exit;
-    }
     string = arg;
     return_value = bytes_fromhex_impl(type, string);
 
@@ -3057,8 +3054,6 @@ _PyBytes_FromHex(PyObject *string, int use_bytearray)
     writer.use_bytearray = use_bytearray;
 
     assert(PyUnicode_Check(string));
-    if (PyUnicode_READY(string))
-        return NULL;
     hexlen = PyUnicode_GET_LENGTH(string);
     assert(PyUnicode_KIND(string) == PyUnicode_1BYTE_KIND);
     str = PyUnicode_1BYTE_DATA(string);

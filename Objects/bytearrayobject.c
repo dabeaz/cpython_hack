@@ -990,9 +990,6 @@ bytearray_fromhex(PyTypeObject *type, PyObject *arg)
         _PyArg_BadArgument("fromhex", "argument", "str", arg);
         goto exit;
     }
-    if (PyUnicode_READY(arg) == -1) {
-        goto exit;
-    }
     string = arg;
     return_value = bytearray_fromhex_impl(type, string);
 

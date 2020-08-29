@@ -70,9 +70,6 @@ _imp_init_frozen(PyObject *module, PyObject *arg)
         _PyArg_BadArgument("init_frozen", "argument", "str", arg);
         goto exit;
     }
-    if (PyUnicode_READY(arg) == -1) {
-        goto exit;
-    }
     name = arg;
     return_value = _imp_init_frozen_impl(module, name);
 
@@ -100,9 +97,6 @@ _imp_get_frozen_object(PyObject *module, PyObject *arg)
 
     if (!PyUnicode_Check(arg)) {
         _PyArg_BadArgument("get_frozen_object", "argument", "str", arg);
-        goto exit;
-    }
-    if (PyUnicode_READY(arg) == -1) {
         goto exit;
     }
     name = arg;
@@ -134,9 +128,6 @@ _imp_is_frozen_package(PyObject *module, PyObject *arg)
         _PyArg_BadArgument("is_frozen_package", "argument", "str", arg);
         goto exit;
     }
-    if (PyUnicode_READY(arg) == -1) {
-        goto exit;
-    }
     name = arg;
     return_value = _imp_is_frozen_package_impl(module, name);
 
@@ -166,9 +157,6 @@ _imp_is_builtin(PyObject *module, PyObject *arg)
         _PyArg_BadArgument("is_builtin", "argument", "str", arg);
         goto exit;
     }
-    if (PyUnicode_READY(arg) == -1) {
-        goto exit;
-    }
     name = arg;
     return_value = _imp_is_builtin_impl(module, name);
 
@@ -196,9 +184,6 @@ _imp_is_frozen(PyObject *module, PyObject *arg)
 
     if (!PyUnicode_Check(arg)) {
         _PyArg_BadArgument("is_frozen", "argument", "str", arg);
-        goto exit;
-    }
-    if (PyUnicode_READY(arg) == -1) {
         goto exit;
     }
     name = arg;
@@ -1495,7 +1480,7 @@ resolve_name(PyThreadState *tstate, PyObject *name, PyObject *globals, int level
         if (_PyDict_GetItemIdWithError(globals, &PyId___path__) == NULL) {
             Py_ssize_t dot;
 
-            if (_PyErr_Occurred(tstate) || PyUnicode_READY(package) < 0) {
+            if (_PyErr_Occurred(tstate)) {
                 goto error;
             }
 
@@ -1606,9 +1591,6 @@ PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
     if (!PyUnicode_Check(name)) {
         _PyErr_SetString(tstate, PyExc_TypeError,
                          "module name must be a string");
-        goto error;
-    }
-    if (PyUnicode_READY(name) < 0) {
         goto error;
     }
     if (level < 0) {

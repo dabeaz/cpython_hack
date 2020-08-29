@@ -131,9 +131,6 @@ builtin_format(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
         _PyArg_BadArgument("format", "argument 2", "str", args[1]);
         goto exit;
     }
-    if (PyUnicode_READY(args[1]) == -1) {
-        goto exit;
-    }
     format_spec = args[1];
 skip_optional:
     return_value = builtin_format_impl(module, value, format_spec);
@@ -2568,8 +2565,6 @@ builtin_ord(PyObject *module, PyObject *c)
         }
     }
     else if (PyUnicode_Check(c)) {
-        if (PyUnicode_READY(c) == -1)
-            return NULL;
         size = PyUnicode_GET_LENGTH(c);
         if (size == 1) {
             ord = (long)PyUnicode_READ_CHAR(c, 0);

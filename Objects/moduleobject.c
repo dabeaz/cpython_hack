@@ -624,9 +624,6 @@ module___init__(PyObject *self, PyObject *args, PyObject *kwargs)
         _PyArg_BadArgument("module", "argument 'name'", "str", fastargs[0]);
         goto exit;
     }
-    if (PyUnicode_READY(fastargs[0]) == -1) {
-        goto exit;
-    }
     name = fastargs[0];
     if (!noptargs) {
         goto skip_optional_pos;

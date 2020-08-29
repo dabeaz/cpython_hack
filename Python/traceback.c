@@ -515,7 +515,7 @@ _Py_DisplaySourceLine(PyObject *f, PyObject *filename, int lineno, int indent)
     }
 
     /* remove the indentation of the line */
-    kind = PyUnicode_KIND(lineobj);
+    kind = PyUnicode_1BYTE_KIND;
     data = PyUnicode_DATA(lineobj);
     for (i=0; i < PyUnicode_GET_LENGTH(lineobj); i++) {
         Py_UCS4 ch = PyUnicode_READ(kind, data, i);
@@ -733,7 +733,7 @@ _Py_DumpHexadecimal(int fd, unsigned long value, Py_ssize_t width)
 void
 _Py_DumpASCII(int fd, PyObject *text)
 {
-    PyCompactUnicodeObject *ascii = (PyCompactUnicodeObject *)text;
+    PyUnicodeObject *ascii = (PyUnicodeObject *)text;
     Py_ssize_t i, size;
     int truncated;
     int kind;
@@ -745,18 +745,11 @@ _Py_DumpASCII(int fd, PyObject *text)
         return;
 
     size = ascii->length;
-    kind = ascii->state.kind;
-    if (kind == PyUnicode_WCHAR_KIND) {
-        wstr = ((PyCompactUnicodeObject *)text)->wstr;
-        if (wstr == NULL)
-            return;
-        size = ((PyCompactUnicodeObject *)text)->wstr_length;
-    }
-    else if (ascii->state.compact) {
-      data = ((PyCompactUnicodeObject*)text) + 1;
+    if (ascii->state.compact) {
+      data = ((PyUnicodeObject*)text) + 1;
     }
     else {
-        data = ((PyUnicodeObject *)text)->data.any;
+      data = ((PyUnicodeObject *)text)->data;
         if (data == NULL)
             return;
     }
@@ -770,10 +763,7 @@ _Py_DumpASCII(int fd, PyObject *text)
     }
 
     for (i=0; i < size; i++) {
-        if (kind != PyUnicode_WCHAR_KIND)
-            ch = PyUnicode_READ(kind, data, i);
-        else
-            ch = wstr[i];
+      ch = PyUnicode_READ(kind, data, i);
         if (' ' <= ch && ch <= 126) {
             /* printable ASCII character */
             char c = (char)ch;

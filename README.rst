@@ -94,7 +94,8 @@ How will it end?  Or is this just the start?
 - Day 77 (8/26/2020). The encoding exorcism has started.
 - Day 78 (8/27/2020). Codecs. Cancelled.
 - Day 79 (8/28/2020). Continued codecs clobbering.
-
+- Day 80 (8/29/2020). Unicode is unravelling.
+  
 Copyright and License Information
 ---------------------------------
 

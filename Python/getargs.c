@@ -870,13 +870,10 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
         if (!PyUnicode_Check(arg))
             return converterr("a unicode character", arg, msgbuf, bufsize);
 
-        if (PyUnicode_READY(arg))
-            RETURN_ERR_OCCURRED;
-
         if (PyUnicode_GET_LENGTH(arg) != 1)
             return converterr("a unicode character", arg, msgbuf, bufsize);
 
-        kind = PyUnicode_KIND(arg);
+        kind = PyUnicode_1BYTE_KIND;
         data = PyUnicode_DATA(arg);
         *p = PyUnicode_READ(kind, data, 0);
         break;
@@ -1023,11 +1020,7 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
                 STORE_SIZE(0);
             }
             else if (PyUnicode_Check(arg)) {
-                Py_ssize_t len;
-                *p = PyUnicode_AsUnicodeAndSize(arg, &len);
-                if (*p == NULL)
-                    RETURN_ERR_OCCURRED;
-                STORE_SIZE(len);
+	      Py_FatalError("Can't convert unicode");	      
             }
             else
                 return converterr(c == 'Z' ? "str or None" : "str",
@@ -1038,14 +1031,7 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
             if (c == 'Z' && arg == Py_None)
                 *p = NULL;
             else if (PyUnicode_Check(arg)) {
-                Py_ssize_t len;
-                *p = PyUnicode_AsUnicodeAndSize(arg, &len);
-                if (*p == NULL)
-                    RETURN_ERR_OCCURRED;
-                if (wcslen(*p) != (size_t)len) {
-                    PyErr_SetString(PyExc_ValueError, "embedded null character");
-                    RETURN_ERR_OCCURRED;
-                }
+	      Py_FatalError("Can't convert unicode");
             } else
                 return converterr(c == 'Z' ? "str or None" : "str",
                                   arg, msgbuf, bufsize);
@@ -1249,8 +1235,6 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
     case 'U': { /* PyUnicode object */
         PyObject **p = va_arg(*p_va, PyObject **);
         if (PyUnicode_Check(arg)) {
-            if (PyUnicode_READY(arg) == -1)
-                RETURN_ERR_OCCURRED;
             *p = arg;
         }
         else

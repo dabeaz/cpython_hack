@@ -2602,13 +2602,8 @@ list_sort_impl(PyListObject *self, PyObject *keyfunc, int reverse)
 
                     ints_are_bounded = 0;
                 }
-                else if (key_type == &PyUnicode_Type &&
-                         strings_are_latin &&
-                         PyUnicode_KIND(key) != PyUnicode_1BYTE_KIND) {
-
-                        strings_are_latin = 0;
-                    }
-                }
+	    }
+	    
             }
 
         /* Choose the best compare, given what we now know about the keys. */

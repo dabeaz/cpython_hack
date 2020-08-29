@@ -50,8 +50,6 @@ _PyPegen_new_identifier(Parser *p, char *n)
     if (!id) {
         goto error;
     }
-    /* PyUnicode_DecodeUTF8 should always return a ready string. */
-    assert(PyUnicode_IS_READY(id));
     /* Check whether there are non-ASCII characters in the
        identifier; if so, normalize to NFKC. */
     PyUnicode_InternInPlace(&id);
@@ -1136,13 +1134,6 @@ _PyPegen_join_names_with_dot(Parser *p, expr_ty first_name, expr_ty second_name)
     assert(first_name != NULL && second_name != NULL);
     PyObject *first_identifier = first_name->v.Name.id;
     PyObject *second_identifier = second_name->v.Name.id;
-
-    if (PyUnicode_READY(first_identifier) == -1) {
-        return NULL;
-    }
-    if (PyUnicode_READY(second_identifier) == -1) {
-        return NULL;
-    }
     const char *first_str = PyUnicode_AsChar(first_identifier);
     if (!first_str) {
         return NULL;

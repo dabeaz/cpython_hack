@@ -196,9 +196,6 @@ code_replace(PyCodeObject *self, PyObject *const *args, Py_ssize_t nargs, PyObje
             _PyArg_BadArgument("replace", "argument 'co_filename'", "str", args[13]);
             goto exit;
         }
-        if (PyUnicode_READY(args[13]) == -1) {
-            goto exit;
-        }
         co_filename = args[13];
         if (!--noptargs) {
             goto skip_optional_kwonly;
@@ -207,9 +204,6 @@ code_replace(PyCodeObject *self, PyObject *const *args, Py_ssize_t nargs, PyObje
     if (args[14]) {
         if (!PyUnicode_Check(args[14])) {
             _PyArg_BadArgument("replace", "argument 'co_name'", "str", args[14]);
-            goto exit;
-        }
-        if (PyUnicode_READY(args[14]) == -1) {
             goto exit;
         }
         co_name = args[14];
@@ -280,10 +274,6 @@ intern_string_constants(PyObject *tuple, int *modified)
     for (Py_ssize_t i = PyTuple_GET_SIZE(tuple); --i >= 0; ) {
         PyObject *v = PyTuple_GET_ITEM(tuple, i);
         if (PyUnicode_CheckExact(v)) {
-            if (PyUnicode_READY(v) == -1) {
-                return -1;
-            }
-
             if (all_name_chars(v)) {
                 PyObject *w = v;
                 PyUnicode_InternInPlace(&v);
@@ -360,13 +350,6 @@ PyCode_NewWithPosOnlyArgs(int argcount, int posonlyargcount, int kwonlyargcount,
     }
 
     /* Ensure that strings are ready Unicode string */
-    if (PyUnicode_READY(name) < 0) {
-        return NULL;
-    }
-    if (PyUnicode_READY(filename) < 0) {
-        return NULL;
-    }
-
     if (intern_strings(names) < 0) {
         return NULL;
     }

@@ -850,7 +850,7 @@ textiowrapper_iternext(textio *self)
         }
     }
 
-    if (line == NULL || PyUnicode_READY(line) == -1)
+    if (line == NULL)
         return NULL;
 
     if (PyUnicode_GET_LENGTH(line) == 0) {
@@ -1063,9 +1063,6 @@ _io_TextIOWrapper_write(textio *self, PyObject *arg)
 
     if (!PyUnicode_Check(arg)) {
         _PyArg_BadArgument("write", "argument", "str", arg);
-        goto exit;
-    }
-    if (PyUnicode_READY(arg) == -1) {
         goto exit;
     }
     text = arg;

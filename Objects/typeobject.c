@@ -217,9 +217,6 @@ object___format__(PyObject *self, PyObject *arg)
         _PyArg_BadArgument("__format__", "argument", "str", arg);
         goto exit;
     }
-    if (PyUnicode_READY(arg) == -1) {
-        goto exit;
-    }
     format_spec = arg;
     return_value = object___format___impl(self, format_spec);
 
@@ -283,10 +280,9 @@ object___dir__(PyObject *self, PyObject *Py_UNUSED(ignored))
 
 #define MCACHE_HASH_METHOD(type, name)                                  \
         MCACHE_HASH((type)->tp_version_tag,                     \
-                    ((PyCompactUnicodeObject *)(name))->hash)
+                    ((PyUnicodeObject *)(name))->hash)
 #define MCACHE_CACHEABLE_NAME(name)                             \
         PyUnicode_CheckExact(name) &&                           \
-        PyUnicode_IS_READY(name) &&                             \
         PyUnicode_GET_LENGTH(name) <= MCACHE_MAX_ATTR_SIZE
 
 struct method_cache_entry {
@@ -3115,7 +3111,7 @@ find_name_in_mro(PyTypeObject *type, PyObject *name, int *error)
     Py_hash_t hash;
 
     if (!PyUnicode_CheckExact(name) ||
-        (hash = ((PyCompactUnicodeObject *) name)->hash) == -1)
+        (hash = ((PyUnicodeObject *) name)->hash) == -1)
     {
         hash = PyObject_Hash(name);
         if (hash == -1) {
@@ -3215,7 +3211,7 @@ _PyType_Lookup(PyTypeObject *type, PyObject *name)
         method_cache[h].version = type->tp_version_tag;
         method_cache[h].value = res;  /* borrowed */
         Py_INCREF(name);
-        assert(((PyCompactUnicodeObject *)(name))->hash != -1);
+        assert(((PyUnicodeObject *)(name))->hash != -1);
 #if MCACHE_STATS
         if (method_cache[h].name != Py_None && method_cache[h].name != name)
             method_cache_collisions++;
@@ -3244,9 +3240,7 @@ static int
 is_dunder_name(PyObject *name)
 {
     Py_ssize_t length = PyUnicode_GET_LENGTH(name);
-    int kind = PyUnicode_KIND(name);
-    /* Special names contain at least "__x__" and are always ASCII. */
-    if (length > 4 && kind == PyUnicode_1BYTE_KIND) {
+    if (length > 4) {
         const Py_UCS1 *characters = PyUnicode_1BYTE_DATA(name);
         return (
             ((characters[length-2] == '_') && (characters[length-1] == '_')) &&
@@ -3358,8 +3352,6 @@ type_setattro(PyTypeObject *type, PyObject *name, PyObject *value)
     }
     if (PyUnicode_Check(name)) {
         if (PyUnicode_CheckExact(name)) {
-            if (PyUnicode_READY(name) == -1)
-                return -1;
             Py_INCREF(name);
         }
         else {

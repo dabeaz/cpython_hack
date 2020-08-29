@@ -933,9 +933,6 @@ _io_open_code(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObjec
         _PyArg_BadArgument("open_code", "argument 'path'", "str", args[0]);
         goto exit;
     }
-    if (PyUnicode_READY(args[0]) == -1) {
-        goto exit;
-    }
     path = args[0];
     return_value = _io_open_code_impl(module, path);
 

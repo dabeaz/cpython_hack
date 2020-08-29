@@ -91,9 +91,6 @@ int___format__(PyObject *self, PyObject *arg)
         _PyArg_BadArgument("__format__", "argument", "str", arg);
         goto exit;
     }
-    if (PyUnicode_READY(arg) == -1) {
-        goto exit;
-    }
     format_spec = arg;
     return_value = int___format___impl(self, format_spec);
 
@@ -264,9 +261,6 @@ int_to_bytes(PyObject *self, PyObject *const *args, Py_ssize_t nargs, PyObject *
         _PyArg_BadArgument("to_bytes", "argument 'byteorder'", "str", args[1]);
         goto exit;
     }
-    if (PyUnicode_READY(args[1]) == -1) {
-        goto exit;
-    }
     byteorder = args[1];
     if (!noptargs) {
         goto skip_optional_kwonly;
@@ -328,9 +322,6 @@ int_from_bytes(PyTypeObject *type, PyObject *const *args, Py_ssize_t nargs, PyOb
     bytes_obj = args[0];
     if (!PyUnicode_Check(args[1])) {
         _PyArg_BadArgument("from_bytes", "argument 'byteorder'", "str", args[1]);
-        goto exit;
-    }
-    if (PyUnicode_READY(args[1]) == -1) {
         goto exit;
     }
     byteorder = args[1];
@@ -1877,7 +1868,6 @@ long_to_decimal_string_internal(PyObject *aa,
     digit *pout, *pin, rem, tenpow;
     int negative;
     int d;
-    enum PyUnicode_Kind kind;
 
     a = (PyLongObject *)aa;
     if (a == NULL || !PyLong_Check(a)) {
@@ -1951,7 +1941,6 @@ long_to_decimal_string_internal(PyObject *aa,
             Py_DECREF(scratch);
             return -1;
         }
-        kind = writer->kind;
     }
     else if (bytes_writer) {
         *bytes_str = _PyBytesWriter_Prepare(bytes_writer, *bytes_str, strlen);
@@ -1966,7 +1955,6 @@ long_to_decimal_string_internal(PyObject *aa,
             Py_DECREF(scratch);
             return -1;
         }
-        kind = PyUnicode_KIND(str);
     }
 
 #define WRITE_DIGITS(p)                                               \
@@ -2014,21 +2002,10 @@ long_to_decimal_string_internal(PyObject *aa,
         WRITE_DIGITS(p);
         assert(p == *bytes_str);
     }
-    else if (kind == PyUnicode_1BYTE_KIND) {
+    {
         Py_UCS1 *p;
         WRITE_UNICODE_DIGITS(Py_UCS1);
     }
-    #if 0
-    else if (kind == PyUnicode_2BYTE_KIND) {
-        Py_UCS2 *p;
-        WRITE_UNICODE_DIGITS(Py_UCS2);
-    }
-    else {
-        Py_UCS4 *p;
-        assert (kind == PyUnicode_4BYTE_KIND);
-        WRITE_UNICODE_DIGITS(Py_UCS4);
-    }
-    #endif
     
 #undef WRITE_DIGITS
 #undef WRITE_UNICODE_DIGITS
@@ -2070,7 +2047,6 @@ long_format_binary(PyObject *aa, int base, int alternate,
     PyObject *v = NULL;
     Py_ssize_t sz;
     Py_ssize_t size_a;
-    enum PyUnicode_Kind kind;
     int negative;
     int bits;
 
@@ -2122,7 +2098,6 @@ long_format_binary(PyObject *aa, int base, int alternate,
     if (writer) {
         if (_PyUnicodeWriter_Prepare(writer, sz, 'x') == -1)
             return -1;
-        kind = writer->kind;
     }
     else if (bytes_writer) {
         *bytes_str = _PyBytesWriter_Prepare(bytes_writer, *bytes_str, sz);
@@ -2133,7 +2108,6 @@ long_format_binary(PyObject *aa, int base, int alternate,
         v = PyUnicode_New(sz, 'x');
         if (v == NULL)
             return -1;
-        kind = PyUnicode_KIND(v);
     }
 
 #define WRITE_DIGITS(p)                                                 \
@@ -2194,21 +2168,10 @@ long_format_binary(PyObject *aa, int base, int alternate,
         WRITE_DIGITS(p);
         assert(p == *bytes_str);
     }
-    else if (kind == PyUnicode_1BYTE_KIND) {
+    {
         Py_UCS1 *p;
         WRITE_UNICODE_DIGITS(Py_UCS1);
     }
-    #if 0
-    else if (kind == PyUnicode_2BYTE_KIND) {
-        Py_UCS2 *p;
-        WRITE_UNICODE_DIGITS(Py_UCS2);
-    }
-    else {
-        Py_UCS4 *p;
-        assert (kind == PyUnicode_4BYTE_KIND);
-        WRITE_UNICODE_DIGITS(Py_UCS4);
-    }
-    #endif
 #undef WRITE_DIGITS
 #undef WRITE_UNICODE_DIGITS
 

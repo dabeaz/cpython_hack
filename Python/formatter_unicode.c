@@ -706,7 +706,6 @@ format_string_internal(PyObject *value, const InternalFormatSpec *format,
     int result = -1;
     Py_UCS4 maxchar;
 
-    assert(PyUnicode_IS_READY(value));
     len = PyUnicode_GET_LENGTH(value);
 
     /* sign is not allowed on strings */
@@ -746,14 +745,8 @@ format_string_internal(PyObject *value, const InternalFormatSpec *format,
 
     calc_padding(len, format->width, format->align, &lpad, &rpad, &total);
 
-    maxchar = writer->maxchar;
-    if (lpad != 0 || rpad != 0)
-        maxchar = Py_MAX(maxchar, format->fill_char);
-    if (PyUnicode_MAX_CHAR_VALUE(value) > maxchar) {
-        Py_UCS4 valmaxchar = _PyUnicode_FindMaxChar(value, 0, len);
-        maxchar = Py_MAX(maxchar, valmaxchar);
-    }
-
+    maxchar = 0xff;
+    
     /* allocate the resulting string */
     if (_PyUnicodeWriter_Prepare(writer, total, maxchar) == -1)
         goto done;
@@ -895,7 +888,7 @@ format_long_internal(PyObject *value, const InternalFormatSpec *format,
 
         /* Do the hard part, converting to a string in a given base */
         tmp = _PyLong_Format(value, base);
-        if (tmp == NULL || PyUnicode_READY(tmp) == -1)
+        if (tmp == NULL)
             goto done;
 
         inumeric_chars = 0;
