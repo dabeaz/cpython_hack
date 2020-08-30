@@ -70,8 +70,7 @@ typedef struct {
     Py_hash_t hash;             /* Hash value; -1 if not set */
     struct {
         unsigned int interned:2;
-        unsigned int compact:1;
-        unsigned int :29;
+        unsigned int :30;
     } state;
     void *data;
 } PyUnicodeObject;
@@ -99,11 +98,6 @@ PyAPI_FUNC(int) _PyUnicode_CheckConsistency(
 #define SSTATE_INTERNED_MORTAL 1
 #define SSTATE_INTERNED_IMMORTAL 2
 
-/* Return true if the string is compact or 0 if not.
-   No type checks or Ready calls are performed. */
-#define PyUnicode_IS_COMPACT(op) \
-    (((PyUnicodeObject*)(op))->state.compact)
-
 enum PyUnicode_Kind {
 /* String contains only wstr byte characters.  This is only possible
    when the string was created with a legacy API and _PyUnicode_Ready()
@@ -122,17 +116,9 @@ enum PyUnicode_Kind {
 #define PyUnicode_1BYTE_DATA(op) ((Py_UCS1*)PyUnicode_DATA(op))
 
 /* Return a void pointer to the raw unicode buffer. */
-#define _PyUnicode_COMPACT_DATA(op)                     \
-  ((void*)((PyUnicodeObject*)(op) + 1))
-
-#define _PyUnicode_NONCOMPACT_DATA(op)                  \
+#define PyUnicode_DATA(op) \
     (assert(((PyUnicodeObject*)(op))->data),        \
      ((((PyUnicodeObject *)(op))->data)))
-
-#define PyUnicode_DATA(op) \
-    (assert(PyUnicode_Check(op)), \
-     PyUnicode_IS_COMPACT(op) ? _PyUnicode_COMPACT_DATA(op) :   \
-     _PyUnicode_NONCOMPACT_DATA(op))
 
 /* In the access macros below, "kind" may be evaluated more than once.
    All other macro parameters are evaluated exactly once, so it is safe

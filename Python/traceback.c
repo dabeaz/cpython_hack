@@ -745,10 +745,7 @@ _Py_DumpASCII(int fd, PyObject *text)
         return;
 
     size = ascii->length;
-    if (ascii->state.compact) {
-      data = ((PyUnicodeObject*)text) + 1;
-    }
-    else {
+    {
       data = ((PyUnicodeObject *)text)->data;
         if (data == NULL)
             return;

@@ -95,7 +95,8 @@ How will it end?  Or is this just the start?
 - Day 78 (8/27/2020). Codecs. Cancelled.
 - Day 79 (8/28/2020). Continued codecs clobbering.
 - Day 80 (8/29/2020). Unicode is unravelling.
-  
+- Day 81 (8/30/2020). Simple is better than complex.
+
 Copyright and License Information
 ---------------------------------
 
