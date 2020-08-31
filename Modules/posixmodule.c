@@ -586,7 +586,6 @@ typedef struct {
     const char *argument_name;
     int nullable;
     int allow_fd;
-    const wchar_t *wide;
     const char *narrow;
     int fd;
     Py_ssize_t length;
@@ -595,7 +594,7 @@ typedef struct {
 } path_t;
 
 #define PATH_T_INITIALIZE(function_name, argument_name, nullable, allow_fd) \
-    {function_name, argument_name, nullable, allow_fd, NULL, NULL, -1, 0, NULL, NULL}
+    {function_name, argument_name, nullable, allow_fd, NULL, -1, 0, NULL, NULL}
 
 
 static void
@@ -632,7 +631,6 @@ path_converter(PyObject *o, void *p)
     Py_INCREF(o);
 
     if ((o == Py_None) && path->nullable) {
-        path->wide = NULL;
         path->narrow = NULL;
         path->fd = -1;
         goto success_exit;
@@ -699,7 +697,6 @@ path_converter(PyObject *o, void *p)
         if (!_fd_converter(o, &path->fd)) {
             goto error_exit;
         }
-        path->wide = NULL;
         path->narrow = NULL;
         goto success_exit;
     }
@@ -725,7 +722,6 @@ path_converter(PyObject *o, void *p)
         goto error_exit;
     }
 
-    path->wide = NULL;
     path->narrow = narrow;
     if (bytes == o) {
         /* Still a reference owned by path->object, don't have to
@@ -795,7 +791,7 @@ follow_symlinks_specified(const char *function_name, int follow_symlinks)
 static int
 path_and_dir_fd_invalid(const char *function_name, path_t *path, int dir_fd)
 {
-    if (!path->wide && (dir_fd != DEFAULT_DIR_FD)
+    if ((dir_fd != DEFAULT_DIR_FD)
         && !path->narrow
     ) {
         PyErr_Format(PyExc_ValueError,
@@ -1789,11 +1785,7 @@ posix_getcwd(int use_bytes)
         obj = PyBytes_FromStringAndSize(buf, strlen(buf));
     }
     else {
-      #if 0
-        obj = PyUnicode_DecodeFSDefault(buf);
-	#else
 	obj = PyUnicode_FromString(buf);
-	#endif
     }
     PyMem_RawFree(buf);
 
@@ -1907,11 +1899,7 @@ _posix_listdir(path_t *path, PyObject *list)
              (ep->d_name[1] == '.' && NAMLEN(ep) == 2)))
             continue;
         if (return_str)
-	  #if 0
-            v = PyUnicode_DecodeFSDefaultAndSize(ep->d_name, NAMLEN(ep));
-	#else
-	v = PyUnicode_FromStringAndSize(ep->d_name, NAMLEN(ep));
-	#endif
+	  v = PyUnicode_FromStringAndSize(ep->d_name, NAMLEN(ep));
 	
         else
             v = PyBytes_FromStringAndSize(ep->d_name, NAMLEN(ep));
@@ -2024,7 +2012,6 @@ os_mkdir_impl(PyObject *module, path_t *path, int mode, int dir_fd)
 static PyObject *
 internal_rename(path_t *src, path_t *dst, int src_dir_fd, int dst_dir_fd, int is_replace)
 {
-    const char *function_name = is_replace ? "replace" : "rename";
     int dir_fd_specified;
     int result;
 
@@ -2036,11 +2023,6 @@ internal_rename(path_t *src, path_t *dst, int src_dir_fd, int dst_dir_fd, int is
         return NULL;
     }
 #endif
-    if ((src->narrow && dst->wide) || (src->wide && dst->narrow)) {
-        PyErr_Format(PyExc_ValueError,
-                     "%s: src and dst must be the same type", function_name);
-        return NULL;
-    }
     
 #ifdef HAVE_RENAMEAT
     if (dir_fd_specified)
@@ -2583,9 +2565,6 @@ os_strerror_impl(PyObject *module, int code)
         return NULL;
     }
     return PyUnicode_FromString(message);
-    #if 0
-    return PyUnicode_DecodeLocale(message, "surrogateescape");
-    #endif
 }
 
 

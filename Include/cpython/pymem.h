@@ -18,10 +18,6 @@ PyAPI_FUNC(char *) _PyMem_RawStrdup(const char *str);
 /* strdup() using PyMem_Malloc() */
 PyAPI_FUNC(char *) _PyMem_Strdup(const char *str);
 
-/* wcsdup() using PyMem_RawMalloc() */
-PyAPI_FUNC(wchar_t*) _PyMem_RawWcsdup(const wchar_t *str);
-
-
 typedef enum {
     /* PyMem_RawMalloc(), PyMem_RawRealloc() and PyMem_RawFree() */
     PYMEM_DOMAIN_RAW,

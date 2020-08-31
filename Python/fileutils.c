@@ -27,23 +27,6 @@ int _Py_open_cloexec_works = -1;
 #endif
 
 
-static int
-get_surrogateescape(_Py_error_handler errors, int *surrogateescape)
-{
-    switch (errors)
-    {
-    case _Py_ERROR_STRICT:
-        *surrogateescape = 0;
-        return 0;
-    case _Py_ERROR_SURROGATEESCAPE:
-        *surrogateescape = 1;
-        return 0;
-    default:
-        return -1;
-    }
-}
-
-
 PyObject *
 _Py_device_encoding(int fd)
 {
@@ -61,221 +44,6 @@ _Py_device_encoding(int fd)
     }
 #endif
     Py_RETURN_NONE;
-}
-
-/* Decode a byte string from the locale encoding with the
-   surrogateescape error handler: undecodable bytes are decoded as characters
-   in range U+DC80..U+DCFF. If a byte sequence can be decoded as a surrogate
-   character, escape the bytes using the surrogateescape error handler instead
-   of decoding them.
-
-   Return a pointer to a newly allocated wide character string, use
-   PyMem_RawFree() to free the memory. If size is not NULL, write the number of
-   wide characters excluding the null character into *size
-
-   Return NULL on decoding error or memory allocation error. If *size* is not
-   NULL, *size is set to (size_t)-1 on memory error or set to (size_t)-2 on
-   decoding error.
-
-   Decoding errors should never happen, unless there is a bug in the C
-   library.
-
-   Use the Py_EncodeLocale() function to encode the character string back to a
-   byte string. */
-wchar_t*
-Py_DecodeLocale(const char* arg, size_t *wlen)
-{
-  #if 1
-  wchar_t *wstr;
-  Py_ssize_t n, len;
-  len = strlen(arg);
-  wstr = (wchar_t *) PyMem_RawMalloc((len+1)*sizeof(wchar_t));
-  if (wstr) {
-    for (n = 0; n < len; n++) {
-      wstr[n] = arg[n];
-    }
-    wstr[n] = L'\0';
-  }
-  if (wlen) {
-    *wlen = len;
-  }
-  return wstr;
-  #endif
-}
-
-
-static int
-encode_current_locale(const wchar_t *text, char **str,
-                      size_t *error_pos, const char **reason,
-                      int raw_malloc, _Py_error_handler errors)
-{
-    const size_t len = wcslen(text);
-    char *result = NULL, *bytes = NULL;
-    size_t i, size, converted;
-    wchar_t c, buf[2];
-
-    int surrogateescape;
-    if (get_surrogateescape(errors, &surrogateescape) < 0) {
-        return -3;
-    }
-
-    /* The function works in two steps:
-       1. compute the length of the output buffer in bytes (size)
-       2. outputs the bytes */
-    size = 0;
-    buf[1] = 0;
-    while (1) {
-        for (i=0; i < len; i++) {
-            c = text[i];
-            if (c >= 0xdc80 && c <= 0xdcff) {
-                if (!surrogateescape) {
-                    goto encode_error;
-                }
-                /* UTF-8b surrogate */
-                if (bytes != NULL) {
-                    *bytes++ = c - 0xdc00;
-                    size--;
-                }
-                else {
-                    size++;
-                }
-                continue;
-            }
-            else {
-                buf[0] = c;
-                if (bytes != NULL) {
-                    converted = wcstombs(bytes, buf, size);
-                }
-                else {
-                    converted = wcstombs(NULL, buf, 0);
-                }
-                if (converted == (size_t)-1) {
-                    goto encode_error;
-                }
-                if (bytes != NULL) {
-                    bytes += converted;
-                    size -= converted;
-                }
-                else {
-                    size += converted;
-                }
-            }
-        }
-        if (result != NULL) {
-            *bytes = '\0';
-            break;
-        }
-
-        size += 1; /* nul byte at the end */
-        if (raw_malloc) {
-            result = PyMem_RawMalloc(size);
-        }
-        else {
-            result = PyMem_Malloc(size);
-        }
-        if (result == NULL) {
-            return -1;
-        }
-        bytes = result;
-    }
-    *str = result;
-    return 0;
-
-encode_error:
-    if (raw_malloc) {
-        PyMem_RawFree(result);
-    }
-    else {
-        PyMem_Free(result);
-    }
-    if (error_pos != NULL) {
-        *error_pos = i;
-    }
-    if (reason) {
-        *reason = "encoding error";
-    }
-    return -2;
-}
-
-
-/* Encode a string to the locale encoding.
-
-   Parameters:
-
-   * raw_malloc: if non-zero, allocate memory using PyMem_RawMalloc() instead
-     of PyMem_Malloc().
-   * current_locale: if non-zero, use the current LC_CTYPE, otherwise use
-     Python filesystem encoding.
-   * errors: error handler like "strict" or "surrogateescape".
-
-   Return value:
-
-    0: success, *str is set to a newly allocated decoded string.
-   -1: memory allocation failure
-   -2: encoding error, set *error_pos and *reason (if set).
-   -3: the error handler 'errors' is not supported.
- */
-static int
-encode_locale_ex(const wchar_t *text, char **str, size_t *error_pos,
-                 const char **reason,
-                 int raw_malloc, int current_locale, _Py_error_handler errors)
-{
-  return encode_current_locale(text, str, error_pos, reason,
-                                     raw_malloc, errors);
-}
-
-static char*
-encode_locale(const wchar_t *text, size_t *error_pos,
-              int raw_malloc, int current_locale)
-{
-    char *str;
-    int res = encode_locale_ex(text, &str, error_pos, NULL,
-                               raw_malloc, current_locale,
-                               _Py_ERROR_SURROGATEESCAPE);
-    if (res != -2 && error_pos) {
-        *error_pos = (size_t)-1;
-    }
-    if (res != 0) {
-        return NULL;
-    }
-    return str;
-}
-
-/* Encode a wide character string to the locale encoding with the
-   surrogateescape error handler: surrogate characters in the range
-   U+DC80..U+DCFF are converted to bytes 0x80..0xFF.
-
-   Return a pointer to a newly allocated byte string, use PyMem_Free() to free
-   the memory. Return NULL on encoding or memory allocation error.
-
-   If error_pos is not NULL, *error_pos is set to (size_t)-1 on success, or set
-   to the index of the invalid character on encoding error.
-
-   Use the Py_DecodeLocale() function to decode the bytes string back to a wide
-   character string. */
-char*
-Py_EncodeLocale(const wchar_t *text, size_t *error_pos)
-{
-    return encode_locale(text, error_pos, 0, 0);
-}
-
-
-/* Similar to Py_EncodeLocale(), but result must be freed by PyMem_RawFree()
-   instead of PyMem_Free(). */
-char*
-_Py_EncodeLocaleRaw(const wchar_t *text, size_t *error_pos)
-{
-    return encode_locale(text, error_pos, 1, 0);
-}
-
-
-int
-_Py_EncodeLocaleEx(const wchar_t *text, char **str,
-                   size_t *error_pos, const char **reason,
-                   int current_locale, _Py_error_handler errors)
-{
-    return encode_locale_ex(text, str, error_pos, reason, 1,
-                            current_locale, errors);
 }
 
 /* Return information about a file.
@@ -581,39 +349,6 @@ _Py_open_noraise(const char *pathname, int flags)
     return _Py_open_impl(pathname, flags, 0);
 }
 
-/* Open a file. Use _wfopen() on Windows, encode the path to the locale
-   encoding and use fopen() otherwise.
-
-   The file descriptor is created non-inheritable.
-
-   If interrupted by a signal, fail with EINTR. */
-FILE *
-_Py_wfopen(const wchar_t *path, const wchar_t *mode)
-{
-    FILE *f;
-    char *cpath;
-    char cmode[10];
-    size_t r;
-    r = wcstombs(cmode, mode, 10);
-    if (r == (size_t)-1 || r >= 10) {
-        errno = EINVAL;
-        return NULL;
-    }
-    cpath = _Py_EncodeLocaleRaw(path, NULL);
-    if (cpath == NULL) {
-        return NULL;
-    }
-    f = fopen(cpath, cmode);
-    PyMem_RawFree(cpath);
-    if (f == NULL)
-        return NULL;
-    if (make_non_inheritable(fileno(f)) < 0) {
-        fclose(f);
-        return NULL;
-    }
-    return f;
-}
-
 /* Wrapper to fopen().
 
    The file descriptor is created non-inheritable.
@@ -830,46 +565,15 @@ _Py_write_noraise(int fd, const void *buf, size_t count)
 
    Return -1 on encoding error, on readlink() error, if the internal buffer is
    too short, on decoding error, or if 'buf' is too short. */
-int
-_Py_wreadlink(const wchar_t *path, wchar_t *buf, size_t buflen)
-{
-    char *cpath;
-    char cbuf[MAXPATHLEN];
-    size_t cbuf_len = Py_ARRAY_LENGTH(cbuf);
-    wchar_t *wbuf;
-    Py_ssize_t res;
-    size_t r1;
 
-    cpath = _Py_EncodeLocaleRaw(path, NULL);
-    if (cpath == NULL) {
-        errno = EINVAL;
-        return -1;
-    }
-    res = readlink(cpath, cbuf, cbuf_len);
-    PyMem_RawFree(cpath);
-    if (res == -1) {
-        return -1;
-    }
-    if ((size_t)res == cbuf_len) {
-        errno = EINVAL;
-        return -1;
-    }
-    cbuf[res] = '\0'; /* buf will be null terminated */
-    wbuf = Py_DecodeLocale(cbuf, &r1);
-    if (wbuf == NULL) {
-        errno = EINVAL;
-        return -1;
-    }
-    /* wbuf must have space to store the trailing NUL character */
-    if (buflen <= r1) {
-        PyMem_RawFree(wbuf);
-        errno = EINVAL;
-        return -1;
-    }
-    wcsncpy(buf, wbuf, buflen);
-    PyMem_RawFree(wbuf);
-    return (int)r1;
+int
+_Py_readlink(const char *path, char *buf, size_t buflen)
+{
+  Py_ssize_t res = readlink(path, buf, buflen);
+  buf[res] = '\0'; /* buf will be null terminated */
+  return res;
 }
+
 #endif
 
 #ifdef HAVE_REALPATH
@@ -879,45 +583,30 @@ _Py_wreadlink(const wchar_t *path, wchar_t *buf, size_t buflen)
 
    Return NULL on encoding error, realpath() error, decoding error
    or if 'resolved_path' is too short. */
-wchar_t*
-_Py_wrealpath(const wchar_t *path,
-              wchar_t *resolved_path, size_t resolved_path_len)
+
+char*
+_Py_realpath(const char *cpath,
+              char *resolved_path, size_t resolved_path_len)
 {
-    char *cpath;
     char cresolved_path[MAXPATHLEN];
-    wchar_t *wresolved_path;
     char *res;
     size_t r;
-    cpath = _Py_EncodeLocaleRaw(path, NULL);
-    if (cpath == NULL) {
-        errno = EINVAL;
-        return NULL;
-    }
+    
     res = realpath(cpath, cresolved_path);
-    PyMem_RawFree(cpath);
     if (res == NULL)
-        return NULL;
-
-    wresolved_path = Py_DecodeLocale(cresolved_path, &r);
-    if (wresolved_path == NULL) {
-        errno = EINVAL;
-        return NULL;
-    }
-    /* wresolved_path must have space to store the trailing NUL character */
+      return NULL;
+    r = strlen(res);
     if (resolved_path_len <= r) {
-        PyMem_RawFree(wresolved_path);
-        errno = EINVAL;
-        return NULL;
+      return NULL;
     }
-    wcsncpy(resolved_path, wresolved_path, resolved_path_len);
-    PyMem_RawFree(wresolved_path);
+    strncpy(resolved_path, res, resolved_path_len);
     return resolved_path;
 }
 #endif
 
 
 int
-_Py_isabs(const wchar_t *path)
+_Py_isabs(const char *path)
 {
     return (path[0] == SEP);
 }
@@ -928,25 +617,25 @@ _Py_isabs(const wchar_t *path)
    On success, return a newly allocated to *abspath_p to and return 0.
    The string must be freed by PyMem_RawFree(). */
 int
-_Py_abspath(const wchar_t *path, wchar_t **abspath_p)
+_Py_abspath(const char *path, char **abspath_p)
 {
     if (_Py_isabs(path)) {
-        *abspath_p = _PyMem_RawWcsdup(path);
-        return 0;
+      *abspath_p = strdup(path);
+      return 0;
     }
 
-    wchar_t cwd[MAXPATHLEN + 1];
+    char cwd[MAXPATHLEN + 1];
     cwd[Py_ARRAY_LENGTH(cwd) - 1] = 0;
-    if (!_Py_wgetcwd(cwd, Py_ARRAY_LENGTH(cwd) - 1)) {
+    if (!_Py_getcwd(cwd, Py_ARRAY_LENGTH(cwd) - 1)) {
         /* unable to get the current directory */
         return -1;
     }
 
-    size_t cwd_len = wcslen(cwd);
-    size_t path_len = wcslen(path);
+    size_t cwd_len = strlen(cwd);
+    size_t path_len = strlen(path);
     size_t len = cwd_len + 1 + path_len + 1;
-    if (len <= (size_t)PY_SSIZE_T_MAX / sizeof(wchar_t)) {
-        *abspath_p = PyMem_RawMalloc(len * sizeof(wchar_t));
+    if (len <= (size_t)PY_SSIZE_T_MAX) {
+      *abspath_p = PyMem_RawMalloc(len);
     }
     else {
         *abspath_p = NULL;
@@ -955,14 +644,14 @@ _Py_abspath(const wchar_t *path, wchar_t **abspath_p)
         return 0;
     }
 
-    wchar_t *abspath = *abspath_p;
-    memcpy(abspath, cwd, cwd_len * sizeof(wchar_t));
+    char *abspath = *abspath_p;
+    memcpy(abspath, cwd, cwd_len);
     abspath += cwd_len;
 
-    *abspath = (wchar_t)SEP;
+    *abspath = SEP;
     abspath++;
 
-    memcpy(abspath, path, path_len * sizeof(wchar_t));
+    memcpy(abspath, path, path_len);
     abspath += path_len;
 
     *abspath = 0;
@@ -975,29 +664,13 @@ _Py_abspath(const wchar_t *path, wchar_t **abspath_p)
 
    Return NULL on getcwd() error, on decoding error, or if 'buf' is
    too short. */
-wchar_t*
-_Py_wgetcwd(wchar_t *buf, size_t buflen)
+char*
+_Py_getcwd(char *buf, size_t buflen)
 {
-    char fname[MAXPATHLEN];
-    wchar_t *wname;
-    size_t len;
-
-    if (getcwd(fname, Py_ARRAY_LENGTH(fname)) == NULL)
-        return NULL;
-    wname = Py_DecodeLocale(fname, &len);
-    if (wname == NULL)
-        return NULL;
-    /* wname must have space to store the trailing NUL character */
-    if (buflen <= len) {
-        PyMem_RawFree(wname);
-        return NULL;
-    }
-    wcsncpy(buf, wname, buflen);
-    PyMem_RawFree(wname);
-    return buf;
+  return getcwd(buf, buflen);
 }
 
-/* Duplicate a file descriptor. The new file descriptor is created as
+/* Duplicate a file descriptor. The new file descriptor is cread as
    non-inheritable. Return a new file descriptor on success, raise an OSError
    exception and return -1 on error.
 

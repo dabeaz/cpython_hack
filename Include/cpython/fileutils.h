@@ -16,23 +16,6 @@ typedef enum {
 
 PyAPI_FUNC(_Py_error_handler) _Py_GetErrorHandler(const char *errors);
 
-PyAPI_FUNC(int) _Py_DecodeLocaleEx(
-    const char *arg,
-    wchar_t **wstr,
-    size_t *wlen,
-    const char **reason,
-    int current_locale,
-    _Py_error_handler errors);
-
-PyAPI_FUNC(int) _Py_EncodeLocaleEx(
-    const wchar_t *text,
-    char **str,
-    size_t *error_pos,
-    const char **reason,
-    int current_locale,
-    _Py_error_handler errors);
-
-
 PyAPI_FUNC(PyObject *) _Py_device_encoding(int);
 
 #if defined(MS_WINDOWS) || defined(__APPLE__)
@@ -48,28 +31,7 @@ PyAPI_FUNC(PyObject *) _Py_device_encoding(int);
 #   define _PY_WRITE_MAX PY_SSIZE_T_MAX
 #endif
 
-#ifdef MS_WINDOWS
-struct _Py_stat_struct {
-    unsigned long st_dev;
-    uint64_t st_ino;
-    unsigned short st_mode;
-    int st_nlink;
-    int st_uid;
-    int st_gid;
-    unsigned long st_rdev;
-    __int64 st_size;
-    time_t st_atime;
-    int st_atime_nsec;
-    time_t st_mtime;
-    int st_mtime_nsec;
-    time_t st_ctime;
-    int st_ctime_nsec;
-    unsigned long st_file_attributes;
-    unsigned long st_reparse_tag;
-};
-#else
 #  define _Py_stat_struct stat
-#endif
 
 PyAPI_FUNC(int) _Py_fstat(
     int fd,
@@ -90,10 +52,6 @@ PyAPI_FUNC(int) _Py_open(
 PyAPI_FUNC(int) _Py_open_noraise(
     const char *pathname,
     int flags);
-
-PyAPI_FUNC(FILE *) _Py_wfopen(
-    const wchar_t *path,
-    const wchar_t *mode);
 
 PyAPI_FUNC(FILE*) _Py_fopen(
     const char *pathname,
@@ -119,31 +77,30 @@ PyAPI_FUNC(Py_ssize_t) _Py_write_noraise(
     size_t count);
 
 #ifdef HAVE_READLINK
-PyAPI_FUNC(int) _Py_wreadlink(
-    const wchar_t *path,
-    wchar_t *buf,
+PyAPI_FUNC(int) _Py_readlink(
+    const char *path,
+    char *buf,
     /* Number of characters of 'buf' buffer
        including the trailing NUL character */
     size_t buflen);
 #endif
 
 #ifdef HAVE_REALPATH
-PyAPI_FUNC(wchar_t*) _Py_wrealpath(
-    const wchar_t *path,
-    wchar_t *resolved_path,
+PyAPI_FUNC(char*) _Py_realpath(
+    const char *path,
+    char *resolved_path,
     /* Number of characters of 'resolved_path' buffer
        including the trailing NUL character */
     size_t resolved_path_len);
+
 #endif
 
-#ifndef MS_WINDOWS
-PyAPI_FUNC(int) _Py_isabs(const wchar_t *path);
-#endif
+PyAPI_FUNC(int) _Py_isabs(const char *path);
 
-PyAPI_FUNC(int) _Py_abspath(const wchar_t *path, wchar_t **abspath_p);
+PyAPI_FUNC(int) _Py_abspath(const char *path, char **abspath_p);
 
-PyAPI_FUNC(wchar_t*) _Py_wgetcwd(
-    wchar_t *buf,
+PyAPI_FUNC(char*) _Py_getcwd(
+    char *buf,
     /* Number of characters of 'buf' buffer
        including the trailing NUL character */
     size_t buflen);

@@ -336,29 +336,7 @@ do_mkvalue(const char **p_format, va_list *p_va, int flags)
 
         case 'u':
         {
-            PyObject *v;
-            Py_UNICODE *u = va_arg(*p_va, Py_UNICODE *);
-            Py_ssize_t n;
-            if (**p_format == '#') {
-                ++*p_format;
-                if (flags & FLAG_SIZE_T)
-                    n = va_arg(*p_va, Py_ssize_t);
-                else {
-                    n = va_arg(*p_va, int);
-                }
-            }
-            else
-                n = -1;
-            if (u == NULL) {
-                v = Py_None;
-                Py_INCREF(v);
-            }
-            else {
-                if (n < 0)
-                    n = wcslen(u);
-                v = PyUnicode_FromWideChar(u, n);
-            }
-            return v;
+	    Py_FatalError("No u code\n");
         }
         case 'f':
         case 'd':

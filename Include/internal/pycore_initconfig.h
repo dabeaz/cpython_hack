@@ -46,40 +46,36 @@ struct pyruntimestate;
 
 /* --- PyWideStringList ------------------------------------------------ */
 
-#define _PyWideStringList_INIT (PyWideStringList){.length = 0, .items = NULL}
+#define _PyStringList_INIT (PyStringList){.length = 0, .items = NULL}
 
-#ifndef NDEBUG
-PyAPI_FUNC(int) _PyWideStringList_CheckConsistency(const PyWideStringList *list);
+  #ifndef NDEBUG
+PyAPI_FUNC(int) _PyStringList_CheckConsistency(const PyStringList *list);
 #endif
-PyAPI_FUNC(void) _PyWideStringList_Clear(PyWideStringList *list);
-PyAPI_FUNC(int) _PyWideStringList_Copy(PyWideStringList *list,
-    const PyWideStringList *list2);
-PyAPI_FUNC(PyStatus) _PyWideStringList_Extend(PyWideStringList *list,
-    const PyWideStringList *list2);
-PyAPI_FUNC(PyObject*) _PyWideStringList_AsList(const PyWideStringList *list);
+PyAPI_FUNC(void) _PyStringList_Clear(PyStringList *list);
+PyAPI_FUNC(int) _PyStringList_Copy(PyStringList *list,
+    const PyStringList *list2);
+PyAPI_FUNC(PyStatus) _PyStringList_Extend(PyStringList *list,
+    const PyStringList *list2);
+PyAPI_FUNC(PyObject*) _PyStringList_AsList(const PyStringList *list);
 
 
 /* --- _PyArgv ---------------------------------------------------- */
 
 typedef struct _PyArgv {
     Py_ssize_t argc;
-    int use_bytes_argv;
     char * const *bytes_argv;
-    wchar_t * const *wchar_argv;
 } _PyArgv;
 
-PyAPI_FUNC(PyStatus) _PyArgv_AsWstrList(const _PyArgv *args,
-    PyWideStringList *list);
-
+PyAPI_FUNC(PyStatus) _PyArgv_AsCharList(const _PyArgv *args,
+    PyStringList *list);
+  
 
 /* --- Helper functions ------------------------------------------- */
 
 PyAPI_FUNC(int) _Py_str_to_int(
     const char *str,
     int *result);
-PyAPI_FUNC(const wchar_t*) _Py_get_xoption(
-    const PyWideStringList *xoptions,
-    const wchar_t *name);
+
 PyAPI_FUNC(const char*) _Py_GetEnv(
     int use_environment,
     const char *name);
@@ -95,8 +91,8 @@ PyAPI_FUNC(void) _Py_ClearArgcArgv(void);
 /* --- _PyPreCmdline ------------------------------------------------- */
 
 typedef struct {
-    PyWideStringList argv;
-    PyWideStringList xoptions;     /* "-X value" option */
+    PyStringList argv;
+    PyStringList xoptions;     /* "-X value" option */
     int isolated;             /* -I option */
     int use_environment;      /* -E option */
     int dev_mode;             /* -X dev and PYTHONDEVMODE */

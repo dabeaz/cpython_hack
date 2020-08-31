@@ -96,7 +96,8 @@ How will it end?  Or is this just the start?
 - Day 79 (8/28/2020). Continued codecs clobbering.
 - Day 80 (8/29/2020). Unicode is unravelling.
 - Day 81 (8/30/2020). Simple is better than complex.
-
+- Day 82 (8/31/2020). Wasted wchar_t.
+  
 Copyright and License Information
 ---------------------------------
 

@@ -5,26 +5,6 @@
 #include "pegen.h"
 #include "string_parser.h"
 
-static int
-init_normalization(Parser *p)
-{
-    if (p->normalize) {
-        return 1;
-    }
-    PyObject *m = PyImport_ImportModuleNoBlock("unicodedata");
-    if (!m)
-    {
-        return 0;
-    }
-    p->normalize = PyObject_GetAttrString(m, "normalize");
-    Py_DECREF(m);
-    if (!p->normalize)
-    {
-        return 0;
-    }
-    return 1;
-}
-
 /* Checks if the NOTEQUAL token is valid given the current parser flags
 0 indicates success and nonzero indicates failure (an exception may be set) */
 int

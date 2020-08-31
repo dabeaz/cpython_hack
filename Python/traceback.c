@@ -736,9 +736,7 @@ _Py_DumpASCII(int fd, PyObject *text)
     PyUnicodeObject *ascii = (PyUnicodeObject *)text;
     Py_ssize_t i, size;
     int truncated;
-    int kind;
     void *data = NULL;
-    wchar_t *wstr = NULL;
     Py_UCS4 ch;
 
     if (!PyUnicode_Check(text))
@@ -875,24 +873,6 @@ void
 _Py_DumpTraceback(int fd, PyThreadState *tstate)
 {
     dump_traceback(fd, tstate, 1);
-}
-
-/* Write the thread identifier into the file 'fd': "Current thread 0xHHHH:\" if
-   is_current is true, "Thread 0xHHHH:\n" otherwise.
-
-   This function is signal safe. */
-
-static void
-write_thread_id(int fd, PyThreadState *tstate, int is_current)
-{
-    if (is_current)
-        PUTS(fd, "Current thread 0x");
-    else
-        PUTS(fd, "Thread 0x");
-    _Py_DumpHexadecimal(fd,
-                        0, 
-                        sizeof(unsigned long) * 2);
-    PUTS(fd, " (most recent call first):\n");
 }
 
 /* Dump the traceback of all Python threads into fd. Use write() to write the

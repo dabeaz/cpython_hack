@@ -15,94 +15,32 @@ static void
 preconfig_copy(PyPreConfig *config, const PyPreConfig *config2);
 
 
-/* --- File system encoding/errors -------------------------------- */
-
-/* The filesystem encoding is chosen by config_init_fs_encoding(),
-   see also initfsencoding().
-
-   Py_FileSystemDefaultEncoding and Py_FileSystemDefaultEncodeErrors
-   are encoded to UTF-8. */
-const char *Py_FileSystemDefaultEncoding = NULL;
-int Py_HasFileSystemDefaultEncoding = 0;
-const char *Py_FileSystemDefaultEncodeErrors = NULL;
-int _Py_HasFileSystemDefaultEncodeErrors = 0;
-
-void
-_Py_ClearFileSystemEncoding(void)
-{
-    if (!Py_HasFileSystemDefaultEncoding && Py_FileSystemDefaultEncoding) {
-        PyMem_RawFree((char*)Py_FileSystemDefaultEncoding);
-        Py_FileSystemDefaultEncoding = NULL;
-    }
-    if (!_Py_HasFileSystemDefaultEncodeErrors && Py_FileSystemDefaultEncodeErrors) {
-        PyMem_RawFree((char*)Py_FileSystemDefaultEncodeErrors);
-        Py_FileSystemDefaultEncodeErrors = NULL;
-    }
-}
-
-
-/* Set Py_FileSystemDefaultEncoding and Py_FileSystemDefaultEncodeErrors
-   global configuration variables. */
-int
-_Py_SetFileSystemEncoding(const char *encoding, const char *errors)
-{
-    char *encoding2 = _PyMem_RawStrdup(encoding);
-    if (encoding2 == NULL) {
-        return -1;
-    }
-
-    char *errors2 = _PyMem_RawStrdup(errors);
-    if (errors2 == NULL) {
-        PyMem_RawFree(encoding2);
-        return -1;
-    }
-
-    _Py_ClearFileSystemEncoding();
-
-    Py_FileSystemDefaultEncoding = encoding2;
-    Py_HasFileSystemDefaultEncoding = 0;
-
-    Py_FileSystemDefaultEncodeErrors = errors2;
-    _Py_HasFileSystemDefaultEncodeErrors = 0;
-    return 0;
-}
-
-
 /* --- _PyArgv ---------------------------------------------------- */
 
 /* Decode bytes_argv using Py_DecodeLocale() */
 PyStatus
-_PyArgv_AsWstrList(const _PyArgv *args, PyWideStringList *list)
+_PyArgv_AsCharList(const _PyArgv *args, PyStringList *list)
 {
-    PyWideStringList wargv = _PyWideStringList_INIT;
-    if (args->use_bytes_argv) {
-        size_t size = sizeof(wchar_t*) * args->argc;
-        wargv.items = (wchar_t **)PyMem_RawMalloc(size);
+    PyStringList wargv = _PyStringList_INIT;
+    { 
+        size_t size = sizeof(char *) * args->argc;
+        wargv.items = (char **)PyMem_RawMalloc(size);
         if (wargv.items == NULL) {
             return _PyStatus_NO_MEMORY();
         }
 
         for (Py_ssize_t i = 0; i < args->argc; i++) {
-            size_t len;
-            wchar_t *arg = Py_DecodeLocale(args->bytes_argv[i], &len);
+	    char *arg;
+	    arg = strdup(args->bytes_argv[i]);
             if (arg == NULL) {
-                _PyWideStringList_Clear(&wargv);
-                return DECODE_LOCALE_ERR("command line arguments",
-                                         (Py_ssize_t)len);
+                _PyStringList_Clear(&wargv);
+		return _PyStatus_NO_MEMORY();
             }
             wargv.items[i] = arg;
             wargv.length++;
         }
-
-        _PyWideStringList_Clear(list);
+        _PyStringList_Clear(list);
         *list = wargv;
-    }
-    else {
-        wargv.length = args->argc;
-        wargv.items = (wchar_t **)args->wchar_argv;
-        if (_PyWideStringList_Copy(list, &wargv) < 0) {
-            return _PyStatus_NO_MEMORY();
-        }
     }
     return _PyStatus_OK();
 }
@@ -113,15 +51,15 @@ _PyArgv_AsWstrList(const _PyArgv *args, PyWideStringList *list)
 void
 _PyPreCmdline_Clear(_PyPreCmdline *cmdline)
 {
-    _PyWideStringList_Clear(&cmdline->argv);
-    _PyWideStringList_Clear(&cmdline->xoptions);
+    _PyStringList_Clear(&cmdline->argv);
+    _PyStringList_Clear(&cmdline->xoptions);
 }
 
 
 PyStatus
 _PyPreCmdline_SetArgv(_PyPreCmdline *cmdline, const _PyArgv *args)
 {
-    return _PyArgv_AsWstrList(args, &cmdline->argv);
+    return _PyArgv_AsCharList(args, &cmdline->argv);
 }
 
 
@@ -167,7 +105,7 @@ _PyPreCmdline_SetConfig(const _PyPreCmdline *cmdline, PyConfig *config)
 static PyStatus
 precmdline_parse_cmdline(_PyPreCmdline *cmdline)
 {
-    const PyWideStringList *argv = &cmdline->argv;
+    const PyStringList *argv = &cmdline->argv;
 
     _PyOS_ResetGetOpt();
     /* Don't log parsing errors into stderr here: PyConfig_Read()
@@ -188,7 +126,7 @@ precmdline_parse_cmdline(_PyPreCmdline *cmdline)
 
         case 'X':
         {
-            PyStatus status = PyWideStringList_Append(&cmdline->xoptions,
+            PyStatus status = PyStringList_Append(&cmdline->xoptions,
                                                       _PyOS_optarg);
             if (_PyStatus_EXCEPTION(status)) {
                 return status;
@@ -436,27 +374,6 @@ _Py_get_env_flag(int use_environment, int *flag, const char *name)
     if (*flag < value) {
         *flag = value;
     }
-}
-
-
-const wchar_t*
-_Py_get_xoption(const PyWideStringList *xoptions, const wchar_t *name)
-{
-    for (Py_ssize_t i=0; i < xoptions->length; i++) {
-        const wchar_t *option = xoptions->items[i];
-        size_t len;
-        wchar_t *sep = wcschr(option, L'=');
-        if (sep != NULL) {
-            len = (sep - option);
-        }
-        else {
-            len = wcslen(option);
-        }
-        if (wcsncmp(option, name, len) == 0 && name[len] == L'\0') {
-            return option;
-        }
-    }
-    return NULL;
 }
 
 static PyStatus

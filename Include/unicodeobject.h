@@ -64,39 +64,6 @@ Copyright (c) Corporation for National Research Initiatives.
 /* Python 3.x requires unicode */
 #define Py_USING_UNICODE
 
-#ifndef SIZEOF_WCHAR_T
-#error Must define SIZEOF_WCHAR_T
-#endif
-
-#define Py_UNICODE_SIZE SIZEOF_WCHAR_T
-
-/* If wchar_t can be used for UCS-4 storage, set Py_UNICODE_WIDE.
-   Otherwise, Unicode strings are stored as UCS-2 (with limited support
-   for UTF-16) */
-
-#if Py_UNICODE_SIZE >= 4
-#define Py_UNICODE_WIDE
-#endif
-
-/* Set these flags if the platform has "wchar.h" and the
-   wchar_t type is a 16-bit unsigned type */
-/* #define HAVE_WCHAR_H */
-/* #define HAVE_USABLE_WCHAR_T */
-
-/* If the compiler provides a wchar_t type we try to support it
-   through the interface functions PyUnicode_FromWideChar(),
-   PyUnicode_AsWideChar() and PyUnicode_AsWideCharString(). */
-
-#ifdef HAVE_USABLE_WCHAR_T
-# ifndef HAVE_WCHAR_H
-#  define HAVE_WCHAR_H
-# endif
-#endif
-
-#ifdef HAVE_WCHAR_H
-#  include <wchar.h>
-#endif
-
 /* Py_UCS4 and Py_UCS2 are typedefs for the respective
    unicode representations. */
 typedef uint32_t Py_UCS4;
@@ -104,7 +71,7 @@ typedef uint16_t Py_UCS2;
 typedef uint8_t Py_UCS1;
 
 #ifdef __cplusplus
-eFxtern "C" {
+extern "C" {
 #endif
 
 
@@ -247,54 +214,7 @@ PyAPI_FUNC(PyObject *) PyUnicode_InternFromString(
 /* Use only if you know it's a string */
 #define PyUnicode_CHECK_INTERNED(op) \
     (((PyUnicodeObject *)(op))->state.interned)
-
-/* --- wchar_t support for platforms which support it --------------------- */
-
-#ifdef HAVE_WCHAR_H
-
-/* Create a Unicode Object from the wchar_t buffer w of the given
-   size.
-
-   The buffer is copied into the new object. */
-
-PyAPI_FUNC(PyObject*) PyUnicode_FromWideChar(
-    const wchar_t *w,           /* wchar_t buffer */
-    Py_ssize_t size             /* size of buffer */
-    );
-
-/* Copies the Unicode Object contents into the wchar_t buffer w.  At
-   most size wchar_t characters are copied.
-
-   Note that the resulting wchar_t string may or may not be
-   0-terminated.  It is the responsibility of the caller to make sure
-   that the wchar_t string is 0-terminated in case this is required by
-   the application.
-
-   Returns the number of wchar_t characters copied (excluding a
-   possibly trailing 0-termination character) or -1 in case of an
-   error. */
-
-PyAPI_FUNC(Py_ssize_t) PyUnicode_AsWideChar(
-    PyObject *unicode,          /* Unicode object */
-    wchar_t *w,                 /* wchar_t buffer */
-    Py_ssize_t size             /* size of buffer */
-    );
-
-/* Convert the Unicode object to a wide character string. The output string
-   always ends with a nul character. If size is not NULL, write the number of
-   wide characters (excluding the null character) into *size.
-
-   Returns a buffer allocated by PyMem_Malloc() (use PyMem_Free() to free it)
-   on success. On error, returns NULL, *size is undefined and raises a
-   MemoryError. */
-
-PyAPI_FUNC(wchar_t*) PyUnicode_AsWideCharString(
-    PyObject *unicode,          /* Unicode object */
-    Py_ssize_t *size            /* number of characters of the result */
-    );
-
-#endif
-
+ 
 /* --- Unicode ordinals --------------------------------------------------- */
 
 /* Create a Unicode Object from the given Unicode code point ordinal.

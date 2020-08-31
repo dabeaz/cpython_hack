@@ -19,13 +19,13 @@ Py_FrozenMain(int argc, char **argv)
     int inspect = 0;
     int unbuffered = 0;
     char *oldloc = NULL;
-    wchar_t **argv_copy = NULL;
+    char **argv_copy = NULL;
     /* We need a second copies, as Python might modify the first one. */
-    wchar_t **argv_copy2 = NULL;
+    char **argv_copy2 = NULL;
 
     if (argc > 0) {
-        argv_copy = PyMem_RawMalloc(sizeof(wchar_t*) * argc);
-        argv_copy2 = PyMem_RawMalloc(sizeof(wchar_t*) * argc);
+        argv_copy = PyMem_RawMalloc(sizeof(char*) * argc);
+        argv_copy2 = PyMem_RawMalloc(sizeof(char*) * argc);
         if (!argv_copy || !argv_copy2) {
             fprintf(stderr, "out of memory\n");
             goto error;
@@ -47,9 +47,9 @@ Py_FrozenMain(int argc, char **argv)
         setbuf(stderr, (char *)NULL);
     }
     for (i = 0; i < argc; i++) {
-        argv_copy[i] = Py_DecodeLocale(argv[i], NULL);
-        argv_copy2[i] = argv_copy[i];
-        if (!argv_copy[i]) {
+      argv_copy[i] = strdup(argv[i]);
+      argv_copy2[i] = argv_copy[i];
+      if (!argv_copy[i]) {
             fprintf(stderr, "Unable to decode the command line argument #%i\n",
                             i + 1);
             argc = i;

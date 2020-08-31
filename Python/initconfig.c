@@ -23,7 +23,7 @@
 
 /* Short usage message (with %s for argv0) */
 static const char usage_line[] =
-"usage: %ls [option] ... [-c cmd | -m mod | file | -] [arg] ...\n";
+"usage: %s [option] ... [-c cmd | -m mod | file | -] [arg] ...\n";
 
 /* Long usage message, split into parts < 512 bytes */
 static const char usage_1[] = "\
@@ -150,11 +150,6 @@ _Py_GetGlobalVariablesAsDict(void)
 #define SET_ITEM_STR(VAR) \
     SET_ITEM(#VAR, FROM_STRING(VAR))
 
-    SET_ITEM_STR(Py_FileSystemDefaultEncoding);
-    SET_ITEM_INT(Py_HasFileSystemDefaultEncoding);
-    SET_ITEM_STR(Py_FileSystemDefaultEncodeErrors);
-    SET_ITEM_INT(_Py_HasFileSystemDefaultEncodeErrors);
-
     SET_ITEM_INT(Py_UTF8Mode);
     SET_ITEM_INT(Py_DebugFlag);
     SET_ITEM_INT(Py_QuietFlag);
@@ -209,11 +204,12 @@ int PyStatus_Exception(PyStatus status)
 { return _PyStatus_EXCEPTION(status); }
 
 
-/* --- PyWideStringList ------------------------------------------------ */
+/* --- StringList */
+
 
 #ifndef NDEBUG
 int
-_PyWideStringList_CheckConsistency(const PyWideStringList *list)
+_PyStringList_CheckConsistency(const PyStringList *list)
 {
     assert(list->length >= 0);
     if (list->length != 0) {
@@ -226,11 +222,10 @@ _PyWideStringList_CheckConsistency(const PyWideStringList *list)
 }
 #endif   /* Py_DEBUG */
 
-
 void
-_PyWideStringList_Clear(PyWideStringList *list)
+_PyStringList_Clear(PyStringList *list)
 {
-    assert(_PyWideStringList_CheckConsistency(list));
+    assert(_PyStringList_CheckConsistency(list));
     for (Py_ssize_t i=0; i < list->length; i++) {
         PyMem_RawFree(list->items[i]);
     }
@@ -241,17 +236,17 @@ _PyWideStringList_Clear(PyWideStringList *list)
 
 
 int
-_PyWideStringList_Copy(PyWideStringList *list, const PyWideStringList *list2)
+_PyStringList_Copy(PyStringList *list, const PyStringList *list2)
 {
-    assert(_PyWideStringList_CheckConsistency(list));
-    assert(_PyWideStringList_CheckConsistency(list2));
+    assert(_PyStringList_CheckConsistency(list));
+    assert(_PyStringList_CheckConsistency(list2));
 
     if (list2->length == 0) {
-        _PyWideStringList_Clear(list);
+        _PyStringList_Clear(list);
         return 0;
     }
 
-    PyWideStringList copy = _PyWideStringList_INIT;
+    PyStringList copy = _PyStringList_INIT;
 
     size_t size = list2->length * sizeof(list2->items[0]);
     copy.items = PyMem_RawMalloc(size);
@@ -260,24 +255,23 @@ _PyWideStringList_Copy(PyWideStringList *list, const PyWideStringList *list2)
     }
 
     for (Py_ssize_t i=0; i < list2->length; i++) {
-        wchar_t *item = _PyMem_RawWcsdup(list2->items[i]);
-        if (item == NULL) {
-            _PyWideStringList_Clear(&copy);
-            return -1;
-        }
-        copy.items[i] = item;
-        copy.length = i + 1;
+      char *item = strdup(list2->items[i]);
+      if (item == NULL) {
+	_PyStringList_Clear(&copy);
+	return -1;
+      }
+      copy.items[i] = item;
+      copy.length = i + 1;
     }
-
-    _PyWideStringList_Clear(list);
+    _PyStringList_Clear(list);
     *list = copy;
     return 0;
 }
 
 
 PyStatus
-PyWideStringList_Insert(PyWideStringList *list,
-                        Py_ssize_t index, const wchar_t *item)
+PyStringList_Insert(PyStringList *list,
+                        Py_ssize_t index, const char *item)
 {
     Py_ssize_t len = list->length;
     if (len == PY_SSIZE_T_MAX) {
@@ -285,19 +279,19 @@ PyWideStringList_Insert(PyWideStringList *list,
         return _PyStatus_NO_MEMORY();
     }
     if (index < 0) {
-        return _PyStatus_ERR("PyWideStringList_Insert index must be >= 0");
+        return _PyStatus_ERR("PyStringList_Insert index must be >= 0");
     }
     if (index > len) {
         index = len;
     }
 
-    wchar_t *item2 = _PyMem_RawWcsdup(item);
+    char *item2 = strdup(item);
     if (item2 == NULL) {
         return _PyStatus_NO_MEMORY();
     }
 
     size_t size = (len + 1) * sizeof(list->items[0]);
-    wchar_t **items2 = (wchar_t **)PyMem_RawRealloc(list->items, size);
+    char **items2 = (char **)PyMem_RawRealloc(list->items, size);
     if (items2 == NULL) {
         PyMem_RawFree(item2);
         return _PyStatus_NO_MEMORY();
@@ -317,17 +311,17 @@ PyWideStringList_Insert(PyWideStringList *list,
 
 
 PyStatus
-PyWideStringList_Append(PyWideStringList *list, const wchar_t *item)
+PyStringList_Append(PyStringList *list, const char *item)
 {
-    return PyWideStringList_Insert(list, list->length, item);
+    return PyStringList_Insert(list, list->length, item);
 }
 
 
 PyStatus
-_PyWideStringList_Extend(PyWideStringList *list, const PyWideStringList *list2)
+_PyStringList_Extend(PyStringList *list, const PyStringList *list2)
 {
     for (Py_ssize_t i = 0; i < list2->length; i++) {
-        PyStatus status = PyWideStringList_Append(list, list2->items[i]);
+        PyStatus status = PyStringList_Append(list, list2->items[i]);
         if (_PyStatus_EXCEPTION(status)) {
             return status;
         }
@@ -337,9 +331,9 @@ _PyWideStringList_Extend(PyWideStringList *list, const PyWideStringList *list2)
 
 
 PyObject*
-_PyWideStringList_AsList(const PyWideStringList *list)
+_PyStringList_AsList(const PyStringList *list)
 {
-    assert(_PyWideStringList_CheckConsistency(list));
+    assert(_PyStringList_CheckConsistency(list));
 
     PyObject *pylist = PyList_New(list->length);
     if (pylist == NULL) {
@@ -347,16 +341,15 @@ _PyWideStringList_AsList(const PyWideStringList *list)
     }
 
     for (Py_ssize_t i = 0; i < list->length; i++) {
-        PyObject *item = PyUnicode_FromWideChar(list->items[i], -1);
-        if (item == NULL) {
-            Py_DECREF(pylist);
-            return NULL;
-        }
-        PyList_SET_ITEM(pylist, i, item);
+      PyObject *item = PyUnicode_FromString(list->items[i]);
+      if (item == NULL) {
+	Py_DECREF(pylist);
+	return NULL;
+      }
+      PyList_SET_ITEM(pylist, i, item);
     }
     return pylist;
 }
-
 
 /* --- Py_SetStandardStreamEncoding() ----------------------------- */
 
@@ -440,7 +433,7 @@ _Py_ClearStandardStreamEncoding(void)
 /* --- Py_GetArgcArgv() ------------------------------------------- */
 
 /* For Py_GetArgcArgv(); set by _Py_SetArgcArgv() */
-static PyWideStringList orig_argv = {.length = 0, .items = NULL};
+static PyStringList orig_argv = {.length = 0, .items = NULL};
 
 
 void
@@ -449,22 +442,22 @@ _Py_ClearArgcArgv(void)
     PyMemAllocatorEx old_alloc;
     _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
 
-    _PyWideStringList_Clear(&orig_argv);
+    _PyStringList_Clear(&orig_argv);
 
     PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
 }
 
 
 static int
-_Py_SetArgcArgv(Py_ssize_t argc, wchar_t * const *argv)
+_Py_SetArgcArgv(Py_ssize_t argc, char * const *argv)
 {
-    const PyWideStringList argv_list = {.length = argc, .items = (wchar_t **)argv};
+    const PyStringList argv_list = {.length = argc, .items = (char **)argv};
     int res;
 
     PyMemAllocatorEx old_alloc;
     _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
 
-    res = _PyWideStringList_Copy(&orig_argv, &argv_list);
+    res = _PyStringList_Copy(&orig_argv, &argv_list);
 
     PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
     return res;
@@ -472,7 +465,7 @@ _Py_SetArgcArgv(Py_ssize_t argc, wchar_t * const *argv)
 
 
 void
-Py_GetArgcArgv(int *argc, wchar_t ***argv)
+Py_GetArgcArgv(int *argc, char ***argv)
 {
     *argc = (int)orig_argv.length;
     *argv = orig_argv.items;
@@ -501,8 +494,8 @@ PyConfig_Clear(PyConfig *config)
     CLEAR(config->home);
     CLEAR(config->program_name);
 
-    _PyWideStringList_Clear(&config->argv);
-    _PyWideStringList_Clear(&config->module_search_paths);
+    _PyStringList_Clear(&config->argv);
+    _PyStringList_Clear(&config->module_search_paths);
     config->module_search_paths_set = 0;
 
     CLEAR(config->executable);
@@ -512,11 +505,6 @@ PyConfig_Clear(PyConfig *config)
     CLEAR(config->exec_prefix);
     CLEAR(config->base_exec_prefix);
     CLEAR(config->platlibdir);
-
-    CLEAR(config->filesystem_encoding);
-    CLEAR(config->filesystem_errors);
-    CLEAR(config->stdio_encoding);
-    CLEAR(config->stdio_errors);
     CLEAR(config->run_command);
     CLEAR(config->run_module);
     CLEAR(config->run_filename);
@@ -581,22 +569,21 @@ PyConfig_InitIsolatedConfig(PyConfig *config)
     config->pathconfig_warnings = 0;
 }
 
-
 /* Copy str into *config_str (duplicate the string) */
 PyStatus
-PyConfig_SetString(PyConfig *config, wchar_t **config_str, const wchar_t *str)
+PyConfig_SetChar(PyConfig *config, char **config_str, const char *str)
 {
     PyStatus status = _Py_PreInitializeFromConfig(config, NULL);
     if (_PyStatus_EXCEPTION(status)) {
         return status;
     }
 
-    wchar_t *str2;
+    char *str2;
     if (str != NULL) {
-        str2 = _PyMem_RawWcsdup(str);
-        if (str2 == NULL) {
-            return _PyStatus_NO_MEMORY();
-        }
+      str2 = strdup(str);
+      if (str2 == NULL) {
+	return _PyStatus_NO_MEMORY();
+      }
     }
     else {
         str2 = NULL;
@@ -608,29 +595,17 @@ PyConfig_SetString(PyConfig *config, wchar_t **config_str, const wchar_t *str)
 
 
 static PyStatus
-config_set_bytes_string(PyConfig *config, wchar_t **config_str,
+config_set_bytes_string(PyConfig *config, char **config_str,
                         const char *str, const char *decode_err_msg)
 {
+  char *str2;
     PyStatus status = _Py_PreInitializeFromConfig(config, NULL);
     if (_PyStatus_EXCEPTION(status)) {
         return status;
     }
-
-    wchar_t *str2;
-    if (str != NULL) {
-        size_t len;
-        str2 = Py_DecodeLocale(str, &len);
-        if (str2 == NULL) {
-            if (len == (size_t)-2) {
-                return _PyStatus_ERR(decode_err_msg);
-            }
-            else {
-                return  _PyStatus_NO_MEMORY();
-            }
-        }
-    }
-    else {
-        str2 = NULL;
+    str2 = strdup(str);
+    if (str2 == NULL) {
+      return _PyStatus_NO_MEMORY();
     }
     PyMem_RawFree(*config_str);
     *config_str = str2;
@@ -646,7 +621,7 @@ config_set_bytes_string(PyConfig *config, wchar_t **config_str,
    Pre-initialize Python if needed to ensure that encodings are properly
    configured. */
 PyStatus
-PyConfig_SetBytesString(PyConfig *config, wchar_t **config_str,
+PyConfig_SetBytesString(PyConfig *config, char **config_str,
                            const char *str)
 {
     return CONFIG_SET_BYTES_STR(config, config_str, str, "string");
@@ -668,6 +643,15 @@ _PyConfig_Copy(PyConfig *config, const PyConfig *config2)
             return status; \
         } \
     } while (0)
+
+#define COPY_CHAR_ATTR(ATTR) \
+    do { \
+        status = PyConfig_SetChar(config, &config->ATTR, config2->ATTR); \
+        if (_PyStatus_EXCEPTION(status)) { \
+            return status; \
+        } \
+    } while (0)
+    
 #define COPY_WSTRLIST(LIST) \
     do { \
         if (_PyWideStringList_Copy(&config->LIST, &config2->LIST) < 0) { \
@@ -675,49 +659,54 @@ _PyConfig_Copy(PyConfig *config, const PyConfig *config2)
         } \
     } while (0)
 
+#define COPY_CHARLIST(LIST) \
+    do { \
+        if (_PyStringList_Copy(&config->LIST, &config2->LIST) < 0) { \
+            return _PyStatus_NO_MEMORY(); \
+        } \
+    } while (0)
+    
     COPY_ATTR(_config_init);
     COPY_ATTR(use_environment);
     COPY_ATTR(use_hash_seed);
     COPY_ATTR(hash_seed);
     COPY_ATTR(_install_importlib);
 
-    COPY_WSTR_ATTR(pythonpath_env);
-    COPY_WSTR_ATTR(home);
-    COPY_WSTR_ATTR(program_name);
+    COPY_CHAR_ATTR(pythonpath_env);
+    COPY_CHAR_ATTR(home);
+    COPY_CHAR_ATTR(program_name);
 
     COPY_ATTR(parse_argv);
-    COPY_WSTRLIST(argv);
-    COPY_WSTRLIST(module_search_paths);
+    COPY_CHARLIST(argv);
+    COPY_CHARLIST(module_search_paths);
     COPY_ATTR(module_search_paths_set);
 
-    COPY_WSTR_ATTR(executable);
-    COPY_WSTR_ATTR(base_executable);
-    COPY_WSTR_ATTR(prefix);
-    COPY_WSTR_ATTR(base_prefix);
-    COPY_WSTR_ATTR(exec_prefix);
-    COPY_WSTR_ATTR(base_exec_prefix);
-    COPY_WSTR_ATTR(platlibdir);
+    COPY_CHAR_ATTR(executable);
+    COPY_CHAR_ATTR(base_executable);
+    COPY_CHAR_ATTR(prefix);
+    COPY_CHAR_ATTR(base_prefix);
+    COPY_CHAR_ATTR(exec_prefix);
+    COPY_CHAR_ATTR(base_exec_prefix);
+    COPY_CHAR_ATTR(platlibdir);
 
     COPY_ATTR(inspect);
     COPY_ATTR(interactive);
     COPY_ATTR(quiet);
     COPY_ATTR(configure_c_stdio);
     COPY_ATTR(buffered_stdio);
-    COPY_WSTR_ATTR(filesystem_encoding);
-    COPY_WSTR_ATTR(filesystem_errors);
-    COPY_WSTR_ATTR(stdio_encoding);
-    COPY_WSTR_ATTR(stdio_errors);
     COPY_ATTR(skip_source_first_line);
-    COPY_WSTR_ATTR(run_command);
-    COPY_WSTR_ATTR(run_module);
-    COPY_WSTR_ATTR(run_filename);
+    COPY_CHAR_ATTR(run_command);
+    COPY_CHAR_ATTR(run_module);
+    COPY_CHAR_ATTR(run_filename);
     COPY_ATTR(pathconfig_warnings);
     COPY_ATTR(_init_main);
-    COPY_WSTRLIST(_orig_argv);
+    COPY_CHARLIST(_orig_argv);
 
 #undef COPY_ATTR
 #undef COPY_WSTR_ATTR
 #undef COPY_WSTRLIST
+#undef COPY_CHAR_ATTR
+#undef COPY_CHARLIST
     return _PyStatus_OK();
 }
 
@@ -752,45 +741,54 @@ config_as_dict(const PyConfig *config)
     ((STR != NULL) ? \
         PyUnicode_FromWideChar(STR, -1) \
         : (Py_INCREF(Py_None), Py_None))
+
+#define FROM_CHAR(STR) \
+    ((STR != NULL) ? \
+        PyUnicode_FromString(STR) \
+        : (Py_INCREF(Py_None), Py_None))
+    
 #define SET_ITEM_WSTR(ATTR) \
     SET_ITEM(#ATTR, FROM_WSTRING(config->ATTR))
+
+#define SET_ITEM_CHAR(ATTR) \
+    SET_ITEM(#ATTR, FROM_CHAR(config->ATTR))
+    
 #define SET_ITEM_WSTRLIST(LIST) \
     SET_ITEM(#LIST, _PyWideStringList_AsList(&config->LIST))
 
+#define SET_ITEM_CHARLIST(LIST) \
+    SET_ITEM(#LIST, _PyStringList_AsList(&config->LIST))
+    
     SET_ITEM_INT(_config_init);
     SET_ITEM_INT(use_environment);
     SET_ITEM_INT(use_hash_seed);
     SET_ITEM_UINT(hash_seed);
-    SET_ITEM_WSTR(filesystem_encoding);
-    SET_ITEM_WSTR(filesystem_errors);
-    SET_ITEM_WSTR(program_name);
+    SET_ITEM_CHAR(program_name);
     SET_ITEM_INT(parse_argv);
-    SET_ITEM_WSTRLIST(argv);
-    SET_ITEM_WSTR(pythonpath_env);
-    SET_ITEM_WSTR(home);
-    SET_ITEM_WSTRLIST(module_search_paths);
-    SET_ITEM_WSTR(executable);
-    SET_ITEM_WSTR(base_executable);
-    SET_ITEM_WSTR(prefix);
-    SET_ITEM_WSTR(base_prefix);
-    SET_ITEM_WSTR(exec_prefix);
-    SET_ITEM_WSTR(base_exec_prefix);
-    SET_ITEM_WSTR(platlibdir);
+    SET_ITEM_CHARLIST(argv);
+    SET_ITEM_CHAR(pythonpath_env);
+    SET_ITEM_CHAR(home);
+    SET_ITEM_CHARLIST(module_search_paths);
+    SET_ITEM_CHAR(executable);
+    SET_ITEM_CHAR(base_executable);
+    SET_ITEM_CHAR(prefix);
+    SET_ITEM_CHAR(base_prefix);
+    SET_ITEM_CHAR(exec_prefix);
+    SET_ITEM_CHAR(base_exec_prefix);
+    SET_ITEM_CHAR(platlibdir);
     SET_ITEM_INT(inspect);
     SET_ITEM_INT(interactive);
     SET_ITEM_INT(quiet);
     SET_ITEM_INT(configure_c_stdio);
     SET_ITEM_INT(buffered_stdio);
-    SET_ITEM_WSTR(stdio_encoding);
-    SET_ITEM_WSTR(stdio_errors);
     SET_ITEM_INT(skip_source_first_line);
-    SET_ITEM_WSTR(run_command);
-    SET_ITEM_WSTR(run_module);
-    SET_ITEM_WSTR(run_filename);
+    SET_ITEM_CHAR(run_command);
+    SET_ITEM_CHAR(run_module);
+    SET_ITEM_CHAR(run_filename);
     SET_ITEM_INT(_install_importlib);
     SET_ITEM_INT(pathconfig_warnings);
     SET_ITEM_INT(_init_main);
-    SET_ITEM_WSTRLIST(_orig_argv);
+    SET_ITEM_CHARLIST(_orig_argv);
 
     return dict;
 
@@ -804,6 +802,8 @@ fail:
 #undef SET_ITEM_UINT
 #undef SET_ITEM_WSTR
 #undef SET_ITEM_WSTRLIST
+#undef SET_ITEM_CHAR
+#undef SET_ITEM_CHARLIST
 }
 
 
@@ -819,8 +819,8 @@ config_get_env(const PyConfig *config, const char *name)
    Return -1 on memory allocation failure. Return -2 on decoding error. */
 static PyStatus
 config_get_env_dup(PyConfig *config,
-                   wchar_t **dest,
-                   wchar_t *wname, char *name,
+                   char **dest,
+                   char *wname, char *name,
                    const char *decode_err_msg)
 {
     assert(*dest == NULL);
@@ -913,69 +913,19 @@ config_init_program_name(PyConfig *config)
     PyStatus status;
 
     /* If Py_SetProgramName() was called, use its value */
-    const wchar_t *program_name = _Py_path_config.program_name;
+    const char *program_name = _Py_path_config.program_name;
     if (program_name != NULL) {
-        config->program_name = _PyMem_RawWcsdup(program_name);
+      config->program_name = strdup(program_name);
         if (config->program_name == NULL) {
             return _PyStatus_NO_MEMORY();
         }
         return _PyStatus_OK();
     }
 
-#ifdef __APPLE__
-    /* On MacOS X, when the Python interpreter is embedded in an
-       application bundle, it gets executed by a bootstrapping script
-       that does os.execve() with an argv[0] that's different from the
-       actual Python executable. This is needed to keep the Finder happy,
-       or rather, to work around Apple's overly strict requirements of
-       the process name. However, we still need a usable sys.executable,
-       so the actual executable path is passed in an environment variable.
-       See Lib/plat-mac/bundlebuilder.py for details about the bootstrap
-       script. */
-    const char *p = config_get_env(config, "PYTHONEXECUTABLE");
-    if (p != NULL) {
-        status = CONFIG_SET_BYTES_STR(config, &config->program_name, p,
-                                      "PYTHONEXECUTABLE environment variable");
-        if (_PyStatus_EXCEPTION(status)) {
-            return status;
-        }
-        return _PyStatus_OK();
-    }
-#ifdef WITH_NEXT_FRAMEWORK
-    else {
-        const char* pyvenv_launcher = getenv("__PYVENV_LAUNCHER__");
-        if (pyvenv_launcher && *pyvenv_launcher) {
-            /* Used by Mac/Tools/pythonw.c to forward
-             * the argv0 of the stub executable
-             */
-            status = CONFIG_SET_BYTES_STR(config,
-                                          &config->program_name,
-                                          pyvenv_launcher,
-                                          "__PYVENV_LAUNCHER__ environment variable");
-            if (_PyStatus_EXCEPTION(status)) {
-                return status;
-            }
-
-            /*
-             * This environment variable is used to communicate between
-             * the stub launcher and the real interpreter and isn't needed
-             * beyond this point.
-             *
-             * Clean up to avoid problems when launching other programs
-             * later on.
-             */
-            (void)unsetenv("__PYVENV_LAUNCHER__");
-
-            return _PyStatus_OK();
-        }
-    }
-#endif   /* WITH_NEXT_FRAMEWORK */
-#endif   /* __APPLE__ */
-
     /* Use argv[0] if available and non-empty */
-    const PyWideStringList *argv = &config->argv;
+    const PyStringList *argv = &config->argv;
     if (argv->length >= 1 && argv->items[0][0] != L'\0') {
-        config->program_name = _PyMem_RawWcsdup(argv->items[0]);
+        config->program_name = strdup(argv->items[0]);
         if (config->program_name == NULL) {
             return _PyStatus_NO_MEMORY();
         }
@@ -983,8 +933,8 @@ config_init_program_name(PyConfig *config)
     }
 
     /* Last fall back: hardcoded name */
-    const wchar_t *default_program_name = L"python3";
-    status = PyConfig_SetString(config, &config->program_name,
+    const char *default_program_name = "python3";
+    status = PyConfig_SetChar(config, &config->program_name,
                                 default_program_name);
     if (_PyStatus_EXCEPTION(status)) {
         return status;
@@ -998,9 +948,9 @@ config_init_executable(PyConfig *config)
     assert(config->executable == NULL);
 
     /* If Py_SetProgramFullPath() was called, use its value */
-    const wchar_t *program_full_path = _Py_path_config.program_full_path;
+    const char *program_full_path = _Py_path_config.program_full_path;
     if (program_full_path != NULL) {
-        PyStatus status = PyConfig_SetString(config,
+        PyStatus status = PyConfig_SetChar(config,
                                              &config->executable,
                                              program_full_path);
         if (_PyStatus_EXCEPTION(status)) {
@@ -1018,9 +968,9 @@ config_init_home(PyConfig *config)
     assert(config->home == NULL);
 
     /* If Py_SetPythonHome() was called, use its value */
-    wchar_t *home = _Py_path_config.home;
+    char *home = _Py_path_config.home;
     if (home) {
-        PyStatus status = PyConfig_SetString(config, &config->home, home);
+        PyStatus status = PyConfig_SetChar(config, &config->home, home);
         if (_PyStatus_EXCEPTION(status)) {
             return status;
         }
@@ -1028,7 +978,7 @@ config_init_home(PyConfig *config)
     }
 
     return CONFIG_GET_ENV_DUP(config, &config->home,
-                              L"PYTHONHOME", "PYTHONHOME");
+                              "PYTHONHOME", "PYTHONHOME");
 }
 
 
@@ -1081,7 +1031,7 @@ config_read_env_vars(PyConfig *config)
 
     if (config->pythonpath_env == NULL) {
         status = CONFIG_GET_ENV_DUP(config, &config->pythonpath_env,
-                                    L"PYTHONPATH", "PYTHONPATH");
+                                    "PYTHONPATH", "PYTHONPATH");
         if (_PyStatus_EXCEPTION(status)) {
             return status;
         }
@@ -1089,7 +1039,7 @@ config_read_env_vars(PyConfig *config)
 
     if(config->platlibdir == NULL) {
         status = CONFIG_GET_ENV_DUP(config, &config->platlibdir,
-                                    L"PYTHONPLATLIBDIR", "PYTHONPLATLIBDIR");
+                                    "PYTHONPLATLIBDIR", "PYTHONPLATLIBDIR");
         if (_PyStatus_EXCEPTION(status)) {
             return status;
         }
@@ -1105,176 +1055,10 @@ config_read_env_vars(PyConfig *config)
     return _PyStatus_OK();
 }
 
-static const wchar_t *
-config_get_stdio_errors(void)
-{
-    return L"strict";
-}
-
-
-static PyStatus
-config_get_locale_encoding(PyConfig *config, wchar_t **locale_encoding)
-{
-#if defined(_Py_FORCE_UTF8_LOCALE)
-    return PyConfig_SetString(config, locale_encoding, L"utf-8");
-#else
-    const char *encoding = nl_langinfo(CODESET);
-    if (!encoding || encoding[0] == '\0') {
-        return _PyStatus_ERR("failed to get the locale encoding: "
-                             "nl_langinfo(CODESET) failed");
-    }
-    /* nl_langinfo(CODESET) is decoded by Py_DecodeLocale() */
-    return CONFIG_SET_BYTES_STR(config,
-                                locale_encoding, encoding,
-                                "nl_langinfo(CODESET)");
-#endif
-}
-
-
-static PyStatus
-config_init_stdio_encoding(PyConfig *config,
-                           const PyPreConfig *preconfig)
-{
-    PyStatus status;
-
-    /* If Py_SetStandardStreamEncoding() have been called, use these
-        parameters. */
-    if (config->stdio_encoding == NULL && _Py_StandardStreamEncoding != NULL) {
-        status = CONFIG_SET_BYTES_STR(config, &config->stdio_encoding,
-                                      _Py_StandardStreamEncoding,
-                                      "_Py_StandardStreamEncoding");
-        if (_PyStatus_EXCEPTION(status)) {
-            return status;
-        }
-    }
-
-    if (config->stdio_errors == NULL && _Py_StandardStreamErrors != NULL) {
-        status = CONFIG_SET_BYTES_STR(config, &config->stdio_errors,
-                                      _Py_StandardStreamErrors,
-                                      "_Py_StandardStreamErrors");
-        if (_PyStatus_EXCEPTION(status)) {
-            return status;
-        }
-    }
-
-    if (config->stdio_encoding != NULL && config->stdio_errors != NULL) {
-        return _PyStatus_OK();
-    }
-
-    /* PYTHONIOENCODING environment variable */
-    const char *opt = config_get_env(config, "PYTHONIOENCODING");
-    if (opt) {
-        char *pythonioencoding = _PyMem_RawStrdup(opt);
-        if (pythonioencoding == NULL) {
-            return _PyStatus_NO_MEMORY();
-        }
-
-        char *errors = strchr(pythonioencoding, ':');
-        if (errors) {
-            *errors = '\0';
-            errors++;
-            if (!errors[0]) {
-                errors = NULL;
-            }
-        }
-
-        /* Does PYTHONIOENCODING contain an encoding? */
-        if (pythonioencoding[0]) {
-            if (config->stdio_encoding == NULL) {
-                status = CONFIG_SET_BYTES_STR(config, &config->stdio_encoding,
-                                              pythonioencoding,
-                                              "PYTHONIOENCODING environment variable");
-                if (_PyStatus_EXCEPTION(status)) {
-                    PyMem_RawFree(pythonioencoding);
-                    return status;
-                }
-            }
-
-            /* If the encoding is set but not the error handler,
-               use "strict" error handler by default.
-               PYTHONIOENCODING=latin1 behaves as
-               PYTHONIOENCODING=latin1:strict. */
-            if (!errors) {
-                errors = "strict";
-            }
-        }
-
-        if (config->stdio_errors == NULL && errors != NULL) {
-            status = CONFIG_SET_BYTES_STR(config, &config->stdio_errors,
-                                          errors,
-                                          "PYTHONIOENCODING environment variable");
-            if (_PyStatus_EXCEPTION(status)) {
-                PyMem_RawFree(pythonioencoding);
-                return status;
-            }
-        }
-
-        PyMem_RawFree(pythonioencoding);
-    }
-
-    /* Choose the default error handler based on the current locale. */
-    if (config->stdio_encoding == NULL) {
-        status = config_get_locale_encoding(config, &config->stdio_encoding);
-        if (_PyStatus_EXCEPTION(status)) {
-            return status;
-        }
-    }
-    if (config->stdio_errors == NULL) {
-        const wchar_t *errors = config_get_stdio_errors();
-        assert(errors != NULL);
-
-        status = PyConfig_SetString(config, &config->stdio_errors, errors);
-        if (_PyStatus_EXCEPTION(status)) {
-            return status;
-        }
-    }
-
-    return _PyStatus_OK();
-}
-
-
-static PyStatus
-config_init_fs_encoding(PyConfig *config, const PyPreConfig *preconfig)
-{
-    PyStatus status;
-
-    if (config->filesystem_encoding == NULL) {
-#ifdef _Py_FORCE_UTF8_FS_ENCODING
-        status = PyConfig_SetString(config, &config->filesystem_encoding, L"utf-8");
-#else
-
-        else if (_Py_GetForceASCII()) {
-            status = PyConfig_SetString(config, &config->filesystem_encoding,
-                                        L"ascii");
-        }
-        else {
-            status = config_get_locale_encoding(config,
-                                                &config->filesystem_encoding);
-        }
-#endif   /* !_Py_FORCE_UTF8_FS_ENCODING */
-
-        if (_PyStatus_EXCEPTION(status)) {
-            return status;
-        }
-    }
-
-    if (config->filesystem_errors == NULL) {
-        const wchar_t *errors;
-        errors = L"surrogateescape";
-        status = PyConfig_SetString(config, &config->filesystem_errors, errors);
-        if (_PyStatus_EXCEPTION(status)) {
-            return status;
-        }
-    }
-    return _PyStatus_OK();
-}
-
-
 static PyStatus
 config_read(PyConfig *config)
 {
     PyStatus status;
-    const PyPreConfig *preconfig = &_PyRuntime.preconfig;
 
     if (config->use_environment) {
         status = config_read_env_vars(config);
@@ -1317,22 +1101,9 @@ config_read(PyConfig *config)
         config->use_hash_seed = 0;
         config->hash_seed = 0;
     }
-
-    if (config->filesystem_encoding == NULL || config->filesystem_errors == NULL) {
-        status = config_init_fs_encoding(config, preconfig);
-        if (_PyStatus_EXCEPTION(status)) {
-            return status;
-        }
-    }
-
-    status = config_init_stdio_encoding(config, preconfig);
-    if (_PyStatus_EXCEPTION(status)) {
-        return status;
-    }
-
     if (config->argv.length < 1) {
         /* Ensure at least one (empty) argument is seen */
-        status = PyWideStringList_Append(&config->argv, L"");
+        status = PyStringList_Append(&config->argv, "");
         if (_PyStatus_EXCEPTION(status)) {
             return status;
         }
@@ -1399,7 +1170,7 @@ _PyConfig_Write(const PyConfig *config, _PyRuntimeState *runtime)
 /* --- PyConfig command line parser -------------------------- */
 
 static void
-config_usage(int error, const wchar_t* program)
+config_usage(int error, const char* program)
 {
     FILE *f = error ? stderr : stdout;
 
@@ -1422,10 +1193,9 @@ static PyStatus
 config_parse_cmdline(PyConfig *config, 
                      Py_ssize_t *opt_index)
 {
-    PyStatus status;
-    const PyWideStringList *argv = &config->argv;
+    const PyStringList *argv = &config->argv;
     int print_version = 0;
-    const wchar_t* program = config->program_name;
+    const char* program = config->program_name;
 
     _PyOS_ResetGetOpt();
     do {
@@ -1440,12 +1210,12 @@ config_parse_cmdline(PyConfig *config,
                 /* -c is the last option; following arguments
                    that look like options are left for the
                    command to interpret. */
-                size_t len = wcslen(_PyOS_optarg) + 1 + 1;
-                wchar_t *command = PyMem_RawMalloc(sizeof(wchar_t) * len);
+                size_t len = strlen(_PyOS_optarg) + 1 + 1;
+                char *command = PyMem_RawMalloc(sizeof(char) * len);
                 if (command == NULL) {
                     return _PyStatus_NO_MEMORY();
                 }
-                memcpy(command, _PyOS_optarg, (len - 2) * sizeof(wchar_t));
+                memcpy(command, _PyOS_optarg, (len - 2) * sizeof(char));
                 command[len - 2] = '\n';
                 command[len - 1] = 0;
                 config->run_command = command;
@@ -1458,7 +1228,7 @@ config_parse_cmdline(PyConfig *config,
                that look like options are left for the
                module to interpret. */
             if (config->run_module == NULL) {
-                config->run_module = _PyMem_RawWcsdup(_PyOS_optarg);
+                config->run_module = strdup(_PyOS_optarg);
                 if (config->run_module == NULL) {
                     return _PyStatus_NO_MEMORY();
                 }
@@ -1470,9 +1240,9 @@ config_parse_cmdline(PyConfig *config,
         case 0:
             // Handle long option.
             assert(longindex == 0); // Only one long option now.
-            if (wcscmp(_PyOS_optarg, L"always") == 0
-                || wcscmp(_PyOS_optarg, L"never") == 0
-                || wcscmp(_PyOS_optarg, L"default") == 0)
+            if (strcmp(_PyOS_optarg, "always") == 0
+                || strcmp(_PyOS_optarg, "never") == 0
+                || strcmp(_PyOS_optarg, "default") == 0)
             {
             } else {
                 fprintf(stderr, "--check-hash-based-pycs must be one of "
@@ -1541,10 +1311,10 @@ config_parse_cmdline(PyConfig *config,
 
     if (config->run_command == NULL && config->run_module == NULL
         && _PyOS_optind < argv->length
-        && wcscmp(argv->items[_PyOS_optind], L"-") != 0
+        && strcmp(argv->items[_PyOS_optind], "-") != 0
         && config->run_filename == NULL)
     {
-        config->run_filename = _PyMem_RawWcsdup(argv->items[_PyOS_optind]);
+        config->run_filename = strdup(argv->items[_PyOS_optind]);
         if (config->run_filename == NULL) {
             return _PyStatus_NO_MEMORY();
         }
@@ -1566,41 +1336,41 @@ config_parse_cmdline(PyConfig *config,
 static PyStatus
 config_update_argv(PyConfig *config, Py_ssize_t opt_index)
 {
-    const PyWideStringList *cmdline_argv = &config->argv;
-    PyWideStringList config_argv = _PyWideStringList_INIT;
+    const PyStringList *cmdline_argv = &config->argv;
+    PyStringList config_argv = _PyStringList_INIT;
 
     /* Copy argv to be able to modify it (to force -c/-m) */
     if (cmdline_argv->length <= opt_index) {
         /* Ensure at least one (empty) argument is seen */
-        PyStatus status = PyWideStringList_Append(&config_argv, L"");
+        PyStatus status = PyStringList_Append(&config_argv, "");
         if (_PyStatus_EXCEPTION(status)) {
             return status;
         }
     }
     else {
-        PyWideStringList slice;
+        PyStringList slice;
         slice.length = cmdline_argv->length - opt_index;
         slice.items = &cmdline_argv->items[opt_index];
-        if (_PyWideStringList_Copy(&config_argv, &slice) < 0) {
+        if (_PyStringList_Copy(&config_argv, &slice) < 0) {
             return _PyStatus_NO_MEMORY();
         }
     }
     assert(config_argv.length >= 1);
 
-    wchar_t *arg0 = NULL;
+    char *arg0 = NULL;
     if (config->run_command != NULL) {
         /* Force sys.argv[0] = '-c' */
-        arg0 = L"-c";
+        arg0 = "-c";
     }
     else if (config->run_module != NULL) {
         /* Force sys.argv[0] = '-m'*/
-        arg0 = L"-m";
+        arg0 = "-m";
     }
 
     if (arg0 != NULL) {
-        arg0 = _PyMem_RawWcsdup(arg0);
+        arg0 = strdup(arg0);
         if (arg0 == NULL) {
-            _PyWideStringList_Clear(&config_argv);
+            _PyStringList_Clear(&config_argv);
             return _PyStatus_NO_MEMORY();
         }
 
@@ -1608,7 +1378,7 @@ config_update_argv(PyConfig *config, Py_ssize_t opt_index)
         config_argv.items[0] = arg0;
     }
 
-    _PyWideStringList_Clear(&config->argv);
+    _PyStringList_Clear(&config->argv);
     config->argv = config_argv;
     return _PyStatus_OK();
 }
@@ -1620,7 +1390,7 @@ core_read_precmdline(PyConfig *config, _PyPreCmdline *precmdline)
     PyStatus status;
 
     if (config->parse_argv) {
-        if (_PyWideStringList_Copy(&precmdline->argv, &config->argv) < 0) {
+        if (_PyStringList_Copy(&precmdline->argv, &config->argv) < 0) {
             return _PyStatus_NO_MEMORY();
         }
     }
@@ -1660,7 +1430,7 @@ config_run_filename_abspath(PyConfig *config)
         return _PyStatus_OK();
     }
 
-    wchar_t *abs_filename;
+    char *abs_filename;
     if (_Py_abspath(config->run_filename, &abs_filename) < 0) {
         /* failed to get the absolute path of the command line filename:
            ignore the error, keep the relative path */
@@ -1734,7 +1504,7 @@ _PyConfig_SetPyArgv(PyConfig *config, const _PyArgv *args)
         return status;
     }
 
-    return _PyArgv_AsWstrList(args, &config->argv);
+    return _PyArgv_AsCharList(args, &config->argv);
 }
 
 
@@ -1745,36 +1515,21 @@ PyConfig_SetBytesArgv(PyConfig *config, Py_ssize_t argc, char * const *argv)
 {
     _PyArgv args = {
         .argc = argc,
-        .use_bytes_argv = 1,
-        .bytes_argv = argv,
-        .wchar_argv = NULL};
+        .bytes_argv = argv};
     return _PyConfig_SetPyArgv(config, &args);
 }
 
-
 PyStatus
-PyConfig_SetArgv(PyConfig *config, Py_ssize_t argc, wchar_t * const *argv)
-{
-    _PyArgv args = {
-        .argc = argc,
-        .use_bytes_argv = 0,
-        .bytes_argv = NULL,
-        .wchar_argv = argv};
-    return _PyConfig_SetPyArgv(config, &args);
-}
-
-
-PyStatus
-PyConfig_SetWideStringList(PyConfig *config, PyWideStringList *list,
-                           Py_ssize_t length, wchar_t **items)
+PyConfig_SetStringList(PyConfig *config, PyStringList *list,
+                           Py_ssize_t length, char **items)
 {
     PyStatus status = _Py_PreInitializeFromConfig(config, NULL);
     if (_PyStatus_EXCEPTION(status)) {
         return status;
     }
 
-    PyWideStringList list2 = {.length = length, .items = items};
-    if (_PyWideStringList_Copy(list, &list2) < 0) {
+    PyStringList list2 = {.length = length, .items = items};
+    if (_PyStringList_Copy(list, &list2) < 0) {
         return _PyStatus_NO_MEMORY();
     }
     return _PyStatus_OK();
@@ -1802,9 +1557,9 @@ PyConfig_Read(PyConfig *config)
 
     if (config->_orig_argv.length == 0
         && !(config->argv.length == 1
-             && wcscmp(config->argv.items[0], L"") == 0))
+             && strcmp(config->argv.items[0], "") == 0))
     {
-        if (_PyWideStringList_Copy(&config->_orig_argv, &config->argv) < 0) {
+        if (_PyStringList_Copy(&config->_orig_argv, &config->argv) < 0) {
             return _PyStatus_NO_MEMORY();
         }
     }
@@ -1835,10 +1590,10 @@ PyConfig_Read(PyConfig *config)
     assert(config->configure_c_stdio >= 0);
     assert(config->buffered_stdio >= 0);
     assert(config->program_name != NULL);
-    assert(_PyWideStringList_CheckConsistency(&config->argv));
+    assert(_PyStringList_CheckConsistency(&config->argv));
     /* sys.argv must be non-empty: empty argv is replaced with [''] */
     assert(config->argv.length >= 1);
-    assert(_PyWideStringList_CheckConsistency(&config->module_search_paths));
+    assert(_PyStringList_CheckConsistency(&config->module_search_paths));
     if (config->_install_importlib) {
         assert(config->module_search_paths_set != 0);
         /* don't check config->module_search_paths */
@@ -1852,14 +1607,11 @@ PyConfig_Read(PyConfig *config)
     assert(config->platlibdir != NULL);
     assert(config->filesystem_encoding != NULL);
     assert(config->filesystem_errors != NULL);
-    assert(config->stdio_encoding != NULL);
-    assert(config->stdio_errors != NULL);
     /* -c and -m options are exclusive */
     assert(!(config->run_command != NULL && config->run_module != NULL));
     assert(config->_install_importlib >= 0);
     assert(config->pathconfig_warnings >= 0);
-    assert(_PyWideStringList_CheckConsistency(&config->_orig_argv));
-
+    assert(_PyStringList_CheckConsistency(&config->_orig_argv));
     status = _PyStatus_OK();
 
 done:
@@ -1920,39 +1672,6 @@ error:
     return NULL;
 }
 
-
-static void
-init_dump_ascii_wstr(const wchar_t *str)
-{
-    if (str == NULL) {
-        PySys_WriteStderr("(not set)");
-        return;
-    }
-
-    PySys_WriteStderr("'");
-    for (; *str != L'\0'; str++) {
-        wchar_t ch = *str;
-        if (ch == L'\'') {
-            PySys_WriteStderr("\\'");
-        } else if (0x20 <= ch && ch < 0x7f) {
-            PySys_WriteStderr("%lc", ch);
-        }
-        else if (ch <= 0xff) {
-            PySys_WriteStderr("\\x%02x", ch);
-        }
-#if SIZEOF_WCHAR_T > 2
-        else if (ch > 0xffff) {
-            PySys_WriteStderr("\\U%08x", ch);
-        }
-#endif
-        else {
-            PySys_WriteStderr("\\u%04x", ch);
-        }
-    }
-    PySys_WriteStderr("'");
-}
-
-
 /* Dump the Python path configuration into sys.stderr */
 void
 _Py_DumpPathConfig(PyThreadState *tstate)
@@ -1965,7 +1684,7 @@ _Py_DumpPathConfig(PyThreadState *tstate)
 #define DUMP_CONFIG(NAME, FIELD) \
         do { \
             PySys_WriteStderr("  " NAME " = "); \
-            init_dump_ascii_wstr(config->FIELD); \
+	    PySys_WriteStderr("%s", config->FIELD);	\
             PySys_WriteStderr("\n"); \
         } while (0)
 

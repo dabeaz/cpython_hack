@@ -50,12 +50,7 @@ pymain_init(const _PyArgv *args)
 
     /* pass NULL as the config: config is read from command line arguments,
        environment variables, configuration files */
-    if (args->use_bytes_argv) {
-        status = PyConfig_SetBytesArgv(&config, args->argc, args->bytes_argv);
-    }
-    else {
-        status = PyConfig_SetArgv(&config, args->argc, args->wchar_argv);
-    }
+    status = PyConfig_SetBytesArgv(&config, args->argc, args->bytes_argv);
     if (_PyStatus_EXCEPTION(status)) {
         goto done;
     }
@@ -119,11 +114,11 @@ pymain_exit_err_print(void)
 /* Write an exitcode into *exitcode and return 1 if we have to exit Python.
    Return 0 otherwise. */
 static int
-pymain_get_importer(const wchar_t *filename, PyObject **importer_p, int *exitcode)
+pymain_get_importer(const char*filename, PyObject **importer_p, int *exitcode)
 {
     PyObject *sys_path0 = NULL, *importer;
 
-    sys_path0 = PyUnicode_FromWideChar(filename, wcslen(filename));
+    sys_path0 = PyUnicode_FromString(filename);
     if (sys_path0 == NULL) {
         goto error;
     }
@@ -214,12 +209,12 @@ pymain_import_readline(const PyConfig *config)
 
 
 static int
-pymain_run_command(wchar_t *command, PyCompilerFlags *cf)
+pymain_run_command(char *command, PyCompilerFlags *cf)
 {
     PyObject *unicode, *bytes;
     int ret;
 
-    unicode = PyUnicode_FromWideChar(command, -1);
+    unicode = PyUnicode_FromString(command);
     if (unicode == NULL) {
         goto error;
     }
@@ -241,7 +236,7 @@ error:
 
 
 static int
-pymain_run_module(const wchar_t *modname, int set_argv0)
+pymain_run_module(const char *modname, int set_argv0)
 {
     PyObject *module, *runpy, *runmodule, *runargs, *result;
     runpy = PyImport_ImportModule("runpy");
@@ -255,7 +250,7 @@ pymain_run_module(const wchar_t *modname, int set_argv0)
         Py_DECREF(runpy);
         return pymain_exit_err_print();
     }
-    module = PyUnicode_FromWideChar(modname, wcslen(modname));
+    module = PyUnicode_FromString(modname);
     if (module == NULL) {
         fprintf(stderr, "Could not convert module name to unicode\n");
         Py_DECREF(runpy);
@@ -287,20 +282,12 @@ pymain_run_module(const wchar_t *modname, int set_argv0)
 static int
 pymain_run_file(const PyConfig *config, PyCompilerFlags *cf)
 {
-    const wchar_t *filename = config->run_filename;
-    FILE *fp = _Py_wfopen(filename, L"rb");
+    const char *filename = config->run_filename;
+    FILE *fp = _Py_fopen(filename, "rb");
     if (fp == NULL) {
-        char *cfilename_buffer;
-        const char *cfilename;
         int err = errno;
-        cfilename_buffer = _Py_EncodeLocaleRaw(filename, NULL);
-        if (cfilename_buffer != NULL)
-            cfilename = cfilename_buffer;
-        else
-            cfilename = "<unprintable file name>";
-        fprintf(stderr, "%ls: can't open file '%s': [Errno %d] %s\n",
-                config->program_name, cfilename, err, strerror(err));
-        PyMem_RawFree(cfilename_buffer);
+        fprintf(stderr, "%s: can't open file '%s': [Errno %d] %s\n",
+                config->program_name, filename, err, strerror(err));
         return 2;
     }
 
@@ -318,7 +305,7 @@ pymain_run_file(const PyConfig *config, PyCompilerFlags *cf)
     struct _Py_stat_struct sb;
     if (_Py_fstat_noraise(fileno(fp), &sb) == 0 && S_ISDIR(sb.st_mode)) {
         fprintf(stderr,
-                "%ls: '%ls' is a directory, cannot continue\n",
+                "%s: '%s' is a directory, cannot continue\n",
                 config->program_name, filename);
         fclose(fp);
         return 1;
@@ -327,7 +314,7 @@ pymain_run_file(const PyConfig *config, PyCompilerFlags *cf)
     PyObject *unicode, *bytes = NULL;
     const char *filename_str;
 
-    unicode = PyUnicode_FromWideChar(filename, wcslen(filename));
+    unicode = PyUnicode_FromString(filename);
     if (unicode != NULL) {
         bytes = PyUnicode_AsBytes(unicode);
         Py_DECREF(unicode);
@@ -503,7 +490,7 @@ pymain_run_python(int *exitcode)
         *exitcode = pymain_run_module(config->run_module, 1);
     }
     else if (main_importer_path != NULL) {
-        *exitcode = pymain_run_module(L"__main__", 0);
+        *exitcode = pymain_run_module("__main__", 0);
     }
     else if (config->run_filename != NULL) {
         *exitcode = pymain_run_file(config, &cf);
@@ -587,27 +574,13 @@ pymain_main(_PyArgv *args)
     return Py_RunMain();
 }
 
-
-int
-Py_Main(int argc, wchar_t **argv)
-{
-    _PyArgv args = {
-        .argc = argc,
-        .use_bytes_argv = 0,
-        .bytes_argv = NULL,
-        .wchar_argv = argv};
-    return pymain_main(&args);
-}
-
-
 int
 Py_BytesMain(int argc, char **argv)
 {
     _PyArgv args = {
         .argc = argc,
-        .use_bytes_argv = 1,
         .bytes_argv = argv,
-        .wchar_argv = NULL};
+    };
     return pymain_main(&args);
 }
 

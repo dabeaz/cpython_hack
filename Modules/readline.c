@@ -128,9 +128,6 @@ static PyObject *
 decode(const char *s)
 {
   return PyUnicode_FromString(s);
-  #if 0
-    return PyUnicode_DecodeLocale(s, "surrogateescape");
-    #endif
 }
 
 
@@ -1009,7 +1006,6 @@ flex_complete(const char *text, int start, int end)
     char **result;
     char saved;
     size_t start_size, end_size;
-    wchar_t *s;
 #ifdef HAVE_RL_COMPLETION_APPEND_CHARACTER
     rl_completion_append_character ='\0';
 #endif
@@ -1019,24 +1015,15 @@ flex_complete(const char *text, int start, int end)
 
     saved = rl_line_buffer[start];
     rl_line_buffer[start] = 0;
-    s = Py_DecodeLocale(rl_line_buffer, &start_size);
     rl_line_buffer[start] = saved;
-    if (s == NULL) {
-        goto done;
-    }
-    PyMem_RawFree(s);
+    start_size = strlen(rl_line_buffer);
     saved = rl_line_buffer[end];
     rl_line_buffer[end] = 0;
-    s = Py_DecodeLocale(rl_line_buffer + start, &end_size);
     rl_line_buffer[end] = saved;
-    if (s == NULL) {
-        goto done;
-    }
-    PyMem_RawFree(s);
+    end_size = strlen(rl_line_buffer + start);
     start = (int)start_size;
     end = start + (int)end_size;
 
-done:
     Py_XDECREF(readlinestate_global->begidx);
     Py_XDECREF(readlinestate_global->endidx);
     readlinestate_global->begidx = PyLong_FromLong((long) start);

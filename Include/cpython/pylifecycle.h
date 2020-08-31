@@ -16,10 +16,6 @@ PyAPI_FUNC(PyStatus) Py_PreInitializeFromBytesArgs(
     const PyPreConfig *src_config,
     Py_ssize_t argc,
     char **argv);
-PyAPI_FUNC(PyStatus) Py_PreInitializeFromArgs(
-    const PyPreConfig *src_config,
-    Py_ssize_t argc,
-    wchar_t **argv);
 
 PyAPI_FUNC(int) _Py_IsCoreInitialized(void);
 
@@ -45,7 +41,7 @@ PyAPI_FUNC(void) _Py_RestoreSignals(void);
 
 PyAPI_FUNC(int) Py_FdIsInteractive(FILE *, const char *);
 
-PyAPI_FUNC(void) _Py_SetProgramFullPath(const wchar_t *);
+PyAPI_FUNC(void) _Py_SetProgramFullPath(const char *);
 
 PyAPI_FUNC(const char *) _Py_gitidentifier(void);
 PyAPI_FUNC(const char *) _Py_gitversion(void);

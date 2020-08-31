@@ -1009,33 +1009,7 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
     case 'u': /* raw unicode buffer (Py_UNICODE *) */
     case 'Z': /* raw unicode buffer or None */
     {
-        Py_UNICODE **p = va_arg(*p_va, Py_UNICODE **);
-
-        if (*format == '#') {
-            /* "u#" or "Z#" */
-            FETCH_SIZE;
-
-            if (c == 'Z' && arg == Py_None) {
-                *p = NULL;
-                STORE_SIZE(0);
-            }
-            else if (PyUnicode_Check(arg)) {
-	      Py_FatalError("Can't convert unicode");	      
-            }
-            else
-                return converterr(c == 'Z' ? "str or None" : "str",
-                                  arg, msgbuf, bufsize);
-            format++;
-        } else {
-            /* "u" or "Z" */
-            if (c == 'Z' && arg == Py_None)
-                *p = NULL;
-            else if (PyUnicode_Check(arg)) {
-	      Py_FatalError("Can't convert unicode");
-            } else
-                return converterr(c == 'Z' ? "str or None" : "str",
-                                  arg, msgbuf, bufsize);
-        }
+	Py_FatalError("Bad format. uZ");
         break;
     }
 

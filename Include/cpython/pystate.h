@@ -101,13 +101,6 @@ struct _ts {
      */
     void (*on_delete)(void *);
     void *on_delete_data;
-
-  #if 0
-    int coroutine_origin_tracking_depth;
-
-    PyObject *async_gen_firstiter;
-    PyObject *async_gen_finalizer;
-#endif
   
     PyObject *context;
     uint64_t context_ver;

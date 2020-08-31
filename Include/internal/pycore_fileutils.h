@@ -7,9 +7,7 @@ extern "C" {
 #ifndef Py_BUILD_CORE
 #  error "Py_BUILD_CORE must be defined to include this header"
 #endif
-
-PyAPI_DATA(int) _Py_HasFileSystemDefaultEncodeErrors;
-
+  
 #ifdef __cplusplus
 }
 #endif

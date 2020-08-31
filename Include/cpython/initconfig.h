@@ -23,20 +23,19 @@ PyAPI_FUNC(int) PyStatus_IsError(PyStatus err);
 PyAPI_FUNC(int) PyStatus_IsExit(PyStatus err);
 PyAPI_FUNC(int) PyStatus_Exception(PyStatus err);
 
-/* --- PyWideStringList ------------------------------------------------ */
+/* --- PyStringList ------------------------------------------------ */
 
 typedef struct {
     /* If length is greater than zero, items must be non-NULL
        and all items strings must be non-NULL */
     Py_ssize_t length;
-    wchar_t **items;
-} PyWideStringList;
+    char **items;
+} PyStringList;
 
-PyAPI_FUNC(PyStatus) PyWideStringList_Append(PyWideStringList *list,
-    const wchar_t *item);
-PyAPI_FUNC(PyStatus) PyWideStringList_Insert(PyWideStringList *list,
-    Py_ssize_t index,
-    const wchar_t *item);
+PyAPI_FUNC(PyStatus) PyStringList_Append(PyStringList *list,
+    const char *item);
+PyAPI_FUNC(PyStatus) PyStringList_Insert(PyStringList *list,
+    Py_ssize_t index, const char *item);
 
 
 /* --- PyPreConfig ----------------------------------------------- */
@@ -128,42 +127,6 @@ typedef struct {
     int use_hash_seed;      /* PYTHONHASHSEED=x */
     unsigned long hash_seed;
 
-    /* Python filesystem encoding and error handler:
-       sys.getfilesystemencoding() and sys.getfilesystemencodeerrors().
-
-       Default encoding and error handler:
-
-       * if Py_SetStandardStreamEncoding() has been called: they have the
-         highest priority;
-       * PYTHONIOENCODING environment variable;
-       * The UTF-8 Mode uses UTF-8/surrogateescape;
-       * If Python forces the usage of the ASCII encoding (ex: C locale
-         or POSIX locale on FreeBSD or HP-UX), use ASCII/surrogateescape;
-       * locale encoding: ANSI code page on Windows, UTF-8 on Android and
-         VxWorks, LC_CTYPE locale encoding on other platforms;
-       * On Windows, "surrogateescape" error handler;
-       * "surrogateescape" error handler if the LC_CTYPE locale is "C" or "POSIX";
-       * "surrogateescape" error handler if the LC_CTYPE locale has been coerced
-         (PEP 538);
-       * "strict" error handler.
-
-       Supported error handlers: "strict", "surrogateescape" and
-       "surrogatepass". The surrogatepass error handler is only supported
-       if Py_DecodeLocale() and Py_EncodeLocale() use directly the UTF-8 codec;
-       it's only used on Windows.
-
-       initfsencoding() updates the encoding to the Python codec name.
-       For example, "ANSI_X3.4-1968" is replaced with "ascii".
-
-       On Windows, sys._enablelegacywindowsfsencoding() sets the
-       encoding/errors to mbcs/replace at runtime.
-
-
-       See Py_FileSystemDefaultEncoding and Py_FileSystemDefaultEncodeErrors.
-       */
-    wchar_t *filesystem_encoding;
-    wchar_t *filesystem_errors;
-
     int parse_argv;           /* Parse argv command line arguments? */
 
     /* Command line arguments (sys.argv).
@@ -173,7 +136,7 @@ typedef struct {
 
        If argv is empty, an empty string is added to ensure that sys.argv
        always exists and is never empty. */
-    PyWideStringList argv;
+    PyStringList argv;
 
     /* Program name:
 
@@ -183,7 +146,7 @@ typedef struct {
          environment variable is set.
        - Use argv[0] if available and non-empty.
        - Use "python" on Windows, or "python3 on other platforms. */
-    wchar_t *program_name;
+    char *program_name;
 
     /* If greater than 0, enable inspect: when a script is passed as first
        argument or the -c option is used, enter interactive mode after
@@ -223,19 +186,7 @@ typedef struct {
        variable.
        If set to -1 (default), it is set to !Py_UnbufferedStdioFlag. */
     int buffered_stdio;
-
-    /* Encoding of sys.stdin, sys.stdout and sys.stderr.
-       Value set from PYTHONIOENCODING environment variable and
-       Py_SetStandardStreamEncoding() function.
-       See also 'stdio_errors' attribute. */
-    wchar_t *stdio_encoding;
-
-    /* Error handler of sys.stdin and sys.stdout.
-       Value set from PYTHONIOENCODING environment variable and
-       Py_SetStandardStreamEncoding() function.
-       See also 'stdio_encoding' attribute. */
-    wchar_t *stdio_errors;
-
+  
     /* --- Path configuration inputs ------------ */
 
     /* If greater than 0, suppress _PyPathConfig_Calculate() warnings on Unix.
@@ -244,24 +195,24 @@ typedef struct {
        If set to -1 (default), inherit !Py_FrozenFlag value. */
     int pathconfig_warnings;
 
-    wchar_t *pythonpath_env; /* PYTHONPATH environment variable */
-    wchar_t *home;          /* PYTHONHOME environment variable,
+    char *pythonpath_env; /* PYTHONPATH environment variable */
+    char *home;          /* PYTHONHOME environment variable,
                                see also Py_SetPythonHome(). */
 
     /* --- Path configuration outputs ----------- */
 
     int module_search_paths_set;  /* If non-zero, use module_search_paths */
-    PyWideStringList module_search_paths;  /* sys.path paths. Computed if
+    PyStringList module_search_paths;  /* sys.path paths. Computed if
                                        module_search_paths_set is equal
                                        to zero. */
 
-    wchar_t *executable;        /* sys.executable */
-    wchar_t *base_executable;   /* sys._base_executable */
-    wchar_t *prefix;            /* sys.prefix */
-    wchar_t *base_prefix;       /* sys.base_prefix */
-    wchar_t *exec_prefix;       /* sys.exec_prefix */
-    wchar_t *base_exec_prefix;  /* sys.base_exec_prefix */
-    wchar_t *platlibdir;        /* sys.platlibdir */
+    char *executable;        /* sys.executable */
+    char *base_executable;   /* sys._base_executable */
+    char *prefix;            /* sys.prefix */
+    char *base_prefix;       /* sys.base_prefix */
+    char *exec_prefix;       /* sys.exec_prefix */
+    char *base_exec_prefix;  /* sys.base_exec_prefix */
+    char *platlibdir;        /* sys.platlibdir */
 
     /* --- Parameter only used by Py_Main() ---------- */
 
@@ -271,9 +222,9 @@ typedef struct {
        Set by the -x command line option. */
     int skip_source_first_line;
 
-    wchar_t *run_command;   /* -c command line argument */
-    wchar_t *run_module;    /* -m command line argument */
-    wchar_t *run_filename;  /* Trailing command line argument without -c or -m */
+    char *run_command;   /* -c command line argument */
+    char *run_module;    /* -m command line argument */
+    char *run_filename;  /* Trailing command line argument without -c or -m */
 
     /* --- Private fields ---------------------------- */
 
@@ -290,19 +241,21 @@ typedef struct {
        is non-zero).
 
        _PyConfig_Write() initializes Py_GetArgcArgv() to this list. */
-    PyWideStringList _orig_argv;
+    PyStringList _orig_argv;
 } PyConfig;
 
 PyAPI_FUNC(void) PyConfig_InitPythonConfig(PyConfig *config);
 PyAPI_FUNC(void) PyConfig_InitIsolatedConfig(PyConfig *config);
 PyAPI_FUNC(void) PyConfig_Clear(PyConfig *);
-PyAPI_FUNC(PyStatus) PyConfig_SetString(
+
+PyAPI_FUNC(PyStatus) PyConfig_SetChar(
     PyConfig *config,
-    wchar_t **config_str,
-    const wchar_t *str);
+    char **config_str,
+    const char *str);
+
 PyAPI_FUNC(PyStatus) PyConfig_SetBytesString(
     PyConfig *config,
-    wchar_t **config_str,
+    char **config_str,
     const char *str);
 PyAPI_FUNC(PyStatus) PyConfig_Read(PyConfig *config);
 PyAPI_FUNC(PyStatus) PyConfig_SetBytesArgv(
@@ -311,10 +264,10 @@ PyAPI_FUNC(PyStatus) PyConfig_SetBytesArgv(
     char * const *argv);
 PyAPI_FUNC(PyStatus) PyConfig_SetArgv(PyConfig *config,
     Py_ssize_t argc,
-    wchar_t * const *argv);
-PyAPI_FUNC(PyStatus) PyConfig_SetWideStringList(PyConfig *config,
-    PyWideStringList *list,
-    Py_ssize_t length, wchar_t **items);
+    char * const *argv);
+PyAPI_FUNC(PyStatus) PyConfig_SetStringList(PyConfig *config,
+    PyStringList *list,
+    Py_ssize_t length, char **items);
 
 
 /* --- Helper functions --------------------------------------- */
@@ -322,7 +275,7 @@ PyAPI_FUNC(PyStatus) PyConfig_SetWideStringList(PyConfig *config,
 /* Get the original command line arguments, before Python modified them.
 
    See also PyConfig._orig_argv. */
-PyAPI_FUNC(void) Py_GetArgcArgv(int *argc, wchar_t ***argv);
+PyAPI_FUNC(void) Py_GetArgcArgv(int *argc, char ***argv);
 
 #endif /* !Py_LIMITED_API */
 #endif /* !Py_PYCORECONFIG_H */

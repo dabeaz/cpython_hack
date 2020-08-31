@@ -521,18 +521,9 @@ _Py_PreInitializeFromPyArgv(const PyPreConfig *src_config, const _PyArgv *args)
 PyStatus
 Py_PreInitializeFromBytesArgs(const PyPreConfig *src_config, Py_ssize_t argc, char **argv)
 {
-    _PyArgv args = {.use_bytes_argv = 1, .argc = argc, .bytes_argv = argv};
+    _PyArgv args = {.argc = argc, .bytes_argv = argv};
     return _Py_PreInitializeFromPyArgv(src_config, &args);
 }
-
-
-PyStatus
-Py_PreInitializeFromArgs(const PyPreConfig *src_config, Py_ssize_t argc, wchar_t **argv)
-{
-    _PyArgv args = {.use_bytes_argv = 0, .argc = argc, .wchar_argv = argv};
-    return _Py_PreInitializeFromPyArgv(src_config, &args);
-}
-
 
 PyStatus
 Py_PreInitialize(const PyPreConfig *src_config)
@@ -567,9 +558,8 @@ _Py_PreInitializeFromConfig(const PyConfig *config,
     }
     else if (args == NULL) {
         _PyArgv config_args = {
-            .use_bytes_argv = 0,
             .argc = config->argv.length,
-            .wchar_argv = config->argv.items};
+            .bytes_argv = config->argv.items};
         return _Py_PreInitializeFromPyArgv(&preconfig, &config_args);
     }
     else {
@@ -644,7 +634,7 @@ _Py_ReconfigureMainInterpreter(PyThreadState *tstate)
 {
     const PyConfig *config = _PyInterpreterState_GetConfig(tstate->interp);
 
-    PyObject *argv = _PyWideStringList_AsList(&config->argv);
+    PyObject *argv = _PyStringList_AsList(&config->argv);
     if (argv == NULL) {
         return _PyStatus_NO_MEMORY(); \
     }
@@ -689,11 +679,6 @@ init_interp_main(PyThreadState *tstate)
         return status;
     }
 
-    status = _PyUnicode_InitEncodings(tstate);
-    if (_PyStatus_EXCEPTION(status)) {
-        return status;
-    }
-
     status = init_sys_streams(tstate);
     if (_PyStatus_EXCEPTION(status)) {
         return status;
@@ -709,6 +694,8 @@ init_interp_main(PyThreadState *tstate)
         return status;
     }
 
+
+    
     if (is_main_interp) {
         /* Initialize warnings. */
         PyObject *warnoptions = PySys_GetObject("warnoptions");
@@ -946,7 +933,6 @@ finalize_interp_clear(PyThreadState *tstate)
 
     if (is_main_interp) {
         _PyArg_Fini();
-        _Py_ClearFileSystemEncoding();
     }
 
     if (is_main_interp) {
@@ -1000,16 +986,6 @@ Py_FinalizeEx(void)
     _PyRuntimeState_SetFinalizing(runtime, tstate);
     runtime->initialized = 0;
     runtime->core_initialized = 0;
-
-    /* Destroy the state of all threads of the interpreter, except of the
-       current thread. In practice, only daemon threads should still be alive,
-       except if wait_for_thread_shutdown() has been cancelled by CTRL+C.
-       Clear frames of other threads to call objects destructors. Destructors
-       will be called in the current Python thread. Since
-       _PyRuntimeState_SetFinalizing() has been called, no other Python thread
-       can take the GIL at this point: if they try, they will exit
-       immediately. */
-    _PyThreadState_DeleteExcept(runtime, tstate);
 
     /* Flush sys.stdout and sys.stderr */
     if (flush_std_files() < 0) {
@@ -1265,7 +1241,7 @@ is_valid_fd(int fd)
 static PyObject*
 create_stdio(const PyConfig *config, PyObject* io,
     int fd, int write_mode, const char* name,
-    const wchar_t* encoding, const wchar_t* errors)
+    const char* encoding, const char* errors)
 {
     PyObject *buf = NULL, *stream = NULL, *text = NULL, *raw = NULL, *res;
     const char* mode;
@@ -1337,26 +1313,10 @@ create_stdio(const PyConfig *config, PyObject* io,
     /* sys.stdin: split lines at "\n".
        sys.stdout and sys.stderr: don't translate newlines (use "\n"). */
     newline = "\n";
-
-    PyObject *encoding_str = PyUnicode_FromWideChar(encoding, -1);
-    if (encoding_str == NULL) {
-        Py_CLEAR(buf);
-        goto error;
-    }
-
-    PyObject *errors_str = PyUnicode_FromWideChar(errors, -1);
-    if (errors_str == NULL) {
-        Py_CLEAR(buf);
-        Py_CLEAR(encoding_str);
-        goto error;
-    }
-
     stream = _PyObject_CallMethodId(io, &PyId_TextIOWrapper, "OOOsOO",
-                                    buf, encoding_str, errors_str,
+                                    buf, Py_None, Py_None,
                                     newline, line_buffering, write_through);
     Py_CLEAR(buf);
-    Py_CLEAR(encoding_str);
-    Py_CLEAR(errors_str);
     if (stream == NULL)
         goto error;
 
@@ -1457,8 +1417,7 @@ init_sys_streams(PyThreadState *tstate)
      * GUI apps don't have valid standard streams by default.
      */
     std = create_stdio(config, iomod, fd, 0, "<stdin>",
-                       config->stdio_encoding,
-                       config->stdio_errors);
+                       NULL, NULL);
     if (std == NULL)
         goto error;
     PySys_SetObject("__stdin__", std);
@@ -1468,8 +1427,7 @@ init_sys_streams(PyThreadState *tstate)
     /* Set sys.stdout */
     fd = fileno(stdout);
     std = create_stdio(config, iomod, fd, 1, "<stdout>",
-                       config->stdio_encoding,
-                       config->stdio_errors);
+                       NULL, NULL);
     if (std == NULL)
         goto error;
     PySys_SetObject("__stdout__", std);

@@ -97,7 +97,7 @@ _PyInterpreterState_Enable(_PyRuntimeState *runtime)
 PyInterpreterState *
 PyInterpreterState_New(void)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+
     /* tstate is NULL when Py_InitializeFromConfig() calls
        PyInterpreterState_New() to create the main interpreter. */
 
@@ -121,14 +121,6 @@ PyInterpreterState_New(void)
         return NULL;
     }
     return interp;
-
-out_of_memory:
-    if (tstate != NULL) {
-        _PyErr_NoMemory(tstate);
-    }
-
-    PyMem_RawFree(interp);
-    return NULL;
 }
 
 
@@ -152,16 +144,6 @@ PyInterpreterState_Clear(PyInterpreterState *interp)
     // per-interpreter GC) we must ensure that all of the interpreter's
     // objects have been cleaned up at the point.
 }
-
-
-static void
-zapthreads(PyInterpreterState *interp, int check_current)
-{
-    PyThreadState *tstate;
-    /* No need to lock the mutex here because this should only happen
-       when the threads are all really dead (XXX famous last words). */
-}
-
 
 void
 PyInterpreterState_Delete(PyInterpreterState *interp)
@@ -462,26 +444,6 @@ PyThreadState_DeleteCurrent(void)
     PyThreadState *tstate = _PyRuntimeGILState_GetThreadState(gilstate);
     _PyThreadState_DeleteCurrent(tstate);
 }
-
-
-/*
- * Delete all thread states except the one passed as argument.
- * Note that, if there is a current thread state, it *must* be the one
- * passed as argument.  Also, this won't touch any other interpreters
- * than the current one, since we don't know which thread state should
- * be kept in those other interpreters.
- */
-void
-_PyThreadState_DeleteExcept(_PyRuntimeState *runtime, PyThreadState *tstate)
-{
-    PyInterpreterState *interp = tstate->interp;
-
-    /* Remove all thread states, except tstate, from the linked list of
-       thread states.  This will allow calling PyThreadState_Clear()
-       without holding the lock. */
-}
-
-
 
 PyThreadState *
 _PyThreadState_UncheckedGet(void)

@@ -364,7 +364,7 @@ def _createenviron():
             data[encodekey(key)] = value
     else:
         # Where Env Var Names Can Be Mixed Case
-        encoding = sys.getfilesystemencoding()
+        encoding = 'latin1'
         def encode(value):
             if not isinstance(value, str):
                 raise TypeError("str expected, not %s" % type(value).__name__)
@@ -412,8 +412,8 @@ if supports_bytes_environ:
     __all__.extend(("environb", "getenvb"))
 
 def _fscodec():
-    encoding = sys.getfilesystemencoding()
-    errors = sys.getfilesystemencodeerrors()
+    encoding = "latin1"
+    errors = "strict"
 
     def fsencode(filename):
         """Encode filename (an os.PathLike, bytes, or str) to the filesystem

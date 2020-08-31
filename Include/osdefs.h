@@ -8,7 +8,7 @@ extern "C" {
 
 /* Filename separator */
 #ifndef SEP
-#define SEP L'/'
+#define SEP '/'
 #endif
 
 /* Max pathname length */
@@ -23,7 +23,7 @@ extern "C" {
 
 /* Search path entry delimiter */
 #ifndef DELIM
-#define DELIM L':'
+#define DELIM ':'
 #endif
 
 #ifdef __cplusplus

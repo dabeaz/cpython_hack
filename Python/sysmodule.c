@@ -174,42 +174,6 @@ sys_getdefaultencoding(PyObject *module, PyObject *Py_UNUSED(ignored))
     return sys_getdefaultencoding_impl(module);
 }
 
-PyDoc_STRVAR(sys_getfilesystemencoding__doc__,
-"getfilesystemencoding($module, /)\n"
-"--\n"
-"\n"
-"Return the encoding used to convert Unicode filenames to OS filenames.");
-
-#define SYS_GETFILESYSTEMENCODING_METHODDEF    \
-    {"getfilesystemencoding", (PyCFunction)sys_getfilesystemencoding, METH_NOARGS, sys_getfilesystemencoding__doc__},
-
-static PyObject *
-sys_getfilesystemencoding_impl(PyObject *module);
-
-static PyObject *
-sys_getfilesystemencoding(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    return sys_getfilesystemencoding_impl(module);
-}
-
-PyDoc_STRVAR(sys_getfilesystemencodeerrors__doc__,
-"getfilesystemencodeerrors($module, /)\n"
-"--\n"
-"\n"
-"Return the error mode used Unicode to OS filename conversion.");
-
-#define SYS_GETFILESYSTEMENCODEERRORS_METHODDEF    \
-    {"getfilesystemencodeerrors", (PyCFunction)sys_getfilesystemencodeerrors, METH_NOARGS, sys_getfilesystemencodeerrors__doc__},
-
-static PyObject *
-sys_getfilesystemencodeerrors_impl(PyObject *module);
-
-static PyObject *
-sys_getfilesystemencodeerrors(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    return sys_getfilesystemencodeerrors_impl(module);
-}
-
 PyDoc_STRVAR(sys_intern__doc__,
 "intern($module, string, /)\n"
 "--\n"
@@ -680,36 +644,6 @@ sys_getdefaultencoding_impl(PyObject *module)
 }
 
 /*[clinic input]
-sys.getfilesystemencoding
-
-Return the encoding used to convert Unicode filenames to OS filenames.
-[clinic start generated code]*/
-
-static PyObject *
-sys_getfilesystemencoding_impl(PyObject *module)
-/*[clinic end generated code: output=1dc4bdbe9be44aa7 input=8475f8649b8c7d8c]*/
-{
-    PyInterpreterState *interp = _PyInterpreterState_GET();
-    const PyConfig *config = _PyInterpreterState_GetConfig(interp);
-    return PyUnicode_FromWideChar(config->filesystem_encoding, -1);
-}
-
-/*[clinic input]
-sys.getfilesystemencodeerrors
-
-Return the error mode used Unicode to OS filename conversion.
-[clinic start generated code]*/
-
-static PyObject *
-sys_getfilesystemencodeerrors_impl(PyObject *module)
-/*[clinic end generated code: output=ba77b36bbf7c96f5 input=22a1e8365566f1e5]*/
-{
-    PyInterpreterState *interp = _PyInterpreterState_GET();
-    const PyConfig *config = _PyInterpreterState_GetConfig(interp);
-    return PyUnicode_FromWideChar(config->filesystem_errors, -1);
-}
-
-/*[clinic input]
 sys.intern
 
     string as s: unicode
@@ -945,8 +879,6 @@ static PyMethodDef sys_methods[] = {
     SYS_EXCEPTHOOK_METHODDEF
     SYS_EXIT_METHODDEF
     SYS_GETDEFAULTENCODING_METHODDEF
-    SYS_GETFILESYSTEMENCODING_METHODDEF
-    SYS_GETFILESYSTEMENCODEERRORS_METHODDEF
     SYS_GETREFCOUNT_METHODDEF
     {"getsizeof",   (PyCFunction)(void(*)(void))sys_getsizeof,
      METH_VARARGS | METH_KEYWORDS, getsizeof_doc},
@@ -1169,7 +1101,7 @@ _PySys_InitMain(PyThreadState *tstate)
 
 #define COPY_LIST(KEY, VALUE) \
     do { \
-        PyObject *list = _PyWideStringList_AsList(&(VALUE)); \
+        PyObject *list = _PyStringList_AsList(&(VALUE)); \
         if (list == NULL) { \
             return -1; \
         } \
@@ -1177,9 +1109,9 @@ _PySys_InitMain(PyThreadState *tstate)
         Py_DECREF(list); \
     } while (0)
 
-#define SET_SYS_FROM_WSTR(KEY, VALUE) \
+#define SET_SYS_FROM_CHAR(KEY, VALUE) \
     do { \
-        PyObject *str = PyUnicode_FromWideChar(VALUE, -1); \
+      PyObject *str = PyUnicode_FromString(VALUE);\
         if (str == NULL) { \
             return -1; \
         } \
@@ -1189,13 +1121,13 @@ _PySys_InitMain(PyThreadState *tstate)
 
     COPY_LIST("path", config->module_search_paths);
 
-    SET_SYS_FROM_WSTR("executable", config->executable);
-    SET_SYS_FROM_WSTR("_base_executable", config->base_executable);
-    SET_SYS_FROM_WSTR("prefix", config->prefix);
-    SET_SYS_FROM_WSTR("base_prefix", config->base_prefix);
-    SET_SYS_FROM_WSTR("exec_prefix", config->exec_prefix);
-    SET_SYS_FROM_WSTR("base_exec_prefix", config->base_exec_prefix);
-    SET_SYS_FROM_WSTR("platlibdir", config->platlibdir);
+    SET_SYS_FROM_CHAR("executable", config->executable);
+    SET_SYS_FROM_CHAR("_base_executable", config->base_executable);
+    SET_SYS_FROM_CHAR("prefix", config->prefix);
+    SET_SYS_FROM_CHAR("base_prefix", config->base_prefix);
+    SET_SYS_FROM_CHAR("exec_prefix", config->exec_prefix);
+    SET_SYS_FROM_CHAR("base_exec_prefix", config->base_exec_prefix);
+    SET_SYS_FROM_CHAR("platlibdir", config->platlibdir);
 
     COPY_LIST("argv", config->argv);
 
@@ -1299,15 +1231,15 @@ error:
 
 
 static PyObject *
-makepathobject(const wchar_t *path, wchar_t delim)
+makepathobject(const char *path, char delim)
 {
     int i, n;
-    const wchar_t *p;
+    const char *p;
     PyObject *v, *w;
 
     n = 1;
     p = path;
-    while ((p = wcschr(p, delim)) != NULL) {
+    while ((p = strchr(p, delim)) != NULL) {
         n++;
         p++;
     }
@@ -1315,10 +1247,10 @@ makepathobject(const wchar_t *path, wchar_t delim)
     if (v == NULL)
         return NULL;
     for (i = 0; ; i++) {
-        p = wcschr(path, delim);
+        p = strchr(path, delim);
         if (p == NULL)
-            p = path + wcslen(path); /* End of string */
-        w = PyUnicode_FromWideChar(path, (Py_ssize_t)(p - path));
+            p = path + strlen(path); /* End of string */
+        w = PyUnicode_FromStringAndSize(path, (Py_ssize_t)(p - path));
         if (w == NULL) {
             Py_DECREF(v);
             return NULL;
@@ -1332,7 +1264,7 @@ makepathobject(const wchar_t *path, wchar_t delim)
 }
 
 void
-PySys_SetPath(const wchar_t *path)
+PySys_SetPath(const char *path)
 {
     PyObject *v;
     if ((v = makepathobject(path, DELIM)) == NULL)
@@ -1345,7 +1277,7 @@ PySys_SetPath(const wchar_t *path)
 }
 
 static PyObject *
-make_sys_argv(int argc, wchar_t * const * argv)
+make_sys_argv(int argc, char * const * argv)
 {
     PyObject *list = PyList_New(argc);
     if (list == NULL) {
@@ -1353,7 +1285,7 @@ make_sys_argv(int argc, wchar_t * const * argv)
     }
 
     for (Py_ssize_t i = 0; i < argc; i++) {
-        PyObject *v = PyUnicode_FromWideChar(argv[i], -1);
+      PyObject *v = PyUnicode_FromString(argv[i]);
         if (v == NULL) {
             Py_DECREF(list);
             return NULL;
@@ -1364,9 +1296,9 @@ make_sys_argv(int argc, wchar_t * const * argv)
 }
 
 void
-PySys_SetArgvEx(int argc, wchar_t **argv, int updatepath)
+PySys_SetArgvEx(int argc, char **argv, int updatepath)
 {
-    wchar_t* empty_argv[1] = {L""};
+    char* empty_argv[1] = {""};
     PyThreadState *tstate = _PyThreadState_GET();
 
     if (argc < 1 || argv == NULL) {
@@ -1388,7 +1320,7 @@ PySys_SetArgvEx(int argc, wchar_t **argv, int updatepath)
     if (updatepath) {
         /* If argv[0] is not '-c' nor '-m', prepend argv[0] to sys.path.
            If argv[0] is a symlink, use the real path. */
-        const PyWideStringList argv_list = {.length = argc, .items = argv};
+        const PyStringList argv_list = {.length = argc, .items = argv};
         PyObject *path0 = NULL;
         if (_PyPathConfig_ComputeSysPath0(&argv_list, &path0)) {
             if (path0 == NULL) {
@@ -1408,7 +1340,7 @@ PySys_SetArgvEx(int argc, wchar_t **argv, int updatepath)
 }
 
 void
-PySys_SetArgv(int argc, wchar_t **argv)
+PySys_SetArgv(int argc, char **argv)
 {
   PySys_SetArgvEx(argc, argv, 1);
 }

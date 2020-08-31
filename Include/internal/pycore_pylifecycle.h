@@ -16,15 +16,6 @@ struct pyruntimestate;
  * KeyboardInterrupt exception, suggesting the user pressed ^C. */
 PyAPI_DATA(int) _Py_UnhandledKeyboardInterrupt;
 
-extern int _Py_SetFileSystemEncoding(
-    const char *encoding,
-    const char *errors);
-extern void _Py_ClearFileSystemEncoding(void);
-extern PyStatus _PyUnicode_InitEncodings(PyThreadState *tstate);
-#ifdef MS_WINDOWS
-extern int _PyUnicode_EnableLegacyWindowsFSEncoding(void);
-#endif
-
 PyAPI_FUNC(void) _Py_ClearStandardStreamEncoding(void);
 
 PyAPI_FUNC(int) _Py_IsLocaleCoercionTarget(const char *ctype_loc);
@@ -40,7 +31,7 @@ extern PyObject * _PyBuiltin_Init(PyThreadState *tstate);
 extern PyStatus _PySys_Create(
     PyThreadState *tstate,
     PyObject **sysmod_p);
-extern PyStatus _PySys_ReadPreinitWarnOptions(PyWideStringList *options);
+extern PyStatus _PySys_ReadPreinitWarnOptions(PyStringList *options);
 extern PyStatus _PySys_ReadPreinitXOptions(PyConfig *config);
 extern int _PySys_InitMain(PyThreadState *tstate);
 extern PyStatus _PyExc_Init(void);

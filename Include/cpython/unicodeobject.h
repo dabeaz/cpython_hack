@@ -2,13 +2,6 @@
 #  error "this header file must not be included directly"
 #endif
 
-/* Py_UNICODE was the native Unicode storage format (code unit) used by
-   Python and represents a single Unicode element in the Unicode type.
-   With PEP 393, Py_UNICODE is deprecated and replaced with a
-   typedef to wchar_t. */
-#define PY_UNICODE_TYPE wchar_t
-/* Py_DEPRECATED(3.3) */ typedef wchar_t Py_UNICODE;
-
 /* --- Internal Unicode Operations ---------------------------------------- */
 
 /* Since splitting on whitespace is an important use case, and
@@ -240,20 +233,6 @@ PyAPI_FUNC(void) _PyUnicode_FastFill(
     Py_UCS4 fill_char
     );
 
-/* Create a Unicode Object from the Py_UNICODE buffer u of the given
-   size.
-
-   u may be NULL which causes the contents to be undefined. It is the
-   user's responsibility to fill in the needed data afterwards. Note
-   that modifying the Unicode object contents after construction is
-   only allowed if u was set to NULL.
-
-   The buffer is copied into the new object. */
-/* Py_DEPRECATED(3.3) */ PyAPI_FUNC(PyObject*) PyUnicode_FromUnicode(
-    const Py_UNICODE *u,        /* Unicode buffer */
-    Py_ssize_t size             /* size of buffer */
-    );
-
 /* Create a new string from a buffer of Py_UCS1, Py_UCS2 or Py_UCS4 characters.
    Scan the string to find the maximum character. */
 PyAPI_FUNC(PyObject*) PyUnicode_FromKindAndData(
@@ -273,31 +252,6 @@ PyAPI_FUNC(Py_UCS4) _PyUnicode_FindMaxChar (
     PyObject *unicode,
     Py_ssize_t start,
     Py_ssize_t end);
-
-/* Return a read-only pointer to the Unicode object's internal
-   Py_UNICODE buffer.
-   If the wchar_t/Py_UNICODE representation is not yet available, this
-   function will calculate it. */
-/* Py_DEPRECATED(3.3) */ PyAPI_FUNC(Py_UNICODE *) PyUnicode_AsUnicode(
-    PyObject *unicode           /* Unicode object */
-    );
-
-/* Similar to PyUnicode_AsUnicode(), but raises a ValueError if the string
-   contains null characters. */
-PyAPI_FUNC(const Py_UNICODE *) _PyUnicode_AsUnicode(
-    PyObject *unicode           /* Unicode object */
-    );
-
-/* Return a read-only pointer to the Unicode object's internal
-   Py_UNICODE buffer and save the length at size.
-   If the wchar_t/Py_UNICODE representation is not yet available, this
-   function will calculate it. */
-
-/* Py_DEPRECATED(3.3) */ PyAPI_FUNC(Py_UNICODE *) PyUnicode_AsUnicodeAndSize(
-    PyObject *unicode,          /* Unicode object */
-    Py_ssize_t *size            /* location where to save the length */
-    );
-
 
 /* --- _PyUnicodeWriter API ----------------------------------------------- */
 
@@ -404,49 +358,6 @@ PyAPI_FUNC(const char *) PyUnicode_AsCharAndSize(
     Py_ssize_t *size);
 
 PyAPI_FUNC(const char *) PyUnicode_AsChar(PyObject *unicode);
-
-/* --- Decimal Encoder ---------------------------------------------------- */
-
-/* Takes a Unicode string holding a decimal value and writes it into
-   an output buffer using standard ASCII digit codes.
-
-   The output buffer has to provide at least length+1 bytes of storage
-   area. The output string is 0-terminated.
-
-   The encoder converts whitespace to ' ', decimal characters to their
-   corresponding ASCII digit and all other Latin-1 characters except
-   \0 as-is. Characters outside this range (Unicode ordinals 1-256)
-   are treated as errors. This includes embedded NULL bytes.
-
-   Error handling is defined by the errors argument:
-
-      NULL or "strict": raise a ValueError
-      "ignore": ignore the wrong characters (these are not copied to the
-                output buffer)
-      "replace": replaces illegal characters with '?'
-
-   Returns 0 on success, -1 on failure.
-
-*/
-
-/* Py_DEPRECATED(3.3) */ PyAPI_FUNC(int) PyUnicode_EncodeDecimal(
-    Py_UNICODE *s,              /* Unicode buffer */
-    Py_ssize_t length,          /* Number of Py_UNICODE chars to encode */
-    char *output,               /* Output buffer; must have size >= length */
-    const char *errors          /* error handling */
-    );
-
-/* Transforms code points that have decimal digit property to the
-   corresponding ASCII digit code points.
-
-   Returns a new Unicode string on success, NULL on failure.
-*/
-
-/* Py_DEPRECATED(3.3) */
-PyAPI_FUNC(PyObject*) PyUnicode_TransformDecimalToASCII(
-    Py_UNICODE *s,              /* Unicode buffer */
-    Py_ssize_t length           /* Number of Py_UNICODE chars to transform */
-    );
 
 /* Coverts a Unicode object holding a decimal value to an ASCII string
    for using in int, float and complex parsers.
