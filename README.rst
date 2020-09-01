@@ -97,7 +97,8 @@ How will it end?  Or is this just the start?
 - Day 80 (8/29/2020). Unicode is unravelling.
 - Day 81 (8/30/2020). Simple is better than complex.
 - Day 82 (8/31/2020). Wasted wchar_t.
-  
+- Day 83 (9/01/2020). More unicode cleanup. Hacked on headers.
+
 Copyright and License Information
 ---------------------------------
 

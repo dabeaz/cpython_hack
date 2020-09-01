@@ -1200,7 +1200,7 @@ r_object(RFILE *p)
             ptr = r_string(n, p);
             if (ptr == NULL)
                 break;
-            v = PyUnicode_FromKindAndData(PyUnicode_1BYTE_KIND, ptr, n);
+            v = PyUnicode_FromStringAndSize(ptr, n);
             if (v == NULL)
                 break;
             if (is_interned)
@@ -1231,7 +1231,7 @@ r_object(RFILE *p)
             v = PyUnicode_FromStringAndSize(buffer, n);
         }
         else {
-            v = PyUnicode_New(0, 0);
+            v = PyUnicode_New(0);
         }
         if (v == NULL)
             break;

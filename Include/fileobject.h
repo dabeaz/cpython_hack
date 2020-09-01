@@ -30,11 +30,15 @@ PyAPI_DATA(int) Py_HasFileSystemDefaultEncoding;
     #define _PyIsSelectable_fd(FD) ((unsigned int)(FD) < (unsigned int)FD_SETSIZE)
 #endif
 
-#ifndef Py_LIMITED_API
-#  define Py_CPYTHON_FILEOBJECT_H
-#  include  "cpython/fileobject.h"
-#  undef Py_CPYTHON_FILEOBJECT_H
-#endif
+PyAPI_FUNC(char *) Py_UniversalNewlineFgets(char *, int, FILE*, PyObject *);
+
+/* The std printer acts as a preliminary sys.stderr until the new io
+   infrastructure is in place. */
+PyAPI_FUNC(PyObject *) PyFile_NewStdPrinter(int);
+PyAPI_DATA(PyTypeObject) PyStdPrinter_Type;
+
+PyAPI_FUNC(PyObject *) PyFile_OpenCode(const char *utf8path);
+PyAPI_FUNC(PyObject *) PyFile_OpenCodeObject(PyObject *path);
 
 #ifdef __cplusplus
 }

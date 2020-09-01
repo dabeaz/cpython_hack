@@ -70,7 +70,7 @@ Py_LOCAL_INLINE(PyObject *)
 SubString_new_object_or_empty(SubString *str)
 {
     if (str->str == NULL) {
-        return PyUnicode_New(0, 0);
+        return PyUnicode_New(0);
     }
     return SubString_new_object(str);
 }
@@ -209,7 +209,7 @@ FieldNameIterator_init(FieldNameIterator *self, PyObject *s,
 static int
 _FieldNameIterator_attr(FieldNameIterator *self, SubString *name)
 {
-    Py_UCS4 c;
+    unsigned char c;
 
     name->str = self->str.str;
     name->start = self->index;
@@ -237,7 +237,7 @@ static int
 _FieldNameIterator_item(FieldNameIterator *self, SubString *name)
 {
     int bracket_seen = 0;
-    Py_UCS4 c;
+    unsigned char c;
 
     name->str = self->str.str;
     name->start = self->index;
@@ -318,7 +318,7 @@ field_name_split(PyObject *str, Py_ssize_t start, Py_ssize_t end, SubString *fir
                  Py_ssize_t *first_idx, FieldNameIterator *rest,
                  AutoNumber *auto_number)
 {
-    Py_UCS4 c;
+    unsigned char c;
     Py_ssize_t i = start;
     int field_name_is_empty;
     int using_numeric_index;
@@ -527,7 +527,7 @@ render_field(PyObject *fieldobj, SubString *format_spec, _PyUnicodeWriter *write
                                                      format_spec->start,
                                                      format_spec->end);
         else
-            format_spec_object = PyUnicode_New(0, 0);
+	  format_spec_object = PyUnicode_New(0);
         if (format_spec_object == NULL)
             goto done;
 
@@ -548,13 +548,13 @@ done:
 
 static int
 parse_field(SubString *str, SubString *field_name, SubString *format_spec,
-            int *format_spec_needs_expanding, Py_UCS4 *conversion)
+            int *format_spec_needs_expanding, unsigned char *conversion)
 {
     /* Note this function works if the field name is zero length,
        which is good.  Zero length field names are handled later, in
        field_name_split. */
 
-    Py_UCS4 c = 0;
+    unsigned char c = 0;
 
     /* initialize these, as they may be empty */
     *conversion = '\0';
@@ -670,11 +670,11 @@ MarkupIterator_init(MarkupIterator *self, PyObject *str,
 static int
 MarkupIterator_next(MarkupIterator *self, SubString *literal,
                     int *field_present, SubString *field_name,
-                    SubString *format_spec, Py_UCS4 *conversion,
+                    SubString *format_spec, unsigned char *conversion,
                     int *format_spec_needs_expanding)
 {
     int at_end;
-    Py_UCS4 c = 0;
+    unsigned char c = 0;
     Py_ssize_t start;
     Py_ssize_t len;
     int markup_follows = 0;
@@ -758,7 +758,7 @@ MarkupIterator_next(MarkupIterator *self, SubString *literal,
 
 /* do the !r or !s conversion on obj */
 static PyObject *
-do_conversion(PyObject *obj, Py_UCS4 conversion)
+do_conversion(PyObject *obj, unsigned char conversion)
 {
     /* XXX in pre-3.0, do we need to convert this to unicode, since it
        might have returned a string? */
@@ -800,7 +800,7 @@ do_conversion(PyObject *obj, Py_UCS4 conversion)
 
 static int
 output_markup(SubString *field_name, SubString *format_spec,
-              int format_spec_needs_expanding, Py_UCS4 conversion,
+              int format_spec_needs_expanding, unsigned char conversion,
               _PyUnicodeWriter *writer, PyObject *args, PyObject *kwargs,
               int recursion_depth, AutoNumber *auto_number)
 {
@@ -871,7 +871,7 @@ do_markup(SubString *input, PyObject *args, PyObject *kwargs,
     SubString literal;
     SubString field_name;
     SubString format_spec;
-    Py_UCS4 conversion;
+    unsigned char conversion;
 
     MarkupIterator_init(&iter, input->str, input->start, input->end);
     while ((result = MarkupIterator_next(&iter, &literal, &field_present,
@@ -995,7 +995,7 @@ formatteriter_next(formatteriterobject *it)
     SubString literal;
     SubString field_name;
     SubString format_spec;
-    Py_UCS4 conversion;
+    unsigned char conversion;
     int format_spec_needs_expanding;
     int field_present;
     int result = MarkupIterator_next(&it->it_markup, &literal, &field_present,
@@ -1039,8 +1039,7 @@ formatteriter_next(formatteriterobject *it)
             Py_INCREF(conversion_str);
         }
         else
-            conversion_str = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND,
-                                                       &conversion, 1);
+	  conversion_str = PyUnicode_FromStringAndSize((char *) &conversion, 1);
 
         if (conversion_str == NULL)
             goto done;

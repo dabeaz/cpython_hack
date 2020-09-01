@@ -25,12 +25,11 @@ PyAPI_FUNC(void) PySys_ResetWarnOptions(void);
 PyAPI_FUNC(void) PySys_AddWarnOption(const char *);
 PyAPI_FUNC(void) PySys_AddWarnOptionUnicode(PyObject *);
 PyAPI_FUNC(int) PySys_HasWarnOptions(void);
-  
-#ifndef Py_LIMITED_API
-#  define Py_CPYTHON_SYSMODULE_H
-#  include  "cpython/sysmodule.h"
-#  undef Py_CPYTHON_SYSMODULE_H
-#endif
+
+PyAPI_FUNC(PyObject *) _PySys_GetObjectId(_Py_Identifier *key);
+PyAPI_FUNC(int) _PySys_SetObjectId(_Py_Identifier *key, PyObject *);
+
+PyAPI_FUNC(size_t) _PySys_GetSizeOf(PyObject *);
 
 #ifdef __cplusplus
 }

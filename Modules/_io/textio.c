@@ -514,9 +514,9 @@ find_control_char(int kind, const char *s, const char *end, Py_UCS4 ch)
         return (char *) memchr((const void *) s, (char) ch, end - s);
     }
     for (;;) {
-        while (PyUnicode_READ(kind, s, 0) > ch)
+        while (PyUnicode_READ(s, 0) > ch)
             s += kind;
-        if (PyUnicode_READ(kind, s, 0) == ch)
+        if (PyUnicode_READ(s, 0) == ch)
             return s;
         if (s == end)
             return NULL;

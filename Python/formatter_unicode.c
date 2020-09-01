@@ -65,7 +65,7 @@ get_integer(PyObject *str, Py_ssize_t *ppos, Py_ssize_t end,
 
     accumulator = numdigits = 0;
     for (; pos < end; pos++, numdigits++) {
-        digitval = Py_UNICODE_TODECIMAL(PyUnicode_READ(kind, data, pos));
+        digitval = Py_UNICODE_TODECIMAL(PyUnicode_READ(data, pos));
         if (digitval < 0)
             break;
         /*
@@ -153,7 +153,7 @@ parse_internal_render_format_spec(PyObject *format_spec,
     const void *data = PyUnicode_DATA(format_spec);
     /* end-pos is used throughout this code to specify the length of
        the input string */
-#define READ_spec(index) PyUnicode_READ(kind, data, index)
+#define READ_spec(index) PyUnicode_READ(data, index)
 
     Py_ssize_t consumed;
     int align_specified = 0;
@@ -424,12 +424,12 @@ parse_number(PyObject *s, Py_ssize_t pos, Py_ssize_t end,
     Py_ssize_t remainder;
     const void *data = PyUnicode_DATA(s);
 
-    while (pos<end && Py_ISDIGIT(PyUnicode_READ(kind, data, pos)))
+    while (pos<end && Py_ISDIGIT(PyUnicode_READ(data, pos)))
         ++pos;
     remainder = pos;
 
     /* Does remainder start with a decimal point? */
-    *has_decimal = pos<end && PyUnicode_READ(kind, data, remainder) == '.';
+    *has_decimal = pos<end && PyUnicode_READ(data, remainder) == '.';
 
     /* Skip the decimal point. */
     if (*has_decimal)
@@ -448,7 +448,7 @@ calc_number_widths(NumberFieldWidths *spec, Py_ssize_t n_prefix,
                    Py_UCS4 sign_char, Py_ssize_t n_start,
                    Py_ssize_t n_end, Py_ssize_t n_remainder,
                    int has_decimal, const LocaleInfo *locale,
-                   const InternalFormatSpec *format, Py_UCS4 *maxchar)
+                   const InternalFormatSpec *format)
 {
     Py_ssize_t n_non_digit_non_padding;
     Py_ssize_t n_padding;
@@ -518,16 +518,15 @@ calc_number_widths(NumberFieldWidths *spec, Py_ssize_t n_prefix,
            to have at least one character. */
         spec->n_grouped_digits = 0;
     else {
-        Py_UCS4 grouping_maxchar;
+
         spec->n_grouped_digits = _PyUnicode_InsertThousandsGrouping(
             NULL, 0,
             NULL, 0, spec->n_digits,
             spec->n_min_width,
-            locale->grouping, locale->thousands_sep, &grouping_maxchar);
+            locale->grouping, locale->thousands_sep);
         if (spec->n_grouped_digits == -1) {
             return -1;
         }
-        *maxchar = Py_MAX(*maxchar, grouping_maxchar);
     }
 
     /* Given the desired width and the total of digit and non-digit
@@ -558,12 +557,6 @@ calc_number_widths(NumberFieldWidths *spec, Py_ssize_t n_prefix,
         }
     }
 
-    if (spec->n_lpadding || spec->n_spadding || spec->n_rpadding)
-        *maxchar = Py_MAX(*maxchar, format->fill_char);
-
-    if (spec->n_decimal)
-        *maxchar = Py_MAX(*maxchar, PyUnicode_MAX_CHAR_VALUE(locale->decimal_point));
-
     return spec->n_lpadding + spec->n_sign + spec->n_prefix +
         spec->n_spadding + spec->n_grouped_digits + spec->n_decimal +
         spec->n_remainder + spec->n_rpadding;
@@ -590,7 +583,7 @@ fill_number(_PyUnicodeWriter *writer, const NumberFieldWidths *spec,
         writer->pos += spec->n_lpadding;
     }
     if (spec->n_sign == 1) {
-        PyUnicode_WRITE(kind, data, writer->pos, spec->sign);
+        PyUnicode_WRITE(data, writer->pos, spec->sign);
         writer->pos++;
     }
     if (spec->n_prefix) {
@@ -600,10 +593,10 @@ fill_number(_PyUnicodeWriter *writer, const NumberFieldWidths *spec,
         if (toupper) {
             Py_ssize_t t;
             for (t = 0; t < spec->n_prefix; t++) {
-                Py_UCS4 c = PyUnicode_READ(kind, data, writer->pos + t);
+                Py_UCS4 c = PyUnicode_READ(data, writer->pos + t);
                 c = Py_TOUPPER(c);
                 assert (c <= 127);
-                PyUnicode_WRITE(kind, data, writer->pos + t, c);
+                PyUnicode_WRITE(data, writer->pos + t, c);
             }
         }
         writer->pos += spec->n_prefix;
@@ -621,7 +614,7 @@ fill_number(_PyUnicodeWriter *writer, const NumberFieldWidths *spec,
                 writer, spec->n_grouped_digits,
                 digits, d_pos, spec->n_digits,
                 spec->n_min_width,
-                locale->grouping, locale->thousands_sep, NULL);
+                locale->grouping, locale->thousands_sep);
         if (r == -1)
             return -1;
         assert(r == spec->n_grouped_digits);
@@ -630,13 +623,13 @@ fill_number(_PyUnicodeWriter *writer, const NumberFieldWidths *spec,
     if (toupper) {
         Py_ssize_t t;
         for (t = 0; t < spec->n_grouped_digits; t++) {
-            Py_UCS4 c = PyUnicode_READ(kind, data, writer->pos + t);
+            Py_UCS4 c = PyUnicode_READ(data, writer->pos + t);
             c = Py_TOUPPER(c);
             if (c > 127) {
                 PyErr_SetString(PyExc_SystemError, "non-ascii grouped digit");
                 return -1;
             }
-            PyUnicode_WRITE(kind, data, writer->pos + t, c);
+            PyUnicode_WRITE(data, writer->pos + t, c);
         }
     }
     writer->pos += spec->n_grouped_digits;
@@ -676,7 +669,7 @@ static int
 get_locale_info(enum LocaleType type, LocaleInfo *locale_info)
 {
   locale_info->decimal_point = PyUnicode_FromOrdinal('.');
-  locale_info->thousands_sep = PyUnicode_New(0, 0);
+  locale_info->thousands_sep = PyUnicode_New(0);
   if (!locale_info->decimal_point || !locale_info->thousands_sep)
     return -1;
   locale_info->grouping = no_grouping;
@@ -704,7 +697,6 @@ format_string_internal(PyObject *value, const InternalFormatSpec *format,
     Py_ssize_t total;
     Py_ssize_t len;
     int result = -1;
-    Py_UCS4 maxchar;
 
     len = PyUnicode_GET_LENGTH(value);
 
@@ -745,10 +737,8 @@ format_string_internal(PyObject *value, const InternalFormatSpec *format,
 
     calc_padding(len, format->width, format->align, &lpad, &rpad, &total);
 
-    maxchar = 0xff;
-    
     /* allocate the resulting string */
-    if (_PyUnicodeWriter_Prepare(writer, total, maxchar) == -1)
+    if (_PyUnicodeWriter_Prepare(writer, total) == -1)
         goto done;
 
     /* Write into that space. First the padding. */
@@ -778,7 +768,6 @@ format_long_internal(PyObject *value, const InternalFormatSpec *format,
                      _PyUnicodeWriter *writer)
 {
     int result = -1;
-    Py_UCS4 maxchar = 127;
     PyObject *tmp = NULL;
     Py_ssize_t inumeric_chars;
     Py_UCS4 sign_char = '\0';
@@ -833,7 +822,6 @@ format_long_internal(PyObject *value, const InternalFormatSpec *format,
         tmp = PyUnicode_FromOrdinal(x);
         inumeric_chars = 0;
         n_digits = 1;
-        maxchar = Py_MAX(maxchar, (Py_UCS4)x);
 
         /* As a sort-of hack, we tell calc_number_widths that we only
            have "remainder" characters. calc_number_widths thinks
@@ -918,13 +906,13 @@ format_long_internal(PyObject *value, const InternalFormatSpec *format,
     /* Calculate how much memory we'll need. */
     n_total = calc_number_widths(&spec, n_prefix, sign_char, inumeric_chars,
                                  inumeric_chars + n_digits, n_remainder, 0,
-                                 &locale, format, &maxchar);
+                                 &locale, format);
     if (n_total == -1) {
         goto done;
     }
 
     /* Allocate the memory. */
-    if (_PyUnicodeWriter_Prepare(writer, n_total, maxchar) == -1)
+    if (_PyUnicodeWriter_Prepare(writer, n_total) == -1)
         goto done;
 
     /* Populate the memory. */
@@ -962,7 +950,6 @@ format_float_internal(PyObject *value,
     NumberFieldWidths spec;
     int flags = 0;
     int result = -1;
-    Py_UCS4 maxchar = 127;
     Py_UCS4 sign_char = '\0';
     int float_type; /* Used to see if we have a nan, inf, or regular float. */
     PyObject *unicode_tmp = NULL;
@@ -1066,13 +1053,13 @@ format_float_internal(PyObject *value,
     /* Calculate how much memory we'll need. */
     n_total = calc_number_widths(&spec, 0, sign_char, index,
                                  index + n_digits, n_remainder, has_decimal,
-                                 &locale, format, &maxchar);
+                                 &locale, format);
     if (n_total == -1) {
         goto done;
     }
 
     /* Allocate the memory. */
-    if (_PyUnicodeWriter_Prepare(writer, n_total, maxchar) == -1)
+    if (_PyUnicodeWriter_Prepare(writer, n_total) == -1)
         goto done;
 
     /* Populate the memory. */

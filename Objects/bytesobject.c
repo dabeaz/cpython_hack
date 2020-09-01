@@ -2032,7 +2032,7 @@ PyBytes_Repr(PyObject *obj, int smartquotes)
         newsize += squotes;
     }
 
-    v = PyUnicode_New(newsize, 127);
+    v = PyUnicode_New(newsize);
     if (v == NULL) {
         return NULL;
     }

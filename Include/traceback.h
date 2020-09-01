@@ -13,12 +13,16 @@ PyAPI_FUNC(int) PyTraceBack_Print(PyObject *, PyObject *);
 PyAPI_DATA(PyTypeObject) PyTraceBack_Type;
 #define PyTraceBack_Check(v) Py_IS_TYPE(v, &PyTraceBack_Type)
 
+typedef struct _traceback {
+    PyObject_HEAD
+    struct _traceback *tb_next;
+    PyFrameObject *tb_frame;
+    int tb_lasti;
+    int tb_lineno;
+} PyTracebackObject;
 
-#ifndef Py_LIMITED_API
-#  define Py_CPYTHON_TRACEBACK_H
-#  include  "cpython/traceback.h"
-#  undef Py_CPYTHON_TRACEBACK_H
-#endif
+PyAPI_FUNC(int) _Py_DisplaySourceLine(PyObject *, PyObject *, int, int);
+PyAPI_FUNC(void) _PyTraceback_Add(const char *, const char *, int);
 
 #ifdef __cplusplus
 }

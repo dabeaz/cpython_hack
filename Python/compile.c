@@ -224,7 +224,6 @@ _Py_Mangle(PyObject *privateobj, PyObject *ident)
        This is independent from how the name is used. */
     PyObject *result;
     size_t nlen, plen, ipriv;
-    Py_UCS4 maxchar;
     if (privateobj == NULL || !PyUnicode_Check(privateobj) ||
         PyUnicode_READ_CHAR(ident, 0) != '_' ||
         PyUnicode_READ_CHAR(ident, 1) != '_') {
@@ -264,15 +263,11 @@ _Py_Mangle(PyObject *privateobj, PyObject *ident)
         return NULL;
     }
 
-    maxchar = PyUnicode_MAX_CHAR_VALUE(ident);
-    if (PyUnicode_MAX_CHAR_VALUE(privateobj) > maxchar)
-        maxchar = PyUnicode_MAX_CHAR_VALUE(privateobj);
-
-    result = PyUnicode_New(1 + nlen + plen, maxchar);
+    result = PyUnicode_New(1 + nlen + plen);
     if (!result)
         return 0;
     /* ident = "_" + priv[ipriv:] + ident # i.e. 1+plen+nlen bytes */
-    PyUnicode_WRITE(PyUnicode_KIND(result), PyUnicode_DATA(result), 0, '_');
+    PyUnicode_WRITE(PyUnicode_DATA(result), 0, '_');
     if (PyUnicode_CopyCharacters(result, 1, privateobj, ipriv, plen) < 0) {
         Py_DECREF(result);
         return NULL;

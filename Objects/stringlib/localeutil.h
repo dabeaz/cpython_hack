@@ -46,15 +46,9 @@ static void
 InsertThousandsGrouping_fill(_PyUnicodeWriter *writer, Py_ssize_t *buffer_pos,
                              PyObject *digits, Py_ssize_t *digits_pos,
                              Py_ssize_t n_chars, Py_ssize_t n_zeros,
-                             PyObject *thousands_sep, Py_ssize_t thousands_sep_len,
-                             Py_UCS4 *maxchar)
+                             PyObject *thousands_sep, Py_ssize_t thousands_sep_len)
 {
     if (!writer) {
-        /* if maxchar > 127, maxchar is already set */
-        if (*maxchar == 127 && thousands_sep) {
-            Py_UCS4 maxchar2 = PyUnicode_MAX_CHAR_VALUE(thousands_sep);
-            *maxchar = Py_MAX(*maxchar, maxchar2);
-        }
         return;
     }
 
@@ -75,8 +69,7 @@ InsertThousandsGrouping_fill(_PyUnicodeWriter *writer, Py_ssize_t *buffer_pos,
 
     if (n_zeros) {
         *buffer_pos -= n_zeros;
-        enum PyUnicode_Kind kind = PyUnicode_1BYTE_KIND;
         void *data = PyUnicode_DATA(writer->buffer);
-        unicode_fill(kind, data, '0', *buffer_pos, n_zeros);
+        unicode_fill(data, '0', *buffer_pos, n_zeros);
     }
 }

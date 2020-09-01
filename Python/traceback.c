@@ -436,7 +436,6 @@ _Py_DisplaySourceLine(PyObject *f, PyObject *filename, int lineno, int indent)
     PyObject *lineobj = NULL;
     PyObject *res;
     char buf[MAXPATHLEN+1];
-    int kind;
     const void *data;
 
     /* open the file */
@@ -515,10 +514,9 @@ _Py_DisplaySourceLine(PyObject *f, PyObject *filename, int lineno, int indent)
     }
 
     /* remove the indentation of the line */
-    kind = PyUnicode_1BYTE_KIND;
     data = PyUnicode_DATA(lineobj);
     for (i=0; i < PyUnicode_GET_LENGTH(lineobj); i++) {
-        Py_UCS4 ch = PyUnicode_READ(kind, data, i);
+        Py_UCS4 ch = PyUnicode_READ(data, i);
         if (ch != ' ' && ch != '\t' && ch != '\014')
             break;
     }
@@ -758,7 +756,7 @@ _Py_DumpASCII(int fd, PyObject *text)
     }
 
     for (i=0; i < size; i++) {
-      ch = PyUnicode_READ(kind, data, i);
+      ch = PyUnicode_READ(data, i);
         if (' ' <= ch && ch <= 126) {
             /* printable ASCII character */
             char c = (char)ch;

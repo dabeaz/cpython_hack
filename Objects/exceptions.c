@@ -1323,15 +1323,13 @@ static PyObject*
 my_basename(PyObject *name)
 {
     Py_ssize_t i, size, offset;
-    int kind;
     const void *data;
 
-    kind = PyUnicode_1BYTE_KIND;
     data = PyUnicode_DATA(name);
     size = PyUnicode_GET_LENGTH(name);
     offset = 0;
     for(i=0; i < size; i++) {
-        if (PyUnicode_READ(kind, data, i) == SEP) {
+        if (PyUnicode_READ(data, i) == SEP) {
             offset = i + 1;
         }
     }
@@ -2659,7 +2657,7 @@ _check_for_legacy_statements(PySyntaxErrorObject *self, Py_ssize_t start)
 
     /* Ignore leading whitespace */
     while (start < text_len) {
-        Py_UCS4 ch = PyUnicode_READ(kind, data, start);
+        unsigned char ch = PyUnicode_READ(data, start);
         if (!Py_UNICODE_ISSPACE(ch))
             break;
         start++;

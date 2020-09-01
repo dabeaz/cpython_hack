@@ -67,7 +67,7 @@
 #include "structseq.h"
 // #include "codecs.h"
 #include "pyerrors.h"
-#include "cpython/initconfig.h"
+#include "initconfig.h"
 #include "pystate.h"
 #include "modsupport.h"
 #include "compile.h"

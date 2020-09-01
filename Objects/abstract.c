@@ -670,21 +670,10 @@ PyObject_Format(PyObject *obj, PyObject *format_spec)
                      Py_TYPE(format_spec)->tp_name);
         return NULL;
     }
-
-    /* Fast path for common types. */
-    if (format_spec == NULL || PyUnicode_GET_LENGTH(format_spec) == 0) {
-        if (PyUnicode_CheckExact(obj)) {
-            Py_INCREF(obj);
-            return obj;
-        }
-        if (PyLong_CheckExact(obj)) {
-            return PyObject_Str(obj);
-        }
-    }
-
+    
     /* If no format_spec is provided, use an empty string */
     if (format_spec == NULL) {
-        empty = PyUnicode_New(0, 0);
+        empty = PyUnicode_New(0);
         format_spec = empty;
     }
 
