@@ -222,7 +222,7 @@ arg_ty _PyPegen_add_type_comment_to_arg(Parser *, arg_ty, Token *);
 PyObject *_PyPegen_new_identifier(Parser *, char *);
 Parser *_PyPegen_Parser_New(struct tok_state *, int, int, int, int *);
 void _PyPegen_Parser_Free(Parser *);
-mod_ty _PyPegen_run_parser_from_file_pointer(FILE *, int, PyObject *, const char *,
+mod_ty _PyPegen_run_parser_from_file_pointer(FILE *, int, PyObject *, 
                                     const char *, const char *, PyCompilerFlags *, int *);
 void *_PyPegen_run_parser(Parser *);
 mod_ty _PyPegen_run_parser_from_file(const char *, int, PyObject *, PyCompilerFlags *);

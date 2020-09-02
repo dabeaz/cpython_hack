@@ -40,9 +40,9 @@ PyPegen_ASTFromFilename(const char *filename, int mode, PyCompilerFlags *flags)
 
 mod_ty
 PyPegen_ASTFromFileObject(FILE *fp, PyObject *filename_ob, int mode,
-                          const char *enc, const char *ps1, const char* ps2,
+                          const char *ps1, const char* ps2,
                           PyCompilerFlags *flags, int *errcode)
 {
-    return _PyPegen_run_parser_from_file_pointer(fp, mode, filename_ob, enc, ps1, ps2,
+    return _PyPegen_run_parser_from_file_pointer(fp, mode, filename_ob, ps1, ps2,
                                         flags, errcode);
 }

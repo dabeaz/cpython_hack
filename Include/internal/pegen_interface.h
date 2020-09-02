@@ -25,7 +25,6 @@ PyAPI_FUNC(mod_ty) PyPegen_ASTFromFileObject(
     FILE *fp,
     PyObject *filename_ob,
     int mode,
-    const char *enc,
     const char *ps1,
     const char *ps2,
     PyCompilerFlags *flags,

@@ -13,12 +13,6 @@ extern "C" {
 #define MAXINDENT 100   /* Max indentation level */
 #define MAXLEVEL 200    /* Max parentheses level */
 
-enum decoding_state {
-    STATE_INIT,
-    STATE_RAW,
-    STATE_NORMAL        /* have a codec associated with input */
-};
-
 /* Tokenizer state */
 struct tok_state {
     /* Input state; buf <= cur <= inp <= end */
@@ -47,27 +41,17 @@ struct tok_state {
     PyObject *filename;
     /* Stuff for checking on different tab sizes */
     int altindstack[MAXINDENT];         /* Stack of alternate indents */
-    /* Stuff for PEP 0263 */
-    enum decoding_state decoding_state;
-    int decoding_erred;         /* whether erred in decoding  */
-    int read_coding_spec;       /* whether 'coding:...' has been read  */
-    char *encoding;         /* Source encoding. */
+  
     int cont_line;          /* whether we are in a continuation line. */
     const char* line_start;     /* pointer to start of current line */
     const char* multi_line_start; /* pointer to start of first line of
                                      a single line or multi line string
                                      expression (cf. issue 16806) */
-    PyObject *decoding_readline; /* open(...).readline */
-    PyObject *decoding_buffer;
-    const char* enc;        /* Encoding for the current str. */
-    char* str;
     char* input;       /* Tokenizer's newline translated copy of the string. */
 };
 
 extern struct tok_state *PyTokenizer_FromString(const char *, int);
-extern struct tok_state *PyTokenizer_FromUTF8(const char *, int);
-extern struct tok_state *PyTokenizer_FromFile(FILE *, const char*,
-                                              const char *, const char *);
+extern struct tok_state *PyTokenizer_FromFile(FILE *, const char *, const char *);
 extern void PyTokenizer_Free(struct tok_state *);
 extern int PyTokenizer_Get(struct tok_state *, const char **, const char **);
 

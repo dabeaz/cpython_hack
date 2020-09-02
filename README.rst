@@ -98,7 +98,8 @@ How will it end?  Or is this just the start?
 - Day 81 (8/30/2020). Simple is better than complex.
 - Day 82 (8/31/2020). Wasted wchar_t.
 - Day 83 (9/01/2020). More unicode cleanup. Hacked on headers.
-
+- Day 84 (9/02/2020). Trimmed the tokenizer.
+  
 Copyright and License Information
 ---------------------------------
 

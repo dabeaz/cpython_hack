@@ -20,9 +20,6 @@ PyAPI_DATA(const char *) Py_hexdigits;
 #define MAX_FRAME_DEPTH 100
 #define MAX_NTHREADS 100
 
-/* Function from Parser/tokenizer.c */
-extern char * PyTokenizer_FindEncodingFilename(int, PyObject *);
-
 _Py_IDENTIFIER(TextIOWrapper);
 _Py_IDENTIFIER(close);
 _Py_IDENTIFIER(open);
@@ -428,8 +425,6 @@ _Py_DisplaySourceLine(PyObject *f, PyObject *filename, int lineno, int indent)
     int err = 0;
     int fd;
     int i;
-    char *found_encoding;
-    const char *encoding;
     PyObject *io;
     PyObject *binary;
     PyObject *fob = NULL;
@@ -464,20 +459,14 @@ _Py_DisplaySourceLine(PyObject *f, PyObject *filename, int lineno, int indent)
         Py_DECREF(binary);
         return 0;
     }
-    found_encoding = PyTokenizer_FindEncodingFilename(fd, filename);
-    if (found_encoding == NULL)
-        PyErr_Clear();
-    encoding = (found_encoding != NULL) ? found_encoding : "utf-8";
     /* Reset position */
     if (lseek(fd, 0, SEEK_SET) == (off_t)-1) {
         Py_DECREF(io);
         Py_DECREF(binary);
-        PyMem_FREE(found_encoding);
         return 0;
     }
-    fob = _PyObject_CallMethodId(io, &PyId_TextIOWrapper, "Os", binary, encoding);
+    fob = _PyObject_CallMethodId(io, &PyId_TextIOWrapper, "Os", binary, "utf-8");
     Py_DECREF(io);
-    PyMem_FREE(found_encoding);
 
     if (fob == NULL) {
         PyErr_Clear();

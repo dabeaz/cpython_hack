@@ -180,7 +180,7 @@ PyRun_InteractiveOneObjectEx(FILE *fp, PyObject *filename,
         }
     }
     mod = PyPegen_ASTFromFileObject(fp, filename, Py_single_input,
-                                    enc, ps1, ps2, flags, &errcode);
+                                    ps1, ps2, flags, &errcode);
 
     Py_XDECREF(v);
     Py_XDECREF(w);
@@ -948,7 +948,7 @@ PyRun_FileExFlags(FILE *fp, const char *filename_str, int start, PyObject *globa
         goto exit;
 
 
-    mod = PyPegen_ASTFromFileObject(fp, filename, start, NULL, NULL, NULL,
+    mod = PyPegen_ASTFromFileObject(fp, filename, start, NULL, NULL, 
                                         flags, NULL);
 
     if (closeit)

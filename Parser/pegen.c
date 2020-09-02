@@ -917,10 +917,10 @@ _PyPegen_run_parser(Parser *p)
 
 mod_ty
 _PyPegen_run_parser_from_file_pointer(FILE *fp, int start_rule, PyObject *filename_ob,
-                             const char *enc, const char *ps1, const char *ps2,
+				      const char *ps1, const char *ps2,
 				      PyCompilerFlags *flags, int *errcode)
 {
-    struct tok_state *tok = PyTokenizer_FromFile(fp, enc, ps1, ps2);
+    struct tok_state *tok = PyTokenizer_FromFile(fp, ps1, ps2);
     if (tok == NULL) {
         if (PyErr_Occurred()) {
             raise_tokenizer_init_error(filename_ob);
@@ -961,7 +961,7 @@ _PyPegen_run_parser_from_file(const char *filename, int start_rule,
     }
 
     mod_ty result = _PyPegen_run_parser_from_file_pointer(fp, start_rule, filename_ob,
-                                                 NULL, NULL, NULL, flags, NULL);
+                                                 NULL, NULL, flags, NULL);
 
     fclose(fp);
     return result;
@@ -974,11 +974,7 @@ _PyPegen_run_parser_from_string(const char *str, int start_rule, PyObject *filen
     int exec_input = start_rule == Py_file_input;
 
     struct tok_state *tok;
-    if (flags == NULL || flags->cf_flags & PyCF_IGNORE_COOKIE) {
-        tok = PyTokenizer_FromUTF8(str, exec_input);
-    } else {
-        tok = PyTokenizer_FromString(str, exec_input);
-    }
+    tok = PyTokenizer_FromString(str, exec_input);
     if (tok == NULL) {
         if (PyErr_Occurred()) {
             raise_tokenizer_init_error(filename_ob);
