@@ -355,7 +355,6 @@ PYTHON_OBJS=	\
 		Python/getopt.o \
 		Python/pystrcmp.o \
 		Python/pystrtod.o \
-		Python/dtoa.o \
 		Python/formatter_unicode.o \
 		Python/fileutils.o \
 		$(LIBOBJS) \
@@ -966,7 +965,6 @@ PYTHON_HEADERS= \
 		$(srcdir)/Include/internal/pycore_ceval.h \
 		$(srcdir)/Include/internal/pycore_code.h \
 		$(srcdir)/Include/internal/pycore_condvar.h \
-		$(srcdir)/Include/internal/pycore_dtoa.h \
 		$(srcdir)/Include/internal/pycore_fileutils.h \
 		$(srcdir)/Include/internal/pycore_getopt.h \
 		$(srcdir)/Include/internal/pycore_hashtable.h \
@@ -1439,12 +1437,6 @@ config.status:	$(srcdir)/configure
 .c.o:
 	$(CC) -c $(PY_CORE_CFLAGS) -o $@ $<
 
-# bpo-30104: dtoa.c uses union to cast double to unsigned long[2]. clang 4.0
-# with -O2 or higher and strict aliasing miscompiles the ratio() function
-# causing rounding issues. Compile dtoa.c using -fno-strict-aliasing on clang.
-# https://bugs.llvm.org//show_bug.cgi?id=31928
-Python/dtoa.o: Python/dtoa.c
-	$(CC) -c $(PY_CORE_CFLAGS) $(CFLAGS_ALIASING) -o $@ $<
 
 # Run reindent on the library
 reindent:

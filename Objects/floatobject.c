@@ -4,7 +4,6 @@
    for any kind of float exception without losing portability. */
 
 #include "Python.h"
-#include "pycore_dtoa.h"
 #include "pycore_interp.h"        // _PyInterpreterState.float_state
 #include "pycore_pystate.h"       // _PyInterpreterState_GET()
 
@@ -1187,68 +1186,6 @@ float___ceil___impl(PyObject *self)
    ndigits <= 323).  Returns a Python float, or sets a Python error and
    returns NULL on failure (OverflowError and memory errors are possible). */
 
-#ifndef PY_NO_SHORT_FLOAT_REPR
-/* version of double_round that uses the correctly-rounded string<->double
-   conversions from Python/dtoa.c */
-
-static PyObject *
-double_round(double x, int ndigits) {
-
-    double rounded;
-    Py_ssize_t buflen, mybuflen=100;
-    char *buf, *buf_end, shortbuf[100], *mybuf=shortbuf;
-    int decpt, sign;
-    PyObject *result = NULL;
-    _Py_SET_53BIT_PRECISION_HEADER;
-
-    /* round to a decimal string */
-    _Py_SET_53BIT_PRECISION_START;
-    buf = _Py_dg_dtoa(x, 3, ndigits, &decpt, &sign, &buf_end);
-    _Py_SET_53BIT_PRECISION_END;
-    if (buf == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-
-    /* Get new buffer if shortbuf is too small.  Space needed <= buf_end -
-    buf + 8: (1 extra for '0', 1 for sign, 5 for exp, 1 for '\0').  */
-    buflen = buf_end - buf;
-    if (buflen + 8 > mybuflen) {
-        mybuflen = buflen+8;
-        mybuf = (char *)PyMem_Malloc(mybuflen);
-        if (mybuf == NULL) {
-            PyErr_NoMemory();
-            goto exit;
-        }
-    }
-    /* copy buf to mybuf, adding exponent, sign and leading 0 */
-    PyOS_snprintf(mybuf, mybuflen, "%s0%se%d", (sign ? "-" : ""),
-                  buf, decpt - (int)buflen);
-
-    /* and convert the resulting string back to a double */
-    errno = 0;
-    _Py_SET_53BIT_PRECISION_START;
-    rounded = _Py_dg_strtod(mybuf, NULL);
-    _Py_SET_53BIT_PRECISION_END;
-    if (errno == ERANGE && fabs(rounded) >= 1.)
-        PyErr_SetString(PyExc_OverflowError,
-                        "rounded value too large to represent");
-    else
-        result = PyFloat_FromDouble(rounded);
-
-    /* done computing value;  now clean up */
-    if (mybuf != shortbuf)
-        PyMem_Free(mybuf);
-  exit:
-    _Py_dg_freedtoa(buf);
-    return result;
-}
-
-#else /* PY_NO_SHORT_FLOAT_REPR */
-
-/* fallback version, to be used when correctly rounded binary<->decimal
-   conversions aren't available */
-
 static PyObject *
 double_round(double x, int ndigits) {
     double pow1, pow2, y, z;
@@ -1293,8 +1230,6 @@ double_round(double x, int ndigits) {
 
     return PyFloat_FromDouble(z);
 }
-
-#endif /* PY_NO_SHORT_FLOAT_REPR */
 
 /* round a Python float v to the closest multiple of 10**-ndigits */
 
@@ -2620,7 +2555,6 @@ _PyFloat_Unpack2(const unsigned char *p, int le)
     f |= *p;
 
     if (e == 0x1f) {
-#ifdef PY_NO_SHORT_FLOAT_REPR
         if (f == 0) {
             /* Infinity */
             return sign ? -Py_HUGE_VAL : Py_HUGE_VAL;
@@ -2637,16 +2571,6 @@ _PyFloat_Unpack2(const unsigned char *p, int le)
             return -1;
 #endif  /* #ifdef Py_NAN */
         }
-#else
-        if (f == 0) {
-            /* Infinity */
-            return _Py_dg_infinity(sign);
-        }
-        else {
-            /* NaN */
-            return _Py_dg_stdnan(sign);
-        }
-#endif  /* #ifdef PY_NO_SHORT_FLOAT_REPR */
     }
 
     x = (double)f / 1024.0;
