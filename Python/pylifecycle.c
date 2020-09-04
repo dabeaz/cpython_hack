@@ -1245,13 +1245,10 @@ create_stdio(const PyConfig *config, PyObject* io,
 {
     PyObject *buf = NULL, *stream = NULL, *text = NULL, *raw = NULL, *res;
     const char* mode;
-    const char* newline;
     PyObject *line_buffering, *write_through;
     int buffering, isatty;
     _Py_IDENTIFIER(open);
     _Py_IDENTIFIER(isatty);
-    _Py_IDENTIFIER(TextIOWrapper);
-    _Py_IDENTIFIER(mode);
     const int buffered_stdio = config->buffered_stdio;
 
     if (!is_valid_fd(fd))
@@ -1310,25 +1307,7 @@ create_stdio(const PyConfig *config, PyObject* io,
 
     Py_CLEAR(raw);
     Py_CLEAR(text);
-    /* sys.stdin: split lines at "\n".
-       sys.stdout and sys.stderr: don't translate newlines (use "\n"). */
-    newline = "\n";
-    stream = _PyObject_CallMethodId(io, &PyId_TextIOWrapper, "OOOsOO",
-                                    buf, Py_None, Py_None,
-                                    newline, line_buffering, write_through);
-    Py_CLEAR(buf);
-    if (stream == NULL)
-        goto error;
-
-    if (write_mode)
-        mode = "w";
-    else
-        mode = "r";
-    text = PyUnicode_FromString(mode);
-    if (!text || _PyObject_SetAttrId(stream, &PyId_mode, text) < 0)
-        goto error;
-    Py_CLEAR(text);
-    return stream;
+    return buf;
 
 error:
     Py_XDECREF(buf);
