@@ -4,7 +4,7 @@
 #include "pycore_ceval.h"         // _PyEval_EvalFrame()
 #include "pycore_object.h"
 #include "pycore_pyerrors.h"      // _PyErr_ClearExcState()
-#include "pycore_pystate.h"       // _PyThreadState_GET()
+#include "pycore_pystate.h"       // PyThreadState_Get()
 #include "frameobject.h"
 #include "structmember.h"         // PyMemberDef
 #include "opcode.h"
@@ -105,7 +105,7 @@ gen_dealloc(PyGenObject *gen)
 static PyObject *
 gen_send_ex(PyGenObject *gen, PyObject *arg, int exc, int closing)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyFrameObject *f = gen->gi_frame;
     PyObject *result;
 

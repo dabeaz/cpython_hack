@@ -120,14 +120,14 @@ PyObject *
 PyEval_EvalFrame(PyFrameObject *f)
 {
     /* Function kept for backward compatibility */
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     return _PyEval_EvalFrame(tstate, f, 0);
 }
 
 PyObject *
 PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     return _PyEval_EvalFrame(tstate, f, throwflag);
 }
 
@@ -2782,7 +2782,7 @@ _PyEval_EvalCodeWithName(PyObject *_co, PyObject *globals, PyObject *locals,
            PyObject *kwdefs, PyObject *closure,
            PyObject *name, PyObject *qualname)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     return _PyEval_EvalCode(tstate, _co, globals, locals,
                args, argcount,
                kwnames, kwargs,
@@ -3022,14 +3022,14 @@ Error:
 PyFrameObject *
 PyEval_GetFrame(void)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     return tstate->frame;
 }
 
 PyObject *
 PyEval_GetBuiltins(void)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyFrameObject *current_frame = tstate->frame;
     if (current_frame == NULL)
         return tstate->interp->builtins;
@@ -3041,7 +3041,7 @@ PyEval_GetBuiltins(void)
 PyObject *
 _PyEval_GetBuiltinId(_Py_Identifier *name)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyObject *attr = _PyDict_GetItemIdWithError(PyEval_GetBuiltins(), name);
     if (attr) {
         Py_INCREF(attr);
@@ -3055,7 +3055,7 @@ _PyEval_GetBuiltinId(_Py_Identifier *name)
 PyObject *
 PyEval_GetLocals(void)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyFrameObject *current_frame = tstate->frame;
     if (current_frame == NULL) {
         _PyErr_SetString(tstate, PyExc_SystemError, "frame does not exist");
@@ -3073,7 +3073,7 @@ PyEval_GetLocals(void)
 PyObject *
 PyEval_GetGlobals(void)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyFrameObject *current_frame = tstate->frame;
     if (current_frame == NULL) {
         return NULL;
@@ -3086,7 +3086,7 @@ PyEval_GetGlobals(void)
 int
 PyEval_MergeCompilerFlags(PyCompilerFlags *cf)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyFrameObject *current_frame = tstate->frame;
     int result = cf->cf_flags != 0;
 
@@ -3177,7 +3177,7 @@ do_call_core(PyThreadState *tstate, PyObject *func, PyObject *callargs, PyObject
 int
 _PyEval_SliceIndex(PyObject *v, Py_ssize_t *pi)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     if (v != Py_None) {
         Py_ssize_t x;
         if (_PyIndex_Check(v)) {
@@ -3199,7 +3199,7 @@ _PyEval_SliceIndex(PyObject *v, Py_ssize_t *pi)
 int
 _PyEval_SliceIndexNotNone(PyObject *v, Py_ssize_t *pi)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     Py_ssize_t x;
     if (_PyIndex_Check(v)) {
         x = PyNumber_AsSsize_t(v, NULL);

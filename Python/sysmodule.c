@@ -24,7 +24,7 @@ Data members:
 #include "pycore_pyerrors.h"
 #include "pycore_pylifecycle.h"
 #include "pycore_pymem.h"         // _PyMem_SetDefaultAllocator()
-#include "pycore_pystate.h"       // _PyThreadState_GET()
+#include "pycore_pystate.h"       // PyThreadState_Get()
 #include "pycore_tupleobject.h"
 
 #include "osdefs.h"               // DELIM
@@ -341,14 +341,14 @@ sys_get_object_id(PyThreadState *tstate, _Py_Identifier *key)
 PyObject *
 _PySys_GetObjectId(_Py_Identifier *key)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     return sys_get_object_id(tstate, key);
 }
 
 PyObject *
 PySys_GetObject(const char *name)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyObject *sd = tstate->interp->sysdict;
     if (sd == NULL) {
         return NULL;
@@ -376,7 +376,7 @@ sys_set_object_id(PyThreadState *tstate, _Py_Identifier *key, PyObject *v)
 int
 _PySys_SetObjectId(_Py_Identifier *key, PyObject *v)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     return sys_set_object_id(tstate, key, v);
 }
 
@@ -400,7 +400,7 @@ sys_set_object(PyThreadState *tstate, const char *name, PyObject *v)
 int
 PySys_SetObject(const char *name, PyObject *v)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     return sys_set_object(tstate, name, v);
 }
 
@@ -482,7 +482,7 @@ sys_displayhook(PyObject *module, PyObject *o)
     PyObject *outf;
     PyObject *builtins;
     static PyObject *newline = NULL;
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
 
     builtins = _PyImport_GetModuleId(&PyId_builtins);
     if (builtins == NULL) {
@@ -569,7 +569,7 @@ static PyObject *
 sys_exc_info_impl(PyObject *module)
 /*[clinic end generated code: output=3afd0940cf3a4d30 input=b5c5bf077788a3e5]*/
 {
-    _PyErr_StackItem *err_info = _PyErr_GetTopmostException(_PyThreadState_GET());
+    _PyErr_StackItem *err_info = _PyErr_GetTopmostException(PyThreadState_Get());
     return Py_BuildValue(
         "(OOO)",
         err_info->exc_type != NULL ? err_info->exc_type : Py_None,
@@ -623,7 +623,7 @@ sys_exit_impl(PyObject *module, PyObject *status)
 /*[clinic end generated code: output=13870986c1ab2ec0 input=b86ca9497baa94f2]*/
 {
     /* Raise SystemExit so callers may catch it or clean up. */
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     _PyErr_SetObject(tstate, PyExc_SystemExit, status);
     return NULL;
 }
@@ -660,7 +660,7 @@ static PyObject *
 sys_intern_impl(PyObject *module, PyObject *s)
 /*[clinic end generated code: output=be680c24f5c9e5d6 input=849483c006924e2f]*/
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     if (PyUnicode_CheckExact(s)) {
         Py_INCREF(s);
         PyUnicode_InternInPlace(&s);
@@ -679,7 +679,7 @@ _PySys_GetSizeOf(PyObject *o)
     PyObject *res = NULL;
     PyObject *method;
     Py_ssize_t size;
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
 
     /* Make sure the type is initialized. float gets initialized late */
     if (PyType_Ready(Py_TYPE(o)) < 0) {
@@ -725,7 +725,7 @@ sys_getsizeof(PyObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"object", "default", 0};
     size_t size;
     PyObject *o, *dflt = NULL;
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O:getsizeof",
                                      kwlist, &o, &dflt)) {
@@ -795,7 +795,7 @@ static PyObject *
 sys__getframe_impl(PyObject *module, int depth)
 /*[clinic end generated code: output=d438776c04d59804 input=c1be8a6464b11ee5]*/
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyFrameObject *f = PyThreadState_GetFrame(tstate);
 
     while (depth > 0 && f != NULL) {
@@ -1269,7 +1269,7 @@ PySys_SetPath(const char *path)
     PyObject *v;
     if ((v = makepathobject(path, DELIM)) == NULL)
         Py_FatalError("can't create sys.path");
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     if (sys_set_object_id(tstate, &PyId_path, v) != 0) {
         Py_FatalError("can't assign sys.path");
     }
@@ -1299,7 +1299,7 @@ void
 PySys_SetArgvEx(int argc, char **argv, int updatepath)
 {
     char* empty_argv[1] = {""};
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
 
     if (argc < 1 || argv == NULL) {
         /* Ensure at least one (empty) argument is seen */
@@ -1415,7 +1415,7 @@ sys_write(_Py_Identifier *key, FILE *fp, const char *format, va_list va)
     PyObject *error_type, *error_value, *error_traceback;
     char buffer[1001];
     int written;
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
 
     _PyErr_Fetch(tstate, &error_type, &error_value, &error_traceback);
     file = sys_get_object_id(tstate, key);
@@ -1458,7 +1458,7 @@ sys_format(_Py_Identifier *key, FILE *fp, const char *format, va_list va)
     PyObject *file, *message;
     PyObject *error_type, *error_value, *error_traceback;
     const char *utf8;
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
 
     _PyErr_Fetch(tstate, &error_type, &error_value, &error_traceback);
     file = sys_get_object_id(tstate, key);

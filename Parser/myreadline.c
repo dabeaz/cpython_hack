@@ -10,7 +10,7 @@
 */
 
 #include "Python.h"
-#include "pycore_pystate.h"   // _PyThreadState_GET()
+#include "pycore_pystate.h"   // PyThreadState_GET()
 
 
 PyThreadState* _PyOS_ReadlineTState = NULL;
@@ -144,7 +144,7 @@ PyOS_Readline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
     char *rv, *res;
     size_t len;
 
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     if (_PyOS_ReadlineTState == tstate) {
         PyErr_SetString(PyExc_RuntimeError,
                         "can't re-enter readline");

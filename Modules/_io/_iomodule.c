@@ -238,11 +238,10 @@ _io_open_impl(PyObject *module, PyObject *file, const char *mode,
     int line_buffering, is_number;
     long isatty = 0;
 
-    PyObject *raw, *modeobj = NULL, *buffer, *wrapper, *result = NULL, *path_or_fd = NULL;
+    PyObject *raw, *modeobj = NULL, *buffer, *result = NULL, *path_or_fd = NULL;
 
     _Py_IDENTIFIER(_blksize);
     _Py_IDENTIFIER(isatty);
-    _Py_IDENTIFIER(mode);
     _Py_IDENTIFIER(close);
 
     is_number = PyNumber_Check(file);
@@ -443,30 +442,8 @@ _io_open_impl(PyObject *module, PyObject *file, const char *mode,
         goto error;
     result = buffer;
     Py_DECREF(raw);
-
-
-    /* if binary, returns the buffered file */
-    if (binary) {
-        Py_DECREF(modeobj);
-        return result;
-    }
-
-    /* wraps into a TextIOWrapper */
-    wrapper = PyObject_CallFunction((PyObject *)&PyTextIOWrapper_Type,
-                                    "OsssO",
-                                    buffer,
-                                    encoding, errors, newline,
-                                    line_buffering ? Py_True : Py_False);
-    if (wrapper == NULL)
-        goto error;
-    result = wrapper;
-    Py_DECREF(buffer);
-
-    if (_PyObject_SetAttrId(wrapper, &PyId_mode, modeobj) < 0)
-        goto error;
-    Py_DECREF(modeobj);
     return result;
-
+    
   error:
     if (result != NULL) {
         PyObject *exc, *val, *tb, *close_result;
@@ -1002,8 +979,7 @@ PyInit__io(void)
     ADD_TYPE(&PyIOBase_Type);
     ADD_TYPE(&PyRawIOBase_Type);
     ADD_TYPE(&PyBufferedIOBase_Type);
-    ADD_TYPE(&PyTextIOBase_Type);
-
+    
     /* Implementation of concrete IO objects. */
     /* FileIO */
     PyFileIO_Type.tp_base = &PyRawIOBase_Type;
@@ -1038,9 +1014,6 @@ PyInit__io(void)
     PyBufferedRandom_Type.tp_base = &PyBufferedIOBase_Type;
     ADD_TYPE(&PyBufferedRandom_Type);
 
-    /* TextIOWrapper */
-    PyTextIOWrapper_Type.tp_base = &PyTextIOBase_Type;
-    ADD_TYPE(&PyTextIOWrapper_Type);
     
     /* Interned strings */
 #define ADD_INTERNED(name) \

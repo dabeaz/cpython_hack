@@ -116,7 +116,7 @@ def maketables(trace=0):
     print("--- Reading", UNICODE_DATA % "", "...")
 
     unicode = UnicodeData(UNIDATA_VERSION)
-
+    
     print(len(list(filter(None, unicode.table))), "characters")
 
     for version in old_versions:
@@ -127,6 +127,7 @@ def maketables(trace=0):
 
     makeunicodename(unicode, trace)
     makeunicodedata(unicode, trace)
+    unicode.uselatin1()
     makeunicodetype(unicode, trace)
 
 
@@ -140,7 +141,7 @@ def makeunicodedata(unicode, trace):
     cache = {0: dummy}
     index = [0] * len(unicode.chars)
 
-    FILE = "Modules/unicodedata_db.h"
+    FILE = "unicodedata_db.h"
 
     print("--- Preparing", FILE, "...")
 
@@ -388,7 +389,7 @@ def makeunicodedata(unicode, trace):
 
 def makeunicodetype(unicode, trace):
 
-    FILE = "Objects/unicodetype_db.h"
+    FILE = "unicodetype_db.h"
 
     print("--- Preparing", FILE, "...")
 
@@ -601,7 +602,7 @@ def makeunicodetype(unicode, trace):
 
 def makeunicodename(unicode, trace):
 
-    FILE = "Modules/unicodename_db.h"
+    FILE = "unicodename_db.h"
 
     print("--- Preparing", FILE, "...")
 

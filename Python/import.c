@@ -317,7 +317,7 @@ _PyImport_GetModuleId(struct _Py_Identifier *nameid)
 int
 _PyImport_SetModule(PyObject *name, PyObject *m)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyObject *modules = tstate->interp->modules;
     return PyObject_SetItem(modules, name, m);
 }
@@ -325,7 +325,7 @@ _PyImport_SetModule(PyObject *name, PyObject *m)
 int
 _PyImport_SetModuleString(const char *name, PyObject *m)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyObject *modules = tstate->interp->modules;
     return PyMapping_SetItemString(modules, name, m);
 }
@@ -592,7 +592,7 @@ _PyImport_FixupExtensionObject(PyObject *mod, PyObject *name,
         return -1;
     }
 
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     if (PyObject_SetItem(modules, name, mod) < 0) {
         return -1;
     }
@@ -709,7 +709,7 @@ import_find_extension(PyThreadState *tstate, PyObject *name,
 PyObject *
 _PyImport_FindExtensionObject(PyObject *name, PyObject *filename)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     return import_find_extension(tstate, name, filename);
 }
 
@@ -775,7 +775,7 @@ import_add_module(PyThreadState *tstate, PyObject *name)
 PyObject *
 PyImport_AddModuleObject(PyObject *name)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     return import_add_module(tstate, name);
 }
 
@@ -948,7 +948,7 @@ PyObject*
 PyImport_ExecCodeModuleObject(PyObject *name, PyObject *co, PyObject *pathname,
                               PyObject *cpathname)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyObject *d, *external, *res;
     _Py_IDENTIFIER(_fix_up_module);
 
@@ -1057,7 +1057,7 @@ get_path_importer(PyThreadState *tstate, PyObject *path_importer_cache,
 PyObject *
 PyImport_GetImporter(PyObject *path)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyObject *importer=NULL, *path_importer_cache=NULL, *path_hooks=NULL;
 
     path_importer_cache = PySys_GetObject("path_importer_cache");
@@ -1083,7 +1083,7 @@ static PyObject *
 _imp_create_builtin(PyObject *module, PyObject *spec)
 /*[clinic end generated code: output=ace7ff22271e6f39 input=37f966f890384e47]*/
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     struct _inittab *p;
     PyObject *name;
     const char *namestr;
@@ -1221,7 +1221,7 @@ is_frozen_package(PyObject *name)
 int
 PyImport_ImportFrozenModuleObject(PyObject *name)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     const struct _frozen *p;
     PyObject *co, *m, *d;
     int ispackage;
@@ -1560,7 +1560,7 @@ import_find_and_load(PyThreadState *tstate, PyObject *abs_name)
 PyObject *
 PyImport_GetModule(PyObject *name)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyObject *mod;
 
     mod = import_get_module(tstate, name);
@@ -1572,7 +1572,7 @@ PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
                                  PyObject *locals, PyObject *fromlist,
                                  int level)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     _Py_IDENTIFIER(_handle_fromlist);
     PyObject *abs_name = NULL;
     PyObject *final_mod = NULL;
@@ -1733,7 +1733,7 @@ PyImport_ImportModuleLevel(const char *name, PyObject *globals, PyObject *locals
 PyObject *
 PyImport_Import(PyObject *module_name)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     static PyObject *silly_list = NULL;
     static PyObject *builtins_str = NULL;
     static PyObject *import_str = NULL;
@@ -1821,7 +1821,7 @@ static PyObject *
 _imp_init_frozen_impl(PyObject *module, PyObject *name)
 /*[clinic end generated code: output=fc0511ed869fd69c input=13019adfc04f3fb3]*/
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     int ret;
     PyObject *m;
 

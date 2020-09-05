@@ -100,6 +100,8 @@ How will it end?  Or is this just the start?
 - Day 83 (9/01/2020). More unicode cleanup. Hacked on headers.
 - Day 84 (9/02/2020). Trimmed the tokenizer.
 - Day 85 (9/03/2020). Short repr got no reason.
+- Day 86 (9/04/2020). Textino.
+- Day 87 (9/05/2020). Various unfocused trimming. Yawn.
 
 Copyright and License Information
 ---------------------------------

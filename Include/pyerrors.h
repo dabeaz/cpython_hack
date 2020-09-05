@@ -31,7 +31,7 @@ PyAPI_FUNC(void) _Py_NO_RETURN Py_FatalError(const char *message);
 #if defined(Py_LIMITED_API)
 #define _PyErr_OCCURRED() PyErr_Occurred()
 #else
-#define _PyErr_OCCURRED() (PyThreadState_GET()->curexc_type)
+#define _PyErr_OCCURRED() (PyThreadState_Get()->curexc_type)
 #endif
 
 /* Error testing and normalization */

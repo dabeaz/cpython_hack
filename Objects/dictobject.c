@@ -114,7 +114,7 @@ converting the dict to the combined table.
 #include "pycore_gc.h"       // _PyObject_GC_IS_TRACKED()
 #include "pycore_object.h"   // _PyObject_GC_TRACK()
 #include "pycore_pyerrors.h" // _PyErr_Fetch()
-#include "pycore_pystate.h"  // _PyThreadState_GET()
+#include "pycore_pystate.h"  // PyThreadState_Get()
 #include "dict-common.h"
 #include "stringlib/eq.h"    // unicode_eq()
 
@@ -1164,7 +1164,7 @@ PyDict_GetItem(PyObject *op, PyObject *key)
       return NULL;
     }
 
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
 
     /* Preserve the existing exception */
     PyObject *exc_type, *exc_value, *exc_tb;

@@ -39,7 +39,7 @@ static inline void _PyObject_GC_TRACK_impl(const char *filename, int lineno,
                           "object is in generation which is garbage collected",
                           filename, lineno, "_PyObject_GC_TRACK");
 
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyGC_Head *generation0 = tstate->interp->gc.generation0;
     PyGC_Head *last = (PyGC_Head*)(generation0->_gc_prev);
     _PyGCHead_SET_NEXT(last, gc);

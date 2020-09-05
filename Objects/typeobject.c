@@ -5,7 +5,7 @@
 #include "pycore_initconfig.h"
 #include "pycore_object.h"
 #include "pycore_pyerrors.h"
-#include "pycore_pystate.h"       // _PyThreadState_GET()
+#include "pycore_pystate.h"       // PyThreadState_Get()
 #include "frameobject.h"
 #include "structmember.h"         // PyMemberDef
 
@@ -1150,7 +1150,7 @@ static PyObject *
 type_call(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     PyObject *obj;
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
 
     /* Special case: type(x) should return Py_TYPE(x) */
     /* We only want type itself to accept the one-argument form (#27157) */
@@ -1698,7 +1698,7 @@ vectorcall_method(_Py_Identifier *name,
 {
     assert(nargs >= 1);
 
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     int unbound;
     PyObject *self = args[0];
     PyObject *func = lookup_method(self, name, &unbound);
@@ -6116,7 +6116,7 @@ static PyObject * \
 FUNCNAME(PyObject *self, PyObject *other) \
 { \
     PyObject* stack[2]; \
-    PyThreadState *tstate = _PyThreadState_GET(); \
+    PyThreadState *tstate = PyThreadState_Get(); \
     _Py_static_string(op_id, OPSTR); \
     _Py_static_string(rop_id, ROPSTR); \
     int do_other = !Py_IS_TYPE(self, Py_TYPE(other)) && \
@@ -6233,7 +6233,7 @@ slot_sq_ass_item(PyObject *self, Py_ssize_t index, PyObject *value)
 static int
 slot_sq_contains(PyObject *self, PyObject *value)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyObject *func, *res;
     int result = -1, unbound;
     _Py_IDENTIFIER(__contains__);
@@ -6490,7 +6490,7 @@ slot_tp_hash(PyObject *self)
 static PyObject *
 slot_tp_call(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     _Py_IDENTIFIER(__call__);
     int unbound;
 
@@ -6625,7 +6625,7 @@ static _Py_Identifier name_op[] = {
 static PyObject *
 slot_tp_richcompare(PyObject *self, PyObject *other, int op)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
 
     int unbound;
     PyObject *func = lookup_maybe_method(self, &name_op[op], &unbound);
@@ -6730,7 +6730,7 @@ slot_tp_descr_set(PyObject *self, PyObject *target, PyObject *value)
 static int
 slot_tp_init(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
 
     _Py_IDENTIFIER(__init__);
     int unbound;
@@ -6763,7 +6763,7 @@ slot_tp_init(PyObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 slot_tp_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyObject *func, *result;
 
     func = _PyObject_GetAttrId((PyObject *)type, &PyId___new__);
@@ -7963,7 +7963,7 @@ super_init(PyObject *self, PyObject *args, PyObject *kwds)
     if (type == NULL) {
         /* Call super(), without args -- fill in from __class__
            and first local variable on the stack. */
-        PyThreadState *tstate = _PyThreadState_GET();
+        PyThreadState *tstate = PyThreadState_Get();
         PyFrameObject *frame = PyThreadState_GetFrame(tstate);
         if (frame == NULL) {
             PyErr_SetString(PyExc_RuntimeError,

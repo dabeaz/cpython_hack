@@ -2716,8 +2716,13 @@ static PyObject *
 _io_BufferedWriter_write(buffered *self, PyObject *arg)
 {
     PyObject *return_value = NULL;
+    int bytes = 0;
     Py_buffer buffer = {NULL, NULL};
 
+    if (PyUnicode_Check(arg)) {
+      arg = PyUnicode_AsBytes(arg);
+      bytes = 1;
+    }
     if (PyObject_GetBuffer(arg, &buffer, PyBUF_SIMPLE) != 0) {
         goto exit;
     }
@@ -2732,7 +2737,8 @@ exit:
     if (buffer.obj) {
        PyBuffer_Release(&buffer);
     }
-
+    if (bytes) 
+      Py_XDECREF(arg);
     return return_value;
 }
 

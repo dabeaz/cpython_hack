@@ -13,7 +13,7 @@
 #include "pycore_pathconfig.h"    // _PyConfig_WritePathConfig()
 #include "pycore_pyerrors.h"      // _PyErr_Occurred()
 #include "pycore_pylifecycle.h"   // _PyErr_Print()
-#include "pycore_pystate.h"       // _PyThreadState_GET()
+#include "pycore_pystate.h"       // PyThreadState_Get()
 #include "pycore_traceback.h"     // _Py_DumpTracebackThreads()
 
 #ifdef HAVE_SIGNAL_H
@@ -190,7 +190,7 @@ pyinit_core_reconfigure(_PyRuntimeState *runtime,
                         const PyConfig *config)
 {
     PyStatus status;
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     if (!tstate) {
         return _PyStatus_ERR("failed to read thread state");
     }
@@ -245,11 +245,6 @@ pycore_init_runtime(_PyRuntimeState *runtime,
      * pair :(
      */
     _PyRuntimeState_SetFinalizing(runtime, NULL);
-    
-    status = _PyInterpreterState_Enable(runtime);
-    if (_PyStatus_EXCEPTION(status)) {
-        return status;
-    }
     return _PyStatus_OK();
 }
 
@@ -260,6 +255,8 @@ pycore_create_interpreter(_PyRuntimeState *runtime,
                           const PyConfig *config,
                           PyThreadState **tstate_p)
 {
+  extern PyThreadState *_PyCurrent;
+  
     PyInterpreterState *interp = PyInterpreterState_New();
     if (interp == NULL) {
         return _PyStatus_ERR("can't make main interpreter");
@@ -274,8 +271,7 @@ pycore_create_interpreter(_PyRuntimeState *runtime,
     if (tstate == NULL) {
         return _PyStatus_ERR("can't make first thread");
     }
-    (void) PyThreadState_Swap(tstate);
-
+    _PyCurrent = tstate;
     *tstate_p = tstate;
     return _PyStatus_OK();
 }
@@ -757,7 +753,7 @@ _Py_InitializeMain(void)
         return status;
     }
     _PyRuntimeState *runtime = &_PyRuntime;
-    PyThreadState *tstate = _PyRuntimeState_GetThreadState(runtime);
+    PyThreadState *tstate = PyThreadState_Get();
     return pyinit_main(tstate);
 }
 
@@ -961,7 +957,7 @@ Py_FinalizeEx(void)
     }
 
     /* Get current thread state and interpreter pointer */
-    PyThreadState *tstate = _PyRuntimeState_GetThreadState(runtime);
+    PyThreadState *tstate = PyThreadState_Get();
 
     // Wrap up existing "threading"-module-created, non-daemon threads.
     wait_for_thread_shutdown(tstate);
@@ -1039,150 +1035,6 @@ void
 Py_Finalize(void)
 {
     Py_FinalizeEx();
-}
-
-
-/* Create and initialize a new interpreter and thread, and return the
-   new thread.  This requires that Py_Initialize() has been called
-   first.
-
-   Unsuccessful initialization yields a NULL pointer.  Note that *no*
-   exception information is available even in this case -- the
-   exception information is held in the thread, and there is no
-   thread.
-
-   Locking: as above.
-
-*/
-
-static PyStatus
-new_interpreter(PyThreadState **tstate_p, int isolated_subinterpreter)
-{
-    PyStatus status;
-
-    status = _PyRuntime_Initialize();
-    if (_PyStatus_EXCEPTION(status)) {
-        return status;
-    }
-    _PyRuntimeState *runtime = &_PyRuntime;
-
-    if (!runtime->initialized) {
-        return _PyStatus_ERR("Py_Initialize must be called first");
-    }
-
-    /* Issue #10915, #15751: The GIL API doesn't work with multiple
-       interpreters: disable PyGILState_Check(). */
-    runtime->gilstate.check_enabled = 0;
-
-    PyInterpreterState *interp = PyInterpreterState_New();
-    if (interp == NULL) {
-        *tstate_p = NULL;
-        return _PyStatus_OK();
-    }
-
-    PyThreadState *tstate = PyThreadState_New(interp);
-    if (tstate == NULL) {
-        PyInterpreterState_Delete(interp);
-        *tstate_p = NULL;
-        return _PyStatus_OK();
-    }
-
-    PyThreadState *save_tstate = PyThreadState_Swap(tstate);
-
-    /* Copy the current interpreter config into the new interpreter */
-    const PyConfig *config;
-    if (save_tstate != NULL) {
-        config = _PyInterpreterState_GetConfig(save_tstate->interp);
-    }
-    else
-    {
-        /* No current thread state, copy from the main interpreter */
-        PyInterpreterState *main_interp = PyInterpreterState_Main();
-        config = _PyInterpreterState_GetConfig(main_interp);
-    }
-
-    status = _PyInterpreterState_SetConfig(interp, config);
-    if (_PyStatus_EXCEPTION(status)) {
-        goto error;
-    }
-
-    status = pycore_interp_init(tstate);
-    if (_PyStatus_EXCEPTION(status)) {
-        goto error;
-    }
-
-    status = init_interp_main(tstate);
-    if (_PyStatus_EXCEPTION(status)) {
-        goto error;
-    }
-
-    *tstate_p = tstate;
-    return _PyStatus_OK();
-
-error:
-    *tstate_p = NULL;
-
-    /* Oops, it didn't work.  Undo it all. */
-    PyErr_PrintEx(0);
-    PyThreadState_Clear(tstate);
-    PyThreadState_Delete(tstate);
-    PyInterpreterState_Delete(interp);
-    PyThreadState_Swap(save_tstate);
-
-    return status;
-}
-
-PyThreadState *
-_Py_NewInterpreter(int isolated_subinterpreter)
-{
-    PyThreadState *tstate = NULL;
-    PyStatus status = new_interpreter(&tstate, isolated_subinterpreter);
-    if (_PyStatus_EXCEPTION(status)) {
-        Py_ExitStatusException(status);
-    }
-    return tstate;
-
-}
-
-PyThreadState *
-Py_NewInterpreter(void)
-{
-    return _Py_NewInterpreter(0);
-}
-
-/* Delete an interpreter and its last thread.  This requires that the
-   given thread state is current, that the thread has no remaining
-   frames, and that it is its interpreter's only remaining thread.
-   It is a fatal error to violate these constraints.
-
-   (Py_FinalizeEx() doesn't have these constraints -- it zaps
-   everything, regardless.)
-
-   Locking: as above.
-
-*/
-
-void
-Py_EndInterpreter(PyThreadState *tstate)
-{
-    PyInterpreterState *interp = tstate->interp;
-
-    if (tstate != _PyThreadState_GET()) {
-        Py_FatalError("thread is not current");
-    }
-    if (tstate->frame != NULL) {
-        Py_FatalError("thread still has a frame");
-    }
-    interp->finalizing = 1;
-
-    // Wrap up existing "threading"-module-created, non-daemon threads.
-    wait_for_thread_shutdown(tstate);
-
-    call_py_exitfuncs(tstate);
-    
-    _PyImport_Cleanup(tstate);
-    finalize_interp_clear(tstate);
-    finalize_interp_delete(tstate);
 }
 
 /* Add the __main__ module */
@@ -1568,7 +1420,7 @@ fatal_error(FILE *stream, int header, const char *prefix, const char *msg,
     _PyRuntimeState *runtime = &_PyRuntime;
     fatal_error_dump_runtime(stream, runtime);
 
-    PyThreadState *tstate = _PyRuntimeState_GetThreadState(runtime);
+    PyThreadState *tstate = PyThreadState_Get();
     PyInterpreterState *interp = NULL;
     if (tstate != NULL) {
         interp = tstate->interp;

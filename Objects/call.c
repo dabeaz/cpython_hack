@@ -3,7 +3,7 @@
 #include "pycore_ceval.h"        // _PyEval_EvalFrame()
 #include "pycore_object.h"
 #include "pycore_pyerrors.h"
-#include "pycore_pystate.h"      // _PyThreadState_GET()
+#include "pycore_pystate.h"      // PyThreadState_Get()
 #include "pycore_tupleobject.h"
 #include "frameobject.h"
 
@@ -75,7 +75,7 @@ _Py_CheckFunctionResult(PyThreadState *tstate, PyObject *callable,
 PyObject *
 PyObject_CallNoArgs(PyObject *func)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     return _PyObject_CallNoArgTstate(tstate, func);
 }
 
@@ -128,7 +128,7 @@ PyObject *
 PyObject_VectorcallDict(PyObject *callable, PyObject *const *args,
                        size_t nargsf, PyObject *kwargs)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     return _PyObject_FastCallDictTstate(tstate, callable, args, nargsf, kwargs);
 }
 
@@ -190,7 +190,7 @@ _PyObject_MakeTpCall(PyThreadState *tstate, PyObject *callable,
 PyObject *
 PyVectorcall_Call(PyObject *callable, PyObject *tuple, PyObject *kwargs)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
 
     /* get vectorcallfunc as in PyVectorcall_Function, but without
      * the Py_TPFLAGS_HAVE_VECTORCALL check */
@@ -268,7 +268,7 @@ _PyObject_Call(PyThreadState *tstate, PyObject *callable,
 PyObject *
 PyObject_Call(PyObject *callable, PyObject *args, PyObject *kwargs)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     return _PyObject_Call(tstate, callable, args, kwargs);
 }
 
@@ -324,7 +324,7 @@ _PyFunction_Vectorcall(PyObject *func, PyObject* const* stack,
     assert((nargs == 0 && nkwargs == 0) || stack != NULL);
     /* kwnames must only contain strings and all keys must be unique */
 
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyCodeObject *co = (PyCodeObject *)PyFunction_GET_CODE(func);
     PyObject *globals = PyFunction_GET_GLOBALS(func);
     PyObject *argdefs = PyFunction_GET_DEFAULTS(func);
@@ -376,7 +376,7 @@ _PyFunction_Vectorcall(PyObject *func, PyObject* const* stack,
 PyObject *
 PyObject_CallObject(PyObject *callable, PyObject *args)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     assert(!_PyErr_Occurred(tstate));
     if (args == NULL) {
         return _PyObject_CallNoArgTstate(tstate, callable);
@@ -491,7 +491,7 @@ PyObject_CallFunction(PyObject *callable, const char *format, ...)
 {
     va_list va;
     PyObject *result;
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
 
     va_start(va, format);
     result = _PyObject_CallFunctionVa(tstate, callable, format, va, 0);
@@ -503,7 +503,7 @@ PyObject_CallFunction(PyObject *callable, const char *format, ...)
 PyObject *
 _PyObject_CallFunction_SizeT(PyObject *callable, const char *format, ...)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
 
     va_list va;
     va_start(va, format);
@@ -532,7 +532,7 @@ callmethod(PyThreadState *tstate, PyObject* callable, const char *format, va_lis
 PyObject *
 PyObject_CallMethod(PyObject *obj, const char *name, const char *format, ...)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
 
     if (obj == NULL || name == NULL) {
         return null_error(tstate);
@@ -556,7 +556,7 @@ PyObject *
 _PyObject_CallMethodId(PyObject *obj, _Py_Identifier *name,
                        const char *format, ...)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     if (obj == NULL || name == NULL) {
         return null_error(tstate);
     }
@@ -580,7 +580,7 @@ PyObject *
 _PyObject_CallMethod_SizeT(PyObject *obj, const char *name,
                            const char *format, ...)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     if (obj == NULL || name == NULL) {
         return null_error(tstate);
     }
@@ -604,7 +604,7 @@ PyObject *
 _PyObject_CallMethodId_SizeT(PyObject *obj, _Py_Identifier *name,
                              const char *format, ...)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     if (obj == NULL || name == NULL) {
         return null_error(tstate);
     }
@@ -692,7 +692,7 @@ PyObject_VectorcallMethod(PyObject *name, PyObject *const *args,
     assert(args != NULL);
     assert(PyVectorcall_NARGS(nargsf) >= 1);
 
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyObject *callable = NULL;
     /* Use args[0] as "self" argument */
     int unbound = _PyObject_GetMethod(args[0], name, &callable);
@@ -721,7 +721,7 @@ PyObject_VectorcallMethod(PyObject *name, PyObject *const *args,
 PyObject *
 PyObject_CallMethodObjArgs(PyObject *obj, PyObject *name, ...)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     if (obj == NULL || name == NULL) {
         return null_error(tstate);
     }
@@ -747,7 +747,7 @@ PyObject *
 _PyObject_CallMethodIdObjArgs(PyObject *obj,
                               struct _Py_Identifier *name, ...)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     if (obj == NULL || name == NULL) {
         return null_error(tstate);
     }
@@ -777,7 +777,7 @@ _PyObject_CallMethodIdObjArgs(PyObject *obj,
 PyObject *
 PyObject_CallFunctionObjArgs(PyObject *callable, ...)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     va_list vargs;
     PyObject *result;
 

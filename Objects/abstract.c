@@ -4,7 +4,7 @@
 #include "pycore_abstract.h"      // _PyIndex_Check()
 #include "pycore_ceval.h"         // _Py_EnterRecursiveCall()
 #include "pycore_pyerrors.h"
-#include "pycore_pystate.h"       // _PyThreadState_GET()
+#include "pycore_pystate.h"       // PyThreadState_Get()
 #include <ctype.h>
 #include <stddef.h>               // offsetof()
 #include "longintrepr.h"
@@ -2420,7 +2420,7 @@ object_recursive_isinstance(PyThreadState *tstate, PyObject *inst, PyObject *cls
 int
 PyObject_IsInstance(PyObject *inst, PyObject *cls)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     return object_recursive_isinstance(tstate, inst, cls);
 }
 
@@ -2493,7 +2493,7 @@ object_issubclass(PyThreadState *tstate, PyObject *derived, PyObject *cls)
 int
 PyObject_IsSubclass(PyObject *derived, PyObject *cls)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     return object_issubclass(tstate, derived, cls);
 }
 

@@ -1096,7 +1096,7 @@ PyAPI_FUNC(void) _PyTrash_end(struct _ts *tstate);
         /* If "cond" is false, then _tstate remains NULL and the deallocator \
          * is run normally without involving the trashcan */ \
         if (cond) { \
-            _tstate = PyThreadState_GET(); \
+            _tstate = PyThreadState_Get(); \
             if (_PyTrash_begin(_tstate, _PyObject_CAST(op))) { \
                 break; \
             } \

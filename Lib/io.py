@@ -44,7 +44,7 @@ __author__ = ("Guido van Rossum <guido@python.org>, "
 __all__ = ["BlockingIOError", "open", "open_code", "IOBase", "RawIOBase",
            "FileIO", "BufferedIOBase",
            "BufferedReader", "BufferedWriter", "BufferedRWPair",
-           "BufferedRandom", "TextIOBase", "TextIOWrapper",
+           "BufferedRandom", 
            "UnsupportedOperation", "SEEK_SET", "SEEK_CUR", "SEEK_END"]
 
 
@@ -52,7 +52,7 @@ import _io
 
 from _io import (DEFAULT_BUFFER_SIZE, BlockingIOError, UnsupportedOperation,
                  open, open_code, FileIO, BufferedReader,
-                 BufferedWriter, BufferedRWPair, BufferedRandom, TextIOWrapper)
+                 BufferedWriter, BufferedRWPair, BufferedRandom,)
 
 OpenWrapper = _io.open # for compatibility with _pyio
 
@@ -75,23 +75,3 @@ class RawIOBase(_io._RawIOBase, IOBase):
 
 class BufferedIOBase(_io._BufferedIOBase, IOBase):
     __doc__ = _io._BufferedIOBase.__doc__
-
-class TextIOBase(_io._TextIOBase, IOBase):
-    __doc__ = _io._TextIOBase.__doc__
-
-# RawIOBase.register(FileIO)
-
-#for klass in (BytesIO, BufferedReader, BufferedWriter, BufferedRandom,
-#              BufferedRWPair):
-#    BufferedIOBase.register(klass)
-
-#for klass in (StringIO, TextIOWrapper):
-#    TextIOBase.register(klass)
-#del klass
-
-try:
-    from _io import _WindowsConsoleIO
-except ImportError:
-    pass
-else:
-    RawIOBase.register(_WindowsConsoleIO)

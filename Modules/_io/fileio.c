@@ -33,13 +33,6 @@
  * - autoconfify header file inclusion
  */
 
-#ifdef MS_WINDOWS
-/* can simulate truncate with Win32 API functions; see file_truncate */
-#define HAVE_FTRUNCATE
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
-
 #if BUFSIZ < (8*1024)
 #define SMALLCHUNK (8*1024)
 #elif (BUFSIZ >= (2 << 25))
@@ -216,11 +209,7 @@ _io_FileIO___init___impl(fileio *self, PyObject *nameobj, const char *mode,
                          int closefd, PyObject *opener)
 /*[clinic end generated code: output=23413f68e6484bbd input=1596c9157a042a39]*/
 {
-#ifdef MS_WINDOWS
-    Py_UNICODE *widename = NULL;
-#else
     const char *name = NULL;
-#endif
     PyObject *stringobj = NULL;
     const char *s;
     int ret = 0;
@@ -228,11 +217,7 @@ _io_FileIO___init___impl(fileio *self, PyObject *nameobj, const char *mode,
     int flags = 0;
     int fd = -1;
     int fd_is_own = 0;
-#ifdef O_CLOEXEC
-    int *atomic_flag_works = &_Py_open_cloexec_works;
-#elif !defined(MS_WINDOWS)
     int *atomic_flag_works = NULL;
-#endif
     struct _Py_stat_struct fdfstat;
     int fstat_result;
     int async_err = 0;
@@ -259,19 +244,10 @@ _io_FileIO___init___impl(fileio *self, PyObject *nameobj, const char *mode,
     }
 
     if (fd < 0) {
-#ifdef MS_WINDOWS
-        if (!PyUnicode_FSDecoder(nameobj, &stringobj)) {
-            return -1;
-        }
-        widename = PyUnicode_AsUnicode(stringobj);
-        if (widename == NULL)
-            return -1;
-#else
         if (!PyUnicode_FSConverter(nameobj, &stringobj)) {
             return -1;
         }
         name = PyBytes_AS_STRING(stringobj);
-#endif
     }
 
     s = mode;
@@ -339,12 +315,7 @@ _io_FileIO___init___impl(fileio *self, PyObject *nameobj, const char *mode,
 #ifdef O_BINARY
     flags |= O_BINARY;
 #endif
-
-#ifdef MS_WINDOWS
-    flags |= O_NOINHERIT;
-#elif defined(O_CLOEXEC)
     flags |= O_CLOEXEC;
-#endif
 
     if (fd >= 0) {
         self->fd = fd;
@@ -361,27 +332,15 @@ _io_FileIO___init___impl(fileio *self, PyObject *nameobj, const char *mode,
         errno = 0;
         if (opener == Py_None) {
             do {
-                
-#ifdef MS_WINDOWS
-                self->fd = _wopen(widename, flags, 0666);
-#else
                 self->fd = open(name, flags, 0666);
-#endif
-                
-		  } while (self->fd < 0 && errno == EINTR); // &&
-	    //                     !(async_err = PyErr_CheckSignals()));
-
+	    } while (self->fd < 0 && errno == EINTR);
             if (async_err)
                 goto error;
         }
         else {
             PyObject *fdobj;
-
-#ifndef MS_WINDOWS
             /* the opener may clear the atomic flag */
             atomic_flag_works = NULL;
-#endif
-
             fdobj = PyObject_CallFunction(opener, "Oi", nameobj, flags);
             if (fdobj == NULL)
                 goto error;
@@ -410,28 +369,19 @@ _io_FileIO___init___impl(fileio *self, PyObject *nameobj, const char *mode,
             PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, nameobj);
             goto error;
         }
-
-#ifndef MS_WINDOWS
         if (_Py_set_inheritable(self->fd, 0, atomic_flag_works) < 0)
             goto error;
-#endif
     }
 
     self->blksize = DEFAULT_BUFFER_SIZE;
-    
     fstat_result = _Py_fstat_noraise(self->fd, &fdfstat);
     
     if (fstat_result < 0) {
         /* Tolerate fstat() errors other than EBADF.  See Issue #25717, where
         an anonymous file on a Virtual Box shared folder filesystem would
         raise ENOENT. */
-#ifdef MS_WINDOWS
-        if (GetLastError() == ERROR_INVALID_HANDLE) {
-            PyErr_SetFromWindowsErr(0);
-#else
         if (errno == EBADF) {
             PyErr_SetFromErrno(PyExc_OSError);
-#endif
             goto error;
         }
     }
@@ -451,12 +401,6 @@ _io_FileIO___init___impl(fileio *self, PyObject *nameobj, const char *mode,
             self->blksize = fdfstat.st_blksize;
 #endif /* HAVE_STRUCT_STAT_ST_BLKSIZE */
     }
-
-#if defined(MS_WINDOWS) || defined(__CYGWIN__)
-    /* don't translate newlines (\r\n <=> \n) */
-    _setmode(self->fd, O_BINARY);
-#endif
-
     if (_PyObject_SetAttrId((PyObject *)self, &PyId_name, nameobj) < 0)
         goto error;
 
@@ -676,15 +620,7 @@ _io_FileIO_readall_impl(fileio *self)
 
     if (self->fd < 0)
         return err_closed();
-
-    
-    
-#ifdef MS_WINDOWS
-    pos = _lseeki64(self->fd, 0L, SEEK_CUR);
-#else
     pos = lseek(self->fd, 0L, SEEK_CUR);
-#endif
-    
     fstat_result = _Py_fstat_noraise(self->fd, &status);
     
 
@@ -886,16 +822,7 @@ portable_lseek(fileio *self, PyObject *posobj, int whence, bool suppress_pipe_er
         if (PyErr_Occurred())
             return NULL;
     }
-
-    
-    
-#ifdef MS_WINDOWS
-    res = _lseeki64(fd, pos, whence);
-#else
     res = lseek(fd, pos, whence);
-#endif
-    
-    
 
     if (self->seekable < 0) {
         self->seekable = (res >= 0);
@@ -1010,14 +937,7 @@ _io_FileIO_truncate_impl(fileio *self, PyObject *posobj)
     
     
     errno = 0;
-#ifdef MS_WINDOWS
-    ret = _chsize_s(fd, pos);
-#else
     ret = ftruncate(fd, pos);
-#endif
-    
-    
-
     if (ret != 0) {
         Py_DECREF(posobj);
         PyErr_SetFromErrno(PyExc_OSError);

@@ -4,7 +4,7 @@
 #include "Python.h"
 #include "pycore_initconfig.h"
 #include "pycore_pyerrors.h"
-#include "pycore_pystate.h"    // _PyThreadState_GET()
+#include "pycore_pystate.h"    // PyThreadState_Get()
 #include "pycore_sysmodule.h"
 #include "pycore_traceback.h"
 
@@ -60,7 +60,7 @@ _PyErr_Restore(PyThreadState *tstate, PyObject *type, PyObject *value,
 void
 PyErr_Restore(PyObject *type, PyObject *value, PyObject *traceback)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     _PyErr_Restore(tstate, type, value, traceback);
 }
 
@@ -158,7 +158,7 @@ _PyErr_SetObject(PyThreadState *tstate, PyObject *exception, PyObject *value)
 void
 PyErr_SetObject(PyObject *exception, PyObject *value)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     _PyErr_SetObject(tstate, exception, value);
 }
 
@@ -168,7 +168,7 @@ PyErr_SetObject(PyObject *exception, PyObject *value)
 void
 _PyErr_SetKeyError(PyObject *arg)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyObject *tup = PyTuple_Pack(1, arg);
     if (!tup) {
         /* caller will expect error to be set anyway */
@@ -188,7 +188,7 @@ _PyErr_SetNone(PyThreadState *tstate, PyObject *exception)
 void
 PyErr_SetNone(PyObject *exception)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     _PyErr_SetNone(tstate, exception);
 }
 
@@ -205,7 +205,7 @@ _PyErr_SetString(PyThreadState *tstate, PyObject *exception,
 void
 PyErr_SetString(PyObject *exception, const char *string)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     _PyErr_SetString(tstate, exception, string);
 }
 
@@ -213,7 +213,7 @@ PyErr_SetString(PyObject *exception, const char *string)
 PyObject* _Py_HOT_FUNCTION
 PyErr_Occurred(void)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     return _PyErr_Occurred(tstate);
 }
 
@@ -260,7 +260,7 @@ _PyErr_ExceptionMatches(PyThreadState *tstate, PyObject *exc)
 int
 PyErr_ExceptionMatches(PyObject *exc)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     return _PyErr_ExceptionMatches(tstate, exc);
 }
 
@@ -378,7 +378,7 @@ _PyErr_NormalizeException(PyThreadState *tstate, PyObject **exc,
 void
 PyErr_NormalizeException(PyObject **exc, PyObject **val, PyObject **tb)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     _PyErr_NormalizeException(tstate, exc, val, tb);
 }
 
@@ -400,7 +400,7 @@ _PyErr_Fetch(PyThreadState *tstate, PyObject **p_type, PyObject **p_value,
 void
 PyErr_Fetch(PyObject **p_type, PyObject **p_value, PyObject **p_traceback)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     _PyErr_Fetch(tstate, p_type, p_value, p_traceback);
 }
 
@@ -415,7 +415,7 @@ _PyErr_Clear(PyThreadState *tstate)
 void
 PyErr_Clear(void)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     _PyErr_Clear(tstate);
 }
 
@@ -438,7 +438,7 @@ _PyErr_GetExcInfo(PyThreadState *tstate,
 void
 PyErr_GetExcInfo(PyObject **p_type, PyObject **p_value, PyObject **p_traceback)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     _PyErr_GetExcInfo(tstate, p_type, p_value, p_traceback);
 }
 
@@ -446,7 +446,7 @@ void
 PyErr_SetExcInfo(PyObject *p_type, PyObject *p_value, PyObject *p_traceback)
 {
     PyObject *oldtype, *oldvalue, *oldtraceback;
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
 
     oldtype = tstate->exc_info->exc_type;
     oldvalue = tstate->exc_info->exc_value;
@@ -472,7 +472,7 @@ _PyErr_ChainExceptions(PyObject *exc, PyObject *val, PyObject *tb)
     if (exc == NULL)
         return;
 
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
 
     if (!PyExceptionClass_Check(exc)) {
         _PyErr_Format(tstate, PyExc_SystemError,
@@ -511,7 +511,7 @@ _PyErr_ChainExceptions(PyObject *exc, PyObject *val, PyObject *tb)
 void
 _PyErr_ChainStackItem(_PyErr_StackItem *exc_info)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     assert(_PyErr_Occurred(tstate));
 
     int exc_info_given;
@@ -602,7 +602,7 @@ _PyErr_FormatFromCauseTstate(PyThreadState *tstate, PyObject *exception,
 PyObject *
 _PyErr_FormatFromCause(PyObject *exception, const char *format, ...)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     va_list vargs;
 #ifdef HAVE_STDARG_PROTOTYPES
     va_start(vargs, format);
@@ -619,7 +619,7 @@ _PyErr_FormatFromCause(PyObject *exception, const char *format, ...)
 int
 PyErr_BadArgument(void)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     _PyErr_SetString(tstate, PyExc_TypeError,
                      "bad argument type for built-in operation");
     return 0;
@@ -641,7 +641,7 @@ _PyErr_NoMemory(PyThreadState *tstate)
 PyObject *
 PyErr_NoMemory(void)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     return _PyErr_NoMemory(tstate);
 }
 
@@ -654,7 +654,7 @@ PyErr_SetFromErrnoWithFilenameObject(PyObject *exc, PyObject *filenameObject)
 PyObject *
 PyErr_SetFromErrnoWithFilenameObjects(PyObject *exc, PyObject *filenameObject, PyObject *filenameObject2)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyObject *message;
     PyObject *v, *args;
     int i = errno;
@@ -714,7 +714,7 @@ PyObject *
 PyErr_SetImportErrorSubclass(PyObject *exception, PyObject *msg,
     PyObject *name, PyObject *path)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     int issubclass;
     PyObject *kwargs, *error;
 
@@ -772,7 +772,7 @@ PyErr_SetImportError(PyObject *msg, PyObject *name, PyObject *path)
 void
 _PyErr_BadInternalCall(const char *filename, int lineno)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     _PyErr_Format(tstate, PyExc_SystemError,
                   "%s:%d: bad argument to internal function",
                   filename, lineno);
@@ -785,7 +785,7 @@ void
 PyErr_BadInternalCall(void)
 {
     assert(0 && "bad argument to internal function");
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     _PyErr_SetString(tstate, PyExc_SystemError,
                      "bad argument to internal function");
 }
@@ -813,7 +813,7 @@ _PyErr_FormatV(PyThreadState *tstate, PyObject *exception,
 PyObject *
 PyErr_FormatV(PyObject *exception, const char *format, va_list vargs)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     return _PyErr_FormatV(tstate, exception, format, vargs);
 }
 
@@ -837,7 +837,7 @@ _PyErr_Format(PyThreadState *tstate, PyObject *exception,
 PyObject *
 PyErr_Format(PyObject *exception, const char *format, ...)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     va_list vargs;
 #ifdef HAVE_STDARG_PROTOTYPES
     va_start(vargs, format);
@@ -853,7 +853,7 @@ PyErr_Format(PyObject *exception, const char *format, ...)
 PyObject *
 PyErr_NewException(const char *name, PyObject *base, PyObject *dict)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyObject *modulename = NULL;
     PyObject *classname = NULL;
     PyObject *mydict = NULL;
@@ -1164,7 +1164,7 @@ write_unraisable_exc(PyThreadState *tstate, PyObject *exc_type,
 PyObject*
 _PyErr_WriteUnraisableDefaultHook(PyObject *args)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
 
     if (!Py_IS_TYPE(args, &UnraisableHookArgsType)) {
         _PyErr_SetString(tstate, PyExc_TypeError,
@@ -1201,7 +1201,7 @@ _PyErr_WriteUnraisableDefaultHook(PyObject *args)
 void
 _PyErr_WriteUnraisableMsg(const char *err_msg_str, PyObject *obj)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
 
     PyObject *err_msg = NULL;
     PyObject *exc_type, *exc_value, *exc_tb;
@@ -1324,7 +1324,7 @@ PyErr_SyntaxLocationObject(PyObject *filename, int lineno, int col_offset)
     _Py_IDENTIFIER(offset);
     _Py_IDENTIFIER(print_file_and_line);
     _Py_IDENTIFIER(text);
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
 
     /* add attributes for the line number and filename for the error */
     _PyErr_Fetch(tstate, &exc, &v, &tb);
@@ -1390,7 +1390,7 @@ PyErr_SyntaxLocationObject(PyObject *filename, int lineno, int col_offset)
 void
 PyErr_SyntaxLocationEx(const char *filename, int lineno, int col_offset)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyObject *fileobj;
     if (filename != NULL) {
 	fileobj = PyUnicode_FromString(filename);
@@ -1451,7 +1451,7 @@ PyErr_ProgramText(const char *filename, int lineno)
     if (filename == NULL || *filename == '\0' || lineno <= 0) {
         return NULL;
     }
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     fp = _Py_fopen(filename, "r" PY_STDIOTEXTMODE);
     return err_programtext(tstate, fp, lineno);
 }
@@ -1463,7 +1463,7 @@ PyErr_ProgramTextObject(PyObject *filename, int lineno)
         return NULL;
     }
 
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     FILE *fp = _Py_fopen_obj(filename, "r" PY_STDIOTEXTMODE);
     if (fp == NULL) {
         _PyErr_Clear(tstate);

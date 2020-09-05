@@ -662,7 +662,7 @@ _PyErr_Print(PyThreadState *tstate)
 void
 PyErr_PrintEx(int set_sys_last_vars)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     _PyErr_PrintEx(tstate, set_sys_last_vars);
 }
 
@@ -1027,7 +1027,7 @@ static PyObject *
 run_mod(mod_ty mod, PyObject *filename, PyObject *globals, PyObject *locals,
             PyCompilerFlags *flags)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyCodeObject *co = PyAST_CompileObject(mod, filename, flags, -1);
     if (co == NULL)
         return NULL;

@@ -3,7 +3,7 @@
 #include "Python.h"
 #include "pycore_object.h"
 #include "pycore_pyerrors.h"
-#include "pycore_pystate.h"       // _PyThreadState_GET()
+#include "pycore_pystate.h"       // PyThreadState_Get()
 #include "structmember.h"         // PyMemberDef
 
 #define TP_DESCR_GET(t) ((t)->tp_descr_get)
@@ -38,7 +38,7 @@ method_vectorcall(PyObject *method, PyObject *const *args,
 {
     assert(Py_IS_TYPE(method, &PyMethod_Type));
 
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     PyObject *self = PyMethod_GET_SELF(method);
     PyObject *func = PyMethod_GET_FUNCTION(method);
     Py_ssize_t nargs = PyVectorcall_NARGS(nargsf);

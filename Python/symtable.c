@@ -1,5 +1,5 @@
 #include "Python.h"
-#include "pycore_pystate.h"   // _PyThreadState_GET()
+#include "pycore_pystate.h"   // PyThreadState_Get()
 #include "symtable.h"
 #undef Yield   /* undefine macro conflicting with <winbase.h> */
 #include "structmember.h"         // PyMemberDef
@@ -274,7 +274,7 @@ PySymtable_BuildObject(mod_ty mod, PyObject *filename, PyFutureFeatures *future)
     st->st_future = future;
 
     /* Setup recursion depth check counters */
-    tstate = _PyThreadState_GET();
+    tstate = PyThreadState_Get();
     if (!tstate) {
         PySymtable_Free(st);
         return NULL;

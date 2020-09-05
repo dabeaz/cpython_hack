@@ -28,7 +28,7 @@
 #include "pycore_interp.h"      // PyInterpreterState.gc
 #include "pycore_object.h"
 #include "pycore_pyerrors.h"
-#include "pycore_pystate.h"     // _PyThreadState_GET()
+#include "pycore_pystate.h"     // PyThreadState_Get()
 
 typedef struct _gc_runtime_state GCState;
 
@@ -1767,7 +1767,7 @@ static Py_ssize_t
 gc_collect_impl(PyObject *module, int generation)
 /*[clinic end generated code: output=b697e633043233c7 input=40720128b682d879]*/
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
 
     if (generation < 0 || generation >= NUM_GENERATIONS) {
         _PyErr_SetString(tstate, PyExc_ValueError, "invalid generation");
@@ -1988,7 +1988,7 @@ static PyObject *
 gc_get_objects_impl(PyObject *module, Py_ssize_t generation)
 /*[clinic end generated code: output=48b35fea4ba6cb0e input=ef7da9df9806754c]*/
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     int i;
     PyObject* result;
     GCState *gcstate = &tstate->interp->gc;
@@ -2286,7 +2286,7 @@ PyInit_gc(void)
 Py_ssize_t
 PyGC_Collect(void)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     GCState *gcstate = &tstate->interp->gc;
 
     if (!gcstate->enabled) {
@@ -2319,7 +2319,7 @@ _PyGC_CollectIfEnabled(void)
 Py_ssize_t
 _PyGC_CollectNoFail(void)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     assert(!_PyErr_Occurred(tstate));
 
     GCState *gcstate = &tstate->interp->gc;
@@ -2423,7 +2423,7 @@ PyObject_IS_GC(PyObject *obj)
 static PyObject *
 _PyObject_GC_Alloc(int use_calloc, size_t basicsize)
 {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     GCState *gcstate = &tstate->interp->gc;
     if (basicsize > PY_SSIZE_T_MAX - sizeof(PyGC_Head)) {
         return _PyErr_NoMemory(tstate);

@@ -9,36 +9,7 @@ extern "C" {
 #endif
 
 #include "pycore_runtime.h"   /* PyRuntimeState */
-
-/* Variable and macro for in-line access to current thread
-   and interpreter state */
-
-static inline PyThreadState*
-_PyRuntimeState_GetThreadState(_PyRuntimeState *runtime)
-{
-    return (PyThreadState*) runtime->gilstate.tstate_current;
-}
-
-/* Get the current Python thread state.
-
-   Efficient macro reading directly the 'gilstate.tstate_current' atomic
-   variable. The macro is unsafe: it does not check for error and it can
-   return NULL.
-
-   The caller must hold the GIL.
-
-   See also PyThreadState_Get() and PyThreadState_GET(). */
-static inline PyThreadState*
-_PyThreadState_GET(void)
-{
-    return _PyRuntimeState_GetThreadState(&_PyRuntime);
-}
-
-/* Redefine PyThreadState_GET() as an alias to _PyThreadState_GET() */
-#undef PyThreadState_GET
-#define PyThreadState_GET() _PyThreadState_GET()
-
-#if 0
+  
 PyAPI_FUNC(void) _Py_NO_RETURN _Py_FatalError_TstateNULL(const char *func);
 
 static inline void
@@ -53,8 +24,6 @@ _Py_EnsureFuncTstateNotNULL(const char *func, PyThreadState *tstate)
 #define _Py_EnsureTstateNotNULL(tstate) \
     _Py_EnsureFuncTstateNotNULL(__func__, tstate)
 
-#endif
-
 /* Get the current interpreter state.
 
    The macro is unsafe: it does not check for error and it can return NULL.
@@ -63,11 +32,12 @@ _Py_EnsureFuncTstateNotNULL(const char *func, PyThreadState *tstate)
 
    See also _PyInterpreterState_Get()
    and _PyGILState_GetInterpreterStateUnsafe(). */
+
+  
 static inline PyInterpreterState* _PyInterpreterState_GET(void) {
-    PyThreadState *tstate = _PyThreadState_GET();
+    PyThreadState *tstate = PyThreadState_Get();
     return tstate->interp;
 }
-
 
 /* Other */
 
@@ -76,27 +46,13 @@ PyAPI_FUNC(void) _PyThreadState_Init(
 PyAPI_FUNC(void) _PyThreadState_DeleteExcept(
     _PyRuntimeState *runtime,
     PyThreadState *tstate);
-
-PyAPI_FUNC(PyThreadState *) _PyThreadState_Swap(
-    struct _gilstate_runtime_state *gilstate,
-    PyThreadState *newts);
-
+  
 PyAPI_FUNC(PyStatus) _PyInterpreterState_Enable(_PyRuntimeState *runtime);
-
-#ifdef HAVE_FORK
-extern PyStatus _PyInterpreterState_DeleteExceptMain(_PyRuntimeState *runtime);
-extern PyStatus _PyGILState_Reinit(_PyRuntimeState *runtime);
-extern void _PySignal_AfterFork(void);
-#endif
-
 
 PyAPI_FUNC(int) _PyState_AddModule(
     PyThreadState *tstate,
     PyObject* module,
     struct PyModuleDef* def);
-
-
-PyAPI_FUNC(int) _PyOS_InterruptOccurred(PyThreadState *tstate);
 
 #ifdef __cplusplus
 }
