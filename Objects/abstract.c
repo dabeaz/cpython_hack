@@ -1,3 +1,4 @@
+
 /* Abstract Object Interface (many thanks to Jim Fulton) */
 
 #include "Python.h"
@@ -1380,10 +1381,7 @@ PyNumber_Long(PyObject *o)
         return _PyLong_FromBytes(PyBytes_AS_STRING(o),
                                  PyBytes_GET_SIZE(o), 10);
 
-    if (PyByteArray_Check(o))
-        return _PyLong_FromBytes(PyByteArray_AS_STRING(o),
-                                 PyByteArray_GET_SIZE(o), 10);
-
+    
     if (PyObject_GetBuffer(o, &view, PyBUF_SIMPLE) == 0) {
         PyObject *bytes;
 

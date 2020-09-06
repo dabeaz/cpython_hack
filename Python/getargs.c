@@ -855,8 +855,6 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
         char *p = va_arg(*p_va, char *);
         if (PyBytes_Check(arg) && PyBytes_Size(arg) == 1)
             *p = PyBytes_AS_STRING(arg)[0];
-        else if (PyByteArray_Check(arg) && PyByteArray_Size(arg) == 1)
-            *p = PyByteArray_AS_STRING(arg)[0];
         else
             return converterr("a byte string of length 1", arg, msgbuf, bufsize);
         break;
@@ -1044,16 +1042,12 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
 
         /* Encode object */
         if (!recode_strings &&
-            (PyBytes_Check(arg) || PyByteArray_Check(arg))) {
+            (PyBytes_Check(arg))) {
             s = arg;
             Py_INCREF(s);
             if (PyBytes_Check(arg)) {
                 size = PyBytes_GET_SIZE(s);
                 ptr = PyBytes_AS_STRING(s);
-            }
-            else {
-                size = PyByteArray_GET_SIZE(s);
-                ptr = PyByteArray_AS_STRING(s);
             }
         }
         else if (PyUnicode_Check(arg)) {
@@ -1194,16 +1188,6 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
             return converterr("bytes", arg, msgbuf, bufsize);
         break;
     }
-
-    case 'Y': { /* PyByteArray object */
-        PyObject **p = va_arg(*p_va, PyObject **);
-        if (PyByteArray_Check(arg))
-            *p = arg;
-        else
-            return converterr("bytearray", arg, msgbuf, bufsize);
-        break;
-    }
-
     case 'U': { /* PyUnicode object */
         PyObject **p = va_arg(*p_va, PyObject **);
         if (PyUnicode_Check(arg)) {

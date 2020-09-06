@@ -1542,7 +1542,6 @@ _PyTypes_Init(void)
     INIT_TYPE(&_PyWeakref_ProxyType, "weakref proxy");
     INIT_TYPE(&PyLong_Type, "int");
     INIT_TYPE(&PyBool_Type, "bool");
-    INIT_TYPE(&PyByteArray_Type, "bytearray");
     INIT_TYPE(&PyBytes_Type, "str");
     INIT_TYPE(&PyList_Type, "list");
     INIT_TYPE(&_PyNone_Type, "None");

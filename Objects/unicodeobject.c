@@ -2750,7 +2750,7 @@ PyUnicode_FSConverter(PyObject* arg, void* addr)
         return 0;
     }
     if (PyBytes_Check(path)) {
-        output = path;
+      output = path;
     }
     else {  // PyOS_FSPath() guarantees its returned value is bytes or str.
       output = PyUnicode_AsBytes(path);
@@ -2760,7 +2760,6 @@ PyUnicode_FSConverter(PyObject* arg, void* addr)
         }
         assert(PyBytes_Check(output));
     }
-
     size = PyBytes_GET_SIZE(output);
     data = PyBytes_AS_STRING(output);
     if ((size_t)size != strlen(data)) {

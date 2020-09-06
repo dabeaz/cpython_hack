@@ -1119,25 +1119,11 @@ create_stdio(const PyConfig *config, PyObject* io,
         mode = "wb";
     else
         mode = "rb";
-    buf = _PyObject_CallMethodId(io, &PyId_open, "isiOOOO",
-                                 fd, mode, buffering,
-                                 Py_None, Py_None, /* encoding, errors */
-                                 Py_None, Py_False); /* newline, closefd */
-    if (buf == NULL)
+    raw = _PyObject_CallMethodId(io, &PyId_open, "is",
+                                 fd, mode, buffering);
+    if (raw == NULL)
         goto error;
-
-    if (buffering) {
-        _Py_IDENTIFIER(raw);
-        raw = _PyObject_GetAttrId(buf, &PyId_raw);
-        if (raw == NULL)
-            goto error;
-    }
-    else {
-        raw = buf;
-        Py_INCREF(raw);
-    }
-
-
+    
     text = PyUnicode_FromString(name);
     if (text == NULL || _PyObject_SetAttrId(raw, &PyId_name, text) < 0)
         goto error;
@@ -1148,25 +1134,10 @@ create_stdio(const PyConfig *config, PyObject* io,
     Py_DECREF(res);
     if (isatty == -1)
         goto error;
-    if (!buffered_stdio)
-        write_through = Py_True;
-    else
-        write_through = Py_False;
-    if (buffered_stdio && (isatty || fd == fileno(stderr)))
-        line_buffering = Py_True;
-    else
-        line_buffering = Py_False;
-
-    Py_CLEAR(raw);
-    Py_CLEAR(text);
-    return buf;
+    return raw;
 
 error:
-    Py_XDECREF(buf);
-    Py_XDECREF(stream);
-    Py_XDECREF(text);
     Py_XDECREF(raw);
-
     if (PyErr_ExceptionMatches(PyExc_OSError) && !is_valid_fd(fd)) {
         /* Issue #24891: the file descriptor was closed after the first
            is_valid_fd() check was called. Ignore the OSError and set the

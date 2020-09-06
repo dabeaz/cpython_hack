@@ -86,9 +86,6 @@ stringlib_ljust(PyObject *self, PyObject *const *args, Py_ssize_t nargs)
     if (PyBytes_Check(args[1]) && PyBytes_GET_SIZE(args[1]) == 1) {
         fillchar = PyBytes_AS_STRING(args[1])[0];
     }
-    else if (PyByteArray_Check(args[1]) && PyByteArray_GET_SIZE(args[1]) == 1) {
-        fillchar = PyByteArray_AS_STRING(args[1])[0];
-    }
     else {
         _PyArg_BadArgument("ljust", "argument 2", "a byte string of length 1", args[1]);
         goto exit;
@@ -142,9 +139,6 @@ stringlib_rjust(PyObject *self, PyObject *const *args, Py_ssize_t nargs)
     if (PyBytes_Check(args[1]) && PyBytes_GET_SIZE(args[1]) == 1) {
         fillchar = PyBytes_AS_STRING(args[1])[0];
     }
-    else if (PyByteArray_Check(args[1]) && PyByteArray_GET_SIZE(args[1]) == 1) {
-        fillchar = PyByteArray_AS_STRING(args[1])[0];
-    }
     else {
         _PyArg_BadArgument("rjust", "argument 2", "a byte string of length 1", args[1]);
         goto exit;
@@ -197,9 +191,6 @@ stringlib_center(PyObject *self, PyObject *const *args, Py_ssize_t nargs)
     }
     if (PyBytes_Check(args[1]) && PyBytes_GET_SIZE(args[1]) == 1) {
         fillchar = PyBytes_AS_STRING(args[1])[0];
-    }
-    else if (PyByteArray_Check(args[1]) && PyByteArray_GET_SIZE(args[1]) == 1) {
-        fillchar = PyByteArray_AS_STRING(args[1])[0];
     }
     else {
         _PyArg_BadArgument("center", "argument 2", "a byte string of length 1", args[1]);

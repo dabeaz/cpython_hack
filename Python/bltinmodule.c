@@ -2571,14 +2571,6 @@ builtin_ord(PyObject *module, PyObject *c)
             return PyLong_FromLong(ord);
         }
     }
-    else if (PyByteArray_Check(c)) {
-        /* XXX Hopefully this is temporary */
-        size = PyByteArray_GET_SIZE(c);
-        if (size == 1) {
-            ord = (long)((unsigned char)*PyByteArray_AS_STRING(c));
-            return PyLong_FromLong(ord);
-        }
-    }
     else {
         PyErr_Format(PyExc_TypeError,
                      "ord() expected string of length 1, but " \
@@ -3101,12 +3093,6 @@ builtin_sum_impl(PyObject *module, PyObject *iterable, PyObject *start)
             Py_DECREF(iter);
             return NULL;
         }
-        if (PyByteArray_Check(result)) {
-            PyErr_SetString(PyExc_TypeError,
-                "sum() can't sum bytearray [use b''.join(seq) instead]");
-            Py_DECREF(iter);
-            return NULL;
-        }
         Py_INCREF(result);
     }
 
@@ -3578,7 +3564,6 @@ _PyBuiltin_Init(PyThreadState *tstate)
     SETBUILTIN("True",                  Py_True);
     SETBUILTIN("bool",                  &PyBool_Type);
     SETBUILTIN("memoryview",        &PyMemoryView_Type);
-    SETBUILTIN("bytearray",             &PyByteArray_Type);
     SETBUILTIN("bytes",                 &PyBytes_Type);
     SETBUILTIN("classmethod",           &PyClassMethod_Type);
     SETBUILTIN("dict",                  &PyDict_Type);

@@ -132,7 +132,7 @@ _io_FileIO_close_impl(fileio *self)
     PyObject *exc, *val, *tb;
     int rc;
     _Py_IDENTIFIER(close);
-    res = _PyObject_CallMethodIdOneArg((PyObject*)&PyRawIOBase_Type,
+    res = _PyObject_CallMethodIdOneArg((PyObject*)&PyIOBase_Type,
                                        &PyId_close, (PyObject *)self);
     if (!self->closefd) {
         self->fd = -1;
@@ -543,41 +543,6 @@ _io_FileIO_seekable_impl(fileio *self)
     return PyBool_FromLong((long) self->seekable);
 }
 
-/*[clinic input]
-_io.FileIO.readinto
-    buffer: Py_buffer(accept={rwbuffer})
-    /
-
-Same as RawIOBase.readinto().
-[clinic start generated code]*/
-
-static PyObject *
-_io_FileIO_readinto_impl(fileio *self, Py_buffer *buffer)
-/*[clinic end generated code: output=b01a5a22c8415cb4 input=4721d7b68b154eaf]*/
-{
-    Py_ssize_t n;
-    int err;
-
-    if (self->fd < 0)
-        return err_closed();
-    if (!self->readable)
-        return err_mode("reading");
-
-    n = _Py_read(self->fd, buffer->buf, buffer->len);
-    /* copy errno because PyBuffer_Release() can indirectly modify it */
-    err = errno;
-
-    if (n == -1) {
-        if (err == EAGAIN) {
-            PyErr_Clear();
-            Py_RETURN_NONE;
-        }
-        return NULL;
-    }
-
-    return PyLong_FromSsize_t(n);
-}
-
 static size_t
 new_buffersize(fileio *self, size_t currentsize)
 {
@@ -612,17 +577,17 @@ _io_FileIO_readall_impl(fileio *self)
 {
     struct _Py_stat_struct status;
     Py_off_t pos, end;
+    char *buffer;
     PyObject *result;
     Py_ssize_t bytes_read = 0;
     Py_ssize_t n;
-    size_t bufsize;
+    size_t bufsize, newbufsize;
     int fstat_result;
 
     if (self->fd < 0)
         return err_closed();
     pos = lseek(self->fd, 0L, SEEK_CUR);
     fstat_result = _Py_fstat_noraise(self->fd, &status);
-    
 
     if (fstat_result == 0)
         end = status.st_size;
@@ -639,52 +604,45 @@ _io_FileIO_readall_impl(fileio *self)
         bufsize = SMALLCHUNK;
     }
 
-    result = PyBytes_FromStringAndSize(NULL, bufsize);
-    if (result == NULL)
+    buffer = PyMem_RawMalloc(bufsize);
+    if (buffer == NULL)
         return NULL;
 
     while (1) {
         if (bytes_read >= (Py_ssize_t)bufsize) {
-            bufsize = new_buffersize(self, bytes_read);
-            if (bufsize > PY_SSIZE_T_MAX || bufsize <= 0) {
+            newbufsize = new_buffersize(self, bytes_read);
+            if (newbufsize > PY_SSIZE_T_MAX || newbufsize <= 0) {
                 PyErr_SetString(PyExc_OverflowError,
                                 "unbounded read returned more bytes "
                                 "than a Python bytes object can hold");
-                Py_DECREF(result);
+		PyMem_RawFree(buffer);
                 return NULL;
             }
-
-            if (PyBytes_GET_SIZE(result) < (Py_ssize_t)bufsize) {
-                if (_PyBytes_Resize(&result, bufsize) < 0)
-                    return NULL;
-            }
+	    if (bufsize < newbufsize) {
+	      char *newbuffer = PyMem_RawRealloc(buffer, newbufsize);
+	      if (newbuffer == NULL) {
+		PyMem_RawFree(buffer);
+		return NULL;
+	      }
+	      buffer = newbuffer;
+	      bufsize = newbufsize;
+	    }
         }
-
         n = _Py_read(self->fd,
-                     PyBytes_AS_STRING(result) + bytes_read,
+                     buffer + bytes_read,
                      bufsize - bytes_read);
 
         if (n == 0)
             break;
         if (n == -1) {
-            if (errno == EAGAIN) {
-                PyErr_Clear();
-                if (bytes_read > 0)
-                    break;
-                Py_DECREF(result);
-                Py_RETURN_NONE;
-            }
-            Py_DECREF(result);
-            return NULL;
+	  PyMem_RawFree(buffer);
+	  return NULL;
         }
         bytes_read += n;
         pos += n;
     }
-
-    if (PyBytes_GET_SIZE(result) > bytes_read) {
-        if (_PyBytes_Resize(&result, bytes_read) < 0)
-            return NULL;
-    }
+    result = PyUnicode_FromStringAndSize(buffer, bytes_read);
+    PyMem_RawFree(buffer);
     return result;
 }
 
@@ -720,73 +678,19 @@ _io_FileIO_read_impl(fileio *self, Py_ssize_t size)
         size = _PY_READ_MAX;
     }
 
-    bytes = PyBytes_FromStringAndSize(NULL, size);
-    if (bytes == NULL)
-        return NULL;
-    ptr = PyBytes_AS_STRING(bytes);
-
+    ptr = (char *) PyMem_RawMalloc(size);
+    if (ptr == NULL) {
+      return NULL;
+    }
     n = _Py_read(self->fd, ptr, size);
     if (n == -1) {
-        /* copy errno because Py_DECREF() can indirectly modify it */
-        int err = errno;
-        Py_DECREF(bytes);
-        if (err == EAGAIN) {
-            PyErr_Clear();
-            Py_RETURN_NONE;
-        }
+	PyMem_RawFree(ptr);
         return NULL;
     }
-
-    if (n != size) {
-        if (_PyBytes_Resize(&bytes, n) < 0) {
-            Py_CLEAR(bytes);
-            return NULL;
-        }
-    }
-
-    return (PyObject *) bytes;
+    bytes = PyUnicode_FromStringAndSize(ptr, n);
+    PyMem_RawFree(ptr);
+    return bytes;
 }
-
-/*[clinic input]
-_io.FileIO.write
-    b: Py_buffer
-    /
-
-Write buffer b to file, return number of bytes written.
-
-Only makes one system call, so not all of the data may be written.
-The number of bytes actually written is returned.  In non-blocking mode,
-returns None if the write would block.
-[clinic start generated code]*/
-
-static PyObject *
-_io_FileIO_write_impl(fileio *self, Py_buffer *b)
-/*[clinic end generated code: output=b4059db3d363a2f7 input=6e7908b36f0ce74f]*/
-{
-    Py_ssize_t n;
-    int err;
-
-    if (self->fd < 0)
-        return err_closed();
-    if (!self->writable)
-        return err_mode("writing");
-
-    n = _Py_write(self->fd, b->buf, b->len);
-    /* copy errno because PyBuffer_Release() can indirectly modify it */
-    err = errno;
-
-    if (n < 0) {
-        if (err == EAGAIN) {
-            PyErr_Clear();
-            Py_RETURN_NONE;
-        }
-        return NULL;
-    }
-
-    return PyLong_FromSsize_t(n);
-}
-
-/* XXX Windows support below is likely incomplete */
 
 /* Cribbed from posix_lseek() */
 static PyObject *
@@ -1207,44 +1111,6 @@ _io_FileIO_seekable(fileio *self, PyObject *Py_UNUSED(ignored))
     return _io_FileIO_seekable_impl(self);
 }
 
-PyDoc_STRVAR(_io_FileIO_readinto__doc__,
-"readinto($self, buffer, /)\n"
-"--\n"
-"\n"
-"Same as RawIOBase.readinto().");
-
-#define _IO_FILEIO_READINTO_METHODDEF    \
-    {"readinto", (PyCFunction)_io_FileIO_readinto, METH_O, _io_FileIO_readinto__doc__},
-
-static PyObject *
-_io_FileIO_readinto_impl(fileio *self, Py_buffer *buffer);
-
-static PyObject *
-_io_FileIO_readinto(fileio *self, PyObject *arg)
-{
-    PyObject *return_value = NULL;
-    Py_buffer buffer = {NULL, NULL};
-
-    if (PyObject_GetBuffer(arg, &buffer, PyBUF_WRITABLE) < 0) {
-        PyErr_Clear();
-        _PyArg_BadArgument("readinto", "argument", "read-write bytes-like object", arg);
-        goto exit;
-    }
-    if (!PyBuffer_IsContiguous(&buffer, 'C')) {
-        _PyArg_BadArgument("readinto", "argument", "contiguous buffer", arg);
-        goto exit;
-    }
-    return_value = _io_FileIO_readinto_impl(self, &buffer);
-
-exit:
-    /* Cleanup for buffer */
-    if (buffer.obj) {
-       PyBuffer_Release(&buffer);
-    }
-
-    return return_value;
-}
-
 PyDoc_STRVAR(_io_FileIO_readall__doc__,
 "readall($self, /)\n"
 "--\n"
@@ -1318,30 +1184,26 @@ PyDoc_STRVAR(_io_FileIO_write__doc__,
     {"write", (PyCFunction)_io_FileIO_write, METH_O, _io_FileIO_write__doc__},
 
 static PyObject *
-_io_FileIO_write_impl(fileio *self, Py_buffer *b);
-
-static PyObject *
 _io_FileIO_write(fileio *self, PyObject *arg)
 {
-    PyObject *return_value = NULL;
-    Py_buffer b = {NULL, NULL};
+  const char *buf;
+  Py_ssize_t len, n;
 
-    if (PyObject_GetBuffer(arg, &b, PyBUF_SIMPLE) != 0) {
-        goto exit;
-    }
-    if (!PyBuffer_IsContiguous(&b, 'C')) {
-        _PyArg_BadArgument("write", "argument", "contiguous buffer", arg);
-        goto exit;
-    }
-    return_value = _io_FileIO_write_impl(self, &b);
-
-exit:
-    /* Cleanup for b */
-    if (b.obj) {
-       PyBuffer_Release(&b);
-    }
-
-    return return_value;
+  if (!PyUnicode_Check(arg)) {
+    _PyArg_BadArgument("write", "argument", "string", arg);
+    return NULL;
+  }
+  buf = PyUnicode_AsCharAndSize(arg, &len);
+  if (self->fd < 0)
+    return err_closed();
+  if (!self->writable)
+    return err_mode("writing");
+      
+  n = _Py_write(self->fd, buf, len);
+  if (n < 0) {
+    return NULL;
+  }
+  return PyLong_FromSsize_t(n);
 }
 
 PyDoc_STRVAR(_io_FileIO_seek__doc__,
@@ -1475,7 +1337,6 @@ _io_FileIO_isatty(fileio *self, PyObject *Py_UNUSED(ignored))
 static PyMethodDef fileio_methods[] = {
     _IO_FILEIO_READ_METHODDEF
     _IO_FILEIO_READALL_METHODDEF
-    _IO_FILEIO_READINTO_METHODDEF
     _IO_FILEIO_WRITE_METHODDEF
     _IO_FILEIO_SEEK_METHODDEF
     _IO_FILEIO_TELL_METHODDEF

@@ -1230,10 +1230,6 @@ byte_converter(PyObject *arg, char *p)
         *p = PyBytes_AS_STRING(arg)[0];
         return 1;
     }
-    else if (PyByteArray_Check(arg) && PyByteArray_GET_SIZE(arg) == 1) {
-        *p = PyByteArray_AS_STRING(arg)[0];
-        return 1;
-    }
     else {
         PyObject *iobj;
         long ival;
@@ -1278,12 +1274,6 @@ format_obj(PyObject *v, const char **pbuf, Py_ssize_t *plen)
     if (PyBytes_Check(v)) {
         *pbuf = PyBytes_AS_STRING(v);
         *plen = PyBytes_GET_SIZE(v);
-        Py_INCREF(v);
-        return v;
-    }
-    if (PyByteArray_Check(v)) {
-        *pbuf = PyByteArray_AS_STRING(v);
-        *plen = PyByteArray_GET_SIZE(v);
         Py_INCREF(v);
         return v;
     }
@@ -1344,8 +1334,7 @@ _PyBytes_FormatEx(const char *format, Py_ssize_t format_len,
     fmtcnt = format_len;
 
     _PyBytesWriter_Init(&writer);
-    writer.use_bytearray = use_bytearray;
-
+    
     res = _PyBytesWriter_Alloc(&writer, fmtcnt);
     if (res == NULL)
         return NULL;
@@ -1361,8 +1350,9 @@ _PyBytes_FormatEx(const char *format, Py_ssize_t format_len,
         argidx = -2;
     }
     if (Py_TYPE(args)->tp_as_mapping && Py_TYPE(args)->tp_as_mapping->mp_subscript &&
-        !PyTuple_Check(args) && !PyBytes_Check(args) && !PyUnicode_Check(args) &&
-        !PyByteArray_Check(args)) {
+        !PyTuple_Check(args) && !PyBytes_Check(args) && !PyUnicode_Check(args)
+	)
+      {
             dict = args;
     }
 
@@ -3051,8 +3041,6 @@ _PyBytes_FromHex(PyObject *string, int use_bytearray)
     _PyBytesWriter writer;
 
     _PyBytesWriter_Init(&writer);
-    writer.use_bytearray = use_bytearray;
-
     assert(PyUnicode_Check(string));
     hexlen = PyUnicode_GET_LENGTH(string);
     assert(PyUnicode_KIND(string) == PyUnicode_1BYTE_KIND);
@@ -3888,10 +3876,6 @@ _PyBytesWriter_AsString(_PyBytesWriter *writer)
         assert(writer->buffer == NULL);
         return writer->small_buffer;
     }
-    else if (writer->use_bytearray) {
-        assert(writer->buffer != NULL);
-        return PyByteArray_AS_STRING(writer->buffer);
-    }
     else {
         assert(writer->buffer != NULL);
         return PyBytes_AS_STRING(writer->buffer);
@@ -3919,10 +3903,7 @@ _PyBytesWriter_CheckConsistency(_PyBytesWriter *writer, char *str)
     }
     else {
         assert(writer->buffer != NULL);
-        if (writer->use_bytearray)
-            assert(PyByteArray_CheckExact(writer->buffer));
-        else
-            assert(PyBytes_CheckExact(writer->buffer));
+	assert(PyBytes_CheckExact(writer->buffer));
         assert(Py_REFCNT(writer->buffer) == 1);
     }
 
@@ -3962,37 +3943,21 @@ _PyBytesWriter_Resize(_PyBytesWriter *writer, void *str, Py_ssize_t size)
 
     pos = _PyBytesWriter_GetSize(writer, str);
     if (!writer->use_small_buffer) {
-        if (writer->use_bytearray) {
-            if (PyByteArray_Resize(writer->buffer, allocated))
-                goto error;
-            /* writer->allocated can be smaller than writer->buffer->ob_alloc,
-               but we cannot use ob_alloc because bytes may need to be moved
-               to use the whole buffer. bytearray uses an internal optimization
-               to avoid moving or copying bytes when bytes are removed at the
-               beginning (ex: del bytearray[:1]). */
-        }
-        else {
-            if (_PyBytes_Resize(&writer->buffer, allocated))
-                goto error;
-        }
+      {
+	if (_PyBytes_Resize(&writer->buffer, allocated))
+	  goto error;
+      }
     }
     else {
         /* convert from stack buffer to bytes object buffer */
         assert(writer->buffer == NULL);
-
-        if (writer->use_bytearray)
-            writer->buffer = PyByteArray_FromStringAndSize(NULL, allocated);
-        else
-            writer->buffer = PyBytes_FromStringAndSize(NULL, allocated);
+	writer->buffer = PyBytes_FromStringAndSize(NULL, allocated);
         if (writer->buffer == NULL)
             goto error;
 
         if (pos != 0) {
             char *dest;
-            if (writer->use_bytearray)
-                dest = PyByteArray_AS_STRING(writer->buffer);
-            else
-                dest = PyBytes_AS_STRING(writer->buffer);
+	    dest = PyBytes_AS_STRING(writer->buffer);
             memcpy(dest,
                       writer->small_buffer,
                       pos);
@@ -4084,36 +4049,27 @@ _PyBytesWriter_Finish(_PyBytesWriter *writer, void *str)
     assert(_PyBytesWriter_CheckConsistency(writer, str));
 
     size = _PyBytesWriter_GetSize(writer, str);
-    if (size == 0 && !writer->use_bytearray) {
+    if (size == 0) {
         Py_CLEAR(writer->buffer);
         /* Get the empty byte string singleton */
         result = PyBytes_FromStringAndSize(NULL, 0);
     }
     else if (writer->use_small_buffer) {
-        if (writer->use_bytearray) {
-            result = PyByteArray_FromStringAndSize(writer->small_buffer, size);
-        }
-        else {
-            result = PyBytes_FromStringAndSize(writer->small_buffer, size);
-        }
+      {
+	result = PyBytes_FromStringAndSize(writer->small_buffer, size);
+      }
     }
     else {
         result = writer->buffer;
         writer->buffer = NULL;
 
         if (size != writer->allocated) {
-            if (writer->use_bytearray) {
-                if (PyByteArray_Resize(result, size)) {
-                    Py_DECREF(result);
-                    return NULL;
-                }
-            }
-            else {
-                if (_PyBytes_Resize(&result, size)) {
-                    assert(result == NULL);
-                    return NULL;
-                }
-            }
+	  {
+	    if (_PyBytes_Resize(&result, size)) {
+	      assert(result == NULL);
+	      return NULL;
+	    }
+	  }
         }
     }
     return result;

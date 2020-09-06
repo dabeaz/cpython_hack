@@ -355,7 +355,7 @@ class FileLoader:
     def get_data(self, path):
         """Return the data from path as raw bytes."""
         if isinstance(self, (SourceLoader,)):
-            with _io.open_code(str(path)) as file:
+            with _io.open(str(path)) as file:
                 return file.read()
         else:
             with _io.FileIO(path, 'r') as file:

@@ -119,10 +119,7 @@ typedef struct {
     /* Minimum number of allocated bytes,
        incremented by _PyBytesWriter_Prepare() */
     Py_ssize_t min_size;
-
-    /* If non-zero, use a bytearray instead of a bytes object for buffer. */
-    int use_bytearray;
-
+  
     /* If non-zero, overallocate the buffer (default: 0).
        This flag must be zero if use_bytearray is non-zero. */
     int overallocate;

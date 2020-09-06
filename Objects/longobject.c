@@ -388,13 +388,6 @@ _PyLong_Negate(PyLongObject **x_p)
  */
 #define FIVEARY_CUTOFF 8
 
-#if 0
-#define SIGCHECK(PyTryBlock)                    \
-    do {                                        \
-        if (PyErr_CheckSignals()) PyTryBlock    \
-    } while(0)
-#endif
-
 #define SIGCHECK(PyTryBlock)                    \
     do {                                        \
     } while(0)
@@ -5203,12 +5196,9 @@ long_new_impl(PyTypeObject *type, PyObject *x, PyObject *obase)
 
     if (PyUnicode_Check(x))
         return PyLong_FromUnicodeObject(x, (int)base);
-    else if (PyByteArray_Check(x) || PyBytes_Check(x)) {
+    else if (PyBytes_Check(x)) {
         const char *string;
-        if (PyByteArray_Check(x))
-            string = PyByteArray_AS_STRING(x);
-        else
-            string = PyBytes_AS_STRING(x);
+	string = PyBytes_AS_STRING(x);
         return _PyLong_FromBytes(string, Py_SIZE(x), (int)base);
     }
     else {

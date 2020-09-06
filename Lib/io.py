@@ -41,18 +41,13 @@ __author__ = ("Guido van Rossum <guido@python.org>, "
               "Amaury Forgeot d'Arc <amauryfa@gmail.com>, "
               "Benjamin Peterson <benjamin@python.org>")
 
-__all__ = ["BlockingIOError", "open", "open_code", "IOBase", "RawIOBase",
-           "FileIO", "BufferedIOBase",
-           "BufferedReader", "BufferedWriter", "BufferedRWPair",
-           "BufferedRandom", 
-           "UnsupportedOperation", "SEEK_SET", "SEEK_CUR", "SEEK_END"]
+__all__ = ["BlockingIOError", "open", "IOBase", 
+           "FileIO", "UnsupportedOperation", "SEEK_SET", "SEEK_CUR", "SEEK_END"]
 
 
 import _io
 
-from _io import (DEFAULT_BUFFER_SIZE, BlockingIOError, UnsupportedOperation,
-                 open, open_code, FileIO, BufferedReader,
-                 BufferedWriter, BufferedRWPair, BufferedRandom,)
+from _io import (DEFAULT_BUFFER_SIZE, BlockingIOError, UnsupportedOperation, open, FileIO)
 
 OpenWrapper = _io.open # for compatibility with _pyio
 
@@ -70,8 +65,3 @@ SEEK_END = 2
 class IOBase(_io._IOBase):
     __doc__ = _io._IOBase.__doc__
 
-class RawIOBase(_io._RawIOBase, IOBase):
-    __doc__ = _io._RawIOBase.__doc__
-
-class BufferedIOBase(_io._BufferedIOBase, IOBase):
-    __doc__ = _io._BufferedIOBase.__doc__

@@ -17,7 +17,6 @@
 /*[clinic input]
 module _io
 class _io._IOBase "PyObject *" "&PyIOBase_Type"
-class _io._RawIOBase "PyObject *" "&PyRawIOBase_Type"
 [clinic start generated code]*/
 /*[clinic end generated code: output=da39a3ee5e6b4b0d input=d29a4d076c2b211c]*/
 
@@ -532,64 +531,22 @@ _io__IOBase_readline_impl(PyObject *self, Py_ssize_t limit)
 {
     /* For backwards compatibility, a (slowish) readline(). */
 
-    PyObject *peek, *buffer, *result;
-    Py_ssize_t old_size = -1;
+    PyObject *result;
+    Py_ssize_t bufsize, bufmax, old_size = -1;
+    char *buffer;
 
-    if (_PyObject_LookupAttr(self, _PyIO_str_peek, &peek) < 0) {
-        return NULL;
-    }
-
-    buffer = PyByteArray_FromStringAndSize(NULL, 0);
+    buffer = (char *) PyMem_RawMalloc(100);
+    bufsize = 0;
+    bufmax = 100;
+    
     if (buffer == NULL) {
-        Py_XDECREF(peek);
         return NULL;
     }
 
-    while (limit < 0 || PyByteArray_GET_SIZE(buffer) < limit) {
+    while (limit < 0 || bufsize < limit) {
         Py_ssize_t nreadahead = 1;
         PyObject *b;
-
-        if (peek != NULL) {
-            PyObject *readahead = PyObject_CallOneArg(peek, _PyLong_One);
-            if (readahead == NULL) {
-                /* NOTE: PyErr_SetFromErrno() calls PyErr_CheckSignals()
-                   when EINTR occurs so we needn't do it ourselves. */
-                if (_PyIO_trap_eintr()) {
-                    continue;
-                }
-                goto fail;
-            }
-            if (!PyBytes_Check(readahead)) {
-                PyErr_Format(PyExc_OSError,
-                             "peek() should have returned a bytes object, "
-                             "not '%.200s'", Py_TYPE(readahead)->tp_name);
-                Py_DECREF(readahead);
-                goto fail;
-            }
-            if (PyBytes_GET_SIZE(readahead) > 0) {
-                Py_ssize_t n = 0;
-                const char *buf = PyBytes_AS_STRING(readahead);
-                if (limit >= 0) {
-                    do {
-                        if (n >= PyBytes_GET_SIZE(readahead) || n >= limit)
-                            break;
-                        if (buf[n++] == '\n')
-                            break;
-                    } while (1);
-                }
-                else {
-                    do {
-                        if (n >= PyBytes_GET_SIZE(readahead))
-                            break;
-                        if (buf[n++] == '\n')
-                            break;
-                    } while (1);
-                }
-                nreadahead = n;
-            }
-            Py_DECREF(readahead);
-        }
-
+	Py_ssize_t bsize;
         b = _PyObject_CallMethodId(self, &PyId_read, "n", nreadahead);
         if (b == NULL) {
             /* NOTE: PyErr_SetFromErrno() calls PyErr_CheckSignals()
@@ -599,40 +556,34 @@ _io__IOBase_readline_impl(PyObject *self, Py_ssize_t limit)
             }
             goto fail;
         }
-        if (!PyBytes_Check(b)) {
-            PyErr_Format(PyExc_OSError,
-                         "read() should have returned a bytes object, "
-                         "not '%.200s'", Py_TYPE(b)->tp_name);
-            Py_DECREF(b);
-            goto fail;
-        }
-        if (PyBytes_GET_SIZE(b) == 0) {
-            Py_DECREF(b);
-            break;
-        }
-
-        old_size = PyByteArray_GET_SIZE(buffer);
-        if (PyByteArray_Resize(buffer, old_size + PyBytes_GET_SIZE(b)) < 0) {
-            Py_DECREF(b);
-            goto fail;
-        }
-        memcpy(PyByteArray_AS_STRING(buffer) + old_size,
-               PyBytes_AS_STRING(b), PyBytes_GET_SIZE(b));
-
+	bsize = PyUnicode_GET_SIZE(b);
+	if (bsize == 0) {
+	  Py_DECREF(b);
+	  break;
+	}
+	if (bufsize + bsize >= bufmax) {
+	  char *newbuffer;
+	  Py_ssize_t newmax = bufsize + bsize > 2*bufmax ? bufsize+bsize : 2*bufmax;
+	  newbuffer = PyMem_RawRealloc(buffer, newmax);
+	  if (newbuffer == NULL) {
+	    PyMem_RawFree(buffer);
+	    return NULL;
+	  }
+	  buffer = newbuffer;
+	  bufmax = newmax;
+	}
+        memcpy(buffer+bufsize, 
+               PyUnicode_AsChar(b), bsize);
+	bufsize += bsize;
         Py_DECREF(b);
-
-        if (PyByteArray_AS_STRING(buffer)[PyByteArray_GET_SIZE(buffer) - 1] == '\n')
+        if (buffer[bufsize-1] == '\n')
             break;
     }
-
-    result = PyBytes_FromStringAndSize(PyByteArray_AS_STRING(buffer),
-                                       PyByteArray_GET_SIZE(buffer));
-    Py_XDECREF(peek);
-    Py_DECREF(buffer);
+    result = PyUnicode_FromStringAndSize(buffer, bufsize);
+    PyMem_RawFree(buffer);
     return result;
   fail:
-    Py_XDECREF(peek);
-    Py_DECREF(buffer);
+    PyMem_RawFree(buffer);
     return NULL;
 }
 
@@ -1043,67 +994,6 @@ PyDoc_STRVAR(_io__IOBase_writelines__doc__,
 #define _IO__IOBASE_WRITELINES_METHODDEF    \
     {"writelines", (PyCFunction)_io__IOBase_writelines, METH_O, _io__IOBase_writelines__doc__},
 
-PyDoc_STRVAR(_io__RawIOBase_read__doc__,
-"read($self, size=-1, /)\n"
-"--\n"
-"\n");
-
-#define _IO__RAWIOBASE_READ_METHODDEF    \
-    {"read", (PyCFunction)(void(*)(void))_io__RawIOBase_read, METH_FASTCALL, _io__RawIOBase_read__doc__},
-
-static PyObject *
-_io__RawIOBase_read_impl(PyObject *self, Py_ssize_t n);
-
-static PyObject *
-_io__RawIOBase_read(PyObject *self, PyObject *const *args, Py_ssize_t nargs)
-{
-    PyObject *return_value = NULL;
-    Py_ssize_t n = -1;
-
-    if (!_PyArg_CheckPositional("read", nargs, 0, 1)) {
-        goto exit;
-    }
-    if (nargs < 1) {
-        goto skip_optional;
-    }
-    {
-        Py_ssize_t ival = -1;
-        PyObject *iobj = _PyNumber_Index(args[0]);
-        if (iobj != NULL) {
-            ival = PyLong_AsSsize_t(iobj);
-            Py_DECREF(iobj);
-        }
-        if (ival == -1 && PyErr_Occurred()) {
-            goto exit;
-        }
-        n = ival;
-    }
-skip_optional:
-    return_value = _io__RawIOBase_read_impl(self, n);
-
-exit:
-    return return_value;
-}
-
-PyDoc_STRVAR(_io__RawIOBase_readall__doc__,
-"readall($self, /)\n"
-"--\n"
-"\n"
-"Read until EOF, using multiple read() call.");
-
-#define _IO__RAWIOBASE_READALL_METHODDEF    \
-    {"readall", (PyCFunction)_io__RawIOBase_readall, METH_NOARGS, _io__RawIOBase_readall__doc__},
-
-static PyObject *
-_io__RawIOBase_readall_impl(PyObject *self);
-
-static PyObject *
-_io__RawIOBase_readall(PyObject *self, PyObject *Py_UNUSED(ignored))
-{
-    return _io__RawIOBase_readall_impl(self);
-}
-/*[clinic end generated code: output=83c1361a7a51ca84 input=a9049054013a1b77]*/
-
 
 static PyMethodDef iobase_methods[] = {
     {"seek", iobase_seek, METH_VARARGS, iobase_seek_doc},
@@ -1191,199 +1081,4 @@ PyTypeObject PyIOBase_Type = {
     0,                          /* tp_del */
     0,                          /* tp_version_tag */
     iobase_finalize,            /* tp_finalize */
-};
-
-
-/*
- * RawIOBase class, Inherits from IOBase.
- */
-PyDoc_STRVAR(rawiobase_doc,
-             "Base class for raw binary I/O.");
-
-/*
- * The read() method is implemented by calling readinto(); derived classes
- * that want to support read() only need to implement readinto() as a
- * primitive operation.  In general, readinto() can be more efficient than
- * read().
- *
- * (It would be tempting to also provide an implementation of readinto() in
- * terms of read(), in case the latter is a more suitable primitive operation,
- * but that would lead to nasty recursion in case a subclass doesn't implement
- * either.)
-*/
-
-/*[clinic input]
-_io._RawIOBase.read
-    size as n: Py_ssize_t = -1
-    /
-[clinic start generated code]*/
-
-static PyObject *
-_io__RawIOBase_read_impl(PyObject *self, Py_ssize_t n)
-/*[clinic end generated code: output=6cdeb731e3c9f13c input=b6d0dcf6417d1374]*/
-{
-    PyObject *b, *res;
-
-    if (n < 0) {
-        _Py_IDENTIFIER(readall);
-
-        return _PyObject_CallMethodIdNoArgs(self, &PyId_readall);
-    }
-
-    /* TODO: allocate a bytes object directly instead and manually construct
-       a writable memoryview pointing to it. */
-    b = PyByteArray_FromStringAndSize(NULL, n);
-    if (b == NULL)
-        return NULL;
-
-    res = PyObject_CallMethodObjArgs(self, _PyIO_str_readinto, b, NULL);
-    if (res == NULL || res == Py_None) {
-        Py_DECREF(b);
-        return res;
-    }
-
-    n = PyNumber_AsSsize_t(res, PyExc_ValueError);
-    Py_DECREF(res);
-    if (n == -1 && PyErr_Occurred()) {
-        Py_DECREF(b);
-        return NULL;
-    }
-
-    res = PyBytes_FromStringAndSize(PyByteArray_AsString(b), n);
-    Py_DECREF(b);
-    return res;
-}
-
-
-/*[clinic input]
-_io._RawIOBase.readall
-
-Read until EOF, using multiple read() call.
-[clinic start generated code]*/
-
-static PyObject *
-_io__RawIOBase_readall_impl(PyObject *self)
-/*[clinic end generated code: output=1987b9ce929425a0 input=688874141213622a]*/
-{
-    int r;
-    PyObject *chunks = PyList_New(0);
-    PyObject *result;
-
-    if (chunks == NULL)
-        return NULL;
-
-    while (1) {
-        PyObject *data = _PyObject_CallMethodId(self, &PyId_read,
-                                                "i", DEFAULT_BUFFER_SIZE);
-        if (!data) {
-            /* NOTE: PyErr_SetFromErrno() calls PyErr_CheckSignals()
-               when EINTR occurs so we needn't do it ourselves. */
-            if (_PyIO_trap_eintr()) {
-                continue;
-            }
-            Py_DECREF(chunks);
-            return NULL;
-        }
-        if (data == Py_None) {
-            if (PyList_GET_SIZE(chunks) == 0) {
-                Py_DECREF(chunks);
-                return data;
-            }
-            Py_DECREF(data);
-            break;
-        }
-        if (!PyBytes_Check(data)) {
-            Py_DECREF(chunks);
-            Py_DECREF(data);
-            PyErr_SetString(PyExc_TypeError, "read() should return bytes");
-            return NULL;
-        }
-        if (PyBytes_GET_SIZE(data) == 0) {
-            /* EOF */
-            Py_DECREF(data);
-            break;
-        }
-        r = PyList_Append(chunks, data);
-        Py_DECREF(data);
-        if (r < 0) {
-            Py_DECREF(chunks);
-            return NULL;
-        }
-    }
-    result = _PyBytes_Join(_PyIO_empty_bytes, chunks);
-    Py_DECREF(chunks);
-    return result;
-}
-
-static PyObject *
-rawiobase_readinto(PyObject *self, PyObject *args)
-{
-    PyErr_SetNone(PyExc_NotImplementedError);
-    return NULL;
-}
-
-static PyObject *
-rawiobase_write(PyObject *self, PyObject *args)
-{
-    PyErr_SetNone(PyExc_NotImplementedError);
-    return NULL;
-}
-
-static PyMethodDef rawiobase_methods[] = {
-    _IO__RAWIOBASE_READ_METHODDEF
-    _IO__RAWIOBASE_READALL_METHODDEF
-    {"readinto", rawiobase_readinto, METH_VARARGS},
-    {"write", rawiobase_write, METH_VARARGS},
-    {NULL, NULL}
-};
-
-PyTypeObject PyRawIOBase_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    "_io._RawIOBase",                /*tp_name*/
-    0,                          /*tp_basicsize*/
-    0,                          /*tp_itemsize*/
-    0,                          /*tp_dealloc*/
-    0,                          /*tp_vectorcall_offset*/
-    0,                          /*tp_getattr*/
-    0,                          /*tp_setattr*/
-    0,                          /*tp_as_async*/
-    0,                          /*tp_repr*/
-    0,                          /*tp_as_number*/
-    0,                          /*tp_as_sequence*/
-    0,                          /*tp_as_mapping*/
-    0,                          /*tp_hash */
-    0,                          /*tp_call*/
-    0,                          /*tp_str*/
-    0,                          /*tp_getattro*/
-    0,                          /*tp_setattro*/
-    0,                          /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,  /*tp_flags*/
-    rawiobase_doc,              /* tp_doc */
-    0,                          /* tp_traverse */
-    0,                          /* tp_clear */
-    0,                          /* tp_richcompare */
-    0,                          /* tp_weaklistoffset */
-    0,                          /* tp_iter */
-    0,                          /* tp_iternext */
-    rawiobase_methods,          /* tp_methods */
-    0,                          /* tp_members */
-    0,                          /* tp_getset */
-    &PyIOBase_Type,             /* tp_base */
-    0,                          /* tp_dict */
-    0,                          /* tp_descr_get */
-    0,                          /* tp_descr_set */
-    0,                          /* tp_dictoffset */
-    0,                          /* tp_init */
-    0,                          /* tp_alloc */
-    0,                          /* tp_new */
-    0,                          /* tp_free */
-    0,                          /* tp_is_gc */
-    0,                          /* tp_bases */
-    0,                          /* tp_mro */
-    0,                          /* tp_cache */
-    0,                          /* tp_subclasses */
-    0,                          /* tp_weaklist */
-    0,                          /* tp_del */
-    0,                          /* tp_version_tag */
-    0,                          /* tp_finalize */
 };

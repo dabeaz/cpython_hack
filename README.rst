@@ -102,7 +102,8 @@ How will it end?  Or is this just the start?
 - Day 85 (9/03/2020). Short repr got no reason.
 - Day 86 (9/04/2020). Textino.
 - Day 87 (9/05/2020). Various unfocused trimming. Yawn.
-
+- Day 88 (9/06/2020). Ba-bye buffered I/O and bytearray.
+  
 Copyright and License Information
 ---------------------------------
 

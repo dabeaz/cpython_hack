@@ -80,8 +80,8 @@ main(int argc, char *argv[])
     PyConfig_InitIsolatedConfig(&config);
 
     PyStatus status;
-    status = PyConfig_SetString(&config, &config.program_name,
-                                L"./_freeze_importlib");
+    status = PyConfig_SetChar(&config, &config.program_name,
+                                "./_freeze_importlib");
     if (PyStatus_Exception(status)) {
         PyConfig_Clear(&config);
         Py_ExitStatusException(status);

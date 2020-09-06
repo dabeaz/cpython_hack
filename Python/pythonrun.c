@@ -1096,10 +1096,6 @@ _Py_SourceAsString(PyObject *cmd, const char *funcname, const char *what, PyComp
         str = PyBytes_AS_STRING(cmd);
         size = PyBytes_GET_SIZE(cmd);
     }
-    else if (PyByteArray_Check(cmd)) {
-        str = PyByteArray_AS_STRING(cmd);
-        size = PyByteArray_GET_SIZE(cmd);
-    }
     else if (PyObject_GetBuffer(cmd, &view, PyBUF_SIMPLE) == 0) {
         /* Copy to NUL-terminated buffer. */
         *cmd_copy = PyBytes_FromStringAndSize(

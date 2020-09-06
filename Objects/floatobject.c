@@ -485,10 +485,6 @@ PyFloat_FromString(PyObject *v)
         s = PyBytes_AS_STRING(v);
         len = PyBytes_GET_SIZE(v);
     }
-    else if (PyByteArray_Check(v)) {
-        s = PyByteArray_AS_STRING(v);
-        len = PyByteArray_GET_SIZE(v);
-    }
     else if (PyObject_GetBuffer(v, &view, PyBUF_SIMPLE) == 0) {
         s = (const char *)view.buf;
         len = view.len;
