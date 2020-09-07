@@ -386,12 +386,8 @@ _Py_fopen_obj(PyObject *path, const char *mode)
 {
     FILE *f;
     int async_err = 0;
-    PyObject *bytes;
     const char *path_bytes;
-
-    if (!PyUnicode_FSConverter(path, &bytes))
-        return NULL;
-    path_bytes = PyBytes_AS_STRING(bytes);
+    path_bytes = PyUnicode_AsChar(path);
     do {
         
         f = fopen(path_bytes, mode);
@@ -399,7 +395,6 @@ _Py_fopen_obj(PyObject *path, const char *mode)
     } while (f == NULL
              && errno == EINTR); //  && !(async_err = PyErr_CheckSignals()));
 
-    Py_DECREF(bytes);
     if (async_err)
         return NULL;
 

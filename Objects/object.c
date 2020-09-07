@@ -1563,8 +1563,6 @@ _PyTypes_Init(void)
     INIT_TYPE(&PyFloat_Type, "float");
     INIT_TYPE(&PyFrozenSet_Type, "frozenset");
     INIT_TYPE(&PyProperty_Type, "property");
-    INIT_TYPE(&_PyManagedBuffer_Type, "managed buffer");
-    INIT_TYPE(&PyMemoryView_Type, "memoryview");
     INIT_TYPE(&PyTuple_Type, "tuple");
     INIT_TYPE(&PyEnum_Type, "enumerate");
     INIT_TYPE(&PyReversed_Type, "reversed");

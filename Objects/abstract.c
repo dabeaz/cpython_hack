@@ -260,7 +260,7 @@ PyObject_DelItemString(PyObject *o, const char *key)
     return ret;
 }
 
-
+#if 1
 /* Return 1 if the getbuffer function is available, otherwise return 0. */
 int
 PyObject_CheckBuffer(PyObject *obj)
@@ -367,7 +367,6 @@ PyBuffer_IsContiguous(const Py_buffer *view, char order)
     return 0;
 }
 
-
 void*
 PyBuffer_GetPointer(Py_buffer *view, Py_ssize_t *indices)
 {
@@ -382,228 +381,9 @@ PyBuffer_GetPointer(Py_buffer *view, Py_ssize_t *indices)
     }
     return (void*)pointer;
 }
+#endif
 
-
-void
-_Py_add_one_to_index_F(int nd, Py_ssize_t *index, const Py_ssize_t *shape)
-{
-    int k;
-
-    for (k=0; k<nd; k++) {
-        if (index[k] < shape[k]-1) {
-            index[k]++;
-            break;
-        }
-        else {
-            index[k] = 0;
-        }
-    }
-}
-
-void
-_Py_add_one_to_index_C(int nd, Py_ssize_t *index, const Py_ssize_t *shape)
-{
-    int k;
-
-    for (k=nd-1; k>=0; k--) {
-        if (index[k] < shape[k]-1) {
-            index[k]++;
-            break;
-        }
-        else {
-            index[k] = 0;
-        }
-    }
-}
-
-Py_ssize_t
-PyBuffer_SizeFromFormat(const char *format)
-{
-    PyObject *structmodule = NULL;
-    PyObject *calcsize = NULL;
-    PyObject *res = NULL;
-    PyObject *fmt = NULL;
-    Py_ssize_t itemsize = -1;
-
-    structmodule = PyImport_ImportModule("struct");
-    if (structmodule == NULL) {
-        return itemsize;
-    }
-
-    calcsize = PyObject_GetAttrString(structmodule, "calcsize");
-    if (calcsize == NULL) {
-        goto done;
-    }
-
-    fmt = PyUnicode_FromString(format);
-    if (fmt == NULL) {
-        goto done;
-    }
-
-    res = PyObject_CallFunctionObjArgs(calcsize, fmt, NULL);
-    if (res == NULL) {
-        goto done;
-    }
-
-    itemsize = PyLong_AsSsize_t(res);
-    if (itemsize < 0) {
-        goto done;
-    }
-
-done:
-    Py_DECREF(structmodule);
-    Py_XDECREF(calcsize);
-    Py_XDECREF(fmt);
-    Py_XDECREF(res);
-    return itemsize;
-}
-
-int
-PyBuffer_FromContiguous(Py_buffer *view, void *buf, Py_ssize_t len, char fort)
-{
-    int k;
-    void (*addone)(int, Py_ssize_t *, const Py_ssize_t *);
-    Py_ssize_t *indices, elements;
-    char *src, *ptr;
-
-    if (len > view->len) {
-        len = view->len;
-    }
-
-    if (PyBuffer_IsContiguous(view, fort)) {
-        /* simplest copy is all that is needed */
-        memcpy(view->buf, buf, len);
-        return 0;
-    }
-
-    /* Otherwise a more elaborate scheme is needed */
-
-    /* view->ndim <= 64 */
-    indices = (Py_ssize_t *)PyMem_Malloc(sizeof(Py_ssize_t)*(view->ndim));
-    if (indices == NULL) {
-        PyErr_NoMemory();
-        return -1;
-    }
-    for (k=0; k<view->ndim;k++) {
-        indices[k] = 0;
-    }
-
-    if (fort == 'F') {
-        addone = _Py_add_one_to_index_F;
-    }
-    else {
-        addone = _Py_add_one_to_index_C;
-    }
-    src = buf;
-    /* XXX : This is not going to be the fastest code in the world
-             several optimizations are possible.
-     */
-    elements = len / view->itemsize;
-    while (elements--) {
-        ptr = PyBuffer_GetPointer(view, indices);
-        memcpy(ptr, src, view->itemsize);
-        src += view->itemsize;
-        addone(view->ndim, indices, view->shape);
-    }
-
-    PyMem_Free(indices);
-    return 0;
-}
-
-int PyObject_CopyData(PyObject *dest, PyObject *src)
-{
-    Py_buffer view_dest, view_src;
-    int k;
-    Py_ssize_t *indices, elements;
-    char *dptr, *sptr;
-
-    if (!PyObject_CheckBuffer(dest) ||
-        !PyObject_CheckBuffer(src)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "both destination and source must be "\
-                        "bytes-like objects");
-        return -1;
-    }
-
-    if (PyObject_GetBuffer(dest, &view_dest, PyBUF_FULL) != 0) return -1;
-    if (PyObject_GetBuffer(src, &view_src, PyBUF_FULL_RO) != 0) {
-        PyBuffer_Release(&view_dest);
-        return -1;
-    }
-
-    if (view_dest.len < view_src.len) {
-        PyErr_SetString(PyExc_BufferError,
-                        "destination is too small to receive data from source");
-        PyBuffer_Release(&view_dest);
-        PyBuffer_Release(&view_src);
-        return -1;
-    }
-
-    if ((PyBuffer_IsContiguous(&view_dest, 'C') &&
-         PyBuffer_IsContiguous(&view_src, 'C')) ||
-        (PyBuffer_IsContiguous(&view_dest, 'F') &&
-         PyBuffer_IsContiguous(&view_src, 'F'))) {
-        /* simplest copy is all that is needed */
-        memcpy(view_dest.buf, view_src.buf, view_src.len);
-        PyBuffer_Release(&view_dest);
-        PyBuffer_Release(&view_src);
-        return 0;
-    }
-
-    /* Otherwise a more elaborate copy scheme is needed */
-
-    /* XXX(nnorwitz): need to check for overflow! */
-    indices = (Py_ssize_t *)PyMem_Malloc(sizeof(Py_ssize_t)*view_src.ndim);
-    if (indices == NULL) {
-        PyErr_NoMemory();
-        PyBuffer_Release(&view_dest);
-        PyBuffer_Release(&view_src);
-        return -1;
-    }
-    for (k=0; k<view_src.ndim;k++) {
-        indices[k] = 0;
-    }
-    elements = 1;
-    for (k=0; k<view_src.ndim; k++) {
-        /* XXX(nnorwitz): can this overflow? */
-        elements *= view_src.shape[k];
-    }
-    while (elements--) {
-        _Py_add_one_to_index_C(view_src.ndim, indices, view_src.shape);
-        dptr = PyBuffer_GetPointer(&view_dest, indices);
-        sptr = PyBuffer_GetPointer(&view_src, indices);
-        memcpy(dptr, sptr, view_src.itemsize);
-    }
-    PyMem_Free(indices);
-    PyBuffer_Release(&view_dest);
-    PyBuffer_Release(&view_src);
-    return 0;
-}
-
-void
-PyBuffer_FillContiguousStrides(int nd, Py_ssize_t *shape,
-                               Py_ssize_t *strides, int itemsize,
-                               char fort)
-{
-    int k;
-    Py_ssize_t sd;
-
-    sd = itemsize;
-    if (fort == 'F') {
-        for (k=0; k<nd; k++) {
-            strides[k] = sd;
-            sd *= shape[k];
-        }
-    }
-    else {
-        for (k=nd-1; k>=0; k--) {
-            strides[k] = sd;
-            sd *= shape[k];
-        }
-    }
-    return;
-}
-
+#if 1
 int
 PyBuffer_FillInfo(Py_buffer *view, PyObject *obj, void *buf, Py_ssize_t len,
                   int readonly, int flags)
@@ -642,7 +422,9 @@ PyBuffer_FillInfo(Py_buffer *view, PyObject *obj, void *buf, Py_ssize_t len,
     view->internal = NULL;
     return 0;
 }
+#endif
 
+#if 1
 void
 PyBuffer_Release(Py_buffer *view)
 {
@@ -656,6 +438,7 @@ PyBuffer_Release(Py_buffer *view)
     view->obj = NULL;
     Py_DECREF(obj);
 }
+#endif
 
 PyObject *
 PyObject_Format(PyObject *obj, PyObject *format_spec)
@@ -1381,22 +1164,6 @@ PyNumber_Long(PyObject *o)
         return _PyLong_FromBytes(PyBytes_AS_STRING(o),
                                  PyBytes_GET_SIZE(o), 10);
 
-    
-    if (PyObject_GetBuffer(o, &view, PyBUF_SIMPLE) == 0) {
-        PyObject *bytes;
-
-        /* Copy to NUL-terminated buffer. */
-        bytes = PyBytes_FromStringAndSize((const char *)view.buf, view.len);
-        if (bytes == NULL) {
-            PyBuffer_Release(&view);
-            return NULL;
-        }
-        result = _PyLong_FromBytes(PyBytes_AS_STRING(bytes),
-                                   PyBytes_GET_SIZE(bytes), 10);
-        Py_DECREF(bytes);
-        PyBuffer_Release(&view);
-        return result;
-    }
 
     return type_error("int() argument must be a string, a bytes-like object "
                       "or a number, not '%.200s'", o);

@@ -373,83 +373,6 @@ exit:
     return return_value;
 }
 
-PyDoc_STRVAR(unicode_encode__doc__,
-"encode($self, /, encoding=\'utf-8\', errors=\'strict\')\n"
-"--\n"
-"\n"
-"Encode the string using the codec registered for encoding.\n"
-"\n"
-"  encoding\n"
-"    The encoding in which to encode the string.\n"
-"  errors\n"
-"    The error handling scheme to use for encoding errors.\n"
-"    The default is \'strict\' meaning that encoding errors raise a\n"
-"    UnicodeEncodeError.  Other possible values are \'ignore\', \'replace\' and\n"
-"    \'xmlcharrefreplace\' as well as any other name registered with\n"
-"    codecs.register_error that can handle UnicodeEncodeErrors.");
-
-#define UNICODE_ENCODE_METHODDEF    \
-    {"encode", (PyCFunction)(void(*)(void))unicode_encode, METH_FASTCALL|METH_KEYWORDS, unicode_encode__doc__},
-
-static PyObject *
-unicode_encode_impl(PyObject *self, const char *encoding, const char *errors);
-
-static PyObject *
-unicode_encode(PyObject *self, PyObject *const *args, Py_ssize_t nargs, PyObject *kwnames)
-{
-    PyObject *return_value = NULL;
-    static const char * const _keywords[] = {"encoding", "errors", NULL};
-    static _PyArg_Parser _parser = {NULL, _keywords, "encode", 0};
-    PyObject *argsbuf[2];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 0;
-    const char *encoding = NULL;
-    const char *errors = NULL;
-
-    args = _PyArg_UnpackKeywords(args, nargs, NULL, kwnames, &_parser, 0, 2, 0, argsbuf);
-    if (!args) {
-        goto exit;
-    }
-    if (!noptargs) {
-        goto skip_optional_pos;
-    }
-    if (args[0]) {
-        if (!PyUnicode_Check(args[0])) {
-            _PyArg_BadArgument("encode", "argument 'encoding'", "str", args[0]);
-            goto exit;
-        }
-        Py_ssize_t encoding_length;
-        encoding = PyUnicode_AsCharAndSize(args[0], &encoding_length);
-        if (encoding == NULL) {
-            goto exit;
-        }
-        if (strlen(encoding) != (size_t)encoding_length) {
-            PyErr_SetString(PyExc_ValueError, "embedded null character");
-            goto exit;
-        }
-        if (!--noptargs) {
-            goto skip_optional_pos;
-        }
-    }
-    if (!PyUnicode_Check(args[1])) {
-        _PyArg_BadArgument("encode", "argument 'errors'", "str", args[1]);
-        goto exit;
-    }
-    Py_ssize_t errors_length;
-    errors = PyUnicode_AsCharAndSize(args[1], &errors_length);
-    if (errors == NULL) {
-        goto exit;
-    }
-    if (strlen(errors) != (size_t)errors_length) {
-        PyErr_SetString(PyExc_ValueError, "embedded null character");
-        goto exit;
-    }
-skip_optional_pos:
-    return_value = unicode_encode_impl(self, encoding, errors);
-
-exit:
-    return return_value;
-}
-
 PyDoc_STRVAR(unicode_expandtabs__doc__,
 "expandtabs($self, /, tabsize=8)\n"
 "--\n"
@@ -1483,15 +1406,6 @@ unicode_sizeof(PyObject *self, PyObject *Py_UNUSED(ignored))
     return unicode_sizeof_impl(self);
 }
 /*[clinic end generated code: output=c5eb21e314da78b8 input=a9049054013a1b77]*/
-
-static inline int
-unicode_check_encoding_errors(const char *encoding, const char *errors)
-{
-    if (encoding == NULL && errors == NULL) {
-        return 0;
-    }
-    return 0;
-}
 
 int
 _PyUnicode_CheckConsistency(PyObject *op, int check_content)
@@ -2628,206 +2542,6 @@ PyUnicode_FromObject(PyObject *obj)
                  "Can't convert '%.100s' object to str implicitly",
                  Py_TYPE(obj)->tp_name);
     return NULL;
-}
-
-PyObject *
-PyUnicode_FromEncodedObject(PyObject *obj,
-                            const char *encoding,
-                            const char *errors)
-{
-    Py_buffer buffer;
-    PyObject *v;
-
-    if (obj == NULL) {
-        PyErr_BadInternalCall();
-        return NULL;
-    }
-
-    /* Decoding bytes objects is the most common case and should be fast */
-    if (PyBytes_Check(obj)) {
-        if (PyBytes_GET_SIZE(obj) == 0) {
-            if (unicode_check_encoding_errors(encoding, errors) < 0) {
-                return NULL;
-            }
-            _Py_RETURN_UNICODE_EMPTY();
-        }
-	return PyUnicode_FromStringAndSize(
-					   PyBytes_AS_STRING(obj),
-					   PyBytes_GET_SIZE(obj));
-    }
-
-    if (PyUnicode_Check(obj)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "decoding str is not supported");
-        return NULL;
-    }
-
-    /* Retrieve a bytes buffer view through the PEP 3118 buffer interface */
-    if (PyObject_GetBuffer(obj, &buffer, PyBUF_SIMPLE) < 0) {
-        PyErr_Format(PyExc_TypeError,
-                     "decoding to str: need a bytes-like object, %.80s found",
-                     Py_TYPE(obj)->tp_name);
-        return NULL;
-    }
-
-    if (buffer.len == 0) {
-        PyBuffer_Release(&buffer);
-        if (unicode_check_encoding_errors(encoding, errors) < 0) {
-            return NULL;
-        }
-        _Py_RETURN_UNICODE_EMPTY();
-    }
-
-    v = PyUnicode_FromStringAndSize((char *) buffer.buf, buffer.len);
-    
-    PyBuffer_Release(&buffer);
-    return v;
-}
-
-/* Normalize an encoding name: similar to encodings.normalize_encoding(), but
-   also convert to lowercase. Return 1 on success, or 0 on error (encoding is
-   longer than lower_len-1). */
-int
-_Py_normalize_encoding(const char *encoding,
-                       char *lower,
-                       size_t lower_len)
-{
-    const char *e;
-    char *l;
-    char *l_end;
-    int punct;
-
-    assert(encoding != NULL);
-
-    e = encoding;
-    l = lower;
-    l_end = &lower[lower_len - 1];
-    punct = 0;
-    while (1) {
-        char c = *e;
-        if (c == 0) {
-            break;
-        }
-
-        if (Py_ISALNUM(c) || c == '.') {
-            if (punct && l != lower) {
-                if (l == l_end) {
-                    return 0;
-                }
-                *l++ = '_';
-            }
-            punct = 0;
-
-            if (l == l_end) {
-                return 0;
-            }
-            *l++ = Py_TOLOWER(c);
-        }
-        else {
-            punct = 1;
-        }
-
-        e++;
-    }
-    *l = '\0';
-    return 1;
-}
-
-int
-PyUnicode_FSConverter(PyObject* arg, void* addr)
-{
-    PyObject *path = NULL;
-    PyObject *output = NULL;
-    Py_ssize_t size;
-    const char *data;
-    if (arg == NULL) {
-        Py_DECREF(*(PyObject**)addr);
-        *(PyObject**)addr = NULL;
-        return 1;
-    }
-    path = PyOS_FSPath(arg);
-    if (path == NULL) {
-        return 0;
-    }
-    if (PyBytes_Check(path)) {
-      output = path;
-    }
-    else {  // PyOS_FSPath() guarantees its returned value is bytes or str.
-      output = PyUnicode_AsBytes(path);
-        Py_DECREF(path);
-        if (!output) {
-            return 0;
-        }
-        assert(PyBytes_Check(output));
-    }
-    size = PyBytes_GET_SIZE(output);
-    data = PyBytes_AS_STRING(output);
-    if ((size_t)size != strlen(data)) {
-        PyErr_SetString(PyExc_ValueError, "embedded null byte");
-        Py_DECREF(output);
-        return 0;
-    }
-    *(PyObject**)addr = output;
-    return Py_CLEANUP_SUPPORTED;
-}
-
-
-int
-PyUnicode_FSDecoder(PyObject* arg, void* addr)
-{
-    int is_buffer = 0;
-    PyObject *path = NULL;
-    PyObject *output = NULL;
-    if (arg == NULL) {
-        Py_DECREF(*(PyObject**)addr);
-        *(PyObject**)addr = NULL;
-        return 1;
-    }
-
-    is_buffer = PyObject_CheckBuffer(arg);
-    if (!is_buffer) {
-        path = PyOS_FSPath(arg);
-        if (path == NULL) {
-            return 0;
-        }
-    }
-    else {
-        path = arg;
-        Py_INCREF(arg);
-    }
-
-    if (PyUnicode_Check(path)) {
-        output = path;
-    }
-    else if (PyBytes_Check(path) || is_buffer) {
-        PyObject *path_bytes = NULL;
-        path_bytes = PyBytes_FromObject(path);
-        Py_DECREF(path);
-        if (!path_bytes) {
-            return 0;
-        }
-	output = PyUnicode_FromStringAndSize(PyBytes_AS_STRING(path_bytes),
-					     PyBytes_GET_SIZE(path_bytes));
-        Py_DECREF(path_bytes);
-        if (!output) {
-            return 0;
-        }
-    }
-    else {
-        PyErr_Format(PyExc_TypeError,
-                     "path should be string, bytes, or os.PathLike, not %.200s",
-                     Py_TYPE(arg)->tp_name);
-        Py_DECREF(path);
-        return 0;
-    }
-    if (findchar(PyUnicode_DATA(output), 
-                 PyUnicode_GET_LENGTH(output), 0, 1) >= 0) {
-        PyErr_SetString(PyExc_ValueError, "embedded null character");
-        Py_DECREF(output);
-        return 0;
-    }
-    *(PyObject**)addr = output;
-    return Py_CLEANUP_SUPPORTED;
 }
 
 const char *
@@ -4489,28 +4203,6 @@ unicode_count(PyObject *self, PyObject *args)
 
     result = PyLong_FromSsize_t(iresult);
     return result;
-}
-
-/*[clinic input]
-str.encode as unicode_encode
-
-    encoding: str(c_default="NULL") = 'utf-8'
-        The encoding in which to encode the string.
-    errors: str(c_default="NULL") = 'strict'
-        The error handling scheme to use for encoding errors.
-        The default is 'strict' meaning that encoding errors raise a
-        UnicodeEncodeError.  Other possible values are 'ignore', 'replace' and
-        'xmlcharrefreplace' as well as any other name registered with
-        codecs.register_error that can handle UnicodeEncodeErrors.
-
-Encode the string using the codec registered for encoding.
-[clinic start generated code]*/
-
-static PyObject *
-unicode_encode_impl(PyObject *self, const char *encoding, const char *errors)
-/*[clinic end generated code: output=bf78b6e2a9470e3c input=f0a9eb293d08fe02]*/
-{
-  return PyUnicode_AsBytes(self);
 }
 
 /*[clinic input]
@@ -6572,7 +6264,6 @@ unicode_getnewargs(PyObject *v, PyObject *Py_UNUSED(ignored))
 }
 
 static PyMethodDef unicode_methods[] = {
-    UNICODE_ENCODE_METHODDEF
     UNICODE_REPLACE_METHODDEF
     UNICODE_SPLIT_METHODDEF
     UNICODE_RSPLIT_METHODDEF
@@ -7660,10 +7351,14 @@ unicode_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         return NULL;
     if (x == NULL)
         _Py_RETURN_UNICODE_EMPTY();
+    #if 0
     if (encoding == NULL && errors == NULL)
+      #endif
         return PyObject_Str(x);
+    #if 0
     else
         return PyUnicode_FromEncodedObject(x, encoding, errors);
+    #endif
 }
 
 static PyObject *

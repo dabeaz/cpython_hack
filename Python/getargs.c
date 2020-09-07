@@ -920,7 +920,6 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
         }
         break;
     }
-
     case 's': /* text string or bytes-like object */
     case 'z': /* text string, bytes-like object or None */
     {
@@ -1231,7 +1230,6 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
         }
         break;
     }
-
 
     case 'w': { /* "w*": memory buffer, read-write access */
         void **p = va_arg(*p_va, void **);

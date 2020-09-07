@@ -468,13 +468,8 @@ verify_identifier(struct tok_state *tok)
     PyObject *s;
     s = PyUnicode_FromStringAndSize(tok->start, tok->cur - tok->start);
     if (s == NULL) {
-        if (PyErr_ExceptionMatches(PyExc_UnicodeDecodeError)) {
-            tok->done = E_DECODE;
-        }
-        else {
-            tok->done = E_ERROR;
-        }
-        return 0;
+      tok->done = E_ERROR;
+      return 0;
     }
     Py_ssize_t invalid = _PyUnicode_ScanIdentifier(s);
     if (invalid < 0) {

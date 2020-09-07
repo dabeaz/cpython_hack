@@ -508,19 +508,7 @@ sys_displayhook(PyObject *module, PyObject *o)
         return NULL;
     }
     if (PyFile_WriteObject(o, outf, 0) != 0) {
-        if (_PyErr_ExceptionMatches(tstate, PyExc_UnicodeEncodeError)) {
-            int err;
-            /* repr(o) is not encodable to sys.stdout.encoding with
-             * sys.stdout.errors error handler (which is probably 'strict') */
-            _PyErr_Clear(tstate);
-            err = sys_displayhook_unencodable(outf, o);
-            if (err) {
-                return NULL;
-            }
-        }
-        else {
-            return NULL;
-        }
+      return NULL;
     }
     if (newline == NULL) {
         newline = PyUnicode_FromString("\n");

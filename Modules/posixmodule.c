@@ -49,23 +49,11 @@ corresponding Unix manual entries for more information on calls.");
 #  include <dlfcn.h>
 #endif
 
-_Py_IDENTIFIER(__fspath__);
-
 /*[clinic input]
 # one of the few times we lie about this name!
 module os
 [clinic start generated code]*/
 /*[clinic end generated code: output=da39a3ee5e6b4b0d input=94a0f0f978acae17]*/
-
-#ifndef _MSC_VER
-
-#if defined(__sgi)&&_COMPILER_VERSION>=700
-/* declare ctermid_r if compiling with MIPSPro 7.x in ANSI C mode
-   (default) */
-extern char        *ctermid_r(char *);
-#endif
-
-#endif /* !_MSC_VER */
 
 #ifdef HAVE_POSIX_SPAWN
 #  include <spawn.h>
@@ -610,7 +598,7 @@ path_converter(PyObject *o, void *p)
     path_t *path = (path_t *)p;
     PyObject *bytes = NULL;
     Py_ssize_t length = 0;
-    int is_index, is_buffer, is_bytes, is_unicode;
+    int is_index, is_bytes, is_unicode;
     const char *narrow;
 
 #define FORMAT_EXCEPTION(exc, fmt) \
@@ -639,59 +627,15 @@ path_converter(PyObject *o, void *p)
     /* Only call this here so that we don't treat the return value of
        os.fspath() as an fd or buffer. */
     is_index = path->allow_fd && PyIndex_Check(o);
-    is_buffer = PyObject_CheckBuffer(o);
     is_bytes = PyBytes_Check(o);
     is_unicode = PyUnicode_Check(o);
-
-    if (!is_index && !is_buffer && !is_unicode && !is_bytes) {
-        /* Inline PyOS_FSPath() for better error messages. */
-        PyObject *func, *res;
-
-        func = _PyObject_LookupSpecial(o, &PyId___fspath__);
-        if (NULL == func) {
-            goto error_format;
-        }
-        res = _PyObject_CallNoArg(func);
-        Py_DECREF(func);
-        if (NULL == res) {
-            goto error_exit;
-        }
-        else if (PyUnicode_Check(res)) {
-            is_unicode = 1;
-        }
-        else if (PyBytes_Check(res)) {
-            is_bytes = 1;
-        }
-        else {
-            PyErr_Format(PyExc_TypeError,
-                 "expected %.200s.__fspath__() to return str or bytes, "
-                 "not %.200s", _PyType_Name(Py_TYPE(o)),
-                 _PyType_Name(Py_TYPE(res)));
-            Py_DECREF(res);
-            goto error_exit;
-        }
-
-        /* still owns a reference to the original object */
-        Py_DECREF(o);
-        o = res;
-    }
-
+    
     if (is_unicode) {
-        if (!PyUnicode_FSConverter(o, &bytes)) {
-            goto error_exit;
-        }
+      bytes = PyUnicode_AsBytes(o);
     }
     else if (is_bytes) {
         bytes = o;
         Py_INCREF(bytes);
-    }
-    else if (is_buffer) {
-        /* XXX Replace PyObject_CheckBuffer with PyBytes_Check in other code
-           after removing support of non-bytes buffer objects. */
-        bytes = PyBytes_FromObject(o);
-        if (!bytes) {
-            goto error_exit;
-        }
     }
     else if (is_index) {
         if (!_fd_converter(o, &path->fd)) {
@@ -701,7 +645,6 @@ path_converter(PyObject *o, void *p)
         goto success_exit;
     }
     else {
- error_format:
         PyErr_Format(PyExc_TypeError, "%s%s%s should be %s, not %.200s",
             path->function_name ? path->function_name : "",
             path->function_name ? ": "                : "",
@@ -1854,7 +1797,7 @@ _posix_listdir(path_t *path, PyObject *list)
         if (path->narrow) {
             name = path->narrow;
             /* only return bytes if they specified a bytes-like object */
-            return_str = !PyObject_CheckBuffer(path->object);
+            return_str = 1; // !PyObject_CheckBuffer(path->object);
         }
         else {
             name = ".";
@@ -2424,23 +2367,6 @@ os_read_impl(PyObject *module, int fd, Py_ssize_t length)
 
 
 /*[clinic input]
-os.write -> Py_ssize_t
-
-    fd: int
-    data: Py_buffer
-    /
-
-Write a bytes object to a file descriptor.
-[clinic start generated code]*/
-
-static Py_ssize_t
-os_write_impl(PyObject *module, int fd, Py_buffer *data)
-/*[clinic end generated code: output=e4ef5bc904b58ef9 input=3207e28963234f3c]*/
-{
-    return _Py_write(fd, data->buf, data->len);
-}
-
-/*[clinic input]
 os.fstat
 
     fd : int
@@ -2508,18 +2434,18 @@ static PyObject *
 os_putenv_impl(PyObject *module, PyObject *name, PyObject *value)
 /*[clinic end generated code: output=d29a567d6b2327d2 input=a97bc6152f688d31]*/
 {
-    const char *name_string = PyBytes_AS_STRING(name);
-    const char *value_string = PyBytes_AS_STRING(value);
+  const char *name_string = PyUnicode_AsChar(name);
+  const char *value_string = PyUnicode_AsChar(value);
 
-    if (strchr(name_string, '=') != NULL) {
-        PyErr_SetString(PyExc_ValueError, "illegal environment variable name");
-        return NULL;
-    }
+  if (strchr(name_string, '=') != NULL) {
+    PyErr_SetString(PyExc_ValueError, "illegal environment variable name");
+    return NULL;
+  }
 
-    if (setenv(name_string, value_string, 1)) {
-        return posix_error();
-    }
-    Py_RETURN_NONE;
+  if (setenv(name_string, value_string, 1)) {
+    return posix_error();
+  }
+  Py_RETURN_NONE;
 }
 /*[clinic input]
 os.unsetenv
@@ -2534,14 +2460,13 @@ os_unsetenv_impl(PyObject *module, PyObject *name)
 /*[clinic end generated code: output=54c4137ab1834f02 input=2bb5288a599c7107]*/
 {
 #ifdef HAVE_BROKEN_UNSETENV
-    unsetenv(PyBytes_AS_STRING(name));
+  unsetenv(PyUnicode_AsChar(name));
 #else
-    int err = unsetenv(PyBytes_AS_STRING(name));
+  int err = unsetenv(PyUnicode_AsChar(name));
     if (err) {
         return posix_error();
     }
 #endif
-
     Py_RETURN_NONE;
 }
 
@@ -3498,15 +3423,11 @@ PyDoc_STRVAR(os_write__doc__,
 #define OS_WRITE_METHODDEF    \
     {"write", (PyCFunction)(void(*)(void))os_write, METH_FASTCALL, os_write__doc__},
 
-static Py_ssize_t
-os_write_impl(PyObject *module, int fd, Py_buffer *data);
-
 static PyObject *
 os_write(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
 {
     PyObject *return_value = NULL;
     int fd;
-    Py_buffer data = {NULL, NULL};
     Py_ssize_t _return_value;
 
     if (!_PyArg_CheckPositional("write", nargs, 2, 2)) {
@@ -3516,25 +3437,18 @@ os_write(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
     if (fd == -1 && PyErr_Occurred()) {
         goto exit;
     }
-    if (PyObject_GetBuffer(args[1], &data, PyBUF_SIMPLE) != 0) {
-        goto exit;
+    if (!PyUnicode_Check(args[1])) {
+      _PyArg_BadArgument("write", "argument 2", "string", args[1]);
+      goto exit;
     }
-    if (!PyBuffer_IsContiguous(&data, 'C')) {
-        _PyArg_BadArgument("write", "argument 2", "contiguous buffer", args[1]);
-        goto exit;
-    }
-    _return_value = os_write_impl(module, fd, &data);
+
+    _return_value = _Py_write(fd, PyUnicode_AsChar(args[1]), PyUnicode_GET_SIZE(args[1]));
     if ((_return_value == -1) && PyErr_Occurred()) {
         goto exit;
     }
     return_value = PyLong_FromSsize_t(_return_value);
 
 exit:
-    /* Cleanup for data */
-    if (data.obj) {
-       PyBuffer_Release(&data);
-    }
-
     return return_value;
 }
 
@@ -3628,26 +3542,21 @@ static PyObject *
 os_putenv(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
 {
     PyObject *return_value = NULL;
-    PyObject *name = NULL;
-    PyObject *value = NULL;
 
     if (!_PyArg_CheckPositional("putenv", nargs, 2, 2)) {
         goto exit;
     }
-    if (!PyUnicode_FSConverter(args[0], &name)) {
-        goto exit;
+    if (!PyUnicode_Check(args[0])) {
+      _PyArg_BadArgument("putenv", "argument 1", "string", args[0]);
+      goto exit;
     }
-    if (!PyUnicode_FSConverter(args[1], &value)) {
-        goto exit;
+    if (!PyUnicode_Check(args[1])) {
+      _PyArg_BadArgument("putenv", "argument 2", "string", args[1]);
+      goto exit;
     }
-    return_value = os_putenv_impl(module, name, value);
+    return_value = os_putenv_impl(module, args[0], args[1]);
 
 exit:
-    /* Cleanup for name */
-    Py_XDECREF(name);
-    /* Cleanup for value */
-    Py_XDECREF(value);
-
     return return_value;
 }
 
@@ -3667,17 +3576,14 @@ static PyObject *
 os_unsetenv(PyObject *module, PyObject *arg)
 {
     PyObject *return_value = NULL;
-    PyObject *name = NULL;
-
-    if (!PyUnicode_FSConverter(arg, &name)) {
-        goto exit;
+    if (!PyUnicode_Check(arg)) {
+      _PyArg_BadArgument("unsetenv", "argument 1", "string", arg);
+      goto exit;
     }
-    return_value = os_unsetenv_impl(module, name);
+    return_value = os_unsetenv_impl(module, arg);
 
 exit:
     /* Cleanup for name */
-    Py_XDECREF(name);
-
     return return_value;
 }
 
@@ -3730,42 +3636,6 @@ os_abort(PyObject *module, PyObject *Py_UNUSED(ignored))
     return os_abort_impl(module);
 }
 
-PyDoc_STRVAR(os_fspath__doc__,
-"fspath($module, /, path)\n"
-"--\n"
-"\n"
-"Return the file system path representation of the object.\n"
-"\n"
-"If the object is str or bytes, then allow it to pass through as-is. If the\n"
-"object defines __fspath__(), then return the result of that method. All other\n"
-"types raise a TypeError.");
-
-#define OS_FSPATH_METHODDEF    \
-    {"fspath", (PyCFunction)(void(*)(void))os_fspath, METH_FASTCALL|METH_KEYWORDS, os_fspath__doc__},
-
-static PyObject *
-os_fspath_impl(PyObject *module, PyObject *path);
-
-static PyObject *
-os_fspath(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *kwnames)
-{
-    PyObject *return_value = NULL;
-    static const char * const _keywords[] = {"path", NULL};
-    static _PyArg_Parser _parser = {NULL, _keywords, "fspath", 0};
-    PyObject *argsbuf[1];
-    PyObject *path;
-
-    args = _PyArg_UnpackKeywords(args, nargs, NULL, kwnames, &_parser, 1, 1, 0, argsbuf);
-    if (!args) {
-        goto exit;
-    }
-    path = args[0];
-    return_value = os_fspath_impl(module, path);
-
-exit:
-    return return_value;
-}
-
 #ifndef OS_SYSTEM_METHODDEF
     #define OS_SYSTEM_METHODDEF
 #endif /* !defined(OS_SYSTEM_METHODDEF) */
@@ -3785,72 +3655,6 @@ exit:
 #ifndef OS_SET_HANDLE_INHERITABLE_METHODDEF
     #define OS_SET_HANDLE_INHERITABLE_METHODDEF
 #endif /* !defined(OS_SET_HANDLE_INHERITABLE_METHODDEF) */
-
-
-/*
-    Return the file system path representation of the object.
-
-    If the object is str or bytes, then allow it to pass through with
-    an incremented refcount. If the object defines __fspath__(), then
-    return the result of that method. All other types raise a TypeError.
-*/
-PyObject *
-PyOS_FSPath(PyObject *path)
-{
-    /* For error message reasons, this function is manually inlined in
-       path_converter(). */
-    PyObject *func = NULL;
-    PyObject *path_repr = NULL;
-
-    if (PyUnicode_Check(path) || PyBytes_Check(path)) {
-        Py_INCREF(path);
-        return path;
-    }
-
-    func = _PyObject_LookupSpecial(path, &PyId___fspath__);
-    if (NULL == func) {
-        return PyErr_Format(PyExc_TypeError,
-                            "expected str, bytes or os.PathLike object, "
-                            "not %.200s",
-                            _PyType_Name(Py_TYPE(path)));
-    }
-
-    path_repr = _PyObject_CallNoArg(func);
-    Py_DECREF(func);
-    if (NULL == path_repr) {
-        return NULL;
-    }
-
-    if (!(PyUnicode_Check(path_repr) || PyBytes_Check(path_repr))) {
-        PyErr_Format(PyExc_TypeError,
-                     "expected %.200s.__fspath__() to return str or bytes, "
-                     "not %.200s", _PyType_Name(Py_TYPE(path)),
-                     _PyType_Name(Py_TYPE(path_repr)));
-        Py_DECREF(path_repr);
-        return NULL;
-    }
-
-    return path_repr;
-}
-
-/*[clinic input]
-os.fspath
-
-    path: object
-
-Return the file system path representation of the object.
-
-If the object is str or bytes, then allow it to pass through as-is. If the
-object defines __fspath__(), then return the result of that method. All other
-types raise a TypeError.
-[clinic start generated code]*/
-
-static PyObject *
-os_fspath_impl(PyObject *module, PyObject *path)
-/*[clinic end generated code: output=c3c3b78ecff2914f input=e357165f7b22490f]*/
-{
-    return PyOS_FSPath(path);
-}
 
 static PyMethodDef posix_methods[] = {
 
@@ -3879,7 +3683,6 @@ static PyMethodDef posix_methods[] = {
     OS_UNSETENV_METHODDEF
     OS_STRERROR_METHODDEF
     OS_ABORT_METHODDEF
-    OS_FSPATH_METHODDEF
     {NULL,              NULL}            /* Sentinel */
 };
 

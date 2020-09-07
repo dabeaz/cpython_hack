@@ -116,7 +116,8 @@ _io_open_impl(PyObject *module, PyObject *file, const char *mode)
         path_or_fd = file;
         Py_INCREF(path_or_fd);
     } else {
-        path_or_fd = PyOS_FSPath(file);
+      path_or_fd = file;
+      Py_INCREF(path_or_fd);
         if (path_or_fd == NULL) {
             return NULL;
         }

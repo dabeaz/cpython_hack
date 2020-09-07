@@ -783,21 +783,14 @@ r_string(Py_ssize_t n, RFILE *p)
         read = fread(p->buf, 1, n, p->fp);
     }
     else {
-        _Py_IDENTIFIER(readinto);
-        PyObject *res, *mview;
-        Py_buffer buf;
-
-        if (PyBuffer_FillInfo(&buf, NULL, p->buf, n, 0, PyBUF_CONTIG) == -1)
-            return NULL;
-        mview = PyMemoryView_FromBuffer(&buf);
-        if (mview == NULL)
-            return NULL;
-
-        res = _PyObject_CallMethodId(p->readable, &PyId_readinto, "N", mview);
-        if (res != NULL) {
-            read = PyNumber_AsSsize_t(res, PyExc_ValueError);
-            Py_DECREF(res);
-        }
+        _Py_IDENTIFIER(read);
+        PyObject *res;
+	res = _PyObject_CallMethodId(p->readable, &PyId_read, "n", n);
+	if (res == NULL)
+	  return NULL;
+	read = PyUnicode_GET_SIZE(res);
+	memcpy(p->buf, PyUnicode_AsChar(res), read);
+	Py_DECREF(res);
     }
     if (read != n) {
         if (!PyErr_Occurred()) {

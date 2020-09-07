@@ -608,84 +608,6 @@ exit:
     return return_value;
 }
 
-PyDoc_STRVAR(bytes_decode__doc__,
-"decode($self, /, encoding=\'utf-8\', errors=\'strict\')\n"
-"--\n"
-"\n"
-"Decode the bytes using the codec registered for encoding.\n"
-"\n"
-"  encoding\n"
-"    The encoding with which to decode the bytes.\n"
-"  errors\n"
-"    The error handling scheme to use for the handling of decoding errors.\n"
-"    The default is \'strict\' meaning that decoding errors raise a\n"
-"    UnicodeDecodeError. Other possible values are \'ignore\' and \'replace\'\n"
-"    as well as any other name registered with codecs.register_error that\n"
-"    can handle UnicodeDecodeErrors.");
-
-#define BYTES_DECODE_METHODDEF    \
-    {"decode", (PyCFunction)(void(*)(void))bytes_decode, METH_FASTCALL|METH_KEYWORDS, bytes_decode__doc__},
-
-static PyObject *
-bytes_decode_impl(PyBytesObject *self, const char *encoding,
-                  const char *errors);
-
-static PyObject *
-bytes_decode(PyBytesObject *self, PyObject *const *args, Py_ssize_t nargs, PyObject *kwnames)
-{
-    PyObject *return_value = NULL;
-    static const char * const _keywords[] = {"encoding", "errors", NULL};
-    static _PyArg_Parser _parser = {NULL, _keywords, "decode", 0};
-    PyObject *argsbuf[2];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 0;
-    const char *encoding = NULL;
-    const char *errors = NULL;
-
-    args = _PyArg_UnpackKeywords(args, nargs, NULL, kwnames, &_parser, 0, 2, 0, argsbuf);
-    if (!args) {
-        goto exit;
-    }
-    if (!noptargs) {
-        goto skip_optional_pos;
-    }
-    if (args[0]) {
-        if (!PyUnicode_Check(args[0])) {
-            _PyArg_BadArgument("decode", "argument 'encoding'", "str", args[0]);
-            goto exit;
-        }
-        Py_ssize_t encoding_length;
-        encoding = PyUnicode_AsCharAndSize(args[0], &encoding_length);
-        if (encoding == NULL) {
-            goto exit;
-        }
-        if (strlen(encoding) != (size_t)encoding_length) {
-            PyErr_SetString(PyExc_ValueError, "embedded null character");
-            goto exit;
-        }
-        if (!--noptargs) {
-            goto skip_optional_pos;
-        }
-    }
-    if (!PyUnicode_Check(args[1])) {
-        _PyArg_BadArgument("decode", "argument 'errors'", "str", args[1]);
-        goto exit;
-    }
-    Py_ssize_t errors_length;
-    errors = PyUnicode_AsCharAndSize(args[1], &errors_length);
-    if (errors == NULL) {
-        goto exit;
-    }
-    if (strlen(errors) != (size_t)errors_length) {
-        PyErr_SetString(PyExc_ValueError, "embedded null character");
-        goto exit;
-    }
-skip_optional_pos:
-    return_value = bytes_decode_impl(self, encoding, errors);
-
-exit:
-    return return_value;
-}
-
 PyDoc_STRVAR(bytes_splitlines__doc__,
 "splitlines($self, /, keepends=False)\n"
 "--\n"
@@ -1264,8 +1186,6 @@ byte_converter(PyObject *arg, char *p)
     return 0;
 }
 
-static PyObject *_PyBytes_FromBuffer(PyObject *x);
-
 static PyObject *
 format_obj(PyObject *v, const char **pbuf, Py_ssize_t *plen)
 {
@@ -1291,16 +1211,6 @@ format_obj(PyObject *v, const char **pbuf, Py_ssize_t *plen)
             Py_DECREF(result);
             return NULL;
         }
-        *pbuf = PyBytes_AS_STRING(result);
-        *plen = PyBytes_GET_SIZE(result);
-        return result;
-    }
-    /* does it support buffer protocol? */
-    if (PyObject_CheckBuffer(v)) {
-        /* maybe we can avoid making a copy of the buffer object here? */
-        result = _PyBytes_FromBuffer(v);
-        if (result == NULL)
-            return NULL;
         *pbuf = PyBytes_AS_STRING(result);
         *plen = PyBytes_GET_SIZE(result);
         return result;
@@ -2963,30 +2873,6 @@ bytes_endswith(PyBytesObject *self, PyObject *args)
 
 
 /*[clinic input]
-bytes.decode
-
-    encoding: str(c_default="NULL") = 'utf-8'
-        The encoding with which to decode the bytes.
-    errors: str(c_default="NULL") = 'strict'
-        The error handling scheme to use for the handling of decoding errors.
-        The default is 'strict' meaning that decoding errors raise a
-        UnicodeDecodeError. Other possible values are 'ignore' and 'replace'
-        as well as any other name registered with codecs.register_error that
-        can handle UnicodeDecodeErrors.
-
-Decode the bytes using the codec registered for encoding.
-[clinic start generated code]*/
-
-static PyObject *
-bytes_decode_impl(PyBytesObject *self, const char *encoding,
-                  const char *errors)
-/*[clinic end generated code: output=5649a53dde27b314 input=958174769d2a40ca]*/
-{
-    return PyUnicode_FromEncodedObject((PyObject*)self, encoding, errors);
-}
-
-
-/*[clinic input]
 bytes.splitlines
 
     keepends: bool(accept={int}) = False
@@ -3104,7 +2990,6 @@ bytes_methods[] = {
     STRINGLIB_CENTER_METHODDEF
     {"count", (PyCFunction)bytes_count, METH_VARARGS,
      _Py_count__doc__},
-    BYTES_DECODE_METHODDEF
     {"endswith", (PyCFunction)bytes_endswith, METH_VARARGS,
      _Py_endswith__doc__},
     STRINGLIB_EXPANDTABS_METHODDEF
@@ -3276,30 +3161,6 @@ bytes_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 }
 
 static PyObject*
-_PyBytes_FromBuffer(PyObject *x)
-{
-    PyObject *new;
-    Py_buffer view;
-
-    if (PyObject_GetBuffer(x, &view, PyBUF_FULL_RO) < 0)
-        return NULL;
-
-    new = PyBytes_FromStringAndSize(NULL, view.len);
-    if (!new)
-        goto fail;
-    if (PyBuffer_ToContiguous(((PyBytesObject *)new)->ob_sval,
-                &view, view.len, 'C') < 0)
-        goto fail;
-    PyBuffer_Release(&view);
-    return new;
-
-fail:
-    Py_XDECREF(new);
-    PyBuffer_Release(&view);
-    return NULL;
-}
-
-static PyObject*
 _PyBytes_FromList(PyObject *x)
 {
     Py_ssize_t i, size = PyList_GET_SIZE(x);
@@ -3454,11 +3315,7 @@ PyBytes_FromObject(PyObject *x)
         Py_INCREF(x);
         return x;
     }
-
-    /* Use the modern buffer interface */
-    if (PyObject_CheckBuffer(x))
-        return _PyBytes_FromBuffer(x);
-
+    
     if (PyList_CheckExact(x))
         return _PyBytes_FromList(x);
 

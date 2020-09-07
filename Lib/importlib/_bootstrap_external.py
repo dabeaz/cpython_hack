@@ -203,8 +203,8 @@ def spec_from_file_location(name, location=None, *, loader=None,
                 location = loader.get_filename(name)
             except ImportError:
                 pass
-    else:
-        location = _os.fspath(location)
+#    else:
+#        location = _os.fspath(location)
 
     # If the location is on the filesystem, but doesn't actually exist,
     # we could return None here, indicating that the location is not

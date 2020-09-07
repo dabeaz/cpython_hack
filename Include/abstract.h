@@ -1047,7 +1047,7 @@ PyAPI_FUNC(int) _PyObject_HasLen(PyObject *o);
 PyAPI_FUNC(Py_ssize_t) PyObject_LengthHint(PyObject *o, Py_ssize_t);
 
 /* === New Buffer API ============================================ */
-
+#if 1
 /* Return 1 if the getbuffer function is available, otherwise return 0. */
 PyAPI_FUNC(int) PyObject_CheckBuffer(PyObject *obj);
 
@@ -1113,6 +1113,8 @@ PyAPI_FUNC(int) PyBuffer_FillInfo(Py_buffer *view, PyObject *o, void *buf,
 
 /* Releases a Py_buffer obtained from getbuffer ParseTuple's "s*". */
 PyAPI_FUNC(void) PyBuffer_Release(Py_buffer *view);
+
+#endif
 
 /* ==== Iterators ================================================ */
 

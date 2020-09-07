@@ -288,18 +288,6 @@ PyAPI_FUNC(PyObject*) PyUnicode_DecodeUTF8Stateful(
 
 PyAPI_FUNC(PyObject*) PyUnicode_AsBytes(PyObject *unicode);
 
-/* --- File system encoding ---------------------------------------------- */
-
-/* ParseTuple converter: encode str objects to bytes using
-   PyUnicode_EncodeFSDefault(); bytes objects are output as-is. */
-
-PyAPI_FUNC(int) PyUnicode_FSConverter(PyObject*, void*);
-
-/* ParseTuple converter: decode bytes objects to unicode using
-   PyUnicode_DecodeFSDefaultAndSize(); str objects are output as-is. */
-
-PyAPI_FUNC(int) PyUnicode_FSDecoder(PyObject*, void*);
-
 /* --- Methods & Slots ----------------------------------------------------
 
    These are capable of handling Unicode objects and strings on input

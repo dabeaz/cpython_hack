@@ -244,10 +244,7 @@ _io_FileIO___init___impl(fileio *self, PyObject *nameobj, const char *mode,
     }
 
     if (fd < 0) {
-        if (!PyUnicode_FSConverter(nameobj, &stringobj)) {
-            return -1;
-        }
-        name = PyBytes_AS_STRING(stringobj);
+        name = PyUnicode_AsChar(nameobj);
     }
 
     s = mode;

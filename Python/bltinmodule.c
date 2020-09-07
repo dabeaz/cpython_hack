@@ -214,9 +214,9 @@ builtin_compile(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObj
         goto exit;
     }
     source = args[0];
-    if (!PyUnicode_FSDecoder(args[1], &filename)) {
-        goto exit;
-    }
+    filename = args[1];
+    Py_INCREF(filename);
+    
     if (!PyUnicode_Check(args[2])) {
         _PyArg_BadArgument("compile", "argument 'mode'", "str", args[2]);
         goto exit;
@@ -3563,7 +3563,6 @@ _PyBuiltin_Init(PyThreadState *tstate)
     SETBUILTIN("False",                 Py_False);
     SETBUILTIN("True",                  Py_True);
     SETBUILTIN("bool",                  &PyBool_Type);
-    SETBUILTIN("memoryview",        &PyMemoryView_Type);
     SETBUILTIN("bytes",                 &PyBytes_Type);
     SETBUILTIN("classmethod",           &PyClassMethod_Type);
     SETBUILTIN("dict",                  &PyDict_Type);

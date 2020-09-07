@@ -42,7 +42,6 @@
 #include "boolobject.h"
 #include "floatobject.h"
 #include "rangeobject.h"
-#include "memoryobject.h"
 #include "tupleobject.h"
 #include "listobject.h"
 #include "dictobject.h"
@@ -64,7 +63,6 @@
 #include "descrobject.h"
 #include "weakrefobject.h"
 #include "structseq.h"
-// #include "codecs.h"
 #include "pyerrors.h"
 #include "initconfig.h"
 #include "pystate.h"
@@ -83,6 +81,5 @@
 #include "pystrtod.h"
 #include "pystrcmp.h"
 #include "fileutils.h"
-// #include "tracemalloc.h"
 
 #endif /* !Py_PYTHON_H */

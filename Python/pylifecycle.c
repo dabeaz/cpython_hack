@@ -752,7 +752,6 @@ _Py_InitializeMain(void)
     if (_PyStatus_EXCEPTION(status)) {
         return status;
     }
-    _PyRuntimeState *runtime = &_PyRuntime;
     PyThreadState *tstate = PyThreadState_Get();
     return pyinit_main(tstate);
 }
@@ -1095,9 +1094,8 @@ create_stdio(const PyConfig *config, PyObject* io,
     int fd, int write_mode, const char* name,
     const char* encoding, const char* errors)
 {
-    PyObject *buf = NULL, *stream = NULL, *text = NULL, *raw = NULL, *res;
+    PyObject *text = NULL, *raw = NULL, *res;
     const char* mode;
-    PyObject *line_buffering, *write_through;
     int buffering, isatty;
     _Py_IDENTIFIER(open);
     _Py_IDENTIFIER(isatty);

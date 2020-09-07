@@ -469,7 +469,6 @@ PyFloat_FromString(PyObject *v)
     const char *s;
     PyObject *s_buffer = NULL;
     Py_ssize_t len;
-    Py_buffer view = {NULL, NULL};
     PyObject *result = NULL;
 
     if (PyUnicode_Check(v)) {
@@ -485,17 +484,6 @@ PyFloat_FromString(PyObject *v)
         s = PyBytes_AS_STRING(v);
         len = PyBytes_GET_SIZE(v);
     }
-    else if (PyObject_GetBuffer(v, &view, PyBUF_SIMPLE) == 0) {
-        s = (const char *)view.buf;
-        len = view.len;
-        /* Copy to NUL-terminated buffer. */
-        s_buffer = PyBytes_FromStringAndSize(s, len);
-        if (s_buffer == NULL) {
-            PyBuffer_Release(&view);
-            return NULL;
-        }
-        s = PyBytes_AS_STRING(s_buffer);
-    }
     else {
         PyErr_Format(PyExc_TypeError,
             "float() argument must be a string or a number, not '%.200s'",
@@ -504,7 +492,6 @@ PyFloat_FromString(PyObject *v)
     }
     result = _Py_string_to_number_with_underscores(s, len, "float", v, v,
                                                    float_from_string_inner);
-    PyBuffer_Release(&view);
     Py_XDECREF(s_buffer);
     return result;
 }

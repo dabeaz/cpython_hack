@@ -144,10 +144,7 @@ raise_decode_error(Parser *p)
 {
     assert(PyErr_Occurred());
     const char *errtype = NULL;
-    if (PyErr_ExceptionMatches(PyExc_UnicodeError)) {
-        errtype = "unicode error";
-    }
-    else if (PyErr_ExceptionMatches(PyExc_ValueError)) {
+    if (PyErr_ExceptionMatches(PyExc_ValueError)) {
         errtype = "value error";
     }
     if (errtype) {
@@ -174,8 +171,7 @@ static void
 raise_tokenizer_init_error(PyObject *filename)
 {
     if (!(PyErr_ExceptionMatches(PyExc_LookupError)
-          || PyErr_ExceptionMatches(PyExc_ValueError)
-          || PyErr_ExceptionMatches(PyExc_UnicodeDecodeError))) {
+          || PyErr_ExceptionMatches(PyExc_ValueError))) {
         return;
     }
     PyObject *errstr = NULL;
