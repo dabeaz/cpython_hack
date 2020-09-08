@@ -104,21 +104,9 @@ int
 _Py_stat(PyObject *path, struct stat *statbuf)
 {
     int ret;
-    PyObject *bytes;
     char *cpath;
-
-    bytes = PyUnicode_AsBytes(path);
-    if (bytes == NULL)
-        return -2;
-
-    /* check for embedded null bytes */
-    if (PyBytes_AsStringAndSize(bytes, &cpath, NULL) == -1) {
-        Py_DECREF(bytes);
-        return -2;
-    }
-
+    cpath = (char *) PyUnicode_AsChar(path);
     ret = stat(cpath, statbuf);
-    Py_DECREF(bytes);
     return ret;
 }
 

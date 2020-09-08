@@ -1852,7 +1852,6 @@ static int
 long_to_decimal_string_internal(PyObject *aa,
                                 PyObject **p_output,
                                 _PyUnicodeWriter *writer,
-                                _PyBytesWriter *bytes_writer,
                                 char **bytes_str)
 {
     PyLongObject *scratch, *a;
@@ -1935,13 +1934,6 @@ long_to_decimal_string_internal(PyObject *aa,
             return -1;
         }
     }
-    else if (bytes_writer) {
-        *bytes_str = _PyBytesWriter_Prepare(bytes_writer, *bytes_str, strlen);
-        if (*bytes_str == NULL) {
-            Py_DECREF(scratch);
-            return -1;
-        }
-    }
     else {
       str = PyUnicode_New(strlen);
         if (str == NULL) {
@@ -1989,12 +1981,6 @@ long_to_decimal_string_internal(PyObject *aa,
             assert(p == (TYPE*)PyUnicode_DATA(str));                  \
     } while (0)
 
-    /* fill the string right-to-left */
-    if (bytes_writer) {
-        char *p = *bytes_str + strlen;
-        WRITE_DIGITS(p);
-        assert(p == *bytes_str);
-    }
     {
         Py_UCS1 *p;
         WRITE_UNICODE_DIGITS(Py_UCS1);
@@ -2007,9 +1993,6 @@ long_to_decimal_string_internal(PyObject *aa,
     if (writer) {
         writer->pos += strlen;
     }
-    else if (bytes_writer) {
-        (*bytes_str) += strlen;
-    }
     else {
         assert(_PyUnicode_CheckConsistency(str, 1));
         *p_output = (PyObject *)str;
@@ -2021,7 +2004,7 @@ static PyObject *
 long_to_decimal_string(PyObject *aa)
 {
     PyObject *v;
-    if (long_to_decimal_string_internal(aa, &v, NULL, NULL, NULL) == -1)
+    if (long_to_decimal_string_internal(aa, &v, NULL, NULL) == -1)
         return NULL;
     return v;
 }
@@ -2034,7 +2017,7 @@ long_to_decimal_string(PyObject *aa)
 static int
 long_format_binary(PyObject *aa, int base, int alternate,
                    PyObject **p_output, _PyUnicodeWriter *writer,
-                   _PyBytesWriter *bytes_writer, char **bytes_str)
+                   char **bytes_str)
 {
     PyLongObject *a = (PyLongObject *)aa;
     PyObject *v = NULL;
@@ -2092,11 +2075,7 @@ long_format_binary(PyObject *aa, int base, int alternate,
         if (_PyUnicodeWriter_Prepare(writer, sz) == -1)
             return -1;
     }
-    else if (bytes_writer) {
-        *bytes_str = _PyBytesWriter_Prepare(bytes_writer, *bytes_str, sz);
-        if (*bytes_str == NULL)
-            return -1;
-    }
+    
     else {
       v = PyUnicode_New(sz);
         if (v == NULL)
@@ -2155,12 +2134,6 @@ long_format_binary(PyObject *aa, int base, int alternate,
         else                                                            \
             assert(p == (TYPE*)PyUnicode_DATA(v));                      \
     } while (0)
-
-    if (bytes_writer) {
-        char *p = *bytes_str + sz;
-        WRITE_DIGITS(p);
-        assert(p == *bytes_str);
-    }
     {
         Py_UCS1 *p;
         WRITE_UNICODE_DIGITS(Py_UCS1);
@@ -2170,9 +2143,6 @@ long_format_binary(PyObject *aa, int base, int alternate,
 
     if (writer) {
         writer->pos += sz;
-    }
-    else if (bytes_writer) {
-        (*bytes_str) += sz;
     }
     else {
         assert(_PyUnicode_CheckConsistency(v, 1));
@@ -2187,9 +2157,9 @@ _PyLong_Format(PyObject *obj, int base)
     PyObject *str;
     int err;
     if (base == 10)
-        err = long_to_decimal_string_internal(obj, &str, NULL, NULL, NULL);
+        err = long_to_decimal_string_internal(obj, &str, NULL, NULL);
     else
-        err = long_format_binary(obj, base, 1, &str, NULL, NULL, NULL);
+        err = long_format_binary(obj, base, 1, &str, NULL, NULL);
     if (err == -1)
         return NULL;
     return str;
@@ -2202,30 +2172,10 @@ _PyLong_FormatWriter(_PyUnicodeWriter *writer,
 {
     if (base == 10)
         return long_to_decimal_string_internal(obj, NULL, writer,
-                                               NULL, NULL);
+                                               NULL);
     else
         return long_format_binary(obj, base, alternate, NULL, writer,
-                                  NULL, NULL);
-}
-
-char*
-_PyLong_FormatBytesWriter(_PyBytesWriter *writer, char *str,
-                          PyObject *obj,
-                          int base, int alternate)
-{
-    char *str2;
-    int res;
-    str2 = str;
-    if (base == 10)
-        res = long_to_decimal_string_internal(obj, NULL, NULL,
-                                              writer, &str2);
-    else
-        res = long_format_binary(obj, base, alternate, NULL, NULL,
-                                 writer, &str2);
-    if (res < 0)
-        return NULL;
-    assert(str2 != NULL);
-    return str2;
+                                  NULL);
 }
 
 /* Table of digit values for 8-bit string -> integer conversion.
@@ -2711,31 +2661,6 @@ digit beyond the first.
                  "invalid literal for int() with base %d: %.200R",
                  base, strobj);
     Py_DECREF(strobj);
-    return NULL;
-}
-
-/* Since PyLong_FromString doesn't have a length parameter,
- * check here for possible NULs in the string.
- *
- * Reports an invalid literal as a bytes object.
- */
-PyObject *
-_PyLong_FromBytes(const char *s, Py_ssize_t len, int base)
-{
-    PyObject *result, *strobj;
-    char *end = NULL;
-
-    result = PyLong_FromString(s, &end, base);
-    if (end == NULL || (result != NULL && end == s + len))
-        return result;
-    Py_XDECREF(result);
-    strobj = PyBytes_FromStringAndSize(s, Py_MIN(len, 200));
-    if (strobj != NULL) {
-        PyErr_Format(PyExc_ValueError,
-                     "invalid literal for int() with base %d: %.200R",
-                     base, strobj);
-        Py_DECREF(strobj);
-    }
     return NULL;
 }
 
@@ -5196,11 +5121,6 @@ long_new_impl(PyTypeObject *type, PyObject *x, PyObject *obase)
 
     if (PyUnicode_Check(x))
         return PyLong_FromUnicodeObject(x, (int)base);
-    else if (PyBytes_Check(x)) {
-        const char *string;
-	string = PyBytes_AS_STRING(x);
-        return _PyLong_FromBytes(string, Py_SIZE(x), (int)base);
-    }
     else {
         PyErr_SetString(PyExc_TypeError,
                         "int() can't convert non-string with explicit base");
@@ -5661,17 +5581,16 @@ int_to_bytes_impl(PyObject *self, Py_ssize_t length, PyObject *byteorder,
         return NULL;
     }
 
-    bytes = PyBytes_FromStringAndSize(NULL, length);
+    bytes = PyUnicode_FromStringAndSize(NULL, length);
     if (bytes == NULL)
         return NULL;
 
     if (_PyLong_AsByteArray((PyLongObject *)self,
-                            (unsigned char *)PyBytes_AS_STRING(bytes),
+                            (unsigned char *)PyUnicode_AsChar(bytes),
                             length, little_endian, is_signed) < 0) {
         Py_DECREF(bytes);
         return NULL;
     }
-
     return bytes;
 }
 
@@ -5703,7 +5622,7 @@ int_from_bytes_impl(PyTypeObject *type, PyObject *bytes_obj,
 /*[clinic end generated code: output=efc5d68e31f9314f input=cdf98332b6a821b0]*/
 {
     int little_endian;
-    PyObject *long_obj, *bytes;
+    PyObject *long_obj;
 
     if (_PyUnicode_EqualToASCIIId(byteorder, &PyId_little))
         little_endian = 1;
@@ -5714,16 +5633,10 @@ int_from_bytes_impl(PyTypeObject *type, PyObject *bytes_obj,
             "byteorder must be either 'little' or 'big'");
         return NULL;
     }
-
-    bytes = PyObject_Bytes(bytes_obj);
-    if (bytes == NULL)
-        return NULL;
-
     long_obj = _PyLong_FromByteArray(
-        (unsigned char *)PyBytes_AS_STRING(bytes), Py_SIZE(bytes),
-        little_endian, is_signed);
-    Py_DECREF(bytes);
-
+				     (unsigned char *)PyUnicode_AsChar(bytes_obj),
+				     PyUnicode_GET_SIZE(bytes_obj),
+				     little_endian, is_signed);
     if (long_obj != NULL && type != &PyLong_Type) {
         Py_SETREF(long_obj, PyObject_CallOneArg((PyObject *)type, long_obj));
     }

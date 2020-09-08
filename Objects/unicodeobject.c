@@ -41,7 +41,6 @@ OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
 #include "pycore_abstract.h"       // _PyIndex_Check()
-#include "pycore_bytes_methods.h"
 #include "pycore_fileutils.h"
 #include "pycore_initconfig.h"
 #include "pycore_interp.h"         // PyInterpreterState.fs_codec
@@ -2619,6 +2618,7 @@ PyUnicode_GetDefaultEncoding(void)
 
 /* --- Latin-1 Codec ------------------------------------------------------ */
 
+#if 0
 PyObject *
 PyUnicode_AsBytes(PyObject *unicode)
 {
@@ -2629,6 +2629,7 @@ PyUnicode_AsBytes(PyObject *unicode)
     return PyBytes_FromStringAndSize(PyUnicode_DATA(unicode),
 				     PyUnicode_GET_LENGTH(unicode));
 }
+#endif
 
 /* --- 7-bit ASCII Codec -------------------------------------------------- */
 PyObject *
@@ -6586,14 +6587,14 @@ _PyUnicode_FormatLong(PyObject *val, int alt, int prec, int type)
 
     /* Fill with leading zeroes to meet minimum width. */
     if (prec > numdigits) {
-        PyObject *r1 = PyBytes_FromStringAndSize(NULL,
+        PyObject *r1 = PyUnicode_FromStringAndSize(NULL,
                                 numnondigits + prec);
         char *b1;
         if (!r1) {
             Py_DECREF(result);
             return NULL;
         }
-        b1 = PyBytes_AS_STRING(r1);
+        b1 = (char *) PyUnicode_AsChar(r1);
         for (i = 0; i < numnondigits; ++i)
             *b1++ = *buf++;
         for (i = 0; i < prec - numdigits; i++)
@@ -6603,7 +6604,7 @@ _PyUnicode_FormatLong(PyObject *val, int alt, int prec, int type)
         *b1 = '\0';
         Py_DECREF(result);
         result = r1;
-        buf = PyBytes_AS_STRING(result);
+        buf = (char *) PyUnicode_AsChar(result);
         len = numnondigits + prec;
     }
 
@@ -7771,6 +7772,125 @@ PyInit__string(void)
     return PyModule_Create(&_string_module);
 }
 
+
+/* Unescape a backslash-escaped string. */
+PyObject *_PyBytes_DecodeEscape(const char *s,
+                                Py_ssize_t len,
+                                const char *errors,
+                                const char **first_invalid_escape)
+{
+    int c;
+    char *p;
+    const char *end;
+    PyObject *temp;
+    temp = PyUnicode_New(len);
+    p = (char *) PyUnicode_AsChar(temp);
+
+    *first_invalid_escape = NULL;
+
+    end = s + len;
+    while (s < end) {
+        if (*s != '\\') {
+            *p++ = *s++;
+            continue;
+        }
+
+        s++;
+        if (s == end) {
+            PyErr_SetString(PyExc_ValueError,
+                            "Trailing \\ in string");
+            goto failed;
+        }
+
+        switch (*s++) {
+        /* XXX This assumes ASCII! */
+        case '\n': break;
+        case '\\': *p++ = '\\'; break;
+        case '\'': *p++ = '\''; break;
+        case '\"': *p++ = '\"'; break;
+        case 'b': *p++ = '\b'; break;
+        case 'f': *p++ = '\014'; break; /* FF */
+        case 't': *p++ = '\t'; break;
+        case 'n': *p++ = '\n'; break;
+        case 'r': *p++ = '\r'; break;
+        case 'v': *p++ = '\013'; break; /* VT */
+        case 'a': *p++ = '\007'; break; /* BEL, not classic C */
+        case '0': case '1': case '2': case '3':
+        case '4': case '5': case '6': case '7':
+            c = s[-1] - '0';
+            if (s < end && '0' <= *s && *s <= '7') {
+                c = (c<<3) + *s++ - '0';
+                if (s < end && '0' <= *s && *s <= '7')
+                    c = (c<<3) + *s++ - '0';
+            }
+            *p++ = c;
+            break;
+        case 'x':
+            if (s+1 < end) {
+                int digit1, digit2;
+                digit1 = _PyLong_DigitValue[Py_CHARMASK(s[0])];
+                digit2 = _PyLong_DigitValue[Py_CHARMASK(s[1])];
+                if (digit1 < 16 && digit2 < 16) {
+                    *p++ = (unsigned char)((digit1 << 4) + digit2);
+                    s += 2;
+                    break;
+                }
+            }
+            /* invalid hexadecimal digits */
+
+            if (!errors || strcmp(errors, "strict") == 0) {
+                PyErr_Format(PyExc_ValueError,
+                             "invalid \\x escape at position %zd",
+                             s - 2 - (end - len));
+                goto failed;
+            }
+            if (strcmp(errors, "replace") == 0) {
+                *p++ = '?';
+            } else if (strcmp(errors, "ignore") == 0)
+                /* do nothing */;
+            else {
+                PyErr_Format(PyExc_ValueError,
+                             "decoding error; unknown "
+                             "error handling code: %.400s",
+                             errors);
+                goto failed;
+            }
+            /* skip \x */
+            if (s < end && Py_ISXDIGIT(s[0]))
+                s++; /* and a hexdigit */
+            break;
+
+        default:
+            if (*first_invalid_escape == NULL) {
+                *first_invalid_escape = s-1; /* Back up one char, since we've
+                                                already incremented s. */
+            }
+            *p++ = '\\';
+            s--;
+        }
+    }
+    PyUnicode_Resize(&temp, (p - PyUnicode_AsChar(temp)));
+    return temp;
+
+  failed:
+    Py_DECREF(temp);
+    return NULL;
+}
+
+PyObject *PyBytes_DecodeEscape(const char *s,
+                                Py_ssize_t len,
+                                const char *errors,
+                                Py_ssize_t Py_UNUSED(unicode),
+                                const char *Py_UNUSED(recode_encoding))
+{
+    const char* first_invalid_escape;
+    PyObject *result = _PyBytes_DecodeEscape(s, len, errors,
+                                             &first_invalid_escape);
+    if (result == NULL)
+        return NULL;
+    return result;
+
+}
 
 #ifdef __cplusplus
 }

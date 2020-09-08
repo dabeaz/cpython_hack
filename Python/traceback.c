@@ -20,7 +20,6 @@ PyAPI_DATA(const char *) Py_hexdigits;
 #define MAX_FRAME_DEPTH 100
 #define MAX_NTHREADS 100
 
-_Py_IDENTIFIER(TextIOWrapper);
 _Py_IDENTIFIER(close);
 _Py_IDENTIFIER(open);
 _Py_IDENTIFIER(path);
@@ -352,18 +351,12 @@ _Py_FindSourceFile(PyObject *filename, char* namebuf, size_t namelen, PyObject *
     PyObject *syspath;
     PyObject *path;
     const char* tail;
-    PyObject *filebytes;
     const char* filepath;
     Py_ssize_t len;
     PyObject* result;
 
-    filebytes = PyUnicode_AsBytes(filename);
-    if (filebytes == NULL) {
-        PyErr_Clear();
-        return NULL;
-    }
-    filepath = PyBytes_AS_STRING(filebytes);
-
+    filepath = PyUnicode_AsChar(filename);
+    
     /* Search tail of filename in sys.path before giving up */
     tail = strrchr(filepath, SEP);
     if (tail == NULL)
@@ -385,18 +378,12 @@ _Py_FindSourceFile(PyObject *filename, char* namebuf, size_t namelen, PyObject *
         }
         if (!PyUnicode_Check(v))
             continue;
-        path = PyUnicode_AsBytes(v);
-        if (path == NULL) {
-            PyErr_Clear();
-            continue;
-        }
-        len = PyBytes_GET_SIZE(path);
+        path = v;
+        len = PyUnicode_GET_SIZE(path);
         if (len + 1 + (Py_ssize_t)taillen >= (Py_ssize_t)namelen - 1) {
-            Py_DECREF(path);
             continue; /* Too long */
         }
-        strcpy(namebuf, PyBytes_AS_STRING(path));
-        Py_DECREF(path);
+        strcpy(namebuf, PyUnicode_AsChar(path));
         if (strlen(namebuf) != (size_t)len)
             continue; /* v contains '\0' */
         if (len > 0 && namebuf[len-1] != SEP)
@@ -415,7 +402,6 @@ _Py_FindSourceFile(PyObject *filename, char* namebuf, size_t namelen, PyObject *
 error:
     result = NULL;
 finally:
-    Py_DECREF(filebytes);
     return result;
 }
 
@@ -423,11 +409,9 @@ int
 _Py_DisplaySourceLine(PyObject *f, PyObject *filename, int lineno, int indent)
 {
     int err = 0;
-    int fd;
     int i;
     PyObject *io;
     PyObject *binary;
-    PyObject *fob = NULL;
     PyObject *lineobj = NULL;
     PyObject *res;
     char buf[MAXPATHLEN+1];
@@ -451,52 +435,23 @@ _Py_DisplaySourceLine(PyObject *f, PyObject *filename, int lineno, int indent)
             return -1;
         }
     }
-
-    /* use the right encoding to decode the file as unicode */
-    fd = PyObject_AsFileDescriptor(binary);
-    if (fd < 0) {
-        Py_DECREF(io);
-        Py_DECREF(binary);
-        return 0;
-    }
-    /* Reset position */
-    if (lseek(fd, 0, SEEK_SET) == (off_t)-1) {
-        Py_DECREF(io);
-        Py_DECREF(binary);
-        return 0;
-    }
-    fob = _PyObject_CallMethodId(io, &PyId_TextIOWrapper, "Os", binary, "utf-8");
-    Py_DECREF(io);
-
-    if (fob == NULL) {
-        PyErr_Clear();
-
-        res = _PyObject_CallMethodIdNoArgs(binary, &PyId_close);
-        Py_DECREF(binary);
-        if (res)
-            Py_DECREF(res);
-        else
-            PyErr_Clear();
-        return 0;
-    }
-    Py_DECREF(binary);
-
+    
     /* get the line number lineno */
     for (i = 0; i < lineno; i++) {
         Py_XDECREF(lineobj);
-        lineobj = PyFile_GetLine(fob, -1);
+        lineobj = PyFile_GetLine(binary, -1);
         if (!lineobj) {
             PyErr_Clear();
             err = -1;
             break;
         }
     }
-    res = _PyObject_CallMethodIdNoArgs(fob, &PyId_close);
+    res = _PyObject_CallMethodIdNoArgs(binary, &PyId_close);
     if (res)
         Py_DECREF(res);
     else
         PyErr_Clear();
-    Py_DECREF(fob);
+    Py_DECREF(binary);
     if (!lineobj || !PyUnicode_Check(lineobj)) {
         Py_XDECREF(lineobj);
         return err;

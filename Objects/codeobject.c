@@ -30,11 +30,11 @@ static PyObject *
 code_replace_impl(PyCodeObject *self, int co_argcount,
                   int co_posonlyargcount, int co_kwonlyargcount,
                   int co_nlocals, int co_stacksize, int co_flags,
-                  int co_firstlineno, PyBytesObject *co_code,
+                  int co_firstlineno, PyObject *co_code,
                   PyObject *co_consts, PyObject *co_names,
                   PyObject *co_varnames, PyObject *co_freevars,
                   PyObject *co_cellvars, PyObject *co_filename,
-                  PyObject *co_name, PyBytesObject *co_lnotab);
+                  PyObject *co_name, PyObject *co_lnotab);
 
 static PyObject *
 code_replace(PyCodeObject *self, PyObject *const *args, Py_ssize_t nargs, PyObject *kwnames)
@@ -51,7 +51,7 @@ code_replace(PyCodeObject *self, PyObject *const *args, Py_ssize_t nargs, PyObje
     int co_stacksize = self->co_stacksize;
     int co_flags = self->co_flags;
     int co_firstlineno = self->co_firstlineno;
-    PyBytesObject *co_code = (PyBytesObject *)self->co_code;
+    PyObject *co_code = (PyObject *)self->co_code;
     PyObject *co_consts = self->co_consts;
     PyObject *co_names = self->co_names;
     PyObject *co_varnames = self->co_varnames;
@@ -59,7 +59,7 @@ code_replace(PyCodeObject *self, PyObject *const *args, Py_ssize_t nargs, PyObje
     PyObject *co_cellvars = self->co_cellvars;
     PyObject *co_filename = self->co_filename;
     PyObject *co_name = self->co_name;
-    PyBytesObject *co_lnotab = (PyBytesObject *)self->co_lnotab;
+    PyObject *co_lnotab = (PyObject *)self->co_lnotab;
 
     args = _PyArg_UnpackKeywords(args, nargs, NULL, kwnames, &_parser, 0, 0, 0, argsbuf);
     if (!args) {
@@ -132,11 +132,11 @@ code_replace(PyCodeObject *self, PyObject *const *args, Py_ssize_t nargs, PyObje
         }
     }
     if (args[7]) {
-        if (!PyBytes_Check(args[7])) {
+        if (!PyUnicode_Check(args[7])) {
             _PyArg_BadArgument("replace", "argument 'co_code'", "bytes", args[7]);
             goto exit;
         }
-        co_code = (PyBytesObject *)args[7];
+        co_code = (PyObject *)args[7];
         if (!--noptargs) {
             goto skip_optional_kwonly;
         }
@@ -211,11 +211,11 @@ code_replace(PyCodeObject *self, PyObject *const *args, Py_ssize_t nargs, PyObje
             goto skip_optional_kwonly;
         }
     }
-    if (!PyBytes_Check(args[15])) {
+    if (!PyUnicode_Check(args[15])) {
         _PyArg_BadArgument("replace", "argument 'co_lnotab'", "bytes", args[15]);
         goto exit;
     }
-    co_lnotab = (PyBytesObject *)args[15];
+    co_lnotab = (PyObject *)args[15];
 skip_optional_kwonly:
     return_value = code_replace_impl(self, co_argcount, co_posonlyargcount, co_kwonlyargcount, co_nlocals, co_stacksize, co_flags, co_firstlineno, co_code, co_consts, co_names, co_varnames, co_freevars, co_cellvars, co_filename, co_name, co_lnotab);
 
@@ -336,7 +336,7 @@ PyCode_NewWithPosOnlyArgs(int argcount, int posonlyargcount, int kwonlyargcount,
     if (argcount < posonlyargcount || posonlyargcount < 0 ||
         kwonlyargcount < 0 || nlocals < 0 ||
         stacksize < 0 || flags < 0 ||
-        code == NULL || !PyBytes_Check(code) ||
+        code == NULL || !PyUnicode_Check(code) ||
         consts == NULL || !PyTuple_Check(consts) ||
         names == NULL || !PyTuple_Check(names) ||
         varnames == NULL || !PyTuple_Check(varnames) ||
@@ -344,7 +344,7 @@ PyCode_NewWithPosOnlyArgs(int argcount, int posonlyargcount, int kwonlyargcount,
         cellvars == NULL || !PyTuple_Check(cellvars) ||
         name == NULL || !PyUnicode_Check(name) ||
         filename == NULL || !PyUnicode_Check(filename) ||
-        lnotab == NULL || !PyBytes_Check(lnotab)) {
+        lnotab == NULL || !PyUnicode_Check(lnotab)) {
         PyErr_BadInternalCall();
         return NULL;
     }
@@ -369,7 +369,7 @@ PyCode_NewWithPosOnlyArgs(int argcount, int posonlyargcount, int kwonlyargcount,
     /* Make sure that code is indexable with an int, this is
        a long running assumption in ceval.c and many parts of
        the interpreter. */
-    if (PyBytes_GET_SIZE(code) > INT_MAX) {
+    if (PyUnicode_GET_SIZE(code) > INT_MAX) {
         PyErr_SetString(PyExc_OverflowError, "co_code larger than INT_MAX");
         return NULL;
     }
@@ -489,7 +489,7 @@ PyCode_NewEmpty(const char *filename, const char *funcname, int firstlineno)
     PyObject *funcname_ob = NULL;
     PyCodeObject *result = NULL;
     if (emptystring == NULL) {
-        emptystring = PyBytes_FromString("");
+        emptystring = PyUnicode_FromString("");
         if (emptystring == NULL)
             goto failed;
     }
@@ -760,7 +760,7 @@ code.replace
     co_stacksize: int(c_default="self->co_stacksize") = -1
     co_flags: int(c_default="self->co_flags") = -1
     co_firstlineno: int(c_default="self->co_firstlineno") = -1
-    co_code: PyBytesObject(c_default="(PyBytesObject *)self->co_code") = None
+    co_code: PyObject(c_default="(PyObject *)self->co_code") = None
     co_consts: object(subclass_of="&PyTuple_Type", c_default="self->co_consts") = None
     co_names: object(subclass_of="&PyTuple_Type", c_default="self->co_names") = None
     co_varnames: object(subclass_of="&PyTuple_Type", c_default="self->co_varnames") = None
@@ -768,7 +768,7 @@ code.replace
     co_cellvars: object(subclass_of="&PyTuple_Type", c_default="self->co_cellvars") = None
     co_filename: unicode(c_default="self->co_filename") = None
     co_name: unicode(c_default="self->co_name") = None
-    co_lnotab: PyBytesObject(c_default="(PyBytesObject *)self->co_lnotab") = None
+    co_lnotab: PyObject(c_default="(PyObject *)self->co_lnotab") = None
 
 Return a copy of the code object with new values for the specified fields.
 [clinic start generated code]*/
@@ -777,11 +777,11 @@ static PyObject *
 code_replace_impl(PyCodeObject *self, int co_argcount,
                   int co_posonlyargcount, int co_kwonlyargcount,
                   int co_nlocals, int co_stacksize, int co_flags,
-                  int co_firstlineno, PyBytesObject *co_code,
+                  int co_firstlineno, PyObject *co_code,
                   PyObject *co_consts, PyObject *co_names,
                   PyObject *co_varnames, PyObject *co_freevars,
                   PyObject *co_cellvars, PyObject *co_filename,
-                  PyObject *co_name, PyBytesObject *co_lnotab)
+                  PyObject *co_name, PyObject *co_lnotab)
 /*[clinic end generated code: output=25c8e303913bcace input=d9051bc8f24e6b28]*/
 {
 #define CHECK_INT_ARG(ARG) \
@@ -844,7 +844,7 @@ _PyCode_ConstantKey(PyObject *op)
         Py_INCREF(op);
         key = op;
     }
-    else if (PyBool_Check(op) || PyBytes_CheckExact(op)) {
+    else if (PyBool_Check(op)) { //  || PyBytes_CheckExact(op)) {
         /* Make booleans different from integers 0 and 1.
          * Avoid BytesWarning from comparing bytes with strings. */
         key = PyTuple_Pack(2, Py_TYPE(op), op);
@@ -1089,8 +1089,8 @@ PyTypeObject PyCode_Type = {
 int
 PyCode_Addr2Line(PyCodeObject *co, int addrq)
 {
-    Py_ssize_t size = PyBytes_Size(co->co_lnotab) / 2;
-    unsigned char *p = (unsigned char*)PyBytes_AsString(co->co_lnotab);
+  Py_ssize_t size = PyUnicode_GET_SIZE(co->co_lnotab) / 2;
+    unsigned char *p = (unsigned char*)PyUnicode_AsChar(co->co_lnotab);
     int line = co->co_firstlineno;
     int addr = 0;
     while (--size >= 0) {
@@ -1112,8 +1112,8 @@ _PyCode_CheckLineNumber(PyCodeObject* co, int lasti, PyAddrPair *bounds)
     int addr, line;
     unsigned char* p;
 
-    p = (unsigned char*)PyBytes_AS_STRING(co->co_lnotab);
-    size = PyBytes_GET_SIZE(co->co_lnotab) / 2;
+    p = (unsigned char*)PyUnicode_AsChar(co->co_lnotab);
+    size = PyUnicode_GET_SIZE(co->co_lnotab) / 2;
 
     addr = 0;
     line = co->co_firstlineno;

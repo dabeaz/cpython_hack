@@ -320,9 +320,7 @@ sys_is_finalizing(PyObject *module, PyObject *Py_UNUSED(ignored))
 
 _Py_IDENTIFIER(_);
 _Py_IDENTIFIER(__sizeof__);
-_Py_IDENTIFIER(buffer);
 _Py_IDENTIFIER(builtins);
-_Py_IDENTIFIER(encoding);
 _Py_IDENTIFIER(path);
 _Py_IDENTIFIER(stdout);
 _Py_IDENTIFIER(stderr);
@@ -402,68 +400,6 @@ PySys_SetObject(const char *name, PyObject *v)
 {
     PyThreadState *tstate = PyThreadState_Get();
     return sys_set_object(tstate, name, v);
-}
-
-/* Write repr(o) to sys.stdout using sys.stdout.encoding and 'backslashreplace'
-   error handler. If sys.stdout has a buffer attribute, use
-   sys.stdout.buffer.write(encoded), otherwise redecode the string and use
-   sys.stdout.write(redecoded).
-
-   Helper function for sys_displayhook(). */
-static int
-sys_displayhook_unencodable(PyObject *outf, PyObject *o)
-{
-    PyObject *stdout_encoding = NULL;
-    PyObject *encoded, *escaped_str, *repr_str, *buffer, *result;
-    const char *stdout_encoding_str;
-    int ret;
-
-    stdout_encoding = _PyObject_GetAttrId(outf, &PyId_encoding);
-    if (stdout_encoding == NULL)
-        goto error;
-    stdout_encoding_str = PyUnicode_AsChar(stdout_encoding);
-    if (stdout_encoding_str == NULL)
-        goto error;
-
-    repr_str = PyObject_Repr(o);
-    if (repr_str == NULL)
-        goto error;
-    encoded = PyUnicode_AsBytes(repr_str);
-    Py_DECREF(repr_str);
-    if (encoded == NULL)
-        goto error;
-
-    if (_PyObject_LookupAttrId(outf, &PyId_buffer, &buffer) < 0) {
-        Py_DECREF(encoded);
-        goto error;
-    }
-    if (buffer) {
-        result = _PyObject_CallMethodIdOneArg(buffer, &PyId_write, encoded);
-        Py_DECREF(buffer);
-        Py_DECREF(encoded);
-        if (result == NULL)
-            goto error;
-        Py_DECREF(result);
-    }
-    else {
-        escaped_str = PyUnicode_FromEncodedObject(encoded,
-                                                  stdout_encoding_str,
-                                                  "strict");
-        Py_DECREF(encoded);
-        if (PyFile_WriteObject(escaped_str, outf, Py_PRINT_RAW) != 0) {
-            Py_DECREF(escaped_str);
-            goto error;
-        }
-        Py_DECREF(escaped_str);
-    }
-    ret = 0;
-    goto finally;
-
-error:
-    ret = -1;
-finally:
-    Py_XDECREF(stdout_encoding);
-    return ret;
 }
 
 /*[clinic input]

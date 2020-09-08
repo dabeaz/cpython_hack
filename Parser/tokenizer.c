@@ -11,7 +11,6 @@
 #include "errcode.h"
 
 #include "unicodeobject.h"
-#include "bytesobject.h"
 #include "fileobject.h"
 #include "abstract.h"
 
@@ -21,15 +20,13 @@
 #define is_potential_identifier_start(c) (\
               (c >= 'a' && c <= 'z')\
                || (c >= 'A' && c <= 'Z')\
-               || c == '_'\
-               || (c >= 128))
+               || c == '_')
 
 #define is_potential_identifier_char(c) (\
               (c >= 'a' && c <= 'z')\
                || (c >= 'A' && c <= 'Z')\
                || (c >= '0' && c <= '9')\
-               || c == '_'\
-               || (c >= 128))
+	      || c == '_')
 
 
 /* Don't ever change this -- it would break the portability of Python code */
@@ -459,55 +456,6 @@ indenterror(struct tok_state *tok)
     return ERRORTOKEN;
 }
 
-/* Verify that the identifier follows PEP 3131.
-   All identifier strings are guaranteed to be "ready" unicode objects.
- */
-static int
-verify_identifier(struct tok_state *tok)
-{
-    PyObject *s;
-    s = PyUnicode_FromStringAndSize(tok->start, tok->cur - tok->start);
-    if (s == NULL) {
-      tok->done = E_ERROR;
-      return 0;
-    }
-    Py_ssize_t invalid = _PyUnicode_ScanIdentifier(s);
-    if (invalid < 0) {
-        Py_DECREF(s);
-        tok->done = E_ERROR;
-        return 0;
-    }
-    assert(PyUnicode_GET_LENGTH(s) > 0);
-    if (invalid < PyUnicode_GET_LENGTH(s)) {
-        Py_UCS4 ch = PyUnicode_READ_CHAR(s, invalid);
-        if (invalid + 1 < PyUnicode_GET_LENGTH(s)) {
-            /* Determine the offset in UTF-8 encoded input */
-            Py_SETREF(s, PyUnicode_Substring(s, 0, invalid + 1));
-            if (s != NULL) {
-	      Py_SETREF(s, PyUnicode_AsBytes(s));
-            }
-            if (s == NULL) {
-                tok->done = E_ERROR;
-                return 0;
-            }
-            tok->cur = (char *)tok->start + PyBytes_GET_SIZE(s);
-        }
-        Py_DECREF(s);
-        // PyUnicode_FromFormatV() does not support %X
-        char hex[9];
-        snprintf(hex, sizeof(hex), "%04X", ch);
-        if (Py_UNICODE_ISPRINTABLE(ch)) {
-            syntaxerror(tok, "invalid character '%c' (U+%s)", ch, hex);
-        }
-        else {
-            syntaxerror(tok, "invalid non-printable character U+%s", hex);
-        }
-        return 0;
-    }
-    Py_DECREF(s);
-    return 1;
-}
-
 static int
 tok_decimal_tail(struct tok_state *tok)
 {
@@ -703,10 +651,6 @@ tok_get(struct tok_state *tok, const char **p_start, const char **p_end)
             c = tok_nextc(tok);
         }
         tok_backup(tok, c);
-        if (nonascii && !verify_identifier(tok)) {
-            return ERRORTOKEN;
-        }
-
         *p_start = tok->start;
         *p_end = tok->cur;
         return NAME;

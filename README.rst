@@ -104,7 +104,8 @@ How will it end?  Or is this just the start?
 - Day 87 (9/05/2020). Various unfocused trimming. Yawn.
 - Day 88 (9/06/2020). Ba-bye buffered I/O and bytearray.
 - Day 89 (9/07/2020). More encoding/decoding removal.
-
+- Day 90 (9/08/2020). Another bytes bites the dust.
+  
 Copyright and License Information
 ---------------------------------
 

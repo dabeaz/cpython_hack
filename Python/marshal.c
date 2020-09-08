@@ -268,7 +268,7 @@ w_reserve(WFILE *p, Py_ssize_t needed)
     }
     assert(p->str != NULL);
     pos = p->ptr - p->buf;
-    size = PyBytes_GET_SIZE(p->str);
+    size = PyUnicode_GET_SIZE(p->str);
     if (size > 16*1024*1024)
         delta = (size >> 3);            /* 12.5% overallocation */
     else
@@ -279,12 +279,12 @@ w_reserve(WFILE *p, Py_ssize_t needed)
         return 0;
     }
     size += delta;
-    if (_PyBytes_Resize(&p->str, size) != 0) {
+    if (PyUnicode_Resize(&p->str, size) != 0) {
         p->end = p->ptr = p->buf = NULL;
         return 0;
     }
     else {
-        p->buf = PyBytes_AS_STRING(p->str);
+      p->buf = (char *) PyUnicode_AsChar(p->str);
         p->ptr = p->buf + pos;
         p->end = p->buf + size;
         return 1;
@@ -559,25 +559,13 @@ w_complex_object(PyObject *v, char flag, WFILE *p)
             w_float_str(PyFloat_AS_DOUBLE(v), p);
         }
     }
-    else if (PyBytes_CheckExact(v)) {
-        W_TYPE(TYPE_STRING, p);
-        w_pstring(PyBytes_AS_STRING(v), PyBytes_GET_SIZE(v), p);
-    }
     else if (PyUnicode_CheckExact(v)) {
       {
-	PyObject *utf8;
-            utf8 = PyUnicode_AsBytes(v);
-            if (utf8 == NULL) {
-                p->depth--;
-                p->error = WFERR_UNMARSHALLABLE;
-                return;
-            }
             if (p->version >= 3 &&  PyUnicode_CHECK_INTERNED(v))
                 W_TYPE(TYPE_INTERNED, p);
             else
                 W_TYPE(TYPE_UNICODE, p);
-            w_pstring(PyBytes_AS_STRING(utf8), PyBytes_GET_SIZE(utf8), p);
-            Py_DECREF(utf8);
+            w_pstring(PyUnicode_AsChar(v), PyUnicode_GET_SIZE(v), p);
         }
     }
     else if (PyTuple_CheckExact(v)) {
@@ -1150,7 +1138,7 @@ r_object(RFILE *p)
                 PyErr_SetString(PyExc_ValueError, "bad marshal data (bytes object size out of range)");
                 break;
             }
-            v = PyBytes_FromStringAndSize((char *)NULL, n);
+            v = PyUnicode_FromStringAndSize((char *)NULL, n);
             if (v == NULL)
                 break;
             ptr = r_string(n, p);
@@ -1158,51 +1146,12 @@ r_object(RFILE *p)
                 Py_DECREF(v);
                 break;
             }
-            memcpy(PyBytes_AS_STRING(v), ptr, n);
+            memcpy((char *) PyUnicode_AsChar(v), ptr, n);
             retval = v;
             R_REF(retval);
             break;
         }
-
-    case TYPE_ASCII_INTERNED:
-        is_interned = 1;
-        /* fall through */
-    case TYPE_ASCII:
-        n = r_long(p);
-        if (PyErr_Occurred())
-            break;
-        if (n < 0 || n > SIZE32_MAX) {
-            PyErr_SetString(PyExc_ValueError, "bad marshal data (string size out of range)");
-            break;
-        }
-        goto _read_ascii;
-
-    case TYPE_SHORT_ASCII_INTERNED:
-        is_interned = 1;
-        /* fall through */
-    case TYPE_SHORT_ASCII:
-        n = r_byte(p);
-        if (n == EOF) {
-            PyErr_SetString(PyExc_EOFError,
-                "EOF read where object expected");
-            break;
-        }
-    _read_ascii:
-        {
-            const char *ptr;
-            ptr = r_string(n, p);
-            if (ptr == NULL)
-                break;
-            v = PyUnicode_FromStringAndSize(ptr, n);
-            if (v == NULL)
-                break;
-            if (is_interned)
-                PyUnicode_InternInPlace(&v);
-            retval = v;
-            R_REF(retval);
-            break;
-        }
-
+	
     case TYPE_INTERNED:
         is_interned = 1;
         /* fall through */
@@ -1647,11 +1596,11 @@ PyMarshal_WriteObjectToString(PyObject *x, int version)
     WFILE wf;
 
     memset(&wf, 0, sizeof(wf));
-    wf.str = PyBytes_FromStringAndSize((char *)NULL, 50);
+    wf.str = PyUnicode_FromStringAndSize((char *)NULL, 50);
     if (wf.str == NULL)
         return NULL;
-    wf.ptr = wf.buf = PyBytes_AS_STRING(wf.str);
-    wf.end = wf.ptr + PyBytes_GET_SIZE(wf.str);
+    wf.ptr = wf.buf = (char *) PyUnicode_AsChar(wf.str);
+    wf.end = wf.ptr + PyUnicode_GET_SIZE(wf.str);
     wf.error = WFERR_OK;
     wf.version = version;
     if (w_init_refs(&wf, version)) {
@@ -1661,8 +1610,8 @@ PyMarshal_WriteObjectToString(PyObject *x, int version)
     w_object(x, &wf);
     w_clear_refs(&wf);
     if (wf.str != NULL) {
-        const char *base = PyBytes_AS_STRING(wf.str);
-        if (_PyBytes_Resize(&wf.str, (Py_ssize_t)(wf.ptr - base)) < 0)
+        const char *base = PyUnicode_AsChar(wf.str);
+        if (PyUnicode_Resize(&wf.str, (Py_ssize_t)(wf.ptr - base)) < 0)
             return NULL;
     }
     if (wf.error != WFERR_OK) {
@@ -1750,9 +1699,9 @@ marshal_load(PyObject *module, PyObject *file)
     data = _PyObject_CallMethodId(file, &PyId_read, "i", 0);
     if (data == NULL)
         return NULL;
-    if (!PyBytes_Check(data)) {
+    if (!PyUnicode_Check(data)) {
         PyErr_Format(PyExc_TypeError,
-                     "file.read() returned not bytes but %.100s",
+                     "file.read() returned not string but %.100s",
                      Py_TYPE(data)->tp_name);
         result = NULL;
     }

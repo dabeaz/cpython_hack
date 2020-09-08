@@ -367,8 +367,6 @@ OBJECT_OBJS=	\
 		Objects/abstract.o \
 		Objects/accu.o \
 		Objects/boolobject.o \
-		Objects/bytes_methods.o \
-		Objects/bytesobject.o \
 		Objects/call.o \
 		Objects/capsule.o \
 		Objects/cellobject.o \
@@ -843,8 +841,6 @@ UNICODE_DEPS = \
 		$(srcdir)/Objects/stringlib/unicode_format.h \
 		$(srcdir)/Objects/stringlib/unicodedefs.h
 
-Objects/bytes_methods.o: $(srcdir)/Objects/bytes_methods.c $(BYTESTR_DEPS)
-Objects/bytesobject.o: $(srcdir)/Objects/bytesobject.c $(BYTESTR_DEPS)
 Objects/unicodeobject.o: $(srcdir)/Objects/unicodeobject.c $(UNICODE_DEPS)
 
 Objects/dictobject.o: $(srcdir)/Objects/stringlib/eq.h $(srcdir)/Objects/dict-common.h
@@ -882,7 +878,6 @@ PYTHON_HEADERS= \
 		$(srcdir)/Include/bitset.h \
 		$(srcdir)/Include/bltinmodule.h \
 		$(srcdir)/Include/boolobject.h \
-		$(srcdir)/Include/bytesobject.h \
 		$(srcdir)/Include/cellobject.h \
 		$(srcdir)/Include/ceval.h \
 		$(srcdir)/Include/classobject.h \
@@ -954,7 +949,6 @@ PYTHON_HEADERS= \
 		$(srcdir)/Include/internal/pycore_abstract.h \
 		$(srcdir)/Include/internal/pycore_accu.h \
 		$(srcdir)/Include/internal/pycore_bitutils.h \
-		$(srcdir)/Include/internal/pycore_bytes_methods.h \
 		$(srcdir)/Include/internal/pycore_call.h \
 		$(srcdir)/Include/internal/pycore_ceval.h \
 		$(srcdir)/Include/internal/pycore_code.h \

@@ -1091,10 +1091,6 @@ _Py_SourceAsString(PyObject *cmd, const char *funcname, const char *what, PyComp
         if (str == NULL)
             return NULL;
     }
-    else if (PyBytes_Check(cmd)) {
-        str = PyBytes_AS_STRING(cmd);
-        size = PyBytes_GET_SIZE(cmd);
-    }
     else {
         PyErr_Format(PyExc_TypeError,
             "%s() arg 1 must be a %s object",

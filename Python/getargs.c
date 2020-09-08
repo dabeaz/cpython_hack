@@ -195,18 +195,6 @@ _PyArg_VaParse_SizeT(PyObject *args, const char *format, va_list va)
     return retval;
 }
 
-
-/* Handle cleanup of allocated memory in case of exception */
-
-static int
-cleanup_ptr(PyObject *self, void *ptr)
-{
-    if (ptr) {
-        PyMem_FREE(ptr);
-    }
-    return 0;
-}
-
 static int
 cleanup_buffer(PyObject *self, void *ptr)
 {
@@ -525,7 +513,7 @@ converttuple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
             n++;
     }
 
-    if (!PySequence_Check(arg) || PyBytes_Check(arg)) {
+    if (!PySequence_Check(arg)) { //  || PyBytes_Check(arg)) {
         levels[0] = 0;
         PyOS_snprintf(msgbuf, bufsize,
                       toplevel ? "expected %d arguments, not %.50s" :
@@ -850,16 +838,7 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
             *p = dval;
         break;
     }
-
-    case 'c': {/* char */
-        char *p = va_arg(*p_va, char *);
-        if (PyBytes_Check(arg) && PyBytes_Size(arg) == 1)
-            *p = PyBytes_AS_STRING(arg)[0];
-        else
-            return converterr("a byte string of length 1", arg, msgbuf, bufsize);
-        break;
-    }
-
+      
     case 'C': {/* unicode char */
         int *p = va_arg(*p_va, int *);
         const void *data;
@@ -1007,186 +986,7 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
 	Py_FatalError("Bad format. uZ");
         break;
     }
-
-    case 'e': {/* encoded string */
-        char **buffer;
-        const char *encoding;
-        PyObject *s;
-        int recode_strings;
-        Py_ssize_t size;
-        const char *ptr;
-
-        /* Get 'e' parameter: the encoding name */
-        encoding = (const char *)va_arg(*p_va, const char *);
-        if (encoding == NULL)
-            encoding = PyUnicode_GetDefaultEncoding();
-
-        /* Get output buffer parameter:
-           's' (recode all objects via Unicode) or
-           't' (only recode non-string objects)
-        */
-        if (*format == 's')
-            recode_strings = 1;
-        else if (*format == 't')
-            recode_strings = 0;
-        else
-            return converterr(
-                "(unknown parser marker combination)",
-                arg, msgbuf, bufsize);
-        buffer = (char **)va_arg(*p_va, char **);
-        format++;
-        if (buffer == NULL)
-            return converterr("(buffer is NULL)",
-                              arg, msgbuf, bufsize);
-
-        /* Encode object */
-        if (!recode_strings &&
-            (PyBytes_Check(arg))) {
-            s = arg;
-            Py_INCREF(s);
-            if (PyBytes_Check(arg)) {
-                size = PyBytes_GET_SIZE(s);
-                ptr = PyBytes_AS_STRING(s);
-            }
-        }
-        else if (PyUnicode_Check(arg)) {
-            /* Encode object; use default error handling */
-	  s = PyUnicode_AsBytes(arg);
-	  if (s == NULL)
-                return converterr("(encoding failed)",
-                                  arg, msgbuf, bufsize);
-            assert(PyBytes_Check(s));
-            size = PyBytes_GET_SIZE(s);
-            ptr = PyBytes_AS_STRING(s);
-            if (ptr == NULL)
-                ptr = "";
-        }
-        else {
-            return converterr(
-                recode_strings ? "str" : "str, bytes or bytearray",
-                arg, msgbuf, bufsize);
-        }
-
-        /* Write output; output is guaranteed to be 0-terminated */
-        if (*format == '#') {
-            /* Using buffer length parameter '#':
-
-               - if *buffer is NULL, a new buffer of the
-               needed size is allocated and the data
-               copied into it; *buffer is updated to point
-               to the new buffer; the caller is
-               responsible for PyMem_Free()ing it after
-               usage
-
-               - if *buffer is not NULL, the data is
-               copied to *buffer; *buffer_len has to be
-               set to the size of the buffer on input;
-               buffer overflow is signalled with an error;
-               buffer has to provide enough room for the
-               encoded string plus the trailing 0-byte
-
-               - in both cases, *buffer_len is updated to
-               the size of the buffer /excluding/ the
-               trailing 0-byte
-
-            */
-            int *q = NULL; Py_ssize_t *q2 = NULL;
-            if (flags & FLAG_SIZE_T) {
-                q2 = va_arg(*p_va, Py_ssize_t*);
-            }
-            else {
-                q = va_arg(*p_va, int*);
-            }
-
-            format++;
-            if (q == NULL && q2 == NULL) {
-                Py_DECREF(s);
-                return converterr(
-                    "(buffer_len is NULL)",
-                    arg, msgbuf, bufsize);
-            }
-            if (*buffer == NULL) {
-                *buffer = PyMem_NEW(char, size + 1);
-                if (*buffer == NULL) {
-                    Py_DECREF(s);
-                    PyErr_NoMemory();
-                    RETURN_ERR_OCCURRED;
-                }
-                if (addcleanup(*buffer, freelist, cleanup_ptr)) {
-                    Py_DECREF(s);
-                    return converterr(
-                        "(cleanup problem)",
-                        arg, msgbuf, bufsize);
-                }
-            } else {
-                if (size + 1 > BUFFER_LEN) {
-                    Py_DECREF(s);
-                    PyErr_Format(PyExc_ValueError,
-                                 "encoded string too long "
-                                 "(%zd, maximum length %zd)",
-                                 (Py_ssize_t)size, (Py_ssize_t)(BUFFER_LEN-1));
-                    RETURN_ERR_OCCURRED;
-                }
-            }
-            memcpy(*buffer, ptr, size+1);
-
-            if (flags & FLAG_SIZE_T) {
-                *q2 = size;
-            }
-            else {
-                if (INT_MAX < size) {
-                    Py_DECREF(s);
-                    PyErr_SetString(PyExc_OverflowError,
-                                    "size does not fit in an int");
-                    return converterr("", arg, msgbuf, bufsize);
-                }
-                *q = (int)size;
-            }
-        } else {
-            /* Using a 0-terminated buffer:
-
-               - the encoded string has to be 0-terminated
-               for this variant to work; if it is not, an
-               error raised
-
-               - a new buffer of the needed size is
-               allocated and the data copied into it;
-               *buffer is updated to point to the new
-               buffer; the caller is responsible for
-               PyMem_Free()ing it after usage
-
-            */
-            if ((Py_ssize_t)strlen(ptr) != size) {
-                Py_DECREF(s);
-                return converterr(
-                    "encoded string without null bytes",
-                    arg, msgbuf, bufsize);
-            }
-            *buffer = PyMem_NEW(char, size + 1);
-            if (*buffer == NULL) {
-                Py_DECREF(s);
-                PyErr_NoMemory();
-                RETURN_ERR_OCCURRED;
-            }
-            if (addcleanup(*buffer, freelist, cleanup_ptr)) {
-                Py_DECREF(s);
-                return converterr("(cleanup problem)",
-                                arg, msgbuf, bufsize);
-            }
-            memcpy(*buffer, ptr, size+1);
-        }
-        Py_DECREF(s);
-        break;
-    }
-
-    case 'S': { /* PyBytes object */
-        PyObject **p = va_arg(*p_va, PyObject **);
-        if (PyBytes_Check(arg))
-            *p = arg;
-        else
-            return converterr("bytes", arg, msgbuf, bufsize);
-        break;
-    }
+    
     case 'U': { /* PyUnicode object */
         PyObject **p = va_arg(*p_va, PyObject **);
         if (PyUnicode_Check(arg)) {

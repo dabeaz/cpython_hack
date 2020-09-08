@@ -578,18 +578,16 @@ typedef struct {
     int fd;
     Py_ssize_t length;
     PyObject *object;
-    PyObject *cleanup;
 } path_t;
 
 #define PATH_T_INITIALIZE(function_name, argument_name, nullable, allow_fd) \
-    {function_name, argument_name, nullable, allow_fd, NULL, -1, 0, NULL, NULL}
+    {function_name, argument_name, nullable, allow_fd, NULL, -1, 0, NULL}
 
 
 static void
 path_cleanup(path_t *path)
 {
     Py_CLEAR(path->object);
-    Py_CLEAR(path->cleanup);
 }
 
 static int
@@ -598,7 +596,7 @@ path_converter(PyObject *o, void *p)
     path_t *path = (path_t *)p;
     PyObject *bytes = NULL;
     Py_ssize_t length = 0;
-    int is_index, is_bytes, is_unicode;
+    int is_index, is_unicode;
     const char *narrow;
 
 #define FORMAT_EXCEPTION(exc, fmt) \
@@ -614,7 +612,7 @@ path_converter(PyObject *o, void *p)
     }
 
     /* Ensure it's always safe to call path_cleanup(). */
-    path->object = path->cleanup = NULL;
+    path->object = NULL;
     /* path->object owns a reference to the original object */
     Py_INCREF(o);
 
@@ -627,15 +625,10 @@ path_converter(PyObject *o, void *p)
     /* Only call this here so that we don't treat the return value of
        os.fspath() as an fd or buffer. */
     is_index = path->allow_fd && PyIndex_Check(o);
-    is_bytes = PyBytes_Check(o);
     is_unicode = PyUnicode_Check(o);
-    
+
     if (is_unicode) {
-      bytes = PyUnicode_AsBytes(o);
-    }
-    else if (is_bytes) {
-        bytes = o;
-        Py_INCREF(bytes);
+      bytes = o;
     }
     else if (is_index) {
         if (!_fd_converter(o, &path->fd)) {
@@ -658,22 +651,14 @@ path_converter(PyObject *o, void *p)
         goto error_exit;
     }
 
-    length = PyBytes_GET_SIZE(bytes);
-    narrow = PyBytes_AS_STRING(bytes);
+    length = PyUnicode_GET_SIZE(bytes);
+    narrow = PyUnicode_AsChar(bytes);
     if ((size_t)length != strlen(narrow)) {
         FORMAT_EXCEPTION(PyExc_ValueError, "embedded null character in %s");
         goto error_exit;
     }
 
     path->narrow = narrow;
-    if (bytes == o) {
-        /* Still a reference owned by path->object, don't have to
-           worry about path->narrow is used after free. */
-        Py_DECREF(bytes);
-    }
-    else {
-        path->cleanup = bytes;
-    }
     path->fd = -1;
 
  success_exit:
@@ -683,7 +668,6 @@ path_converter(PyObject *o, void *p)
 
  error_exit:
     Py_XDECREF(o);
-    Py_XDECREF(bytes);
     return 0;
 }
 
@@ -883,14 +867,7 @@ convertenviron(void)
     d = PyDict_New();
     if (d == NULL)
         return NULL;
-#if defined(WITH_NEXT_FRAMEWORK) || (defined(__APPLE__) && defined(Py_ENABLE_SHARED))
-    /* environ is not accessible as an extern in a shared object on OSX; use
-       _NSGetEnviron to resolve it. The value changes if you add environment
-       variables between calls to Py_Initialize, so don't cache the value. */
-    e = *_NSGetEnviron();
-#else
     e = environ;
-#endif
     if (e == NULL)
         return d;
     for (; *e != NULL; e++) {
@@ -899,12 +876,12 @@ convertenviron(void)
         const char *p = strchr(*e, '=');
         if (p == NULL)
             continue;
-        k = PyBytes_FromStringAndSize(*e, (int)(p-*e));
+        k = PyUnicode_FromStringAndSize(*e, (int)(p-*e));
         if (k == NULL) {
             Py_DECREF(d);
             return NULL;
         }
-        v = PyBytes_FromStringAndSize(p+1, strlen(p+1));
+        v = PyUnicode_FromStringAndSize(p+1, strlen(p+1));
         if (v == NULL) {
             Py_DECREF(k);
             Py_DECREF(d);
@@ -1724,12 +1701,7 @@ posix_getcwd(int use_bytes)
     }
 
     PyObject *obj;
-    if (use_bytes) {
-        obj = PyBytes_FromStringAndSize(buf, strlen(buf));
-    }
-    else {
-	obj = PyUnicode_FromString(buf);
-    }
+    obj = PyUnicode_FromString(buf);
     PyMem_RawFree(buf);
 
     return obj;
@@ -1841,11 +1813,7 @@ _posix_listdir(path_t *path, PyObject *list)
             (NAMLEN(ep) == 1 ||
              (ep->d_name[1] == '.' && NAMLEN(ep) == 2)))
             continue;
-        if (return_str)
-	  v = PyUnicode_FromStringAndSize(ep->d_name, NAMLEN(ep));
-	
-        else
-            v = PyBytes_FromStringAndSize(ep->d_name, NAMLEN(ep));
+	v = PyUnicode_FromStringAndSize(ep->d_name, NAMLEN(ep));
         if (v == NULL) {
             Py_CLEAR(list);
             break;
@@ -2077,7 +2045,7 @@ os_system_impl(PyObject *module, PyObject *command)
 /*[clinic end generated code: output=290fc437dd4f33a0 input=86a58554ba6094af]*/
 {
     long result;
-    const char *bytes = PyBytes_AsString(command);
+    const char *bytes = PyUnicode_AsChar(command);
     
     result = system(bytes);
     
@@ -2349,18 +2317,18 @@ os_read_impl(PyObject *module, int fd, Py_ssize_t length)
 
     length = Py_MIN(length, _PY_READ_MAX);
 
-    buffer = PyBytes_FromStringAndSize((char *)NULL, length);
+    buffer = PyUnicode_FromStringAndSize((char *)NULL, length);
     if (buffer == NULL)
         return NULL;
 
-    n = _Py_read(fd, PyBytes_AS_STRING(buffer), length);
+    n = _Py_read(fd, (void *) PyUnicode_AsChar(buffer), length);
     if (n == -1) {
         Py_DECREF(buffer);
         return NULL;
     }
 
-    if (n != length)
-        _PyBytes_Resize(&buffer, n);
+    if (n != length) 
+        PyUnicode_Resize(&buffer, n);
 
     return buffer;
 }

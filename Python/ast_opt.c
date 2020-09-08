@@ -144,19 +144,18 @@ safe_multiply(PyObject *v, PyObject *w)
             }
         }
     }
-    else if (PyLong_Check(v) && (PyUnicode_Check(w) || PyBytes_Check(w))) {
-        Py_ssize_t size = PyUnicode_Check(w) ? PyUnicode_GET_LENGTH(w) :
-                                               PyBytes_GET_SIZE(w);
-        if (size) {
-            long n = PyLong_AsLong(v);
-            if (n < 0 || n > MAX_STR_SIZE / size) {
-                return NULL;
-            }
-        }
+    else if (PyLong_Check(v) && (PyUnicode_Check(w))) {
+      Py_ssize_t size = PyUnicode_GET_LENGTH(w);
+      if (size) {
+	long n = PyLong_AsLong(v);
+	if (n < 0 || n > MAX_STR_SIZE / size) {
+	  return NULL;
+	}
+      }
     }
     else if (PyLong_Check(w) &&
              (PyTuple_Check(v) || PyFrozenSet_Check(v) ||
-              PyUnicode_Check(v) || PyBytes_Check(v)))
+              PyUnicode_Check(v)))
     {
         return safe_multiply(w, v);
     }
@@ -201,11 +200,10 @@ safe_lshift(PyObject *v, PyObject *w)
 static PyObject *
 safe_mod(PyObject *v, PyObject *w)
 {
-    if (PyUnicode_Check(v) || PyBytes_Check(v)) {
+  if (PyUnicode_Check(v)) {
         return NULL;
-    }
-
-    return PyNumber_Remainder(v, w);
+  }
+  return PyNumber_Remainder(v, w);
 }
 
 static int

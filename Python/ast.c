@@ -68,16 +68,6 @@ validate_keywords(asdl_seq *keywords)
     return 1;
 }
 
-static int
-validate_args(asdl_seq *args)
-{
-    Py_ssize_t i;
-    for (i = 0; i < asdl_seq_LEN(args); i++) {
-        arg_ty arg = asdl_seq_GET(args, i);
-    }
-    return 1;
-}
-
 static const char *
 expr_context_name(expr_context_ty ctx)
 {
@@ -91,6 +81,16 @@ expr_context_name(expr_context_ty ctx)
     default:
         Py_UNREACHABLE();
     }
+}
+
+static int
+validate_args(asdl_seq *args)
+{
+    Py_ssize_t i;
+    for (i = 0; i < asdl_seq_LEN(args); i++) {
+        arg_ty arg = asdl_seq_GET(args, i);
+    }
+    return 1;
 }
 
 static int
@@ -123,7 +123,7 @@ validate_constant(PyObject *value)
             || PyFloat_CheckExact(value)
             || PyBool_Check(value)
             || PyUnicode_CheckExact(value)
-            || PyBytes_CheckExact(value))
+	)
         return 1;
 
     if (PyTuple_CheckExact(value) || PyFrozenSet_CheckExact(value)) {

@@ -35,7 +35,7 @@
 #include "typeslots.h"
 #include "pyhash.h"
 #include "pydebug.h"
-#include "bytesobject.h"
+// #include "bytesobject.h"
 #include "unicodeobject.h"
 #include "longobject.h"
 #include "longintrepr.h"

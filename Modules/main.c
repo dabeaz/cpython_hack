@@ -211,27 +211,10 @@ pymain_import_readline(const PyConfig *config)
 static int
 pymain_run_command(char *command, PyCompilerFlags *cf)
 {
-    PyObject *unicode, *bytes;
     int ret;
 
-    unicode = PyUnicode_FromString(command);
-    if (unicode == NULL) {
-        goto error;
-    }
-
-    bytes = PyUnicode_AsBytes(unicode);
-    Py_DECREF(unicode);
-    if (bytes == NULL) {
-        goto error;
-    }
-
-    ret = PyRun_SimpleStringFlags(PyBytes_AsString(bytes), cf);
-    Py_DECREF(bytes);
+    ret = PyRun_SimpleStringFlags(command, cf);
     return (ret != 0);
-
-error:
-    PySys_WriteStderr("Unable to decode the command from the command line:\n");
-    return pymain_exit_err_print();
 }
 
 
@@ -310,53 +293,11 @@ pymain_run_file(const PyConfig *config, PyCompilerFlags *cf)
         fclose(fp);
         return 1;
     }
-
-    PyObject *unicode, *bytes = NULL;
-    const char *filename_str;
-
-    unicode = PyUnicode_FromString(filename);
-    if (unicode != NULL) {
-        bytes = PyUnicode_AsBytes(unicode);
-        Py_DECREF(unicode);
-    }
-    if (bytes != NULL) {
-        filename_str = PyBytes_AsString(bytes);
-    }
-    else {
-        PyErr_Clear();
-        filename_str = "<filename encoding error>";
-    }
-
     /* PyRun_AnyFileExFlags(closeit=1) calls fclose(fp) before running code */
-    int run = PyRun_AnyFileExFlags(fp, filename_str, 1, cf);
-    Py_XDECREF(bytes);
+    int run = PyRun_AnyFileExFlags(fp, filename, 1, cf);
     return (run != 0);
 }
 
-
-static int
-pymain_run_startup(PyConfig *config, PyCompilerFlags *cf, int *exitcode)
-{
-    const char *startup = _Py_GetEnv(config->use_environment, "PYTHONSTARTUP");
-    if (startup == NULL) {
-        return 0;
-    }
-    FILE *fp = _Py_fopen(startup, "r");
-    if (fp == NULL) {
-        int save_errno = errno;
-        PySys_WriteStderr("Could not open PYTHONSTARTUP\n");
-
-        errno = save_errno;
-        PyErr_SetFromErrnoWithFilename(PyExc_OSError, startup);
-
-        return pymain_err_print(exitcode);
-    }
-
-    (void) PyRun_SimpleFileExFlags(fp, startup, 0, cf);
-    PyErr_Clear();
-    fclose(fp);
-    return 0;
-}
 
 
 /* Write an exitcode into *exitcode and return 1 if we have to exit Python.
@@ -399,10 +340,6 @@ pymain_run_stdin(PyConfig *config, PyCompilerFlags *cf)
         Py_InspectFlag = 0; /* do exit on SystemExit */
 
         int exitcode;
-        if (pymain_run_startup(config, cf, &exitcode)) {
-            return exitcode;
-        }
-
         if (pymain_run_interactive_hook(&exitcode)) {
             return exitcode;
         }

@@ -21,7 +21,8 @@ and opendir), and leave all pathname manipulation to os.path
 (e.g., split and join).
 """
 
-#'
+bytes = str
+
 import sys
 import stat as st
 
@@ -216,8 +217,6 @@ def makedirs(name, mode=0o777, exist_ok=False):
             # Defeats race condition when another thread created the path
             pass
         cdir = curdir
-        if isinstance(tail, bytes):
-            cdir = bytes(curdir, 'ASCII')
         if tail == cdir:           # xxx/newdir/. exists if xxx/newdir exists
             return
     try:

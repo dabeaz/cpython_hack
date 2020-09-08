@@ -121,7 +121,8 @@ static PyModuleDef readlinemodule;
 static PyObject *
 encode(PyObject *b)
 {
-  return PyUnicode_AsBytes(b);
+  Py_INCREF(b);
+  return b;
 }
 
 static PyObject *
@@ -143,12 +144,12 @@ parse_and_bind(PyObject *self, PyObject *string)
     }
     /* Make a copy -- rl_parse_and_bind() modifies its argument */
     /* Bernard Herzog */
-    copy = PyMem_Malloc(1 + PyBytes_GET_SIZE(encoded));
+    copy = PyMem_Malloc(1 + PyUnicode_GET_SIZE(encoded));
     if (copy == NULL) {
         Py_DECREF(encoded);
         return PyErr_NoMemory();
     }
-    strcpy(copy, PyBytes_AS_STRING(encoded));
+    strcpy(copy, PyUnicode_AsChar(encoded));
     Py_DECREF(encoded);
     rl_parse_and_bind(copy);
     PyMem_Free(copy); /* Free the copy */
@@ -165,7 +166,7 @@ Execute the init line provided in the string argument.");
 static PyObject *
 read_init_file(PyObject *self, PyObject *args)
 {
-    PyObject *filename_obj = Py_None, *filename_bytes;
+  PyObject *filename_obj = Py_None;
     if (!PyArg_ParseTuple(args, "|O:read_init_file", &filename_obj))
         return NULL;
     if (filename_obj != Py_None) {
@@ -191,7 +192,7 @@ The default filename is the last filename used.");
 static PyObject *
 read_history_file(PyObject *self, PyObject *args)
 {
-    PyObject *filename_obj = Py_None, *filename_bytes;
+    PyObject *filename_obj = Py_None;
     if (!PyArg_ParseTuple(args, "|O:read_history_file", &filename_obj))
         return NULL;
     if (filename_obj != Py_None) {
@@ -247,44 +248,6 @@ PyDoc_STRVAR(doc_write_history_file,
 "write_history_file([filename]) -> None\n\
 Save a readline history file.\n\
 The default filename is ~/.history.");
-
-
-#ifdef HAVE_RL_APPEND_HISTORY
-/* Exported function to save part of a readline history file */
-
-static PyObject *
-append_history_file(PyObject *self, PyObject *args)
-{
-    int nelements;
-    PyObject *filename_obj = Py_None, *filename_bytes;
-    const char *filename;
-    int err;
-    if (!PyArg_ParseTuple(args, "i|O:append_history_file", &nelements, &filename_obj))
-        return NULL;
-    if (filename_obj != Py_None) {
-        if (!PyUnicode_FSConverter(filename_obj, &filename_bytes))
-            return NULL;
-        filename = PyBytes_AsString(filename_bytes);
-    } else {
-        filename_bytes = NULL;
-        filename = NULL;
-    }
-    errno = err = append_history(nelements, filename);
-    if (!err && _history_length >= 0)
-        history_truncate_file(filename, _history_length);
-    Py_XDECREF(filename_bytes);
-    errno = err;
-    if (errno)
-        return PyErr_SetFromErrno(PyExc_OSError);
-    Py_RETURN_NONE;
-}
-
-PyDoc_STRVAR(doc_append_history_file,
-"append_history_file(nelements[, filename]) -> None\n\
-Append the last nelements items of the history list to file.\n\
-The default filename is ~/.history.");
-#endif
-
 
 /* Set history length */
 
@@ -459,7 +422,7 @@ set_completer_delims(PyObject *self, PyObject *string)
     /* Keep a reference to the allocated memory in the module state in case
        some other module modifies rl_completer_word_break_characters
        (see issue #17289). */
-    break_chars = strdup(PyBytes_AS_STRING(encoded));
+    break_chars = strdup(PyUnicode_AsChar(encoded));
     Py_DECREF(encoded);
     if (break_chars) {
         free(completer_word_break_characters);
@@ -557,7 +520,7 @@ py_replace_history(PyObject *self, PyObject *args)
     if (encoded == NULL) {
         return NULL;
     }
-    old_entry = replace_history_entry(entry_number, PyBytes_AS_STRING(encoded), (void *)NULL);
+    old_entry = replace_history_entry(entry_number, PyUnicode_AsChar(encoded), (void *)NULL);
     Py_DECREF(encoded);
     if (!old_entry) {
         PyErr_Format(PyExc_ValueError,
@@ -583,7 +546,7 @@ py_add_history(PyObject *self, PyObject *string)
     if (encoded == NULL) {
         return NULL;
     }
-    add_history(PyBytes_AS_STRING(encoded));
+    add_history(PyUnicode_AsChar(encoded));
     Py_DECREF(encoded);
     Py_RETURN_NONE;
 }
@@ -767,7 +730,7 @@ insert_text(PyObject *self, PyObject *string)
     if (encoded == NULL) {
         return NULL;
     }
-    rl_insert_text(PyBytes_AS_STRING(encoded));
+    rl_insert_text(PyUnicode_AsChar(encoded));
     Py_DECREF(encoded);
     Py_RETURN_NONE;
 }
@@ -805,10 +768,6 @@ static struct PyMethodDef readline_methods[] =
      METH_VARARGS, doc_read_history_file},
     {"write_history_file", write_history_file,
      METH_VARARGS, doc_write_history_file},
-#ifdef HAVE_RL_APPEND_HISTORY
-    {"append_history_file", append_history_file,
-     METH_VARARGS, doc_append_history_file},
-#endif
     {"get_history_item", get_history_item,
      METH_VARARGS, doc_get_history_item},
     {"get_current_history_length", (PyCFunction)get_current_history_length,
@@ -984,7 +943,7 @@ on_completion(const char *text, int state)
             PyObject *encoded = encode(r);
             if (encoded == NULL)
                 goto error;
-            result = strdup(PyBytes_AS_STRING(encoded));
+            result = strdup(PyUnicode_AsChar(encoded));
             Py_DECREF(encoded);
         }
         Py_DECREF(r);

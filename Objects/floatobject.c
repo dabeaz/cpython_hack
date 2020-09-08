@@ -480,10 +480,6 @@ PyFloat_FromString(PyObject *v)
         s = PyUnicode_AsCharAndSize(s_buffer, &len);
         assert(s != NULL);
     }
-    else if (PyBytes_Check(v)) {
-        s = PyBytes_AS_STRING(v);
-        len = PyBytes_GET_SIZE(v);
-    }
     else {
         PyErr_Format(PyExc_TypeError,
             "float() argument must be a string or a number, not '%.200s'",

@@ -1581,6 +1581,7 @@ PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
     PyInterpreterState *interp = tstate->interp;
     int has_from;
 
+
     if (name == NULL) {
         _PyErr_SetString(tstate, PyExc_ValueError, "Empty module name");
         goto error;
@@ -1617,6 +1618,8 @@ PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
         goto error;
     }
     Py_XDECREF(mod);
+
+
     mod = import_find_and_load(tstate, abs_name);
     if (mod == NULL) {
       goto error;
@@ -1628,11 +1631,14 @@ PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
         if (has_from < 0)
             goto error;
     }
+
     if (!has_from) {
         Py_ssize_t len = PyUnicode_GET_LENGTH(name);
         if (level == 0 || len > 0) {
             Py_ssize_t dot;
 
+
+	    
             dot = PyUnicode_FindChar(name, '.', 0, len, 1);
             if (dot == -2) {
                 goto error;
@@ -1644,7 +1650,7 @@ PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
                 Py_INCREF(mod);
                 goto error;
             }
-
+	    
             if (level == 0) {
                 PyObject *front = PyUnicode_Substring(name, 0, dot);
                 if (front == NULL) {
@@ -1717,6 +1723,7 @@ PyImport_ImportModuleLevel(const char *name, PyObject *globals, PyObject *locals
         return NULL;
     mod = PyImport_ImportModuleLevelObject(nameobj, globals, locals,
                                            fromlist, level);
+
     Py_DECREF(nameobj);
     return mod;
 }
@@ -1785,6 +1792,7 @@ PyImport_Import(PyObject *module_name)
         import = PyObject_GetAttr(builtins, import_str);
     if (import == NULL)
         goto err;
+
 
     /* Call the __import__ function with the proper argument list
        Always use absolute import here.

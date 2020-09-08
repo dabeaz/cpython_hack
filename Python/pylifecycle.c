@@ -901,10 +901,6 @@ finalize_interp_types(PyThreadState *tstate, int is_main_interp)
     _PyTuple_Fini(tstate);
 
     _PySlice_Fini(tstate);
-
-    if (is_main_interp) {
-        _PyBytes_Fini();
-    }
     _PyUnicode_Fini(tstate);
     _PyFloat_Fini(tstate);
     _PyLong_Fini(tstate);
@@ -1205,7 +1201,7 @@ init_sys_streams(PyThreadState *tstate)
         S_ISDIR(sb.st_mode)) {
         return _PyStatus_ERR("<stdin> is a directory, cannot continue");
     }
-    
+
     if (!(iomod = PyImport_ImportModule("io"))) {
         goto error;
     }

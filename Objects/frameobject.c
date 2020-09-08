@@ -102,7 +102,7 @@ static int64_t *
 markblocks(PyCodeObject *code_obj, int len)
 {
     const _Py_CODEUNIT *code =
-        (const _Py_CODEUNIT *)PyBytes_AS_STRING(code_obj->co_code);
+        (const _Py_CODEUNIT *)PyUnicode_AsChar(code_obj->co_code);
     int64_t *blocks = PyMem_New(int64_t, len+1);
     int i, j, opcode;
 
@@ -244,8 +244,8 @@ marklines(PyCodeObject *code, int len)
     if (linestarts == NULL) {
         return NULL;
     }
-    Py_ssize_t size = PyBytes_GET_SIZE(code->co_lnotab) / 2;
-    unsigned char *p = (unsigned char*)PyBytes_AS_STRING(code->co_lnotab);
+    Py_ssize_t size = PyUnicode_GET_SIZE(code->co_lnotab) / 2;
+    unsigned char *p = (unsigned char*)PyUnicode_AsChar(code->co_lnotab);
     int line = code->co_firstlineno;
     int addr = 0;
     int index = 0;
@@ -399,7 +399,7 @@ frame_setlineno(PyFrameObject *f, PyObject* p_new_lineno, void *Py_UNUSED(ignore
 
     /* PyCode_NewWithPosOnlyArgs limits co_code to be under INT_MAX so this
      * should never overflow. */
-    int len = (int)(PyBytes_GET_SIZE(f->f_code->co_code) / sizeof(_Py_CODEUNIT));
+    int len = (int)(PyUnicode_GET_SIZE(f->f_code->co_code) / sizeof(_Py_CODEUNIT));
     int *lines = marklines(f->f_code, len);
     if (lines == NULL) {
         return -1;

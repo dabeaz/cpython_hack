@@ -30,7 +30,7 @@ decode_unicode_with_escapes(Parser *parser, const char *s, size_t len, Token *t)
 {
   PyObject *result;
   PyObject *temp = decode_bytes_with_escapes(parser, s, len, t);
-  result = PyUnicode_FromStringAndSize(PyBytes_AsString(temp), PyBytes_Size(temp));
+  result = PyUnicode_FromStringAndSize(PyUnicode_AsChar(temp), PyUnicode_GET_SIZE(temp));
   Py_XDECREF(temp);
   return result;
 }
@@ -62,119 +62,117 @@ int
 _PyPegen_parsestr(Parser *p, int *bytesmode, int *rawmode, PyObject **result,
                   const char **fstr, Py_ssize_t *fstrlen, Token *t)
 {
-    const char *s = PyBytes_AsString(t->bytes);
-    if (s == NULL) {
-        return -1;
+  const char *s = PyUnicode_AsChar(t->bytes);
+  if (s == NULL) {
+    return -1;
+  }
+  size_t len;
+  int quote = Py_CHARMASK(*s);
+  int fmode = 0;
+  *bytesmode = 0;
+  *rawmode = 0;
+  *result = NULL;
+  *fstr = NULL;
+  if (Py_ISALPHA(quote)) {
+    while (!*bytesmode || !*rawmode) {
+      if (quote == 'b' || quote == 'B') {
+	quote = *++s;
+	*bytesmode = 1;
+      }
+      else if (quote == 'u' || quote == 'U') {
+	quote = *++s;
+      }
+      else if (quote == 'r' || quote == 'R') {
+	quote = *++s;
+	*rawmode = 1;
+      }
+      else if (quote == 'f' || quote == 'F') {
+	quote = *++s;
+	fmode = 1;
+      }
+      else {
+	break;
+      }
     }
+  }
+  /* fstrings are only allowed in Python 3.6 and greater */
+  if (fmode && p->feature_version < 6) {
+    p->error_indicator = 1;
+    RAISE_SYNTAX_ERROR("Format strings are only supported in Python 3.6 and greater");
+    return -1;
+  }
 
-    size_t len;
-    int quote = Py_CHARMASK(*s);
-    int fmode = 0;
-    *bytesmode = 0;
-    *rawmode = 0;
-    *result = NULL;
-    *fstr = NULL;
-    if (Py_ISALPHA(quote)) {
-        while (!*bytesmode || !*rawmode) {
-            if (quote == 'b' || quote == 'B') {
-                quote = *++s;
-                *bytesmode = 1;
-            }
-            else if (quote == 'u' || quote == 'U') {
-                quote = *++s;
-            }
-            else if (quote == 'r' || quote == 'R') {
-                quote = *++s;
-                *rawmode = 1;
-            }
-            else if (quote == 'f' || quote == 'F') {
-                quote = *++s;
-                fmode = 1;
-            }
-            else {
-                break;
-            }
-        }
+  if (fmode && *bytesmode) {
+    PyErr_BadInternalCall();
+    return -1;
+  }
+  if (quote != '\'' && quote != '\"') {
+    PyErr_BadInternalCall();
+    return -1;
+  }
+  /* Skip the leading quote char. */
+  s++;
+  len = strlen(s);
+  if (len > INT_MAX) {
+    PyErr_SetString(PyExc_OverflowError, "string to parse is too long");
+    return -1;
+  }
+  if (s[--len] != quote) {
+    /* Last quote char must match the first. */
+    PyErr_BadInternalCall();
+    return -1;
+  }
+  if (len >= 4 && s[0] == quote && s[1] == quote) {
+    /* A triple quoted string. We've already skipped one quote at
+       the start and one at the end of the string. Now skip the
+       two at the start. */
+    s += 2;
+    len -= 2;
+    /* And check that the last two match. */
+    if (s[--len] != quote || s[--len] != quote) {
+      PyErr_BadInternalCall();
+      return -1;
     }
-
-    /* fstrings are only allowed in Python 3.6 and greater */
-    if (fmode && p->feature_version < 6) {
-        p->error_indicator = 1;
-        RAISE_SYNTAX_ERROR("Format strings are only supported in Python 3.6 and greater");
-        return -1;
+  }
+  
+  if (fmode) {
+    /* Just return the bytes. The caller will parse the resulting
+       string. */
+    *fstr = s;
+    *fstrlen = len;
+    return 0;
+  }
+  
+  /* Not an f-string. */
+  /* Avoid invoking escape decoding routines if possible. */
+  *rawmode = *rawmode || strchr(s, '\\') == NULL;
+  if (*bytesmode) {
+    /* Disallow non-ASCII characters. */
+    const char *ch;
+    for (ch = s; *ch; ch++) {
+      if (Py_CHARMASK(*ch) >= 0x80) {
+	RAISE_SYNTAX_ERROR(
+			   "bytes can only contain ASCII "
+			   "literal characters.");
+	return -1;
+      }
     }
-
-    if (fmode && *bytesmode) {
-        PyErr_BadInternalCall();
-        return -1;
-    }
-    if (quote != '\'' && quote != '\"') {
-        PyErr_BadInternalCall();
-        return -1;
-    }
-    /* Skip the leading quote char. */
-    s++;
-    len = strlen(s);
-    if (len > INT_MAX) {
-        PyErr_SetString(PyExc_OverflowError, "string to parse is too long");
-        return -1;
-    }
-    if (s[--len] != quote) {
-        /* Last quote char must match the first. */
-        PyErr_BadInternalCall();
-        return -1;
-    }
-    if (len >= 4 && s[0] == quote && s[1] == quote) {
-        /* A triple quoted string. We've already skipped one quote at
-           the start and one at the end of the string. Now skip the
-           two at the start. */
-        s += 2;
-        len -= 2;
-        /* And check that the last two match. */
-        if (s[--len] != quote || s[--len] != quote) {
-            PyErr_BadInternalCall();
-            return -1;
-        }
-    }
-
-    if (fmode) {
-        /* Just return the bytes. The caller will parse the resulting
-           string. */
-        *fstr = s;
-        *fstrlen = len;
-        return 0;
-    }
-
-    /* Not an f-string. */
-    /* Avoid invoking escape decoding routines if possible. */
-    *rawmode = *rawmode || strchr(s, '\\') == NULL;
-    if (*bytesmode) {
-        /* Disallow non-ASCII characters. */
-        const char *ch;
-        for (ch = s; *ch; ch++) {
-            if (Py_CHARMASK(*ch) >= 0x80) {
-                RAISE_SYNTAX_ERROR(
-                                   "bytes can only contain ASCII "
-                                   "literal characters.");
-                return -1;
-            }
-        }
-        if (*rawmode) {
-            *result = PyBytes_FromStringAndSize(s, len);
-        }
-        else {
-            *result = decode_bytes_with_escapes(p, s, len, t);
-        }
+    if (*rawmode) {
+      *result = PyUnicode_FromStringAndSize(s, len);
     }
     else {
-        if (*rawmode) {
-	    *result = PyUnicode_FromStringAndSize(s, len);
-        }
-        else {
-	    *result = decode_unicode_with_escapes(p, s, len, t);
-        }
+      *result = decode_unicode_with_escapes(p, s, len, t);
     }
-    return *result == NULL ? -1 : 0;
+  }
+  else {
+    if (*rawmode) {
+      *result = PyUnicode_FromStringAndSize(s, len);
+    }
+    else {
+      *result = decode_unicode_with_escapes(p, s, len, t);
+    }
+  }
+  return *result == NULL ? -1 : 0;
 }
 
 
@@ -419,7 +417,7 @@ fstring_fix_expr_location(Token *parent, expr_ty n, char *expr_str)
     int cols = 0;
 
     if (parent && parent->bytes) {
-        char *parent_str = PyBytes_AsString(parent->bytes);
+      char *parent_str = (char *) PyUnicode_AsChar(parent->bytes);
         if (!parent_str) {
             return;
         }
@@ -1130,7 +1128,7 @@ make_str_node_and_del(Parser *p, PyObject **str, Token* first_token, Token *last
     PyObject *kind = NULL;
     *str = NULL;
     assert(PyUnicode_CheckExact(s));
-    const char* the_str = PyBytes_AsString(first_token->bytes);
+    const char* the_str = PyUnicode_AsChar(first_token->bytes);
     if (the_str && the_str[0] == 'u') {
         kind = _PyPegen_new_identifier(p, "u");
     }
@@ -1236,7 +1234,7 @@ _PyPegen_FstringParser_ConcatFstring(Parser *p, FstringParser *state, const char
         if (ExprList_Append(&state->expr_list, expression) < 0)
             return -1;
     }
-
+    
     /* If recurse_lvl is zero, then we must be at the end of the
        string. Otherwise, we must be at a right brace. */
 
@@ -1248,7 +1246,6 @@ _PyPegen_FstringParser_ConcatFstring(Parser *p, FstringParser *state, const char
         RAISE_SYNTAX_ERROR("f-string: expecting '}'");
         return -1;
     }
-
     FstringParser_check_invariants(state);
     return 0;
 }

@@ -532,7 +532,7 @@ _io__IOBase_readline_impl(PyObject *self, Py_ssize_t limit)
     /* For backwards compatibility, a (slowish) readline(). */
 
     PyObject *result;
-    Py_ssize_t bufsize, bufmax, old_size = -1;
+    Py_ssize_t bufsize, bufmax;
     char *buffer;
 
     buffer = (char *) PyMem_RawMalloc(100);

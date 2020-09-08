@@ -17,7 +17,6 @@ extern "C" {
 
 
 _Py_IDENTIFIER(Py_Repr);
-_Py_IDENTIFIER(__bytes__);
 _Py_IDENTIFIER(__dir__);
 
 int
@@ -180,22 +179,10 @@ PyObject_Print(PyObject *op, FILE *fp, int flags)
                 s = PyObject_Repr(op);
             if (s == NULL)
                 ret = -1;
-            else if (PyBytes_Check(s)) {
-                fwrite(PyBytes_AS_STRING(s), 1,
-                       PyBytes_GET_SIZE(s), fp);
-            }
             else if (PyUnicode_Check(s)) {
-                PyObject *t;
-                t = PyUnicode_AsBytes(s);
-                if (t == NULL) {
-                    ret = -1;
-                }
-                else {
-                    fwrite(PyBytes_AS_STRING(t), 1,
-                           PyBytes_GET_SIZE(t), fp);
-                    Py_DECREF(t);
-                }
-            }
+	      fwrite(PyUnicode_AsChar(s), 1,
+		     PyUnicode_GET_SIZE(s), fp);
+	    }
             else {
                 PyErr_Format(PyExc_TypeError,
                              "str() or repr() returned '%.100s'",
@@ -213,12 +200,6 @@ PyObject_Print(PyObject *op, FILE *fp, int flags)
         }
     }
     return ret;
-}
-
-/* For debugging convenience.  Set a breakpoint here and call it from your DLL */
-void
-_Py_BreakPoint(void)
-{
 }
 
 
@@ -349,40 +330,6 @@ PyObject_ASCII(PyObject *v)
   repr = PyObject_Repr(v);
   return repr;
 }
-
-PyObject *
-PyObject_Bytes(PyObject *v)
-{
-    PyObject *result, *func;
-
-    if (v == NULL)
-        return PyBytes_FromString("<NULL>");
-
-    if (PyBytes_CheckExact(v)) {
-        Py_INCREF(v);
-        return v;
-    }
-
-    func = _PyObject_LookupSpecial(v, &PyId___bytes__);
-    if (func != NULL) {
-        result = _PyObject_CallNoArg(func);
-        Py_DECREF(func);
-        if (result == NULL)
-            return NULL;
-        if (!PyBytes_Check(result)) {
-            PyErr_Format(PyExc_TypeError,
-                         "__bytes__ returned non-bytes (type %.200s)",
-                         Py_TYPE(result)->tp_name);
-            Py_DECREF(result);
-            return NULL;
-        }
-        return result;
-    }
-    else if (PyErr_Occurred())
-        return NULL;
-    return PyBytes_FromObject(v);
-}
-
 
 /*
 def _PyObject_FunctionStr(x):
@@ -1542,7 +1489,6 @@ _PyTypes_Init(void)
     INIT_TYPE(&_PyWeakref_ProxyType, "weakref proxy");
     INIT_TYPE(&PyLong_Type, "int");
     INIT_TYPE(&PyBool_Type, "bool");
-    INIT_TYPE(&PyBytes_Type, "str");
     INIT_TYPE(&PyList_Type, "list");
     INIT_TYPE(&_PyNone_Type, "None");
     INIT_TYPE(&_PyNotImplemented_Type, "NotImplemented");

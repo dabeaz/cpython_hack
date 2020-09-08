@@ -2356,18 +2356,17 @@ _PyGC_DumpShutdownStats(PyThreadState *tstate)
             message = "gc: %zd uncollectable objects at " \
                 "shutdown; use gc.set_debug(gc.DEBUG_UNCOLLECTABLE) to list them";
         if (gcstate->debug & DEBUG_UNCOLLECTABLE) {
-            PyObject *repr = NULL, *bytes = NULL;
+   	  PyObject *repr = NULL;
             repr = PyObject_Repr(gcstate->garbage);
-            if (!repr || !(bytes = PyUnicode_AsBytes(repr)))
+            if (!repr)
                 PyErr_WriteUnraisable(gcstate->garbage);
             else {
                 PySys_WriteStderr(
                     "      %s\n",
-                    PyBytes_AS_STRING(bytes)
+                    PyUnicode_AsChar(repr)
                     );
             }
             Py_XDECREF(repr);
-            Py_XDECREF(bytes);
         }
     }
 }

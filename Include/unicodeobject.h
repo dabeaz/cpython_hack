@@ -282,12 +282,6 @@ PyAPI_FUNC(PyObject*) PyUnicode_DecodeUTF8Stateful(
     Py_ssize_t *consumed        /* bytes consumed */
     );
 
-/* --- Latin-1 Codecs -----------------------------------------------------
-
-   Note: Latin-1 corresponds to the first 256 Unicode ordinals. */
-
-PyAPI_FUNC(PyObject*) PyUnicode_AsBytes(PyObject *unicode);
-
 /* --- Methods & Slots ----------------------------------------------------
 
    These are capable of handling Unicode objects and strings on input
@@ -1045,6 +1039,18 @@ PyAPI_FUNC(PyObject*) _PyUnicode_FromId(_Py_Identifier*);
 PyAPI_FUNC(int) _PyUnicode_EQ(PyObject *, PyObject *);
 
 PyAPI_FUNC(Py_ssize_t) _PyUnicode_ScanIdentifier(PyObject *);
+
+  /* Helper for PyBytes_DecodeEscape that detects invalid escape chars. */
+PyAPI_FUNC(PyObject *) _PyBytes_DecodeEscape(const char *, Py_ssize_t,
+                                             const char *, const char **);
+
+  
+/* Flags used by string formatting */
+#define F_LJUST (1<<0)
+#define F_SIGN  (1<<1)
+#define F_BLANK (1<<2)
+#define F_ALT   (1<<3)
+#define F_ZERO  (1<<4)
 
 #ifdef __cplusplus
 }

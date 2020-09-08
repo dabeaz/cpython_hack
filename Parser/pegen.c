@@ -5,24 +5,6 @@
 #include "pegen.h"
 #include "string_parser.h"
 
-/* Checks if the NOTEQUAL token is valid given the current parser flags
-0 indicates success and nonzero indicates failure (an exception may be set) */
-int
-_PyPegen_check_barry_as_flufl(Parser *p) {
-    Token *t = p->tokens[p->fill - 1];
-    assert(t->bytes != NULL);
-    assert(t->type == NOTEQUAL);
-
-    char* tok_str = PyBytes_AS_STRING(t->bytes);
-    if (p->flags & PyPARSE_BARRY_AS_BDFL && strcmp(tok_str, "<>")){
-        RAISE_SYNTAX_ERROR("with Barry as BDFL, use '<>' instead of '!='");
-        return -1;
-    } else if (!(p->flags & PyPARSE_BARRY_AS_BDFL)) {
-        return strcmp(tok_str, "!=");
-    }
-    return 0;
-}
-
 PyObject *
 _PyPegen_new_identifier(Parser *p, char *n)
 {
@@ -443,7 +425,7 @@ _PyPegen_fill_token(Parser *p)
 
     Token *t = p->tokens[p->fill];
     t->type = (type == NAME) ? _get_keyword_or_name_type(p, start, (int)(end - start)) : type;
-    t->bytes = PyBytes_FromStringAndSize(start, end - start);
+    t->bytes = PyUnicode_FromStringAndSize(start, end - start);
     if (t->bytes == NULL) {
         return -1;
     }
@@ -612,7 +594,7 @@ _PyPegen_expect_soft_keyword(Parser *p, const char *keyword)
     if (t->type != NAME) {
         return NULL;
     }
-    char *s = PyBytes_AsString(t->bytes);
+    char *s = (char *) PyUnicode_AsChar(t->bytes);
     if (!s) {
         p->error_indicator = 1;
         return NULL;
@@ -644,7 +626,7 @@ _PyPegen_name_token(Parser *p)
     if (t == NULL) {
         return NULL;
     }
-    char* s = PyBytes_AsString(t->bytes);
+    char* s = (char *) PyUnicode_AsChar(t->bytes);
     if (!s) {
         p->error_indicator = 1;
         return NULL;
@@ -728,7 +710,7 @@ _PyPegen_number_token(Parser *p)
         return NULL;
     }
 
-    char *num_raw = PyBytes_AsString(t->bytes);
+    char *num_raw = (char *) PyUnicode_AsChar(t->bytes);
     if (num_raw == NULL) {
         p->error_indicator = 1;
         return NULL;
@@ -819,9 +801,6 @@ compute_parser_flags(PyCompilerFlags *flags)
     }
     if (flags->cf_flags & PyCF_IGNORE_COOKIE) {
         parser_flags |= PyPARSE_IGNORE_COOKIE;
-    }
-    if (flags->cf_flags & CO_FUTURE_BARRY_AS_BDFL) {
-        parser_flags |= PyPARSE_BARRY_AS_BDFL;
     }
     if (flags->cf_flags & PyCF_TYPE_COMMENTS) {
         parser_flags |= PyPARSE_TYPE_COMMENTS;
@@ -1116,12 +1095,12 @@ _PyPegen_join_names_with_dot(Parser *p, expr_ty first_name, expr_ty second_name)
     }
     Py_ssize_t len = strlen(first_str) + strlen(second_str) + 1;  // +1 for the dot
 
-    PyObject *str = PyBytes_FromStringAndSize(NULL, len);
+    PyObject *str = PyUnicode_FromStringAndSize(NULL, len);
     if (!str) {
         return NULL;
     }
 
-    char *s = PyBytes_AS_STRING(str);
+    char *s = (char *) PyUnicode_AsChar(str);
     if (!s) {
         return NULL;
     }
@@ -1133,7 +1112,7 @@ _PyPegen_join_names_with_dot(Parser *p, expr_ty first_name, expr_ty second_name)
     s += strlen(second_str);
     *s = '\0';
 
-    PyObject *uni = PyUnicode_FromStringAndSize(PyBytes_AS_STRING(str), PyBytes_GET_SIZE(str));
+    PyObject *uni = PyUnicode_FromStringAndSize(PyUnicode_AsChar(str), PyUnicode_GET_SIZE(str));
     Py_DECREF(str);
     if (!uni) {
         return NULL;
@@ -1783,33 +1762,12 @@ _PyPegen_concatenate_strings(Parser *p, asdl_seq *strings)
         else {
             /* String or byte string. */
             assert(s != NULL && fstr == NULL);
-            assert(bytesmode ? PyBytes_CheckExact(s) : PyUnicode_CheckExact(s));
-
-            if (bytesmode) {
-                if (i == 0) {
-                    bytes_str = s;
-                }
-                else {
-                    PyBytes_ConcatAndDel(&bytes_str, s);
-                    if (!bytes_str) {
-                        goto error;
-                    }
-                }
-            }
-            else {
-                /* This is a regular string. Concatenate it. */
-                if (_PyPegen_FstringParser_ConcatAndDel(&state, s) < 0) {
-                    goto error;
-                }
+	    /* This is a regular string. Concatenate it. */
+	    if (_PyPegen_FstringParser_ConcatAndDel(&state, s) < 0) {
+	      goto error;
             }
         }
     }
-
-    if (bytesmode) {
-        return Constant(bytes_str, NULL, first->lineno, first->col_offset, last->end_lineno,
-                        last->end_col_offset);
-    }
-
     return _PyPegen_FstringParser_Finish(p, &state, first, last);
 
 error:

@@ -3765,7 +3765,7 @@ check_index(struct compiler *c, expr_ty e, expr_ty s)
     switch (e->kind) {
     case Constant_kind:
         v = e->v.Constant.value;
-        if (!(PyUnicode_Check(v) || PyBytes_Check(v) || PyTuple_Check(v))) {
+        if (!(PyUnicode_Check(v) || PyTuple_Check(v))) {
             return 1;
         }
         /* fall through */
@@ -4903,10 +4903,10 @@ assemble_init(struct assembler *a, int nblocks, int firstlineno)
 {
     memset(a, 0, sizeof(struct assembler));
     a->a_lineno = firstlineno;
-    a->a_bytecode = PyBytes_FromStringAndSize(NULL, DEFAULT_CODE_SIZE);
+    a->a_bytecode = PyUnicode_FromStringAndSize(NULL, DEFAULT_CODE_SIZE);
     if (!a->a_bytecode)
         return 0;
-    a->a_lnotab = PyBytes_FromStringAndSize(NULL, DEFAULT_LNOTAB_SIZE);
+    a->a_lnotab = PyUnicode_FromStringAndSize(NULL, DEFAULT_LNOTAB_SIZE);
     if (!a->a_lnotab)
         return 0;
     if ((size_t)nblocks > SIZE_MAX / sizeof(basicblock *)) {
@@ -4964,7 +4964,7 @@ assemble_lnotab(struct assembler *a, struct instr *i)
     if (d_bytecode > 255) {
         int j, nbytes, ncodes = d_bytecode / 255;
         nbytes = a->a_lnotab_off + 2 * ncodes;
-        len = PyBytes_GET_SIZE(a->a_lnotab);
+        len = PyUnicode_GET_SIZE(a->a_lnotab);
         if (nbytes >= len) {
             if ((len <= INT_MAX / 2) && (len * 2 < nbytes))
                 len = nbytes;
@@ -4974,11 +4974,11 @@ assemble_lnotab(struct assembler *a, struct instr *i)
                 PyErr_NoMemory();
                 return 0;
             }
-            if (_PyBytes_Resize(&a->a_lnotab, len) < 0)
+            if (PyUnicode_Resize(&a->a_lnotab, len) < 0)
                 return 0;
         }
         lnotab = (unsigned char *)
-                   PyBytes_AS_STRING(a->a_lnotab) + a->a_lnotab_off;
+                   PyUnicode_AsChar(a->a_lnotab) + a->a_lnotab_off;
         for (j = 0; j < ncodes; j++) {
             *lnotab++ = 255;
             *lnotab++ = 0;
@@ -5002,7 +5002,7 @@ assemble_lnotab(struct assembler *a, struct instr *i)
         d_lineno -= ncodes * k;
         assert(ncodes >= 1);
         nbytes = a->a_lnotab_off + 2 * ncodes;
-        len = PyBytes_GET_SIZE(a->a_lnotab);
+        len = PyUnicode_GET_SIZE(a->a_lnotab);
         if (nbytes >= len) {
             if ((len <= INT_MAX / 2) && len * 2 < nbytes)
                 len = nbytes;
@@ -5012,11 +5012,11 @@ assemble_lnotab(struct assembler *a, struct instr *i)
                 PyErr_NoMemory();
                 return 0;
             }
-            if (_PyBytes_Resize(&a->a_lnotab, len) < 0)
+            if (PyUnicode_Resize(&a->a_lnotab, len) < 0)
                 return 0;
         }
         lnotab = (unsigned char *)
-                   PyBytes_AS_STRING(a->a_lnotab) + a->a_lnotab_off;
+                   PyUnicode_AsChar(a->a_lnotab) + a->a_lnotab_off;
         *lnotab++ = d_bytecode;
         *lnotab++ = k;
         d_bytecode = 0;
@@ -5028,13 +5028,13 @@ assemble_lnotab(struct assembler *a, struct instr *i)
     }
     assert(-128 <= d_lineno && d_lineno <= 127);
 
-    len = PyBytes_GET_SIZE(a->a_lnotab);
+    len = PyUnicode_GET_SIZE(a->a_lnotab);
     if (a->a_lnotab_off + 2 >= len) {
-        if (_PyBytes_Resize(&a->a_lnotab, len * 2) < 0)
+        if (PyUnicode_Resize(&a->a_lnotab, len * 2) < 0)
             return 0;
     }
     lnotab = (unsigned char *)
-                    PyBytes_AS_STRING(a->a_lnotab) + a->a_lnotab_off;
+                    PyUnicode_AsChar(a->a_lnotab) + a->a_lnotab_off;
 
     a->a_lnotab_off += 2;
     if (d_bytecode) {
@@ -5059,7 +5059,7 @@ static int
 assemble_emit(struct assembler *a, struct instr *i)
 {
     int size, arg = 0;
-    Py_ssize_t len = PyBytes_GET_SIZE(a->a_bytecode);
+    Py_ssize_t len = PyUnicode_GET_SIZE(a->a_bytecode);
     _Py_CODEUNIT *code;
 
     arg = i->i_oparg;
@@ -5069,10 +5069,10 @@ assemble_emit(struct assembler *a, struct instr *i)
     if (a->a_offset + size >= len / (int)sizeof(_Py_CODEUNIT)) {
         if (len > PY_SSIZE_T_MAX / 2)
             return 0;
-        if (_PyBytes_Resize(&a->a_bytecode, len * 2) < 0)
+        if (PyUnicode_Resize(&a->a_bytecode, len * 2) < 0)
             return 0;
     }
-    code = (_Py_CODEUNIT *)PyBytes_AS_STRING(a->a_bytecode) + a->a_offset;
+    code = (_Py_CODEUNIT *)PyUnicode_AsChar(a->a_bytecode) + a->a_offset;
     a->a_offset += size;
     write_op_arg(code, i->i_opcode, arg, size);
     return 1;
@@ -5253,7 +5253,6 @@ makecode(struct compiler *c, struct assembler *a)
     PyObject *name = NULL;
     PyObject *freevars = NULL;
     PyObject *cellvars = NULL;
-    PyObject *bytecode = NULL;
     Py_ssize_t nlocals;
     int nlocals_int;
     int flags;
@@ -5287,8 +5286,6 @@ makecode(struct compiler *c, struct assembler *a)
     flags = compute_code_flags(c);
     if (flags < 0)
         goto error;
-
-    bytecode = a->a_bytecode;
     
     tmp = PyList_AsTuple(consts); /* PyCode_New requires a tuple */
     if (!tmp)
@@ -5298,7 +5295,6 @@ makecode(struct compiler *c, struct assembler *a)
     if (!merge_const_tuple(c, &consts)) {
         goto error;
     }
-
     posonlyargcount = Py_SAFE_DOWNCAST(c->u->u_posonlyargcount, Py_ssize_t, int);
     posorkeywordargcount = Py_SAFE_DOWNCAST(c->u->u_argcount, Py_ssize_t, int);
     kwonlyargcount = Py_SAFE_DOWNCAST(c->u->u_kwonlyargcount, Py_ssize_t, int);
@@ -5308,7 +5304,7 @@ makecode(struct compiler *c, struct assembler *a)
     }
     co = PyCode_NewWithPosOnlyArgs(posonlyargcount+posorkeywordargcount,
                                    posonlyargcount, kwonlyargcount, nlocals_int,
-                                   maxdepth, flags, bytecode, consts, names,
+                                   maxdepth, flags, a->a_bytecode, consts, names,
                                    varnames, freevars, cellvars, c->c_filename,
                                    c->u->u_name, c->u->u_firstlineno, a->a_lnotab);
  error:
@@ -5370,9 +5366,9 @@ assemble(struct compiler *c, int addNone)
                 goto error;
     }
 
-    if (_PyBytes_Resize(&a.a_lnotab, a.a_lnotab_off) < 0)
+    if (PyUnicode_Resize(&a.a_lnotab, a.a_lnotab_off) < 0)
         goto error;
-    if (_PyBytes_Resize(&a.a_bytecode, a.a_offset * sizeof(_Py_CODEUNIT)) < 0)
+    if (PyUnicode_Resize(&a.a_bytecode, a.a_offset * sizeof(_Py_CODEUNIT)) < 0)
         goto error;
 
     co = makecode(c, &a);

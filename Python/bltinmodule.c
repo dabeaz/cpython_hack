@@ -2556,15 +2556,7 @@ builtin_ord(PyObject *module, PyObject *c)
 {
     long ord;
     Py_ssize_t size;
-
-    if (PyBytes_Check(c)) {
-        size = PyBytes_GET_SIZE(c);
-        if (size == 1) {
-            ord = (long)((unsigned char)*PyBytes_AS_STRING(c));
-            return PyLong_FromLong(ord);
-        }
-    }
-    else if (PyUnicode_Check(c)) {
+    if (PyUnicode_Check(c)) {
         size = PyUnicode_GET_LENGTH(c);
         if (size == 1) {
             ord = (long)PyUnicode_READ_CHAR(c, 0);
@@ -2808,32 +2800,7 @@ builtin_input_impl(PyObject *module, PyObject *prompt)
         else
             Py_DECREF(tmp);
         if (prompt != NULL) {
-            /* We have a prompt, encode it as stdout would */
-            const char *stdout_encoding_str, *stdout_errors_str;
-            PyObject *stringpo;
-            stdout_encoding = _PyObject_GetAttrId(fout, &PyId_encoding);
-            stdout_errors = _PyObject_GetAttrId(fout, &PyId_errors);
-            if (!stdout_encoding || !stdout_errors ||
-                    !PyUnicode_Check(stdout_encoding) ||
-                    !PyUnicode_Check(stdout_errors)) {
-                tty = 0;
-                goto _readline_errors;
-            }
-            stdout_encoding_str = PyUnicode_AsChar(stdout_encoding);
-            stdout_errors_str = PyUnicode_AsChar(stdout_errors);
-            if (!stdout_encoding_str || !stdout_errors_str)
-                goto _readline_errors;
-            stringpo = PyObject_Str(prompt);
-            if (stringpo == NULL)
-                goto _readline_errors;
-            po = PyUnicode_AsBytes(stringpo);
-            Py_CLEAR(stdout_encoding);
-            Py_CLEAR(stdout_errors);
-            Py_CLEAR(stringpo);
-            if (po == NULL)
-                goto _readline_errors;
-            assert(PyBytes_Check(po));
-            promptstr = PyBytes_AS_STRING(po);
+	  promptstr = PyUnicode_AsChar(prompt);
         }
         else {
             po = NULL;
@@ -3084,12 +3051,6 @@ builtin_sum_impl(PyObject *module, PyObject *iterable, PyObject *start)
         if (PyUnicode_Check(result)) {
             PyErr_SetString(PyExc_TypeError,
                 "sum() can't sum strings [use ''.join(seq) instead]");
-            Py_DECREF(iter);
-            return NULL;
-        }
-        if (PyBytes_Check(result)) {
-            PyErr_SetString(PyExc_TypeError,
-                "sum() can't sum bytes [use b''.join(seq) instead]");
             Py_DECREF(iter);
             return NULL;
         }
@@ -3563,7 +3524,6 @@ _PyBuiltin_Init(PyThreadState *tstate)
     SETBUILTIN("False",                 Py_False);
     SETBUILTIN("True",                  Py_True);
     SETBUILTIN("bool",                  &PyBool_Type);
-    SETBUILTIN("bytes",                 &PyBytes_Type);
     SETBUILTIN("classmethod",           &PyClassMethod_Type);
     SETBUILTIN("dict",                  &PyDict_Type);
     SETBUILTIN("enumerate",             &PyEnum_Type);

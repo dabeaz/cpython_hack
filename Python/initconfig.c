@@ -112,7 +112,6 @@ int Py_QuietFlag = 0; /* Needed by sysmodule.c */
 int Py_InteractiveFlag = 0; /* Needed by Py_FdIsInteractive() below */
 int Py_InspectFlag = 0; /* Needed to determine whether to exit at SystemExit */
 int Py_OptimizeFlag = 0; /* Needed by compile.c */
-int Py_BytesWarningFlag = 0; /* Warn on str(bytes) and str(buffer) */
 int Py_FrozenFlag = 0; /* Needed by getpath.c */
 int Py_IgnoreEnvironmentFlag = 0; /* e.g. PYTHONPATH, PYTHONHOME */
 int Py_NoUserSiteDirectory = 0; /* for -s and site.py */
@@ -157,7 +156,6 @@ _Py_GetGlobalVariablesAsDict(void)
     SET_ITEM_INT(Py_InspectFlag);
 
     SET_ITEM_INT(Py_OptimizeFlag);
-    SET_ITEM_INT(Py_BytesWarningFlag);
     SET_ITEM_INT(Py_FrozenFlag);
     SET_ITEM_INT(Py_IgnoreEnvironmentFlag);
     SET_ITEM_INT(Py_UnbufferedStdioFlag);

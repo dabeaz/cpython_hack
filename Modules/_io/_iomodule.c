@@ -513,10 +513,6 @@ PyInit__io(void)
     if (!_PyIO_empty_str &&
         !(_PyIO_empty_str = PyUnicode_FromStringAndSize(NULL, 0)))
         goto fail;
-    if (!_PyIO_empty_bytes &&
-        !(_PyIO_empty_bytes = PyBytes_FromStringAndSize(NULL, 0)))
-        goto fail;
-
     state->initialized = 1;
 
     return m;
