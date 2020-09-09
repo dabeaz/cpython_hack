@@ -81,9 +81,7 @@ static const char *converttuple(PyObject *, const char **, va_list *, int,
                                 int *, char *, size_t, int, freelist_t *);
 static const char *convertsimple(PyObject *, const char **, va_list *, int,
                                  char *, size_t, freelist_t *);
-static Py_ssize_t convertbuffer(PyObject *, const void **p, const char **);
-static int getbuffer(PyObject *, Py_buffer *, const char**);
-
+  
 static int vgetargskeywords(PyObject *, PyObject *,
                             const char *, char **, va_list *, int);
 static int vgetargskeywordsfast(PyObject *, PyObject *,
@@ -193,16 +191,6 @@ _PyArg_VaParse_SizeT(PyObject *args, const char *format, va_list va)
     retval = vgetargs1(args, format, &lva, FLAG_SIZE_T);
     va_end(lva);
     return retval;
-}
-
-static int
-cleanup_buffer(PyObject *self, void *ptr)
-{
-    Py_buffer *buf = (Py_buffer *)ptr;
-    if (buf) {
-        PyBuffer_Release(buf);
-    }
-    return 0;
 }
 
 static int
@@ -869,92 +857,10 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
     /* XXX WAAAAH!  's', 'y', 'z', 'u', 'Z', 'e', 'w' codes all
        need to be cleaned up! */
 
-    case 'y': {/* any bytes-like object */
-        void **p = (void **)va_arg(*p_va, char **);
-        const char *buf;
-        Py_ssize_t count;
-        if (*format == '*') {
-            if (getbuffer(arg, (Py_buffer*)p, &buf) < 0)
-                return converterr(buf, arg, msgbuf, bufsize);
-            format++;
-            if (addcleanup(p, freelist, cleanup_buffer)) {
-                return converterr(
-                    "(cleanup problem)",
-                    arg, msgbuf, bufsize);
-            }
-            break;
-        }
-        count = convertbuffer(arg, (const void **)p, &buf);
-        if (count < 0)
-            return converterr(buf, arg, msgbuf, bufsize);
-        if (*format == '#') {
-            FETCH_SIZE;
-            STORE_SIZE(count);
-            format++;
-        } else {
-            if (strlen(*p) != (size_t)count) {
-                PyErr_SetString(PyExc_ValueError, "embedded null byte");
-                RETURN_ERR_OCCURRED;
-            }
-        }
-        break;
-    }
     case 's': /* text string or bytes-like object */
     case 'z': /* text string, bytes-like object or None */
     {
-        if (*format == '*') {
-            /* "s*" or "z*" */
-            Py_buffer *p = (Py_buffer *)va_arg(*p_va, Py_buffer *);
-
-            if (c == 'z' && arg == Py_None)
-                PyBuffer_FillInfo(p, NULL, NULL, 0, 1, 0);
-            else if (PyUnicode_Check(arg)) {
-                Py_ssize_t len;
-                sarg = PyUnicode_AsCharAndSize(arg, &len);
-                if (sarg == NULL)
-                    return converterr(CONV_UNICODE,
-                                      arg, msgbuf, bufsize);
-                PyBuffer_FillInfo(p, arg, (void *)sarg, len, 1, 0);
-            }
-            else { /* any bytes-like object */
-                const char *buf;
-                if (getbuffer(arg, p, &buf) < 0)
-                    return converterr(buf, arg, msgbuf, bufsize);
-            }
-            if (addcleanup(p, freelist, cleanup_buffer)) {
-                return converterr(
-                    "(cleanup problem)",
-                    arg, msgbuf, bufsize);
-            }
-            format++;
-        } else if (*format == '#') { /* a string or read-only bytes-like object */
-            /* "s#" or "z#" */
-            const void **p = (const void **)va_arg(*p_va, const char **);
-            FETCH_SIZE;
-
-            if (c == 'z' && arg == Py_None) {
-                *p = NULL;
-                STORE_SIZE(0);
-            }
-            else if (PyUnicode_Check(arg)) {
-                Py_ssize_t len;
-                sarg = PyUnicode_AsCharAndSize(arg, &len);
-                if (sarg == NULL)
-                    return converterr(CONV_UNICODE,
-                                      arg, msgbuf, bufsize);
-                *p = sarg;
-                STORE_SIZE(len);
-            }
-            else { /* read-only bytes-like object */
-                /* XXX Really? */
-                const char *buf;
-                Py_ssize_t count = convertbuffer(arg, p, &buf);
-                if (count < 0)
-                    return converterr(buf, arg, msgbuf, bufsize);
-                STORE_SIZE(count);
-            }
-            format++;
-        } else {
+	  {
             /* "s" or "z" */
             const char **p = va_arg(*p_va, const char **);
             Py_ssize_t len;
@@ -979,14 +885,6 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
         }
         break;
     }
-
-    case 'u': /* raw unicode buffer (Py_UNICODE *) */
-    case 'Z': /* raw unicode buffer or None */
-    {
-	Py_FatalError("Bad format. uZ");
-        break;
-    }
-    
     case 'U': { /* PyUnicode object */
         PyObject **p = va_arg(*p_va, PyObject **);
         if (PyUnicode_Check(arg)) {
@@ -1030,35 +928,6 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
         }
         break;
     }
-
-    case 'w': { /* "w*": memory buffer, read-write access */
-        void **p = va_arg(*p_va, void **);
-
-        if (*format != '*')
-            return converterr(
-                "(invalid use of 'w' format character)",
-                arg, msgbuf, bufsize);
-        format++;
-
-        /* Caller is interested in Py_buffer, and the object
-           supports it directly. */
-        if (PyObject_GetBuffer(arg, (Py_buffer*)p, PyBUF_WRITABLE) < 0) {
-            PyErr_Clear();
-            return converterr("read-write bytes-like object",
-                              arg, msgbuf, bufsize);
-        }
-        if (!PyBuffer_IsContiguous((Py_buffer*)p, 'C')) {
-            PyBuffer_Release((Py_buffer*)p);
-            return converterr("contiguous buffer", arg, msgbuf, bufsize);
-        }
-        if (addcleanup(p, freelist, cleanup_buffer)) {
-            return converterr(
-                "(cleanup problem)",
-                arg, msgbuf, bufsize);
-        }
-        break;
-    }
-
     default:
         return converterr("(impossible<bad format char>)", arg, msgbuf, bufsize);
 
@@ -1071,43 +940,6 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
 #undef STORE_SIZE
 #undef BUFFER_LEN
 #undef RETURN_ERR_OCCURRED
-}
-
-static Py_ssize_t
-convertbuffer(PyObject *arg, const void **p, const char **errmsg)
-{
-    PyBufferProcs *pb = Py_TYPE(arg)->tp_as_buffer;
-    Py_ssize_t count;
-    Py_buffer view;
-
-    *errmsg = NULL;
-    *p = NULL;
-    if (pb != NULL && pb->bf_releasebuffer != NULL) {
-        *errmsg = "read-only bytes-like object";
-        return -1;
-    }
-
-    if (getbuffer(arg, &view, errmsg) < 0)
-        return -1;
-    count = view.len;
-    *p = view.buf;
-    PyBuffer_Release(&view);
-    return count;
-}
-
-static int
-getbuffer(PyObject *arg, Py_buffer *view, const char **errmsg)
-{
-    if (PyObject_GetBuffer(arg, view, PyBUF_SIMPLE) != 0) {
-        *errmsg = "bytes-like object";
-        return -1;
-    }
-    if (!PyBuffer_IsContiguous(view, 'C')) {
-        PyBuffer_Release(view);
-        *errmsg = "contiguous buffer";
-        return -1;
-    }
-    return 0;
 }
 
 /* Support for keyword arguments donated by

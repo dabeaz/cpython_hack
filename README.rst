@@ -105,7 +105,8 @@ How will it end?  Or is this just the start?
 - Day 88 (9/06/2020). Ba-bye buffered I/O and bytearray.
 - Day 89 (9/07/2020). More encoding/decoding removal.
 - Day 90 (9/08/2020). Another bytes bites the dust.
-  
+- Day 91 (9/09/2020). Buffer interface. Flushed.
+
 Copyright and License Information
 ---------------------------------
 

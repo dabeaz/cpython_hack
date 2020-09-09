@@ -151,30 +151,20 @@ PyDoc_STRVAR(marshal_loads__doc__,
     {"loads", (PyCFunction)marshal_loads, METH_O, marshal_loads__doc__},
 
 static PyObject *
-marshal_loads_impl(PyObject *module, Py_buffer *bytes);
+marshal_loads_impl(PyObject *module, char *s, Py_ssize_t n);
 
 static PyObject *
 marshal_loads(PyObject *module, PyObject *arg)
 {
-    PyObject *return_value = NULL;
-    Py_buffer bytes = {NULL, NULL};
+    char *s;
+    Py_ssize_t n;
 
-    if (PyObject_GetBuffer(arg, &bytes, PyBUF_SIMPLE) != 0) {
-        goto exit;
+    if (!PyUnicode_Check(arg)) {
+        _PyArg_BadArgument("loads", "argument", "string", arg);
+	return NULL;
     }
-    if (!PyBuffer_IsContiguous(&bytes, 'C')) {
-        _PyArg_BadArgument("loads", "argument", "contiguous buffer", arg);
-        goto exit;
-    }
-    return_value = marshal_loads_impl(module, &bytes);
-
-exit:
-    /* Cleanup for bytes */
-    if (bytes.obj) {
-       PyBuffer_Release(&bytes);
-    }
-
-    return return_value;
+    s = (char *) PyUnicode_AsCharAndSize(arg, &n);
+    return marshal_loads_impl(module, s, n);
 }
 /*[clinic end generated code: output=68b78f38bfe0c06d input=a9049054013a1b77]*/
 
@@ -636,19 +626,6 @@ w_complex_object(PyObject *v, char flag, WFILE *p)
         w_object(co->co_name, p);
         w_long(co->co_firstlineno, p);
         w_object(co->co_lnotab, p);
-    }
-    else if (PyObject_CheckBuffer(v)) {
-        /* Write unknown bytes-like objects as a bytes object */
-        Py_buffer view;
-        if (PyObject_GetBuffer(v, &view, PyBUF_SIMPLE) != 0) {
-            w_byte(TYPE_UNKNOWN, p);
-            p->depth--;
-            p->error = WFERR_UNMARSHALLABLE;
-            return;
-        }
-        W_TYPE(TYPE_STRING, p);
-        w_pstring(view.buf, view.len, p);
-        PyBuffer_Release(&view);
     }
     else {
         W_TYPE(TYPE_UNKNOWN, p);
@@ -1758,12 +1735,10 @@ bytes in the input are ignored.
 [clinic start generated code]*/
 
 static PyObject *
-marshal_loads_impl(PyObject *module, Py_buffer *bytes)
+marshal_loads_impl(PyObject *module, char *s, Py_ssize_t n)
 /*[clinic end generated code: output=9fc65985c93d1bb1 input=6f426518459c8495]*/
 {
     RFILE rf;
-    char *s = bytes->buf;
-    Py_ssize_t n = bytes->len;
     PyObject* result;
     rf.fp = NULL;
     rf.readable = NULL;

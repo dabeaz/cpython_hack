@@ -1610,12 +1610,6 @@ static PyTypeObject _PyExc_MemoryError = {
 PyObject *PyExc_MemoryError = (PyObject *) &_PyExc_MemoryError;
 
 
-/*
- *    BufferError extends Exception
- */
-SimpleExtendsException(PyExc_Exception, BufferError, "Buffer error.");
-
-
 PyStatus
 _PyExc_Init(void)
 {
@@ -1667,7 +1661,6 @@ _PyExc_Init(void)
     PRE_INIT(SystemError);
     PRE_INIT(ReferenceError);
     PRE_INIT(MemoryError);
-    PRE_INIT(BufferError);
     
     /* OSError subclasses */
     PRE_INIT(ConnectionError);
@@ -1785,10 +1778,8 @@ _PyBuiltins_AddExceptions(PyObject *bltinmod)
     POST_INIT(SystemError);
     POST_INIT(ReferenceError);
     POST_INIT(MemoryError);
-    POST_INIT(BufferError);
     /* OSError subclasses */
     POST_INIT(ConnectionError);
-
     POST_INIT(BlockingIOError);
     POST_INIT(BrokenPipeError);
     POST_INIT(ChildProcessError);
