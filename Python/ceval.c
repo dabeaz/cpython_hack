@@ -2729,7 +2729,7 @@ _PyEval_EvalCode(PyThreadState *tstate,
     }
 
     /* Handle generator/coroutine/asynchronous generator */
-    if (co->co_flags & (CO_GENERATOR | CO_COROUTINE | CO_ASYNC_GENERATOR)) {
+    if (co->co_flags & (CO_GENERATOR | CO_COROUTINE)) {
         PyObject *gen;
 
 

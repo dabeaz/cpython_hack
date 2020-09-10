@@ -16,7 +16,7 @@ typedef BYTE *bitset;
 #define BIT2BYTE(ibit)  ((ibit) / BITSPERBYTE)
 #define BIT2SHIFT(ibit) ((ibit) % BITSPERBYTE)
 #define BIT2MASK(ibit)  (1 << BIT2SHIFT(ibit))
-
+  
 #ifdef __cplusplus
 }
 #endif

@@ -256,7 +256,7 @@ symtable_new(void)
 #define COMPILER_STACK_FRAME_SCALE 3
 
 struct symtable *
-PySymtable_BuildObject(mod_ty mod, PyObject *filename, PyFutureFeatures *future)
+PySymtable_BuildObject(mod_ty mod, PyObject *filename)
 {
     struct symtable *st = symtable_new();
     asdl_seq *seq;
@@ -271,7 +271,6 @@ PySymtable_BuildObject(mod_ty mod, PyObject *filename, PyFutureFeatures *future)
     }
     Py_INCREF(filename);
     st->st_filename = filename;
-    st->st_future = future;
 
     /* Setup recursion depth check counters */
     tstate = PyThreadState_Get();
@@ -325,7 +324,7 @@ PySymtable_BuildObject(mod_ty mod, PyObject *filename, PyFutureFeatures *future)
 }
 
 struct symtable *
-PySymtable_Build(mod_ty mod, const char *filename_str, PyFutureFeatures *future)
+PySymtable_Build(mod_ty mod, const char *filename_str)
 {
     PyObject *filename;
     struct symtable *st;
@@ -333,7 +332,7 @@ PySymtable_Build(mod_ty mod, const char *filename_str, PyFutureFeatures *future)
     
     if (filename == NULL)
         return NULL;
-    st = PySymtable_BuildObject(mod, filename, future);
+    st = PySymtable_BuildObject(mod, filename);
     Py_DECREF(filename);
     return st;
 }

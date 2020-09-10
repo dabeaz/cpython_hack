@@ -1082,17 +1082,7 @@ PyAPI_FUNC(Py_ssize_t) _PySequence_IterSearch(PyObject *seq,
 PyAPI_FUNC(int) _PyObject_RealIsInstance(PyObject *inst, PyObject *cls);
 
 PyAPI_FUNC(int) _PyObject_RealIsSubclass(PyObject *derived, PyObject *cls);
-
-PyAPI_FUNC(char *const *) _PySequence_BytesToCharpArray(PyObject* self);
-
-PyAPI_FUNC(void) _Py_FreeCharPArray(char *const array[]);
-
-/* For internal use by buffer API functions */
-PyAPI_FUNC(void) _Py_add_one_to_index_F(int nd, Py_ssize_t *index,
-                                        const Py_ssize_t *shape);
-PyAPI_FUNC(void) _Py_add_one_to_index_C(int nd, Py_ssize_t *index,
-                                        const Py_ssize_t *shape);
-
+  
 /* Convert Python int to Py_ssize_t. Do nothing if the argument is None. */
 PyAPI_FUNC(int) _Py_convert_optional_to_ssize_t(PyObject *, void *);
 

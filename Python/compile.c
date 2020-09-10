@@ -158,7 +158,6 @@ handled by the symbol analysis pass.
 struct compiler {
     PyObject *c_filename;
     struct symtable *c_st;
-    PyFutureFeatures *c_future; /* pointer to module's __future__ */
     PyCompilerFlags *c_flags;
 
     int c_optimize;              /* optimization level */
@@ -317,29 +316,24 @@ PyAST_CompileObject(mod_ty mod, PyObject *filename, PyCompilerFlags *flags,
         return NULL;
     Py_INCREF(filename);
     c.c_filename = filename;
-    c.c_future = PyFuture_FromASTObject(mod, filename);
-    if (c.c_future == NULL)
-        goto finally;
     if (!flags) {
         flags = &local_flags;
     }
-    merged = c.c_future->ff_features | flags->cf_flags;
-    c.c_future->ff_features = merged;
-    flags->cf_flags = merged;
     c.c_flags = flags;
     c.c_optimize = 0;  
     c.c_nestlevel = 0;
     c.c_do_not_emit_bytecode = 0;
+    
 
     _PyASTOptimizeState state;
     state.optimize = c.c_optimize;
-    state.ff_features = merged;
+    state.ff_features = flags->cf_flags;
 
     if (!_PyAST_Optimize(mod, &state)) {
         goto finally;
     }
 
-    c.c_st = PySymtable_BuildObject(mod, filename, c.c_future);
+    c.c_st = PySymtable_BuildObject(mod, filename);  // , c.c_future);
     if (c.c_st == NULL) {
         if (!PyErr_Occurred())
             PyErr_SetString(PyExc_SystemError, "no symtable");
@@ -375,8 +369,6 @@ compiler_free(struct compiler *c)
 {
     if (c->c_st)
         PySymtable_Free(c->c_st);
-    if (c->c_future)
-        PyObject_Free(c->c_future);
     Py_XDECREF(c->c_filename);
     Py_DECREF(c->c_const_cache);
     Py_DECREF(c->c_stack);
@@ -3000,13 +2992,7 @@ compiler_from_import(struct compiler *c, stmt_ty s)
         Py_INCREF(alias->name);
         PyTuple_SET_ITEM(names, i, alias->name);
     }
-
-    if (s->lineno > c->c_future->ff_lineno && s->v.ImportFrom.module &&
-        _PyUnicode_EqualToASCIIString(s->v.ImportFrom.module, "__future__")) {
-        Py_DECREF(names);
-        return compiler_error(c, "from __future__ imports must occur "
-                              "at the beginning of the file");
-    }
+    
     ADDOP_LOAD_CONST_NEW(c, names);
 
     if (s->v.ImportFrom.module) {
@@ -5193,8 +5179,6 @@ compute_code_flags(struct compiler *c)
             flags |= CO_GENERATOR;
         if (!ste->ste_generator && ste->ste_coroutine)
             flags |= CO_COROUTINE;
-        if (ste->ste_generator && ste->ste_coroutine)
-            flags |= CO_ASYNC_GENERATOR;
         if (ste->ste_varargs)
             flags |= CO_VARARGS;
         if (ste->ste_varkeywords)

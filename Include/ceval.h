@@ -12,9 +12,6 @@ PyAPI_FUNC(PyObject *) PyEval_GetGlobals(void);
 PyAPI_FUNC(PyObject *) PyEval_GetLocals(void);
 PyAPI_FUNC(PyFrameObject *) PyEval_GetFrame(void);
 
-PyAPI_FUNC(int) Py_AddPendingCall(int (*func)(void *), void *arg);
-PyAPI_FUNC(int) Py_MakePendingCalls(void);
-  
 PyAPI_FUNC(const char *) PyEval_GetFuncName(PyObject *);
 PyAPI_FUNC(const char *) PyEval_GetFuncDesc(PyObject *);
 
@@ -29,17 +26,7 @@ PyAPI_FUNC(PyObject *) PyEval_EvalFrameEx(PyFrameObject *f, int exc);
 #define FVC_ASCII     0x3
 #define FVS_MASK      0x4
 #define FVS_HAVE_SPEC 0x4
-
-PyAPI_FUNC(void) PyEval_SetProfile(Py_tracefunc, PyObject *);
-PyAPI_DATA(int) _PyEval_SetProfile(PyThreadState *tstate, Py_tracefunc func, PyObject *arg);
-PyAPI_FUNC(void) PyEval_SetTrace(Py_tracefunc, PyObject *);
-PyAPI_FUNC(int) _PyEval_SetTrace(PyThreadState *tstate, Py_tracefunc func, PyObject *arg);
-PyAPI_FUNC(int) _PyEval_GetCoroutineOriginTrackingDepth(void);
-PyAPI_FUNC(int) _PyEval_SetAsyncGenFirstiter(PyObject *);
-PyAPI_FUNC(PyObject *) _PyEval_GetAsyncGenFirstiter(void);
-PyAPI_FUNC(int) _PyEval_SetAsyncGenFinalizer(PyObject *);
-PyAPI_FUNC(PyObject *) _PyEval_GetAsyncGenFinalizer(void);
-
+  
 /* Helper to look up a builtin object */
 PyAPI_FUNC(PyObject *) _PyEval_GetBuiltinId(_Py_Identifier *);
 /* Look at the current frame's (if any) code's co_flags, and turn on
@@ -48,10 +35,6 @@ PyAPI_FUNC(PyObject *) _PyEval_GetBuiltinId(_Py_Identifier *);
 PyAPI_FUNC(int) PyEval_MergeCompilerFlags(PyCompilerFlags *cf);
 
 PyAPI_FUNC(PyObject *) _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int exc);
-
-PyAPI_FUNC(void) _PyEval_SetSwitchInterval(unsigned long microseconds);
-PyAPI_FUNC(unsigned long) _PyEval_GetSwitchInterval(void);
-
 PyAPI_FUNC(Py_ssize_t) _PyEval_RequestCodeExtraIndex(freefunc);
 
 PyAPI_FUNC(int) _PyEval_SliceIndex(PyObject *, Py_ssize_t *);

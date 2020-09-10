@@ -1123,7 +1123,7 @@ _Py_SymtableStringObjectFlags(const char *str, PyObject *filename, int start, Py
     if (mod == NULL) {
         return NULL;
     }
-    st = PySymtable_BuildObject(mod, filename, 0);
+    st = PySymtable_BuildObject(mod, filename);
     return st;
 }
 

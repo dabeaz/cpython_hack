@@ -106,7 +106,9 @@ How will it end?  Or is this just the start?
 - Day 89 (9/07/2020). More encoding/decoding removal.
 - Day 90 (9/08/2020). Another bytes bites the dust.
 - Day 91 (9/09/2020). Buffer interface. Flushed.
-
+- Day 92 (9/10/2020). Frack to the __future__.
+  
+  
 Copyright and License Information
 ---------------------------------
 

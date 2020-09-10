@@ -29,8 +29,6 @@ struct symtable {
                                        consistency with the corresponding
                                        compiler structure */
     PyObject *st_private;           /* name of current class or NULL */
-    PyFutureFeatures *st_future;    /* module's future features that affect
-                                       the symbol table */
 };
 
 typedef struct _symtable_entry {
@@ -73,12 +71,11 @@ PyAPI_FUNC(int) PyST_GetScope(PySTEntryObject *, PyObject *);
 
 PyAPI_FUNC(struct symtable *) PySymtable_Build(
     mod_ty mod,
-    const char *filename,       /* decoded from the filesystem encoding */
-    PyFutureFeatures *future);
+    const char *filename);       /* decoded from the filesystem encoding */
 PyAPI_FUNC(struct symtable *) PySymtable_BuildObject(
     mod_ty mod,
-    PyObject *filename,
-    PyFutureFeatures *future);
+    PyObject *filename);
+
 PyAPI_FUNC(PySTEntryObject *) PySymtable_Lookup(struct symtable *, void *);
 
 PyAPI_FUNC(void) PySymtable_Free(struct symtable *);

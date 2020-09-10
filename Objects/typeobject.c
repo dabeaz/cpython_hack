@@ -2636,6 +2636,7 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
     type->tp_as_sequence = &et->as_sequence;
     type->tp_as_mapping = &et->as_mapping;
     type->tp_as_buffer = &et->as_buffer;
+    
     type->tp_name = PyUnicode_AsCharAndSize(name, &name_size);
     if (!type->tp_name)
         goto error;
@@ -2950,6 +2951,7 @@ PyType_FromModuleAndSpec(PyObject *module, PyType_Spec *spec, PyObject *bases)
     type->tp_as_sequence = &res->as_sequence;
     type->tp_as_mapping = &res->as_mapping;
     type->tp_as_buffer = &res->as_buffer;
+    
     /* Set tp_base and tp_bases */
     type->tp_bases = bases;
     bases = NULL;
@@ -5032,7 +5034,7 @@ inherit_slots(PyTypeObject *type, PyTypeObject *base)
 #define COPYSEQ(SLOT) COPYSLOT(tp_as_sequence->SLOT)
 #define COPYMAP(SLOT) COPYSLOT(tp_as_mapping->SLOT)
 #define COPYBUF(SLOT) COPYSLOT(tp_as_buffer->SLOT)
-
+    
     /* This won't inherit indirect slots (from tp_as_number etc.)
        if type doesn't provide the space. */
 
@@ -5085,7 +5087,6 @@ inherit_slots(PyTypeObject *type, PyTypeObject *base)
         COPYASYNC(am_aiter);
         COPYASYNC(am_anext);
     }
-
     if (type->tp_as_sequence != NULL && base->tp_as_sequence != NULL) {
         basebase = base->tp_base;
         if (basebase->tp_as_sequence == NULL)
@@ -5116,7 +5117,6 @@ inherit_slots(PyTypeObject *type, PyTypeObject *base)
         COPYBUF(bf_getbuffer);
         COPYBUF(bf_releasebuffer);
     }
-
     basebase = base->tp_base;
 
     COPYSLOT(tp_dealloc);
@@ -6979,7 +6979,6 @@ static slotdef slotdefs[] = {
            "__aiter__($self, /)\n--\n\nReturn an awaitable, that resolves in asynchronous iterator."),
     AMSLOT("__anext__", am_anext, slot_am_anext, wrap_unaryfunc,
            "__anext__($self, /)\n--\n\nReturn a value or raise StopAsyncIteration."),
-
     BINSLOT("__add__", nb_add, slot_nb_add,
            "+"),
     RBINSLOT("__radd__", nb_add, slot_nb_add,
