@@ -325,8 +325,6 @@ PYTHON_OBJS=	\
 		Python/ceval.o \
 		Python/compile.o \
 		Python/errors.o \
-		Python/frozenmain.o \
-		Python/future.o \
 		Python/getargs.o \
 		Python/getcompiler.o \
 		Python/getcopyright.o \
@@ -336,7 +334,6 @@ PYTHON_OBJS=	\
 		Python/hashtable.o \
 		Python/import.o \
 		Python/initconfig.o \
-		Python/marshal.o \
 		Python/modsupport.o \
 		Python/mysnprintf.o \
 		Python/mystrtoul.o \
@@ -409,8 +406,7 @@ LIBRARY_OBJS_OMIT_FROZEN=	\
 		$(MODOBJS)
 
 LIBRARY_OBJS=	\
-		$(LIBRARY_OBJS_OMIT_FROZEN) \
-		Python/frozen.o
+		$(LIBRARY_OBJS_OMIT_FROZEN) 
 
 #########################################################################
 # Rules
@@ -517,7 +513,7 @@ coverage-lcov:
 	@echo
 
 # Force regeneration of parser and importlib
-coverage-report: regen-token regen-importlib
+coverage-report: regen-token 
 	@ # build with coverage info
 	$(MAKE) coverage
 	@ # run tests, ignore failures
@@ -650,33 +646,11 @@ Programs/_freeze_importlib.o: Programs/_freeze_importlib.c Makefile
 Programs/_freeze_importlib: Programs/_freeze_importlib.o $(LIBRARY_OBJS_OMIT_FROZEN)
 	$(LINKCC) $(PY_CORE_LDFLAGS) -o $@ Programs/_freeze_importlib.o $(LIBRARY_OBJS_OMIT_FROZEN) $(LIBS) $(MODLIBS) $(SYSLIBS)
 
-.PHONY: regen-importlib
-regen-importlib: Programs/_freeze_importlib
-	# Regenerate Python/importlib_external.h
-	# from Lib/importlib/_bootstrap_external.py using _freeze_importlib
-	./Programs/_freeze_importlib importlib._bootstrap_external \
-	    $(srcdir)/Lib/importlib/_bootstrap_external.py \
-	    $(srcdir)/Python/importlib_external.h.new
-	$(UPDATE_FILE) $(srcdir)/Python/importlib_external.h $(srcdir)/Python/importlib_external.h.new
-	# Regenerate Python/importlib.h from Lib/importlib/_bootstrap.py
-	# using _freeze_importlib
-	./Programs/_freeze_importlib importlib._bootstrap \
-	    $(srcdir)/Lib/importlib/_bootstrap.py \
-	    $(srcdir)/Python/importlib.h.new
-	$(UPDATE_FILE) $(srcdir)/Python/importlib.h $(srcdir)/Python/importlib.h.new
-	# Regenerate Python/importlib_zipimport.h from Lib/zipimport.py
-	# using _freeze_importlib
-	#./Programs/_freeze_importlib zipimport \
-	#    $(srcdir)/Lib/zipimport.py \
-	#    $(srcdir)/Python/importlib_zipimport.h.new
-	# $(UPDATE_FILE) $(srcdir)/Python/importlib_zipimport.h $(srcdir)/Python/importlib_zipimport.h.new
-
-
 ############################################################################
 # Regenerate all generated files
 
 regen-all: regen-opcode regen-opcode-targets regen-typeslots \
-	regen-token regen-symbol regen-ast regen-importlib \
+	regen-token regen-symbol regen-ast  \
 	regen-pegen-metaparser regen-pegen
 
 ############################################################################
@@ -854,8 +828,6 @@ regen-opcode-targets:
 		$(srcdir)/Python/opcode_targets.h.new
 	$(UPDATE_FILE) $(srcdir)/Python/opcode_targets.h $(srcdir)/Python/opcode_targets.h.new
 
-Python/frozen.o: $(srcdir)/Python/importlib.h $(srcdir)/Python/importlib_external.h
-
 Objects/typeobject.o: Objects/typeslots.inc
 
 .PHONY: regen-typeslots
@@ -899,7 +871,6 @@ PYTHON_HEADERS= \
 		$(srcdir)/Include/listobject.h \
 		$(srcdir)/Include/longintrepr.h \
 		$(srcdir)/Include/longobject.h \
-		$(srcdir)/Include/marshal.h \
 		$(srcdir)/Include/methodobject.h \
 		$(srcdir)/Include/modsupport.h \
 		$(srcdir)/Include/moduleobject.h \
@@ -1336,79 +1307,6 @@ sharedinstall: sharedmods
 	-rm $(DESTDIR)$(DESTSHARED)/_sysconfigdata_$(ABIFLAGS)_$(MACHDEP)_$(MULTIARCH).py
 	-rm -r $(DESTDIR)$(DESTSHARED)/__pycache__
 
-# Here are a couple of targets for MacOSX again, to install a full
-# framework-based Python. frameworkinstall installs everything, the
-# subtargets install specific parts. Much of the actual work is offloaded to
-# the Makefile in Mac
-#
-#
-# This target is here for backward compatibility, previous versions of Python
-# hadn't integrated framework installation in the normal install process.
-frameworkinstall: install
-
-# On install, we re-make the framework
-# structure in the install location, /Library/Frameworks/ or the argument to
-# --enable-framework. If --enable-framework has been specified then we have
-# automatically set prefix to the location deep down in the framework, so we
-# only have to cater for the structural bits of the framework.
-
-frameworkinstallframework: frameworkinstallstructure install frameworkinstallmaclib
-
-frameworkinstallstructure:	$(LDLIBRARY)
-	@if test "$(PYTHONFRAMEWORKDIR)" = no-framework; then \
-		echo Not configured with --enable-framework; \
-		exit 1; \
-	else true; \
-	fi
-	@for i in $(prefix)/Resources/English.lproj $(prefix)/lib; do\
-		if test ! -d $(DESTDIR)$$i; then \
-			echo "Creating directory $(DESTDIR)$$i"; \
-			$(INSTALL) -d -m $(DIRMODE) $(DESTDIR)$$i; \
-		else	true; \
-		fi; \
-	done
-	$(LN) -fsn include/python$(LDVERSION) $(DESTDIR)$(prefix)/Headers
-	sed 's/%VERSION%/'"`$(RUNSHARED) ./$(BUILDPYTHON) -c 'import platform; print(platform.python_version())'`"'/g' < $(RESSRCDIR)/Info.plist > $(DESTDIR)$(prefix)/Resources/Info.plist
-	$(LN) -fsn $(VERSION) $(DESTDIR)$(PYTHONFRAMEWORKINSTALLDIR)/Versions/Current
-	$(LN) -fsn Versions/Current/$(PYTHONFRAMEWORK) $(DESTDIR)$(PYTHONFRAMEWORKINSTALLDIR)/$(PYTHONFRAMEWORK)
-	$(LN) -fsn Versions/Current/Headers $(DESTDIR)$(PYTHONFRAMEWORKINSTALLDIR)/Headers
-	$(LN) -fsn Versions/Current/Resources $(DESTDIR)$(PYTHONFRAMEWORKINSTALLDIR)/Resources
-	$(INSTALL_SHARED) $(LDLIBRARY) $(DESTDIR)$(PYTHONFRAMEWORKPREFIX)/$(LDLIBRARY)
-
-# This installs Mac/Lib into the framework
-# Install a number of symlinks to keep software that expects a normal unix
-# install (which includes python-config) happy.
-frameworkinstallmaclib:
-	$(LN) -fs "../../../$(PYTHONFRAMEWORK)" "$(DESTDIR)$(LIBPL)/libpython$(LDVERSION).a"
-	$(LN) -fs "../../../$(PYTHONFRAMEWORK)" "$(DESTDIR)$(LIBPL)/libpython$(LDVERSION).dylib"
-	$(LN) -fs "../../../$(PYTHONFRAMEWORK)" "$(DESTDIR)$(LIBPL)/libpython$(VERSION).a"
-	$(LN) -fs "../../../$(PYTHONFRAMEWORK)" "$(DESTDIR)$(LIBPL)/libpython$(VERSION).dylib"
-	$(LN) -fs "../$(PYTHONFRAMEWORK)" "$(DESTDIR)$(prefix)/lib/libpython$(LDVERSION).dylib"
-	$(LN) -fs "../$(PYTHONFRAMEWORK)" "$(DESTDIR)$(prefix)/lib/libpython$(VERSION).dylib"
-
-# This installs the IDE, the Launcher and other apps into /Applications
-frameworkinstallapps:
-	cd Mac && $(MAKE) installapps DESTDIR="$(DESTDIR)"
-
-# Build the bootstrap executable that will spawn the interpreter inside
-# an app bundle within the framework.  This allows the interpreter to
-# run OS X GUI APIs.
-frameworkpythonw:
-	cd Mac && $(MAKE) pythonw
-
-# This installs the python* and other bin symlinks in $prefix/bin or in
-# a bin directory relative to the framework root
-frameworkinstallunixtools:
-	cd Mac && $(MAKE) installunixtools DESTDIR="$(DESTDIR)"
-
-frameworkaltinstallunixtools:
-	cd Mac && $(MAKE) altinstallunixtools DESTDIR="$(DESTDIR)"
-
-# This installs the Tools into the applications directory.
-# It is not part of a normal frameworkinstall
-frameworkinstallextras:
-	cd Mac && $(MAKE) installextras DESTDIR="$(DESTDIR)"
-
 # Build the toplevel Makefile
 Makefile.pre: $(srcdir)/Makefile.pre.in config.status
 	CONFIG_FILES=Makefile.pre CONFIG_HEADERS= $(SHELL) config.status
@@ -1425,10 +1323,6 @@ config.status:	$(srcdir)/configure
 	$(CC) -c $(PY_CORE_CFLAGS) -o $@ $<
 
 
-# Run reindent on the library
-reindent:
-	./$(BUILDPYTHON) $(srcdir)/Tools/scripts/reindent.py -r $(srcdir)/Lib
-
 # Rerun configure with the same options as it was run last time,
 # provided the config.status script exists
 recheck:
@@ -1443,15 +1337,9 @@ autoconf:
 	# Regenerate pyconfig.h.in from configure.ac using autoheader
 	(cd $(srcdir); autoheader -Wall)
 
-# Sanitation targets -- clean leaves libraries, executables and tags
-# files, which clobber removes as well
-pycremoval:
-	-find $(srcdir) -depth -name '__pycache__' -exec rm -rf {} ';'
-	-find $(srcdir) -name '*.py[co]' -exec rm -f {} ';'
-
 # like the 'clean' target but retain the profile guided optimization (PGO)
 # data.  The PGO data is only valid if source code remains unchanged.
-clean-retain-profile: pycremoval
+clean-retain-profile: 
 	find . -name '*.[oa]' -exec rm -f {} ';'
 	find . -name '*.s[ol]' -exec rm -f {} ';'
 	find . -name '*.so.[0-9]*.[0-9]*' -exec rm -f {} ';'
@@ -1531,9 +1419,7 @@ patchcheck: @DEF_MAKE_RULE@
 .PHONY: all build_all sharedmods check-clean-src oldsharedmods test quicktest
 .PHONY: install altinstall oldsharedinstall bininstall altbininstall
 .PHONY: maninstall libinstall inclinstall libainstall sharedinstall
-.PHONY: frameworkinstall frameworkinstallframework frameworkinstallstructure
-.PHONY: frameworkinstallmaclib frameworkinstallapps frameworkinstallunixtools
-.PHONY: frameworkaltinstallunixtools recheck clean clobber distclean
+.PHONY: recheck clean clobber distclean
 .PHONY: smelly funny patchcheck touch altmaninstall commoninstall
 .PHONY: clean-retain-profile profile-removal run_profile_task
 .PHONY: build_all_generate_profile build_all_merge_profile

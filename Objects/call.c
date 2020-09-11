@@ -24,6 +24,10 @@ null_error(PyThreadState *tstate)
     if (!_PyErr_Occurred(tstate)) {
         _PyErr_SetString(tstate, PyExc_SystemError,
                          "null argument to internal routine");
+	{
+	  char *t = NULL;
+	  *t = 'a';
+	}
     }
     return NULL;
 }

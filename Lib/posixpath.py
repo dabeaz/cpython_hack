@@ -123,6 +123,7 @@ def splitext(p):
         sep = '/'
         extsep = '.'
     return genericpath._splitext(p, sep, None, extsep)
+
 splitext.__doc__ = genericpath._splitext.__doc__
 
 # Split a pathname into a drive specification and the rest of the

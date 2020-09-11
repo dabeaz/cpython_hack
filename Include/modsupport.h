@@ -223,17 +223,18 @@ PyAPI_FUNC(PyObject *) _PyModule_CreateInitialized(struct PyModuleDef*,
 #endif
 
 #if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03050000
-/* New in 3.5 */
-PyAPI_FUNC(PyObject *) PyModule_FromDefAndSpec2(PyModuleDef *def,
+
+  PyAPI_FUNC(PyObject *) PyModule_FromDefAndName2(PyModuleDef *def,
                                                 PyObject *spec,
                                                 int module_api_version);
-  
+
 #ifdef Py_LIMITED_API
-#define PyModule_FromDefAndSpec(module, spec) \
-    PyModule_FromDefAndSpec2(module, spec, PYTHON_ABI_VERSION)
+#define PyModule_FromDefAndName(module, spec) \
+    PyModule_FromDefAndName2(module, spec, PYTHON_ABI_VERSION)
 #else
-#define PyModule_FromDefAndSpec(module, spec) \
-    PyModule_FromDefAndSpec2(module, spec, PYTHON_API_VERSION)
+#define PyModule_FromDefAndName(module, spec) \
+    PyModule_FromDefAndName2(module, spec, PYTHON_API_VERSION)
+
 #endif /* Py_LIMITED_API */
 #endif /* New in 3.5 */
 

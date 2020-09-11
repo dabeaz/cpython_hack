@@ -107,7 +107,7 @@ How will it end?  Or is this just the start?
 - Day 90 (9/08/2020). Another bytes bites the dust.
 - Day 91 (9/09/2020). Buffer interface. Flushed.
 - Day 92 (9/10/2020). Frack to the __future__.
-  
+- Day 93 (9/11/2020). Punctured packages. And importlib. And marshal.
   
 Copyright and License Information
 ---------------------------------

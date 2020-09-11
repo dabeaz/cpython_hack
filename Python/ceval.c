@@ -3216,20 +3216,8 @@ static PyObject *
 import_name(PyThreadState *tstate, PyFrameObject *f,
             PyObject *name, PyObject *fromlist, PyObject *level)
 {
-    _Py_IDENTIFIER(__import__);
-    PyObject *import_func, *res;
-    PyObject* stack[5];
-
-    import_func = _PyDict_GetItemIdWithError(f->f_builtins, &PyId___import__);
-    if (import_func == NULL) {
-        if (!_PyErr_Occurred(tstate)) {
-            _PyErr_SetString(tstate, PyExc_ImportError, "__import__ not found");
-        }
-        return NULL;
-    }
-
-    /* Fast path for not overloaded __import__. */
-    if (import_func == tstate->interp->import_func) {
+    PyObject *res;
+    {
         int ilevel = _PyLong_AsInt(level);
         if (ilevel == -1 && _PyErr_Occurred(tstate)) {
             return NULL;
@@ -3242,24 +3230,13 @@ import_name(PyThreadState *tstate, PyFrameObject *f,
                         ilevel);
         return res;
     }
-
-    Py_INCREF(import_func);
-
-    stack[0] = name;
-    stack[1] = f->f_globals;
-    stack[2] = f->f_locals == NULL ? Py_None : f->f_locals;
-    stack[3] = fromlist;
-    stack[4] = level;
-    res = _PyObject_FastCall(import_func, stack, 5);
-    Py_DECREF(import_func);
-    return res;
 }
 
 static PyObject *
 import_from(PyThreadState *tstate, PyObject *v, PyObject *name)
 {
     PyObject *x;
-    PyObject *fullmodname, *pkgname, *pkgpath, *pkgname_or_unknown, *errmsg;
+    PyObject *fullmodname, *pkgname, *pkgpath, *pkgname_or_unknown, *errmsg=NULL;
 
     if (_PyObject_LookupAttr(v, name, &x) != 0) {
         return x;
@@ -3308,21 +3285,6 @@ import_from(PyThreadState *tstate, PyObject *v, PyObject *name)
         /* NULL checks for errmsg and pkgname done by PyErr_SetImportError. */
         PyErr_SetImportError(errmsg, pkgname, NULL);
     }
-    else {
-        _Py_IDENTIFIER(__spec__);
-        PyObject *spec = _PyObject_GetAttrId(v, &PyId___spec__);
-        const char *fmt =
-            _PyModuleSpec_IsInitializing(spec) ?
-            "cannot import name %R from partially initialized module %R "
-            "(most likely due to a circular import) (%S)" :
-            "cannot import name %R from %R (%S)";
-        Py_XDECREF(spec);
-
-        errmsg = PyUnicode_FromFormat(fmt, name, pkgname_or_unknown, pkgpath);
-        /* NULL checks for errmsg and pkgname done by PyErr_SetImportError. */
-        PyErr_SetImportError(errmsg, pkgname, pkgpath);
-    }
-
     Py_XDECREF(errmsg);
     Py_XDECREF(pkgname_or_unknown);
     Py_XDECREF(pkgpath);

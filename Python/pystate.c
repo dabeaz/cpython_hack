@@ -101,8 +101,6 @@ PyInterpreterState_Clear(PyInterpreterState *interp)
     Py_CLEAR(interp->sysdict);
     Py_CLEAR(interp->builtins);
     Py_CLEAR(interp->builtins_copy);
-    Py_CLEAR(interp->importlib);
-    Py_CLEAR(interp->import_func);
     Py_CLEAR(interp->dict);
     if (_PyRuntimeState_GetFinalizing(runtime) == NULL) {
       /* _PyWarnings_Fini(interp); */

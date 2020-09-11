@@ -100,90 +100,7 @@ Py_IsInitialized(void)
     return _PyRuntime.initialized;
 }
 
-
-/* Global initializations.  Can be undone by Py_FinalizeEx().  Don't
-   call this twice without an intervening Py_FinalizeEx() call.  When
-   initializations fail, a fatal error is issued and the function does
-   not return.  On return, the first thread and interpreter state have
-   been created.
-
-   Locking: you must hold the interpreter lock while calling this.
-   (If the lock has not yet been initialized, that's equivalent to
-   having the lock, but you cannot use multiple threads.)
-
-*/
-
-static PyStatus
-init_importlib(PyThreadState *tstate, PyObject *sysmod)
-{
-    PyObject *importlib;
-    PyObject *impmod;
-    PyObject *value;
-    PyInterpreterState *interp = tstate->interp;
-
-    /* Import _importlib through its frozen version, _frozen_importlib. */
-    if (PyImport_ImportFrozenModule("_frozen_importlib") <= 0) {
-        return _PyStatus_ERR("can't import _frozen_importlib");
-    }
-    importlib = PyImport_AddModule("_frozen_importlib");
-    if (importlib == NULL) {
-        return _PyStatus_ERR("couldn't get _frozen_importlib from sys.modules");
-    }
-    interp->importlib = importlib;
-    Py_INCREF(interp->importlib);
-
-    interp->import_func = PyDict_GetItemString(interp->builtins, "__import__");
-    if (interp->import_func == NULL)
-        return _PyStatus_ERR("__import__ not found");
-    Py_INCREF(interp->import_func);
-
-    /* Import the _imp module */
-    impmod = PyInit__imp();
-    if (impmod == NULL) {
-        return _PyStatus_ERR("can't import _imp");
-    }
-    if (_PyImport_SetModuleString("_imp", impmod) < 0) {
-        return _PyStatus_ERR("can't save _imp to sys.modules");
-    }
-
-    /* Install importlib as the implementation of import */
-    value = PyObject_CallMethod(importlib, "_install", "OO", sysmod, impmod);
-    if (value == NULL) {
-        _PyErr_Print(tstate);
-        return _PyStatus_ERR("importlib install failed");
-    }
-    Py_DECREF(value);
-    Py_DECREF(impmod);
-
-    return _PyStatus_OK();
-}
-
-static PyStatus
-init_importlib_external(PyThreadState *tstate)
-{
-    PyObject *value;
-    value = PyObject_CallMethod(tstate->interp->importlib,
-                                "_install_external_importers", "");
-    if (value == NULL) {
-        _PyErr_Print(tstate);
-        return _PyStatus_ERR("external importer setup failed");
-    }
-    Py_DECREF(value);
-    return _PyStatus_OK();    
-}
-
-/* Global initializations.  Can be undone by Py_Finalize().  Don't
-   call this twice without an intervening Py_Finalize() call.
-
-   Every call to Py_InitializeFromConfig, Py_Initialize or Py_InitializeEx
-   must have a corresponding call to Py_Finalize.
-
-   Locking: you must hold the interpreter lock while calling these APIs.
-   (If the lock has not yet been initialized, that's equivalent to
-   having the lock, but you cannot use multiple threads.)
-
-*/
-
+  
 static PyStatus
 pyinit_core_reconfigure(_PyRuntimeState *runtime,
                         PyThreadState **tstate_p,
@@ -373,42 +290,6 @@ error:
     return _PyStatus_ERR("can't initialize builtins module");
 }
 
-
-static PyStatus
-pycore_init_import_warnings(PyThreadState *tstate, PyObject *sysmod)
-{
-    assert(!_PyErr_Occurred(tstate));
-
-    PyStatus status = _PyImportHooks_Init(tstate);
-    if (_PyStatus_EXCEPTION(status)) {
-        return status;
-    }
-
-    const PyConfig *config = _PyInterpreterState_GetConfig(tstate->interp);
-    if (1) {
-
-        if (config->_install_importlib) {
-            status = _PyConfig_WritePathConfig(config);
-            if (_PyStatus_EXCEPTION(status)) {
-                return status;
-            }
-        }
-    }
-
-    /* This call sets up builtin and frozen import support */
-    if (config->_install_importlib) {
-        status = init_importlib(tstate, sysmod);
-        if (_PyStatus_EXCEPTION(status)) {
-            return status;
-        }
-    }
-
-    assert(!_PyErr_Occurred(tstate));
-
-    return _PyStatus_OK();
-}
-
-
 static PyStatus
 pycore_interp_init(PyThreadState *tstate)
 {
@@ -429,9 +310,7 @@ pycore_interp_init(PyThreadState *tstate)
     if (_PyStatus_EXCEPTION(status)) {
         goto done;
     }
-
-    status = pycore_init_import_warnings(tstate, sysmod);
-
+    
 done:
     /* sys.modules['sys'] contains a strong reference to the module */
     Py_XDECREF(sysmod);
@@ -669,12 +548,7 @@ init_interp_main(PyThreadState *tstate)
     if (_PySys_InitMain(tstate) < 0) {
         return _PyStatus_ERR("can't finish initializing sys");
     }
-
-    status = init_importlib_external(tstate);
-    if (_PyStatus_EXCEPTION(status)) {
-        return status;
-    }
-
+    
     status = init_sys_streams(tstate);
     if (_PyStatus_EXCEPTION(status)) {
         return status;
@@ -1037,7 +911,7 @@ Py_Finalize(void)
 static PyStatus
 add_main_module(PyInterpreterState *interp)
 {
-  PyObject *m, *d, *loader;
+  PyObject *m, *d;
     m = PyImport_AddModule("__main__");
     if (m == NULL)
         return _PyStatus_ERR("can't create __main__ module");
@@ -1053,25 +927,7 @@ add_main_module(PyInterpreterState *interp)
         }
         Py_DECREF(bimod);
     }
-
-    /* Main is a little special - imp.is_builtin("__main__") will return
-     * False, but BuiltinImporter is still the most appropriate initial
-     * setting for its __loader__ attribute. A more suitable value will
-     * be set if __main__ gets further initialized later in the startup
-     * process.
-     */
-    loader = PyDict_GetItemString(d, "__loader__");
-    if (loader == NULL || loader == Py_None) {
-        PyObject *loader = PyObject_GetAttrString(interp->importlib,
-                                                  "BuiltinImporter");
-        if (loader == NULL) {
-            return _PyStatus_ERR("Failed to retrieve BuiltinImporter");
-        }
-        if (PyDict_SetItemString(d, "__loader__", loader) < 0) {
-            return _PyStatus_ERR("Failed to initialize __main__.__loader__");
-        }
-        Py_DECREF(loader);
-    }
+    
     return _PyStatus_OK();
 }
 

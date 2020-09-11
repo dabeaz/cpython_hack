@@ -10,7 +10,6 @@ static Py_ssize_t max_module_number;
 
 _Py_IDENTIFIER(__doc__);
 _Py_IDENTIFIER(__name__);
-_Py_IDENTIFIER(__spec__);
 
 typedef struct {
     PyObject_HEAD
@@ -68,8 +67,6 @@ module_init_dict(PyModuleObject *mod, PyObject *md_dict,
     if (_PyDict_SetItemId(md_dict, &PyId___package__, Py_None) != 0)
         return -1;
     if (_PyDict_SetItemId(md_dict, &PyId___loader__, Py_None) != 0)
-        return -1;
-    if (_PyDict_SetItemId(md_dict, &PyId___spec__, Py_None) != 0)
         return -1;
     if (PyUnicode_CheckExact(name)) {
         Py_INCREF(name);
@@ -227,22 +224,16 @@ _PyModule_CreateInitialized(struct PyModuleDef* module, int module_api_version)
 }
 
 PyObject *
-PyModule_FromDefAndSpec2(struct PyModuleDef* def, PyObject *spec, int module_api_version)
+PyModule_FromDefAndName2(struct PyModuleDef* def, PyObject *nameobj, int module_api_version)
 {
     PyModuleDef_Slot* cur_slot;
     PyObject *(*create)(PyObject *, PyModuleDef*) = NULL;
-    PyObject *nameobj;
     PyObject *m = NULL;
     int has_execution_slots = 0;
     const char *name;
     int ret;
 
     PyModuleDef_Init(def);
-
-    nameobj = PyObject_GetAttrString(spec, "name");
-    if (nameobj == NULL) {
-        return NULL;
-    }
     name = PyUnicode_AsChar(nameobj);
     if (name == NULL) {
         goto error;
@@ -280,26 +271,7 @@ PyModule_FromDefAndSpec2(struct PyModuleDef* def, PyObject *spec, int module_api
             has_execution_slots = 1;
         }
     }
-
-    if (create) {
-        m = create(spec, def);
-        if (m == NULL) {
-            if (!PyErr_Occurred()) {
-                PyErr_Format(
-                    PyExc_SystemError,
-                    "creation of module %s failed without setting an exception",
-                    name);
-            }
-            goto error;
-        } else {
-            if (PyErr_Occurred()) {
-                PyErr_Format(PyExc_SystemError,
-                            "creation of module %s raised unreported exception",
-                            name);
-                goto error;
-            }
-        }
-    } else {
+      {
         m = PyModule_NewObject(nameobj);
         if (m == NULL) {
             goto error;
@@ -340,15 +312,13 @@ PyModule_FromDefAndSpec2(struct PyModuleDef* def, PyObject *spec, int module_api
             goto error;
         }
     }
-
-    Py_DECREF(nameobj);
     return m;
 
 error:
-    Py_DECREF(nameobj);
     Py_XDECREF(m);
     return NULL;
 }
+
 
 int
 PyModule_ExecDef(PyObject *module, PyModuleDef *def)
@@ -688,30 +658,11 @@ module_dealloc(PyModuleObject *m)
 static PyObject *
 module_repr(PyModuleObject *m)
 {
-    PyInterpreterState *interp = _PyInterpreterState_GET();
-
-    return PyObject_CallMethod(interp->importlib, "_module_repr", "O", m);
-}
-
-/* Check if the "_initializing" attribute of the module spec is set to true.
-   Clear the exception and return 0 if spec is NULL.
- */
-int
-_PyModuleSpec_IsInitializing(PyObject *spec)
-{
-    if (spec != NULL) {
-        _Py_IDENTIFIER(_initializing);
-        PyObject *value = _PyObject_GetAttrId(spec, &PyId__initializing);
-        if (value != NULL) {
-            int initializing = PyObject_IsTrue(value);
-            Py_DECREF(value);
-            if (initializing >= 0) {
-                return initializing;
-            }
-        }
-    }
-    PyErr_Clear();
-    return 0;
+  char *temp;
+  int size = PyUnicode_GET_SIZE(m->md_name);
+  temp = PyMem_RawMalloc(size + 50);
+  sprintf(temp, "<module '%s'>", PyUnicode_AsChar(m->md_name));
+  return PyUnicode_FromString(temp);
 }
 
 static PyObject*
@@ -730,26 +681,6 @@ module_getattro(PyModuleObject *m, PyObject *name)
             return PyObject_CallOneArg(getattr, name);
         }
         mod_name = _PyDict_GetItemId(m->md_dict, &PyId___name__);
-        if (mod_name && PyUnicode_Check(mod_name)) {
-            Py_INCREF(mod_name);
-            PyObject *spec = _PyDict_GetItemId(m->md_dict, &PyId___spec__);
-            Py_XINCREF(spec);
-            if (_PyModuleSpec_IsInitializing(spec)) {
-                PyErr_Format(PyExc_AttributeError,
-                             "partially initialized "
-                             "module '%U' has no attribute '%U' "
-                             "(most likely due to a circular import)",
-                             mod_name, name);
-            }
-            else {
-                PyErr_Format(PyExc_AttributeError,
-                             "module '%U' has no attribute '%U'",
-                             mod_name, name);
-            }
-            Py_XDECREF(spec);
-            Py_DECREF(mod_name);
-            return NULL;
-        }
     }
     PyErr_Format(PyExc_AttributeError,
                 "module has no attribute '%U'", name);

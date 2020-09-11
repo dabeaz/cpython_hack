@@ -33,13 +33,10 @@ struct _is {
     PyObject *modules_by_index;
     PyObject *sysdict;
     PyObject *builtins;
-    PyObject *importlib;
-  
     PyConfig config;
     PyObject *dict;  /* Stores per-interpreter state */
-
     PyObject *builtins_copy;
-    PyObject *import_func;
+  
     /* Initialized to PyEval_EvalFrameDefault(). */
     _PyFrameEvalFunction eval_frame;
 
@@ -61,11 +58,7 @@ extern PyStatus _PyInterpreterState_SetConfig(
     const PyConfig *config);
 
 PyAPI_FUNC(struct _is*) _PyInterpreterState_LookUpID(int64_t);
-
-PyAPI_FUNC(int) _PyInterpreterState_IDInitref(struct _is *);
-PyAPI_FUNC(void) _PyInterpreterState_IDIncref(struct _is *);
-PyAPI_FUNC(void) _PyInterpreterState_IDDecref(struct _is *);
-
+  
 #ifdef __cplusplus
 }
 #endif
