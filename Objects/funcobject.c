@@ -19,8 +19,8 @@ PyFunction_NewWithQualName(PyObject *code, PyObject *globals, PyObject *qualname
         if (__name__ == NULL)
             return NULL;
     }
-
-    op = PyObject_GC_New(PyFunctionObject, &PyFunction_Type);
+    op = PyObject_New(PyFunctionObject, &PyFunction_Type);
+    
     if (op == NULL)
         return NULL;
 
@@ -66,8 +66,6 @@ PyFunction_NewWithQualName(PyObject *code, PyObject *globals, PyObject *qualname
     else
         op->func_qualname = op->func_name;
     Py_INCREF(op->func_qualname);
-
-    _PyObject_GC_TRACK(op);
     return (PyObject *)op;
 }
 
@@ -560,12 +558,11 @@ func_clear(PyFunctionObject *op)
 static void
 func_dealloc(PyFunctionObject *op)
 {
-    _PyObject_GC_UNTRACK(op);
     if (op->func_weakreflist != NULL) {
         PyObject_ClearWeakRefs((PyObject *) op);
     }
     (void)func_clear(op);
-    PyObject_GC_Del(op);
+    PyObject_Del(op);
 }
 
 static PyObject*
@@ -573,22 +570,6 @@ func_repr(PyFunctionObject *op)
 {
     return PyUnicode_FromFormat("<function %U at %p>",
                                op->func_qualname, op);
-}
-
-static int
-func_traverse(PyFunctionObject *f, visitproc visit, void *arg)
-{
-    Py_VISIT(f->func_code);
-    Py_VISIT(f->func_globals);
-    Py_VISIT(f->func_module);
-    Py_VISIT(f->func_defaults);
-    Py_VISIT(f->func_kwdefaults);
-    Py_VISIT(f->func_doc);
-    Py_VISIT(f->func_name);
-    Py_VISIT(f->func_dict);
-    Py_VISIT(f->func_closure);
-    Py_VISIT(f->func_qualname);
-    return 0;
 }
 
 /* Bind a function to an object */
@@ -622,11 +603,11 @@ PyTypeObject PyFunction_Type = {
     0,                                          /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
+    Py_TPFLAGS_DEFAULT | // Py_TPFLAGS_HAVE_GC |
     Py_TPFLAGS_HAVE_VECTORCALL |
     Py_TPFLAGS_METHOD_DESCRIPTOR,               /* tp_flags */
     func_new__doc__,                            /* tp_doc */
-    (traverseproc)func_traverse,                /* tp_traverse */
+    0,                /* tp_traverse */
     (inquiry)func_clear,                        /* tp_clear */
     0,                                          /* tp_richcompare */
     offsetof(PyFunctionObject, func_weakreflist), /* tp_weaklistoffset */
@@ -675,18 +656,9 @@ typedef struct {
 static void
 cm_dealloc(classmethod *cm)
 {
-    _PyObject_GC_UNTRACK((PyObject *)cm);
     Py_XDECREF(cm->cm_callable);
     Py_XDECREF(cm->cm_dict);
     Py_TYPE(cm)->tp_free((PyObject *)cm);
-}
-
-static int
-cm_traverse(classmethod *cm, visitproc visit, void *arg)
-{
-    Py_VISIT(cm->cm_callable);
-    Py_VISIT(cm->cm_dict);
-    return 0;
 }
 
 static int
@@ -784,9 +756,9 @@ PyTypeObject PyClassMethod_Type = {
     0,                                          /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, // | Py_TPFLAGS_HAVE_GC,
     classmethod_doc,                            /* tp_doc */
-    (traverseproc)cm_traverse,                  /* tp_traverse */
+    0,                   /* tp_traverse */
     (inquiry)cm_clear,                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -803,7 +775,7 @@ PyTypeObject PyClassMethod_Type = {
     cm_init,                                    /* tp_init */
     PyType_GenericAlloc,                        /* tp_alloc */
     PyType_GenericNew,                          /* tp_new */
-    PyObject_GC_Del,                            /* tp_free */
+    PyObject_Del,                            /* tp_free */
 };
 
 PyObject *
@@ -846,18 +818,9 @@ typedef struct {
 static void
 sm_dealloc(staticmethod *sm)
 {
-    _PyObject_GC_UNTRACK((PyObject *)sm);
     Py_XDECREF(sm->sm_callable);
     Py_XDECREF(sm->sm_dict);
     Py_TYPE(sm)->tp_free((PyObject *)sm);
-}
-
-static int
-sm_traverse(staticmethod *sm, visitproc visit, void *arg)
-{
-    Py_VISIT(sm->sm_callable);
-    Py_VISIT(sm->sm_dict);
-    return 0;
 }
 
 static int
@@ -947,9 +910,9 @@ PyTypeObject PyStaticMethod_Type = {
     0,                                          /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, // | Py_TPFLAGS_HAVE_GC,
     staticmethod_doc,                           /* tp_doc */
-    (traverseproc)sm_traverse,                  /* tp_traverse */
+    0,                  /* tp_traverse */
     (inquiry)sm_clear,                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -966,7 +929,7 @@ PyTypeObject PyStaticMethod_Type = {
     sm_init,                                    /* tp_init */
     PyType_GenericAlloc,                        /* tp_alloc */
     PyType_GenericNew,                          /* tp_new */
-    PyObject_GC_Del,                            /* tp_free */
+    PyObject_Del,                            /* tp_free */
 };
 
 PyObject *

@@ -465,7 +465,7 @@ PyList_New(Py_ssize_t size)
     }
 
     PyListObject *op;
-    op = PyObject_GC_New(PyListObject, &PyList_Type);
+    op = PyObject_New(PyListObject, &PyList_Type);
     if (op == NULL) {
       return NULL;
     }
@@ -482,7 +482,6 @@ PyList_New(Py_ssize_t size)
     }
     Py_SET_SIZE(op, size);
     op->allocated = size;
-    _PyObject_GC_TRACK(op);
     return (PyObject *) op;
 }
 
@@ -639,8 +638,6 @@ static void
 list_dealloc(PyListObject *op)
 {
     Py_ssize_t i;
-    PyObject_GC_UnTrack(op);
-    Py_TRASHCAN_BEGIN(op, list_dealloc)
     if (op->ob_item != NULL) {
         /* Do it backwards, for Christian Tismer.
            There's a simple test case where somehow this reduces
@@ -653,7 +650,6 @@ list_dealloc(PyListObject *op)
         PyMem_FREE(op->ob_item);
     }
     Py_TYPE(op)->tp_free((PyObject *)op);
-    Py_TRASHCAN_END
 }
 
 static PyObject *
@@ -2909,16 +2905,6 @@ list_remove(PyListObject *self, PyObject *value)
     return NULL;
 }
 
-static int
-list_traverse(PyListObject *o, visitproc visit, void *arg)
-{
-    Py_ssize_t i;
-
-    for (i = Py_SIZE(o); --i >= 0; )
-        Py_VISIT(o->ob_item[i]);
-    return 0;
-}
-
 static PyObject *
 list_richcompare(PyObject *v, PyObject *w, int op)
 {
@@ -3344,10 +3330,10 @@ PyTypeObject PyList_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
+    Py_TPFLAGS_DEFAULT | // Py_TPFLAGS_HAVE_GC |
         Py_TPFLAGS_BASETYPE | Py_TPFLAGS_LIST_SUBCLASS, /* tp_flags */
     list___init____doc__,                       /* tp_doc */
-    (traverseproc)list_traverse,                /* tp_traverse */
+    0,                 /* tp_traverse */
     (inquiry)_list_clear,                       /* tp_clear */
     list_richcompare,                           /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -3364,7 +3350,7 @@ PyTypeObject PyList_Type = {
     (initproc)list___init__,                    /* tp_init */
     PyType_GenericAlloc,                        /* tp_alloc */
     PyType_GenericNew,                          /* tp_new */
-    PyObject_GC_Del,                            /* tp_free */
+    PyObject_Del,                            /* tp_free */
     .tp_vectorcall = list_vectorcall,
 };
 
@@ -3377,7 +3363,6 @@ typedef struct {
 } listiterobject;
 
 static void listiter_dealloc(listiterobject *);
-static int listiter_traverse(listiterobject *, visitproc, void *);
 static PyObject *listiter_next(listiterobject *);
 static PyObject *listiter_len(listiterobject *, PyObject *);
 static PyObject *listiter_reduce_general(void *_it, int forward);
@@ -3416,9 +3401,9 @@ PyTypeObject PyListIter_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
+    Py_TPFLAGS_DEFAULT,  //| Py_TPFLAGS_HAVE_GC,/* tp_flags */
     0,                                          /* tp_doc */
-    (traverseproc)listiter_traverse,            /* tp_traverse */
+    0,            /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -3438,29 +3423,20 @@ list_iter(PyObject *seq)
         PyErr_BadInternalCall();
         return NULL;
     }
-    it = PyObject_GC_New(listiterobject, &PyListIter_Type);
+    it = PyObject_New(listiterobject, &PyListIter_Type);
     if (it == NULL)
         return NULL;
     it->it_index = 0;
     Py_INCREF(seq);
     it->it_seq = (PyListObject *)seq;
-    _PyObject_GC_TRACK(it);
     return (PyObject *)it;
 }
 
 static void
 listiter_dealloc(listiterobject *it)
 {
-    _PyObject_GC_UNTRACK(it);
     Py_XDECREF(it->it_seq);
-    PyObject_GC_Del(it);
-}
-
-static int
-listiter_traverse(listiterobject *it, visitproc visit, void *arg)
-{
-    Py_VISIT(it->it_seq);
-    return 0;
+    PyObject_Del(it);
 }
 
 static PyObject *
@@ -3530,7 +3506,6 @@ typedef struct {
 } listreviterobject;
 
 static void listreviter_dealloc(listreviterobject *);
-static int listreviter_traverse(listreviterobject *, visitproc, void *);
 static PyObject *listreviter_next(listreviterobject *);
 static PyObject *listreviter_len(listreviterobject *, PyObject *);
 static PyObject *listreviter_reduce(listreviterobject *, PyObject *);
@@ -3564,9 +3539,9 @@ PyTypeObject PyListRevIter_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
+    Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC,/* tp_flags */
     0,                                          /* tp_doc */
-    (traverseproc)listreviter_traverse,         /* tp_traverse */
+    0,         /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -3588,30 +3563,21 @@ list___reversed___impl(PyListObject *self)
 {
     listreviterobject *it;
 
-    it = PyObject_GC_New(listreviterobject, &PyListRevIter_Type);
+    it = PyObject_New(listreviterobject, &PyListRevIter_Type);
     if (it == NULL)
         return NULL;
     assert(PyList_Check(self));
     it->it_index = PyList_GET_SIZE(self) - 1;
     Py_INCREF(self);
     it->it_seq = self;
-    PyObject_GC_Track(it);
     return (PyObject *)it;
 }
 
 static void
 listreviter_dealloc(listreviterobject *it)
 {
-    PyObject_GC_UnTrack(it);
     Py_XDECREF(it->it_seq);
-    PyObject_GC_Del(it);
-}
-
-static int
-listreviter_traverse(listreviterobject *it, visitproc visit, void *arg)
-{
-    Py_VISIT(it->it_seq);
-    return 0;
+    PyObject_Del(it);
 }
 
 static PyObject *

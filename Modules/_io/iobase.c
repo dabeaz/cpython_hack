@@ -347,7 +347,6 @@ iobase_dealloc(iobase *self)
             Py_INCREF(Py_TYPE(self));
         return;
     }
-    _PyObject_GC_UNTRACK(self);
     if (self->weakreflist != NULL)
         PyObject_ClearWeakRefs((PyObject *) self);
     Py_CLEAR(self->dict);
@@ -1051,8 +1050,8 @@ PyTypeObject PyIOBase_Type = {
     0,                          /*tp_getattro*/
     0,                          /*tp_setattro*/
     0,                          /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE
-        | Py_TPFLAGS_HAVE_GC,   /*tp_flags*/
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+    //        | Py_TPFLAGS_HAVE_GC,   /*tp_flags*/
     iobase_doc,                 /* tp_doc */
     (traverseproc)iobase_traverse, /* tp_traverse */
     (inquiry)iobase_clear,      /* tp_clear */

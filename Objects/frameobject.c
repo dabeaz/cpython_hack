@@ -2,7 +2,6 @@
 
 #include "Python.h"
 #include "pycore_object.h"
-#include "pycore_gc.h"       // _PyObject_GC_IS_TRACKED()
 
 #include "code.h"
 #include "frameobject.h"
@@ -564,11 +563,6 @@ static PyGetSetDef frame_getsetlist[] = {
 static void _Py_HOT_FUNCTION
 frame_dealloc(PyFrameObject *f)
 {
-    if (_PyObject_GC_IS_TRACKED(f)) {
-        _PyObject_GC_UNTRACK(f);
-    }
-
-    Py_TRASHCAN_SAFE_BEGIN(f)
     /* Kill all local variables */
     PyObject **valuestack = f->f_valuestack;
     for (PyObject **p = f->f_localsplus; p < valuestack; p++) {
@@ -593,11 +587,10 @@ frame_dealloc(PyFrameObject *f)
         co->co_zombieframe = f;
     }
     else {
-	PyObject_GC_Del(f);
+	PyObject_Del(f);
     }
 
     Py_DECREF(co);
-    Py_TRASHCAN_SAFE_END(f)
 }
 
 static inline Py_ssize_t
@@ -607,31 +600,6 @@ frame_nslots(PyFrameObject *frame)
     return (code->co_nlocals
             + PyTuple_GET_SIZE(code->co_cellvars)
             + PyTuple_GET_SIZE(code->co_freevars));
-}
-
-static int
-frame_traverse(PyFrameObject *f, visitproc visit, void *arg)
-{
-    Py_VISIT(f->f_back);
-    Py_VISIT(f->f_code);
-    Py_VISIT(f->f_builtins);
-    Py_VISIT(f->f_globals);
-    Py_VISIT(f->f_locals);
-    Py_VISIT(f->f_trace);
-
-    /* locals */
-    PyObject **fastlocals = f->f_localsplus;
-    for (Py_ssize_t i = frame_nslots(f); --i >= 0; ++fastlocals) {
-        Py_VISIT(*fastlocals);
-    }
-
-    /* stack */
-    if (f->f_stacktop != NULL) {
-        for (PyObject **p = f->f_valuestack; p < f->f_stacktop; p++) {
-            Py_VISIT(*p);
-        }
-    }
-    return 0;
 }
 
 static int
@@ -738,9 +706,9 @@ PyTypeObject PyFrame_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     PyObject_GenericSetAttr,                    /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
+    Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC,/* tp_flags */
     0,                                          /* tp_doc */
-    (traverseproc)frame_traverse,               /* tp_traverse */
+    0,              /* tp_traverse */
     (inquiry)frame_tp_clear,                    /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -771,7 +739,7 @@ frame_alloc(PyCodeObject *code)
     Py_ssize_t ncells = PyTuple_GET_SIZE(code->co_cellvars);
     Py_ssize_t nfrees = PyTuple_GET_SIZE(code->co_freevars);
     Py_ssize_t extras = code->co_stacksize + code->co_nlocals + ncells + nfrees;
-    f = PyObject_GC_NewVar(PyFrameObject, &PyFrame_Type, extras);
+    f = PyObject_NewVar(PyFrameObject, &PyFrame_Type, extras);
     if (f == NULL) {
       return NULL;
     }
@@ -890,8 +858,6 @@ PyFrame_New(PyThreadState *tstate, PyCodeObject *code,
             PyObject *globals, PyObject *locals)
 {
     PyFrameObject *f = _PyFrame_New_NoTrack(tstate, code, globals, locals);
-    if (f)
-        _PyObject_GC_TRACK(f);
     return f;
 }
 

@@ -13,20 +13,6 @@ struct pyruntimestate;
 
 #include "pycore_interp.h"   /* PyInterpreterState.eval_frame */
 
-extern void _Py_FinishPendingCalls(PyThreadState *tstate);
-PyAPI_FUNC(void) _PyEval_SignalReceived(PyInterpreterState *interp);
-PyAPI_FUNC(int) _PyEval_AddPendingCall(
-    PyInterpreterState *interp,
-    int (*func)(void *),
-    void *arg);
-PyAPI_FUNC(void) _PyEval_SignalAsyncExc(PyThreadState *tstate);
-#ifdef HAVE_FORK
-extern PyStatus _PyEval_ReInitThreads(PyThreadState *tstate);
-#endif
-PyAPI_FUNC(void) _PyEval_SetCoroutineOriginTrackingDepth(
-    PyThreadState *tstate,
-    int new_depth);
-
 /* Private function */
 void _PyEval_Fini(void);
 
@@ -45,10 +31,7 @@ extern PyObject *_PyEval_EvalCode(
     PyObject *const *defs, Py_ssize_t defcount,
     PyObject *kwdefs, PyObject *closure,
     PyObject *name, PyObject *qualname);
-
-extern int _PyEval_ThreadsInitialized(struct pyruntimestate *runtime);
-extern void _PyEval_ReleaseLock(PyThreadState *tstate);
-
+  
 #ifdef __cplusplus
 }
 #endif

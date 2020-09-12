@@ -4,7 +4,6 @@
 #include "Python.h"
 #include "pycore_abstract.h"   // _PyIndex_Check()
 #include "pycore_accu.h"
-#include "pycore_gc.h"         // _PyObject_GC_IS_TRACKED()
 #include "pycore_object.h"
 
 /*[clinic input]
@@ -127,13 +126,6 @@ tuple___getnewargs__(PyTupleObject *self, PyObject *Py_UNUSED(ignored))
 }
 /*[clinic end generated code: output=56fab9b7368aba49 input=a9049054013a1b77]*/
 
-
-static inline void
-tuple_gc_track(PyTupleObject *op)
-{
-    _PyObject_GC_TRACK(op);
-}
-
 /* Allocate an uninitialized tuple object. Before making it public following
    steps must be done:
    - initialize its items
@@ -156,7 +148,7 @@ tuple_alloc(Py_ssize_t size)
                     sizeof(PyObject *))) / sizeof(PyObject *)) {
             return (PyTupleObject *)PyErr_NoMemory();
         }
-        op = PyObject_GC_NewVar(PyTupleObject, &PyTuple_Type, size);
+	op = PyObject_NewVar(PyTupleObject, &PyTuple_Type, size);
         if (op == NULL)
             return NULL;
     }
@@ -174,7 +166,6 @@ PyTuple_New(Py_ssize_t size)
     for (Py_ssize_t i = 0; i < size; i++) {
         op->ob_item[i] = NULL;
     }
-    tuple_gc_track(op);
     return (PyObject *) op;
 }
 
@@ -226,23 +217,6 @@ PyTuple_SetItem(PyObject *op, Py_ssize_t i, PyObject *newitem)
 void
 _PyTuple_MaybeUntrack(PyObject *op)
 {
-    PyTupleObject *t;
-    Py_ssize_t i, n;
-
-    if (!PyTuple_CheckExact(op) || !_PyObject_GC_IS_TRACKED(op))
-        return;
-    t = (PyTupleObject *) op;
-    n = Py_SIZE(t);
-    for (i = 0; i < n; i++) {
-        PyObject *elt = PyTuple_GET_ITEM(t, i);
-        /* Tuple with NULL elements aren't
-           fully constructed, don't untrack
-           them yet. */
-        if (!elt ||
-            _PyObject_GC_MAY_BE_TRACKED(elt))
-            return;
-    }
-    _PyObject_GC_UNTRACK(op);
 }
 
 PyObject *
@@ -270,7 +244,6 @@ PyTuple_Pack(Py_ssize_t n, ...)
         items[i] = o;
     }
     va_end(vargs);
-    tuple_gc_track(result);
     return (PyObject *)result;
 }
 
@@ -281,8 +254,7 @@ static void
 tupledealloc(PyTupleObject *op)
 {
     Py_ssize_t len =  Py_SIZE(op);
-    PyObject_GC_UnTrack(op);
-    Py_TRASHCAN_BEGIN(op, tupledealloc)
+      
     if (len > 0) {
         Py_ssize_t i = len;
         while (--i >= 0) {
@@ -290,7 +262,6 @@ tupledealloc(PyTupleObject *op)
         }
     }
     Py_TYPE(op)->tp_free((PyObject *)op);
-    Py_TRASHCAN_END
 }
 
 static PyObject *
@@ -466,7 +437,6 @@ _PyTuple_FromArray(PyObject *const *src, Py_ssize_t n)
         Py_INCREF(item);
         dst[i] = item;
     }
-    tuple_gc_track(tuple);
     return (PyObject *)tuple;
 }
 
@@ -544,7 +514,6 @@ tupleconcat(PyTupleObject *a, PyObject *bb)
         Py_INCREF(v);
         dest[i] = v;
     }
-    tuple_gc_track(np);
     return (PyObject *)np;
 }
 
@@ -581,7 +550,6 @@ tuplerepeat(PyTupleObject *a, Py_ssize_t n)
             p++;
         }
     }
-    tuple_gc_track(np);
     return (PyObject *) np;
 }
 
@@ -651,16 +619,6 @@ tuple_count(PyTupleObject *self, PyObject *value)
             return NULL;
     }
     return PyLong_FromSsize_t(count);
-}
-
-static int
-tupletraverse(PyTupleObject *o, visitproc visit, void *arg)
-{
-    Py_ssize_t i;
-
-    for (i = Py_SIZE(o); --i >= 0; )
-        Py_VISIT(o->ob_item[i]);
-    return 0;
 }
 
 static PyObject *
@@ -845,8 +803,6 @@ tuplesubscript(PyTupleObject* self, PyObject* item)
                 Py_INCREF(it);
                 dest[i] = it;
             }
-
-            tuple_gc_track(result);
             return (PyObject *)result;
         }
     }
@@ -904,10 +860,10 @@ PyTypeObject PyTuple_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
+    Py_TPFLAGS_DEFAULT | // Py_TPFLAGS_HAVE_GC |
         Py_TPFLAGS_BASETYPE | Py_TPFLAGS_TUPLE_SUBCLASS, /* tp_flags */
     tuple_new__doc__,                           /* tp_doc */
-    (traverseproc)tupletraverse,                /* tp_traverse */
+    0,
     0,                                          /* tp_clear */
     tuplerichcompare,                           /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -924,7 +880,7 @@ PyTypeObject PyTuple_Type = {
     0,                                          /* tp_init */
     0,                                          /* tp_alloc */
     tuple_new,                                  /* tp_new */
-    PyObject_GC_Del,                            /* tp_free */
+    PyObject_Del,
     .tp_vectorcall = tuple_vectorcall,
 };
 
@@ -964,27 +920,18 @@ _PyTuple_Resize(PyObject **pv, Py_ssize_t newsize)
         return *pv == NULL ? -1 : 0;
     }
 
-    /* XXX UNREF/NEWREF interface should be more symmetrical */
-    if (_PyObject_GC_IS_TRACKED(v)) {
-        _PyObject_GC_UNTRACK(v);
-    }
     /* DECREF items deleted by shrinkage */
     for (i = newsize; i < oldsize; i++) {
         Py_CLEAR(v->ob_item[i]);
     }
-    sv = PyObject_GC_Resize(PyTupleObject, v, newsize);
-    if (sv == NULL) {
-        *pv = NULL;
-        PyObject_GC_Del(v);
-        return -1;
-    }
+    sv = PyObject_NewVar(PyTupleObject, &PyTuple_Type, newsize);
+    memmove(sv, v, _PyObject_VAR_SIZE(&PyTuple_Type, newsize));
     _Py_NewReference((PyObject *) sv);
     /* Zero out items added by growing */
     if (newsize > oldsize)
         memset(&sv->ob_item[oldsize], 0,
                sizeof(*sv->ob_item) * (newsize - oldsize));
     *pv = (PyObject *) sv;
-    _PyObject_GC_TRACK(sv);
     return 0;
 }
 
@@ -1004,16 +951,8 @@ typedef struct {
 static void
 tupleiter_dealloc(tupleiterobject *it)
 {
-    _PyObject_GC_UNTRACK(it);
     Py_XDECREF(it->it_seq);
-    PyObject_GC_Del(it);
-}
-
-static int
-tupleiter_traverse(tupleiterobject *it, visitproc visit, void *arg)
-{
-    Py_VISIT(it->it_seq);
-    return 0;
+    PyObject_Del(it);
 }
 
 static PyObject *
@@ -1109,9 +1048,9 @@ PyTypeObject PyTupleIter_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
+    Py_TPFLAGS_DEFAULT, //  | Py_TPFLAGS_HAVE_GC,/* tp_flags */
     0,                                          /* tp_doc */
-    (traverseproc)tupleiter_traverse,           /* tp_traverse */
+    0,            /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -1130,12 +1069,11 @@ tuple_iter(PyObject *seq)
         PyErr_BadInternalCall();
         return NULL;
     }
-    it = PyObject_GC_New(tupleiterobject, &PyTupleIter_Type);
+    it = PyObject_New(tupleiterobject, &PyTupleIter_Type);
     if (it == NULL)
         return NULL;
     it->it_index = 0;
     Py_INCREF(seq);
     it->it_seq = (PyTupleObject *)seq;
-    _PyObject_GC_TRACK(it);
     return (PyObject *)it;
 }

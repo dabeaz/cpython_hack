@@ -84,7 +84,7 @@ PyCMethod_New(PyMethodDef *ml, PyObject *self, PyObject *module, PyTypeObject *c
                             "flag but no class");
             return NULL;
         }
-        PyCMethodObject *om = PyObject_GC_New(PyCMethodObject, &PyCMethod_Type);
+        PyCMethodObject *om = PyObject_New(PyCMethodObject, &PyCMethod_Type);
         if (om == NULL) {
             return NULL;
         }
@@ -98,7 +98,7 @@ PyCMethod_New(PyMethodDef *ml, PyObject *self, PyObject *module, PyTypeObject *c
                             "but no METH_METHOD flag");
             return NULL;
         }
-        op = PyObject_GC_New(PyCFunctionObject, &PyCFunction_Type);
+        op = PyObject_New(PyCFunctionObject, &PyCFunction_Type);
         if (op == NULL) {
             return NULL;
         }
@@ -111,7 +111,6 @@ PyCMethod_New(PyMethodDef *ml, PyObject *self, PyObject *module, PyTypeObject *c
     Py_XINCREF(module);
     op->m_module = module;
     op->vectorcall = vectorcall;
-    _PyObject_GC_TRACK(op);
     return (PyObject *)op;
 }
 
@@ -160,14 +159,13 @@ PyCMethod_GetClass(PyObject *op)
 static void
 meth_dealloc(PyCFunctionObject *m)
 {
-    _PyObject_GC_UNTRACK(m);
     if (m->m_weakreflist != NULL) {
         PyObject_ClearWeakRefs((PyObject*) m);
     }
     Py_XDECREF(m->m_self);
     Py_XDECREF(m->m_module);
     Py_XDECREF(PyCFunction_GET_CLASS(m));
-    PyObject_GC_Del(m);
+    PyObject_Del(m);
 }
 
 static PyObject *
@@ -238,15 +236,6 @@ meth_get__qualname__(PyCFunctionObject *m, void *closure)
     res = PyUnicode_FromFormat("%S.%s", type_qualname, m->m_ml->ml_name);
     Py_DECREF(type_qualname);
     return res;
-}
-
-static int
-meth_traverse(PyCFunctionObject *m, visitproc visit, void *arg)
-{
-    Py_VISIT(m->m_self);
-    Py_VISIT(m->m_module);
-    Py_VISIT(PyCFunction_GET_CLASS(m));
-    return 0;
 }
 
 static PyObject *
@@ -348,10 +337,10 @@ PyTypeObject PyCFunction_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
+    Py_TPFLAGS_DEFAULT | //Py_TPFLAGS_HAVE_GC |
     Py_TPFLAGS_HAVE_VECTORCALL,                 /* tp_flags */
     0,                                          /* tp_doc */
-    (traverseproc)meth_traverse,                /* tp_traverse */
+    0,                /* tp_traverse */
     0,                                          /* tp_clear */
     meth_richcompare,                           /* tp_richcompare */
     offsetof(PyCFunctionObject, m_weakreflist), /* tp_weaklistoffset */

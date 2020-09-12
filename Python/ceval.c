@@ -2744,8 +2744,6 @@ _PyEval_EvalCode(PyThreadState *tstate,
             return NULL;
         }
 
-        _PyObject_GC_TRACK(f);
-
         return gen;
     }
 
@@ -2760,7 +2758,6 @@ fail: /* Jump here from prelude on failure */
     */
     if (Py_REFCNT(f) > 1) {
         Py_DECREF(f);
-        _PyObject_GC_TRACK(f);
     }
     else {
         Py_DECREF(f);
@@ -3124,10 +3121,6 @@ PyEval_GetFuncDesc(PyObject *func)
         return " object";
 }
 
-#define C_TRACE(x, call) \
-    x = call; 
-
-
 /* Issue #29227: Inline call_function() into _PyEval_EvalFrameDefault()
    to reduce the stack consumption. */
 Py_LOCAL_INLINE(PyObject *) _Py_HOT_FUNCTION
@@ -3158,7 +3151,7 @@ do_call_core(PyThreadState *tstate, PyObject *func, PyObject *callargs, PyObject
     PyObject *result;
 
     if (PyCFunction_CheckExact(func) || PyCMethod_CheckExact(func)) {
-        C_TRACE(result, PyObject_Call(func, callargs, kwdict));
+        result = PyObject_Call(func, callargs, kwdict);
         return result;
     }
     return PyObject_Call(func, callargs, kwdict);

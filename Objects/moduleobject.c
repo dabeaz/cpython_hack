@@ -81,7 +81,7 @@ PyObject *
 PyModule_NewObject(PyObject *name)
 {
     PyModuleObject *m;
-    m = PyObject_GC_New(PyModuleObject, &PyModule_Type);
+    m = PyObject_New(PyModuleObject, &PyModule_Type);
     if (m == NULL)
         return NULL;
     m->md_def = NULL;
@@ -91,7 +91,6 @@ PyModule_NewObject(PyObject *name)
     m->md_dict = PyDict_New();
     if (module_init_dict(m, m->md_dict, name, NULL) != 0)
         goto fail;
-    PyObject_GC_Track(m);
     return (PyObject *)m;
 
  fail:
@@ -639,7 +638,6 @@ module___init___impl(PyModuleObject *self, PyObject *name, PyObject *doc)
 static void
 module_dealloc(PyModuleObject *m)
 {
-    PyObject_GC_UnTrack(m);
     if (m->md_weaklist != NULL)
         PyObject_ClearWeakRefs((PyObject *) m);
     /* bpo-39824: Don't call m_free() if m_size > 0 and md_state=NULL */
@@ -685,21 +683,6 @@ module_getattro(PyModuleObject *m, PyObject *name)
     PyErr_Format(PyExc_AttributeError,
                 "module has no attribute '%U'", name);
     return NULL;
-}
-
-static int
-module_traverse(PyModuleObject *m, visitproc visit, void *arg)
-{
-    /* bpo-39824: Don't call m_traverse() if m_size > 0 and md_state=NULL */
-    if (m->md_def && m->md_def->m_traverse
-        && (m->md_def->m_size <= 0 || m->md_state != NULL))
-    {
-        int res = m->md_def->m_traverse((PyObject*)m, visit, arg);
-        if (res)
-            return res;
-    }
-    Py_VISIT(m->md_dict);
-    return 0;
 }
 
 static int
@@ -780,10 +763,10 @@ PyTypeObject PyModule_Type = {
     (getattrofunc)module_getattro,              /* tp_getattro */
     PyObject_GenericSetAttr,                    /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
+    Py_TPFLAGS_DEFAULT | //Py_TPFLAGS_HAVE_GC |
         Py_TPFLAGS_BASETYPE,                    /* tp_flags */
     module___init____doc__,                     /* tp_doc */
-    (traverseproc)module_traverse,              /* tp_traverse */
+    0,               /* tp_traverse */
     (inquiry)module_clear,                      /* tp_clear */
     0,                                          /* tp_richcompare */
     offsetof(PyModuleObject, md_weaklist),      /* tp_weaklistoffset */
@@ -800,5 +783,5 @@ PyTypeObject PyModule_Type = {
     module___init__,                            /* tp_init */
     PyType_GenericAlloc,                        /* tp_alloc */
     PyType_GenericNew,                          /* tp_new */
-    PyObject_GC_Del,                            /* tp_free */
+    PyObject_Del,                            /* tp_free */
 };

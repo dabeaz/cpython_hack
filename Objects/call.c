@@ -306,7 +306,6 @@ function_code_fastcall(PyThreadState *tstate, PyCodeObject *co,
 
     if (Py_REFCNT(f) > 1) {
         Py_DECREF(f);
-        _PyObject_GC_TRACK(f);
     }
     else {
         Py_DECREF(f);

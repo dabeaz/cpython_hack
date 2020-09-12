@@ -81,20 +81,8 @@ BaseException_clear(PyBaseExceptionObject *self)
 static void
 BaseException_dealloc(PyBaseExceptionObject *self)
 {
-    _PyObject_GC_UNTRACK(self);
     BaseException_clear(self);
     Py_TYPE(self)->tp_free((PyObject *)self);
-}
-
-static int
-BaseException_traverse(PyBaseExceptionObject *self, visitproc visit, void *arg)
-{
-    Py_VISIT(self->dict);
-    Py_VISIT(self->args);
-    Py_VISIT(self->traceback);
-    Py_VISIT(self->cause);
-    Py_VISIT(self->context);
-    return 0;
 }
 
 static PyObject *
@@ -392,10 +380,10 @@ static PyTypeObject _PyExc_BaseException = {
     PyObject_GenericGetAttr,    /*tp_getattro*/
     PyObject_GenericSetAttr,    /*tp_setattro*/
     0,                          /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC |
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | // Py_TPFLAGS_HAVE_GC |
         Py_TPFLAGS_BASE_EXC_SUBCLASS,  /*tp_flags*/
     PyDoc_STR("Common base class for all exceptions"), /* tp_doc */
-    (traverseproc)BaseException_traverse, /* tp_traverse */
+    0, /* tp_traverse */
     (inquiry)BaseException_clear, /* tp_clear */
     0,                          /* tp_richcompare */
     0,                          /* tp_weaklistoffset */
@@ -428,8 +416,8 @@ static PyTypeObject _PyExc_ ## EXCNAME = { \
     sizeof(PyBaseExceptionObject), \
     0, (destructor)BaseException_dealloc, 0, 0, 0, 0, 0, 0, 0, \
     0, 0, 0, 0, 0, 0, 0, \
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC, \
-    PyDoc_STR(EXCDOC), (traverseproc)BaseException_traverse, \
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, \
+    PyDoc_STR(EXCDOC), 0, \
     (inquiry)BaseException_clear, 0, 0, 0, 0, 0, 0, 0, &_ ## EXCBASE, \
     0, 0, 0, offsetof(PyBaseExceptionObject, dict), \
     (initproc)BaseException_init, 0, BaseException_new,\
@@ -443,8 +431,8 @@ static PyTypeObject _PyExc_ ## EXCNAME = { \
     sizeof(Py ## EXCSTORE ## Object), \
     0, (destructor)EXCSTORE ## _dealloc, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
     0, 0, 0, 0, 0, \
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC, \
-    PyDoc_STR(EXCDOC), (traverseproc)EXCSTORE ## _traverse, \
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, \
+    PyDoc_STR(EXCDOC), 0, \
     (inquiry)EXCSTORE ## _clear, 0, 0, 0, 0, 0, 0, 0, &_ ## EXCBASE, \
     0, 0, 0, offsetof(Py ## EXCSTORE ## Object, dict), \
     (initproc)EXCSTORE ## _init, 0, 0, \
@@ -460,8 +448,8 @@ static PyTypeObject _PyExc_ ## EXCNAME = { \
     sizeof(Py ## EXCSTORE ## Object), 0, \
     (destructor)EXCSTORE ## _dealloc, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
     (reprfunc)EXCSTR, 0, 0, 0, \
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC, \
-    PyDoc_STR(EXCDOC), (traverseproc)EXCSTORE ## _traverse, \
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, \
+    PyDoc_STR(EXCDOC), 0, \
     (inquiry)EXCSTORE ## _clear, 0, 0, 0, 0, EXCMETHODS, \
     EXCMEMBERS, EXCGETSET, &_ ## EXCBASE, \
     0, 0, 0, offsetof(Py ## EXCSTORE ## Object, dict), \
@@ -522,16 +510,8 @@ StopIteration_clear(PyStopIterationObject *self)
 static void
 StopIteration_dealloc(PyStopIterationObject *self)
 {
-    _PyObject_GC_UNTRACK(self);
     StopIteration_clear(self);
     Py_TYPE(self)->tp_free((PyObject *)self);
-}
-
-static int
-StopIteration_traverse(PyStopIterationObject *self, visitproc visit, void *arg)
-{
-    Py_VISIT(self->value);
-    return BaseException_traverse((PyBaseExceptionObject *)self, visit, arg);
 }
 
 ComplexExtendsException(
@@ -589,16 +569,8 @@ SystemExit_clear(PySystemExitObject *self)
 static void
 SystemExit_dealloc(PySystemExitObject *self)
 {
-    _PyObject_GC_UNTRACK(self);
     SystemExit_clear(self);
     Py_TYPE(self)->tp_free((PyObject *)self);
-}
-
-static int
-SystemExit_traverse(PySystemExitObject *self, visitproc visit, void *arg)
-{
-    Py_VISIT(self->code);
-    return BaseException_traverse((PyBaseExceptionObject *)self, visit, arg);
 }
 
 static PyMemberDef SystemExit_members[] = {
@@ -671,18 +643,8 @@ ImportError_clear(PyImportErrorObject *self)
 static void
 ImportError_dealloc(PyImportErrorObject *self)
 {
-    _PyObject_GC_UNTRACK(self);
     ImportError_clear(self);
     Py_TYPE(self)->tp_free((PyObject *)self);
-}
-
-static int
-ImportError_traverse(PyImportErrorObject *self, visitproc visit, void *arg)
-{
-    Py_VISIT(self->msg);
-    Py_VISIT(self->name);
-    Py_VISIT(self->path);
-    return BaseException_traverse((PyBaseExceptionObject *)self, visit, arg);
 }
 
 static PyObject *
@@ -1002,20 +964,8 @@ OSError_clear(PyOSErrorObject *self)
 static void
 OSError_dealloc(PyOSErrorObject *self)
 {
-    _PyObject_GC_UNTRACK(self);
     OSError_clear(self);
     Py_TYPE(self)->tp_free((PyObject *)self);
-}
-
-static int
-OSError_traverse(PyOSErrorObject *self, visitproc visit,
-        void *arg)
-{
-    Py_VISIT(self->myerrno);
-    Py_VISIT(self->strerror);
-    Py_VISIT(self->filename);
-    Py_VISIT(self->filename2);
-    return BaseException_traverse((PyBaseExceptionObject *)self, visit, arg);
 }
 
 static PyObject *
@@ -1299,21 +1249,8 @@ SyntaxError_clear(PySyntaxErrorObject *self)
 static void
 SyntaxError_dealloc(PySyntaxErrorObject *self)
 {
-    _PyObject_GC_UNTRACK(self);
     SyntaxError_clear(self);
     Py_TYPE(self)->tp_free((PyObject *)self);
-}
-
-static int
-SyntaxError_traverse(PySyntaxErrorObject *self, visitproc visit, void *arg)
-{
-    Py_VISIT(self->msg);
-    Py_VISIT(self->filename);
-    Py_VISIT(self->lineno);
-    Py_VISIT(self->offset);
-    Py_VISIT(self->text);
-    Py_VISIT(self->print_file_and_line);
-    return BaseException_traverse((PyBaseExceptionObject *)self, visit, arg);
 }
 
 /* This is called "my_basename" instead of just "basename" to avoid name
@@ -1546,14 +1483,12 @@ MemoryError_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     memerrors_numfree--;
     self->dict = NULL;
     _Py_NewReference((PyObject *)self);
-    _PyObject_GC_TRACK(self);
     return (PyObject *)self;
 }
 
 static void
 MemoryError_dealloc(PyBaseExceptionObject *self)
 {
-    _PyObject_GC_UNTRACK(self);
     BaseException_clear(self);
     if (memerrors_numfree >= MEMERRORS_SAVE)
         Py_TYPE(self)->tp_free((PyObject *)self);
@@ -1601,8 +1536,8 @@ static PyTypeObject _PyExc_MemoryError = {
     sizeof(PyBaseExceptionObject),
     0, (destructor)MemoryError_dealloc, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0,
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
-    PyDoc_STR("Out of memory."), (traverseproc)BaseException_traverse,
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+    PyDoc_STR("Out of memory."), 0, 
     (inquiry)BaseException_clear, 0, 0, 0, 0, 0, 0, 0, &_PyExc_Exception,
     0, 0, 0, offsetof(PyBaseExceptionObject, dict),
     (initproc)BaseException_init, 0, MemoryError_new

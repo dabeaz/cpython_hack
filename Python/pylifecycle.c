@@ -199,8 +199,6 @@ pycore_init_types(PyThreadState *tstate)
 {
     PyStatus status;
     int is_main_interp = 1;
-
-    status = _PyGC_Init(tstate);
     if (_PyStatus_EXCEPTION(status)) {
         return status;
     }
@@ -788,14 +786,7 @@ finalize_interp_clear(PyThreadState *tstate)
 
     /* Clear interpreter state and all thread states */
     PyInterpreterState_Clear(tstate->interp);
-
-    /* Trigger a GC collection on subinterpreters*/
-    if (!is_main_interp) {
-        _PyGC_CollectNoFail();
-    }
-
-    _PyGC_Fini(tstate);
-
+    
     if (is_main_interp) {
         _PyArg_Fini();
     }
@@ -856,23 +847,6 @@ Py_FinalizeEx(void)
     if (flush_std_files() < 0) {
         status = -1;
     }
-
-    /* Disable signal handling */
-    // PyOS_FiniInterrupts();
-
-    /* Collect garbage.  This may call finalizers; it's nice to call these
-     * before all modules are destroyed.
-     * XXX If a __del__ or weakref callback is triggered here, and tries to
-     * XXX import a module, bad things can happen, because Python no
-     * XXX longer believes it's initialized.
-     * XXX     Fatal Python error: Interpreter not initialized (version mismatch?)
-     * XXX is easy to provoke that way.  I've also seen, e.g.,
-     * XXX     Exception exceptions.ImportError: 'No module named sha'
-     * XXX         in <function callback at 0x008F5718> ignored
-     * XXX but I'm unclear on exactly how that one happens.  In any case,
-     * XXX I haven't seen a real-life report of either of these.
-     */
-    _PyGC_CollectIfEnabled();
 
     /* Destroy all modules */
     _PyImport_Cleanup(tstate);

@@ -472,8 +472,6 @@ set_dealloc(PySetObject *so)
     Py_ssize_t used = so->used;
 
     /* bpo-31095: UnTrack is needed before calling any callbacks */
-    PyObject_GC_UnTrack(so);
-    Py_TRASHCAN_BEGIN(so, set_dealloc)
     if (so->weakreflist != NULL)
         PyObject_ClearWeakRefs((PyObject *) so);
 
@@ -486,7 +484,6 @@ set_dealloc(PySetObject *so)
     if (so->table != so->smalltable)
         PyMem_DEL(so->table);
     Py_TYPE(so)->tp_free(so);
-    Py_TRASHCAN_END
 }
 
 static PyObject *
@@ -640,17 +637,6 @@ set_pop(PySetObject *so, PyObject *Py_UNUSED(ignored))
 PyDoc_STRVAR(pop_doc, "Remove and return an arbitrary set element.\n\
 Raises KeyError if the set is empty.");
 
-static int
-set_traverse(PySetObject *so, visitproc visit, void *arg)
-{
-    Py_ssize_t pos = 0;
-    setentry *entry;
-
-    while (set_next(so, &pos, &entry))
-        Py_VISIT(entry->key);
-    return 0;
-}
-
 /* Work to increase the bit dispersion for closely spaced hash values.
    This is important because some use cases have many combinations of a
    small number of elements with nearby hashes so that many distinct
@@ -728,16 +714,8 @@ static void
 setiter_dealloc(setiterobject *si)
 {
     /* bpo-31095: UnTrack is needed before calling any callbacks */
-    _PyObject_GC_UNTRACK(si);
     Py_XDECREF(si->si_set);
-    PyObject_GC_Del(si);
-}
-
-static int
-setiter_traverse(setiterobject *si, visitproc visit, void *arg)
-{
-    Py_VISIT(si->si_set);
-    return 0;
+    PyObject_Del(si);
 }
 
 static PyObject *
@@ -837,9 +815,9 @@ PyTypeObject PySetIter_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,    /* tp_flags */
+    Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC,    /* tp_flags */
     0,                                          /* tp_doc */
-    (traverseproc)setiter_traverse,             /* tp_traverse */
+    0,            /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -852,7 +830,7 @@ PyTypeObject PySetIter_Type = {
 static PyObject *
 set_iter(PySetObject *so)
 {
-    setiterobject *si = PyObject_GC_New(setiterobject, &PySetIter_Type);
+    setiterobject *si = PyObject_New(setiterobject, &PySetIter_Type);
     if (si == NULL)
         return NULL;
     Py_INCREF(so);
@@ -860,7 +838,6 @@ set_iter(PySetObject *so)
     si->si_used = so->used;
     si->si_pos = 0;
     si->len = so->used;
-    _PyObject_GC_TRACK(si);
     return (PyObject *)si;
 }
 
@@ -2097,10 +2074,10 @@ PyTypeObject PySet_Type = {
     PyObject_GenericGetAttr,            /* tp_getattro */
     0,                                  /* tp_setattro */
     0,                                  /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
+    Py_TPFLAGS_DEFAULT |  // | Py_TPFLAGS_HAVE_GC |
         Py_TPFLAGS_BASETYPE,            /* tp_flags */
     set_doc,                            /* tp_doc */
-    (traverseproc)set_traverse,         /* tp_traverse */
+    0,          /* tp_traverse */
     (inquiry)set_clear_internal,        /* tp_clear */
     (richcmpfunc)set_richcompare,       /* tp_richcompare */
     offsetof(PySetObject, weakreflist), /* tp_weaklistoffset */
@@ -2117,7 +2094,7 @@ PyTypeObject PySet_Type = {
     (initproc)set_init,                 /* tp_init */
     PyType_GenericAlloc,                /* tp_alloc */
     set_new,                            /* tp_new */
-    PyObject_GC_Del,                    /* tp_free */
+    PyObject_Del,                    /* tp_free */
     .tp_vectorcall = set_vectorcall,
 };
 
@@ -2196,10 +2173,10 @@ PyTypeObject PyFrozenSet_Type = {
     PyObject_GenericGetAttr,            /* tp_getattro */
     0,                                  /* tp_setattro */
     0,                                  /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
+    Py_TPFLAGS_DEFAULT | // Py_TPFLAGS_HAVE_GC |
         Py_TPFLAGS_BASETYPE,            /* tp_flags */
     frozenset_doc,                      /* tp_doc */
-    (traverseproc)set_traverse,         /* tp_traverse */
+    0,         /* tp_traverse */
     (inquiry)set_clear_internal,        /* tp_clear */
     (richcmpfunc)set_richcompare,       /* tp_richcompare */
     offsetof(PySetObject, weakreflist), /* tp_weaklistoffset */
@@ -2216,7 +2193,7 @@ PyTypeObject PyFrozenSet_Type = {
     0,                                  /* tp_init */
     PyType_GenericAlloc,                /* tp_alloc */
     frozenset_new,                      /* tp_new */
-    PyObject_GC_Del,                    /* tp_free */
+    PyObject_Del,                    /* tp_free */
     .tp_vectorcall = frozenset_vectorcall,
 };
 

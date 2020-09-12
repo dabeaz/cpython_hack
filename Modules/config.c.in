@@ -24,7 +24,6 @@ extern "C" {
 
 /* -- ADDMODULE MARKER 1 -- */
 
-extern PyObject* PyInit_gc(void);
 extern PyObject* PyInit__ast(void);
 extern PyObject* PyInit__string(void);
 
@@ -37,9 +36,6 @@ struct _inittab _PyImport_Inittab[] = {
     /* These entries are here for sys.builtin_module_names */
     {"builtins", NULL},
     {"sys", NULL},
-
-    /* This lives in gcmodule.c */
-    {"gc", PyInit_gc},
 
     /* This lives in Objects/unicodeobject.c */
     {"_string", PyInit__string},

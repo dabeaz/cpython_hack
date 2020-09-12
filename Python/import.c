@@ -275,11 +275,7 @@ _PyImport_Cleanup(PyThreadState *tstate)
     }
     Py_XDECREF(dict);
     /* Collect references */
-    _PyGC_CollectNoFail();
-    /* Dump GC stats before it's too late, since it uses the warnings
-       machinery. */
-    _PyGC_DumpShutdownStats(tstate);
-
+    
     /* Now, if there are any modules left alive, clear their globals to
        minimize potential leaks.  All C extension modules actually end
        up here, since they are kept alive in the interpreter state.
@@ -323,9 +319,6 @@ _PyImport_Cleanup(PyThreadState *tstate)
        destructor. */
     interp->modules = NULL;
     Py_DECREF(modules);
-
-    /* Once more */
-    _PyGC_CollectNoFail();
 
 #undef CLEAR_MODULE
 #undef STORE_MODULE_WEAKREF

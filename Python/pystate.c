@@ -83,7 +83,6 @@ PyInterpreterState_New(void)
     _PyRuntimeState *runtime = &_PyRuntime;
     interp->runtime = runtime;
 
-    _PyGC_InitState(&interp->gc);
     PyConfig_InitPythonConfig(&interp->config);
 
     interp->eval_frame = _PyEval_EvalFrameDefault;
@@ -175,11 +174,6 @@ new_threadstate(PyInterpreterState *interp, int init)
     tstate->exc_state.exc_traceback = NULL;
     tstate->exc_state.previous_item = NULL;
     tstate->exc_info = &tstate->exc_state;
-
-    tstate->trash_delete_nesting = 0;
-    tstate->trash_delete_later = NULL;
-    tstate->on_delete = NULL;
-    tstate->on_delete_data = NULL;
     tstate->context = NULL;
     tstate->context_ver = 1;
 
@@ -357,10 +351,6 @@ PyThreadState_Clear(PyThreadState *tstate)
     Py_CLEAR(tstate->exc_state.exc_value);
     Py_CLEAR(tstate->exc_state.exc_traceback);
     Py_CLEAR(tstate->context);
-
-    if (tstate->on_delete != NULL) {
-        tstate->on_delete(tstate->on_delete_data);
-    }
 }
 
 

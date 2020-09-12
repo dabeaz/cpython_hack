@@ -102,7 +102,7 @@ PyMethod_New(PyObject *func, PyObject *self)
         PyErr_BadInternalCall();
         return NULL;
     }
-    PyMethodObject *im = PyObject_GC_New(PyMethodObject, &PyMethod_Type);
+    PyMethodObject *im = PyObject_New(PyMethodObject, &PyMethod_Type);
     if (im == NULL) {
         return NULL;
     }
@@ -112,7 +112,6 @@ PyMethod_New(PyObject *func, PyObject *self)
     Py_INCREF(self);
     im->im_self = self;
     im->vectorcall = method_vectorcall;
-    _PyObject_GC_TRACK(im);
     return (PyObject *)im;
 }
 
@@ -234,12 +233,11 @@ method_new(PyTypeObject* type, PyObject* args, PyObject *kw)
 static void
 method_dealloc(PyMethodObject *im)
 {
-    _PyObject_GC_UNTRACK(im);
     if (im->im_weakreflist != NULL)
         PyObject_ClearWeakRefs((PyObject *)im);
     Py_DECREF(im->im_func);
     Py_XDECREF(im->im_self);
-    PyObject_GC_Del(im);
+    PyObject_Del(im);
 }
 
 static PyObject *
@@ -313,14 +311,6 @@ method_hash(PyMethodObject *a)
     return x;
 }
 
-static int
-method_traverse(PyMethodObject *im, visitproc visit, void *arg)
-{
-    Py_VISIT(im->im_func);
-    Py_VISIT(im->im_self);
-    return 0;
-}
-
 static PyObject *
 method_descr_get(PyObject *meth, PyObject *obj, PyObject *cls)
 {
@@ -348,10 +338,10 @@ PyTypeObject PyMethod_Type = {
     method_getattro,                            /* tp_getattro */
     PyObject_GenericSetAttr,                    /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
+    Py_TPFLAGS_DEFAULT | // Py_TPFLAGS_HAVE_GC |
     Py_TPFLAGS_HAVE_VECTORCALL,                 /* tp_flags */
     method_doc,                                 /* tp_doc */
-    (traverseproc)method_traverse,              /* tp_traverse */
+    0,                /* tp_traverse */
     0,                                          /* tp_clear */
     method_richcompare,                         /* tp_richcompare */
     offsetof(PyMethodObject, im_weakreflist), /* tp_weaklistoffset */
@@ -377,12 +367,11 @@ PyTypeObject PyMethod_Type = {
 PyObject *
 PyInstanceMethod_New(PyObject *func) {
     PyInstanceMethodObject *method;
-    method = PyObject_GC_New(PyInstanceMethodObject,
+    method = PyObject_New(PyInstanceMethodObject,
                              &PyInstanceMethod_Type);
     if (method == NULL) return NULL;
     Py_INCREF(func);
     method->func = func;
-    _PyObject_GC_TRACK(method);
     return (PyObject *)method;
 }
 
@@ -448,9 +437,8 @@ instancemethod_getattro(PyObject *self, PyObject *name)
 
 static void
 instancemethod_dealloc(PyObject *self) {
-    _PyObject_GC_UNTRACK(self);
     Py_DECREF(PyInstanceMethod_GET_FUNCTION(self));
-    PyObject_GC_Del(self);
+    PyObject_Del(self);
 }
 
 static int
@@ -588,8 +576,8 @@ PyTypeObject PyInstanceMethod_Type = {
     instancemethod_getattro,                    /* tp_getattro */
     PyObject_GenericSetAttr,                    /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT
-        | Py_TPFLAGS_HAVE_GC,                   /* tp_flags */
+    Py_TPFLAGS_DEFAULT,
+    //        | Py_TPFLAGS_HAVE_GC,                   /* tp_flags */
     instancemethod_doc,                         /* tp_doc */
     instancemethod_traverse,                    /* tp_traverse */
     0,                                          /* tp_clear */

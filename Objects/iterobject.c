@@ -20,29 +20,21 @@ PySeqIter_New(PyObject *seq)
         PyErr_BadInternalCall();
         return NULL;
     }
-    it = PyObject_GC_New(seqiterobject, &PySeqIter_Type);
+    it = PyObject_New(seqiterobject, &PySeqIter_Type);
+    
     if (it == NULL)
         return NULL;
     it->it_index = 0;
     Py_INCREF(seq);
     it->it_seq = seq;
-    _PyObject_GC_TRACK(it);
     return (PyObject *)it;
 }
 
 static void
 iter_dealloc(seqiterobject *it)
 {
-    _PyObject_GC_UNTRACK(it);
     Py_XDECREF(it->it_seq);
-    PyObject_GC_Del(it);
-}
-
-static int
-iter_traverse(seqiterobject *it, visitproc visit, void *arg)
-{
-    Py_VISIT(it->it_seq);
-    return 0;
+    PyObject_Del(it);
 }
 
 static PyObject *
@@ -157,9 +149,9 @@ PyTypeObject PySeqIter_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
+    Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC,/* tp_flags */
     0,                                          /* tp_doc */
-    (traverseproc)iter_traverse,                /* tp_traverse */
+    0,                /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -181,31 +173,21 @@ PyObject *
 PyCallIter_New(PyObject *callable, PyObject *sentinel)
 {
     calliterobject *it;
-    it = PyObject_GC_New(calliterobject, &PyCallIter_Type);
+    it = PyObject_New(calliterobject, &PyCallIter_Type);
     if (it == NULL)
         return NULL;
     Py_INCREF(callable);
     it->it_callable = callable;
     Py_INCREF(sentinel);
     it->it_sentinel = sentinel;
-    _PyObject_GC_TRACK(it);
     return (PyObject *)it;
 }
 static void
 calliter_dealloc(calliterobject *it)
 {
-    _PyObject_GC_UNTRACK(it);
     Py_XDECREF(it->it_callable);
     Py_XDECREF(it->it_sentinel);
-    PyObject_GC_Del(it);
-}
-
-static int
-calliter_traverse(calliterobject *it, visitproc visit, void *arg)
-{
-    Py_VISIT(it->it_callable);
-    Py_VISIT(it->it_sentinel);
-    return 0;
+    PyObject_Del(it);
 }
 
 static PyObject *
@@ -276,9 +258,9 @@ PyTypeObject PyCallIter_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
+    Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC,/* tp_flags */
     0,                                          /* tp_doc */
-    (traverseproc)calliter_traverse,            /* tp_traverse */
+    0,            /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */

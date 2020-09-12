@@ -445,7 +445,6 @@ fileio_dealloc(fileio *self)
     self->finalizing = 1;
     if (_PyIOBase_finalize((PyObject *) self) < 0)
         return;
-    _PyObject_GC_UNTRACK(self);
     if (self->weakreflist != NULL)
         PyObject_ClearWeakRefs((PyObject *) self);
     Py_CLEAR(self->dict);
@@ -1402,8 +1401,8 @@ PyTypeObject PyFileIO_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE
-        | Py_TPFLAGS_HAVE_GC,                   /* tp_flags */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, 
+    // | Py_TPFLAGS_HAVE_GC,                   /* tp_flags */
     _io_FileIO___init____doc__,                 /* tp_doc */
     (traverseproc)fileio_traverse,              /* tp_traverse */
     (inquiry)fileio_clear,                      /* tp_clear */
@@ -1422,7 +1421,7 @@ PyTypeObject PyFileIO_Type = {
     _io_FileIO___init__,                        /* tp_init */
     PyType_GenericAlloc,                        /* tp_alloc */
     fileio_new,                                 /* tp_new */
-    PyObject_GC_Del,                            /* tp_free */
+    PyObject_Del,                            /* tp_free */
     0,                                          /* tp_is_gc */
     0,                                          /* tp_bases */
     0,                                          /* tp_mro */

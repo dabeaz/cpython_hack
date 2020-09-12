@@ -1213,11 +1213,7 @@ PyType_GenericAlloc(PyTypeObject *type, Py_ssize_t nitems)
     PyObject *obj;
     const size_t size = _PyObject_VAR_SIZE(type, nitems+1);
     /* note that we need to add one, for the sentinel */
-
-    if (_PyType_IS_GC(type)) {
-        obj = _PyObject_GC_Malloc(size);
-    }
-    else {
+    {
         obj = (PyObject *)PyObject_MALLOC(size);
     }
 
@@ -1233,10 +1229,6 @@ PyType_GenericAlloc(PyTypeObject *type, Py_ssize_t nitems)
     else {
         (void) PyObject_INIT_VAR((PyVarObject *)obj, type, nitems);
     }
-
-    if (_PyType_IS_GC(type)) {
-        _PyObject_GC_TRACK(obj);
-    }
     return obj;
 }
 
@@ -1246,136 +1238,18 @@ PyType_GenericNew(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return type->tp_alloc(type, 0);
 }
 
-/* Helpers for subtyping */
-
-static int
-traverse_slots(PyTypeObject *type, PyObject *self, visitproc visit, void *arg)
-{
-    Py_ssize_t i, n;
-    PyMemberDef *mp;
-
-    n = Py_SIZE(type);
-    mp = PyHeapType_GET_MEMBERS((PyHeapTypeObject *)type);
-    for (i = 0; i < n; i++, mp++) {
-        if (mp->type == T_OBJECT_EX) {
-            char *addr = (char *)self + mp->offset;
-            PyObject *obj = *(PyObject **)addr;
-            if (obj != NULL) {
-                int err = visit(obj, arg);
-                if (err)
-                    return err;
-            }
-        }
-    }
-    return 0;
-}
-
-static int
-subtype_traverse(PyObject *self, visitproc visit, void *arg)
-{
-    PyTypeObject *type, *base;
-    traverseproc basetraverse;
-
-    /* Find the nearest base with a different tp_traverse,
-       and traverse slots while we're at it */
-    type = Py_TYPE(self);
-    base = type;
-    while ((basetraverse = base->tp_traverse) == subtype_traverse) {
-        if (Py_SIZE(base)) {
-            int err = traverse_slots(base, self, visit, arg);
-            if (err)
-                return err;
-        }
-        base = base->tp_base;
-        assert(base);
-    }
-
-    if (type->tp_dictoffset != base->tp_dictoffset) {
-        PyObject **dictptr = _PyObject_GetDictPtr(self);
-        if (dictptr && *dictptr)
-            Py_VISIT(*dictptr);
-    }
-
-    if (type->tp_flags & Py_TPFLAGS_HEAPTYPE
-        && (!basetraverse || !(base->tp_flags & Py_TPFLAGS_HEAPTYPE))) {
-        /* For a heaptype, the instances count as references
-           to the type.          Traverse the type so the collector
-           can find cycles involving this link.
-           Skip this visit if basetraverse belongs to a heap type: in that
-           case, basetraverse will visit the type when we call it later.
-           */
-        Py_VISIT(type);
-    }
-
-    if (basetraverse)
-        return basetraverse(self, visit, arg);
-    return 0;
-}
-
-static void
-clear_slots(PyTypeObject *type, PyObject *self)
-{
-    Py_ssize_t i, n;
-    PyMemberDef *mp;
-
-    n = Py_SIZE(type);
-    mp = PyHeapType_GET_MEMBERS((PyHeapTypeObject *)type);
-    for (i = 0; i < n; i++, mp++) {
-        if (mp->type == T_OBJECT_EX && !(mp->flags & READONLY)) {
-            char *addr = (char *)self + mp->offset;
-            PyObject *obj = *(PyObject **)addr;
-            if (obj != NULL) {
-                *(PyObject **)addr = NULL;
-                Py_DECREF(obj);
-            }
-        }
-    }
-}
-
-static int
-subtype_clear(PyObject *self)
-{
-    PyTypeObject *type, *base;
-    inquiry baseclear;
-
-    /* Find the nearest base with a different tp_clear
-       and clear slots while we're at it */
-    type = Py_TYPE(self);
-    base = type;
-    while ((baseclear = base->tp_clear) == subtype_clear) {
-        if (Py_SIZE(base))
-            clear_slots(base, self);
-        base = base->tp_base;
-        assert(base);
-    }
-
-    /* Clear the instance dict (if any), to break cycles involving only
-       __dict__ slots (as in the case 'self.__dict__ is self'). */
-    if (type->tp_dictoffset != base->tp_dictoffset) {
-        PyObject **dictptr = _PyObject_GetDictPtr(self);
-        if (dictptr && *dictptr)
-            Py_CLEAR(*dictptr);
-    }
-
-    if (baseclear)
-        return baseclear(self);
-    return 0;
-}
-
 static void
 subtype_dealloc(PyObject *self)
 {
     PyTypeObject *type, *base;
     destructor basedealloc;
-    int has_finalizer;
 
     /* Extract the type; we expect it to be a heap type */
     type = Py_TYPE(self);
     _PyObject_ASSERT((PyObject *)type, type->tp_flags & Py_TPFLAGS_HEAPTYPE);
 
     /* Test whether the type has GC exactly once */
-
-    if (!_PyType_IS_GC(type)) {
+      {
         /* A non GC dynamic type allows certain simplifications:
            there's no need to call clear_slots(), or DECREF the dict,
            or clear weakrefs. */
@@ -1414,145 +1288,6 @@ subtype_dealloc(PyObject *self)
         /* Done */
         return;
     }
-
-    /* We get here only if the type has GC */
-
-    /* UnTrack and re-Track around the trashcan macro, alas */
-    /* See explanation at end of function for full disclosure */
-    PyObject_GC_UnTrack(self);
-    Py_TRASHCAN_BEGIN(self, subtype_dealloc);
-
-    /* Find the nearest base with a different tp_dealloc */
-    base = type;
-    while ((/*basedealloc =*/ base->tp_dealloc) == subtype_dealloc) {
-        base = base->tp_base;
-        assert(base);
-    }
-
-    has_finalizer = type->tp_finalize || type->tp_del;
-
-    if (type->tp_finalize) {
-        _PyObject_GC_TRACK(self);
-        if (PyObject_CallFinalizerFromDealloc(self) < 0) {
-            /* Resurrected */
-            goto endlabel;
-        }
-        _PyObject_GC_UNTRACK(self);
-    }
-    /*
-      If we added a weaklist, we clear it. Do this *before* calling tp_del,
-      clearing slots, or clearing the instance dict.
-
-      GC tracking must be off at this point. weakref callbacks (if any, and
-      whether directly here or indirectly in something we call) may trigger GC,
-      and if self is tracked at that point, it will look like trash to GC and GC
-      will try to delete self again.
-    */
-    if (type->tp_weaklistoffset && !base->tp_weaklistoffset)
-        PyObject_ClearWeakRefs(self);
-
-    if (type->tp_del) {
-        _PyObject_GC_TRACK(self);
-        type->tp_del(self);
-        if (Py_REFCNT(self) > 0) {
-            /* Resurrected */
-            goto endlabel;
-        }
-        _PyObject_GC_UNTRACK(self);
-    }
-    if (has_finalizer) {
-        /* New weakrefs could be created during the finalizer call.
-           If this occurs, clear them out without calling their
-           finalizers since they might rely on part of the object
-           being finalized that has already been destroyed. */
-        if (type->tp_weaklistoffset && !base->tp_weaklistoffset) {
-            /* Modeled after GET_WEAKREFS_LISTPTR() */
-            PyWeakReference **list = (PyWeakReference **) \
-                _PyObject_GET_WEAKREFS_LISTPTR(self);
-            while (*list)
-                _PyWeakref_ClearRef(*list);
-        }
-    }
-
-    /*  Clear slots up to the nearest base with a different tp_dealloc */
-    base = type;
-    while ((basedealloc = base->tp_dealloc) == subtype_dealloc) {
-        if (Py_SIZE(base))
-            clear_slots(base, self);
-        base = base->tp_base;
-        assert(base);
-    }
-
-    /* If we added a dict, DECREF it */
-    if (type->tp_dictoffset && !base->tp_dictoffset) {
-        PyObject **dictptr = _PyObject_GetDictPtr(self);
-        if (dictptr != NULL) {
-            PyObject *dict = *dictptr;
-            if (dict != NULL) {
-                Py_DECREF(dict);
-                *dictptr = NULL;
-            }
-        }
-    }
-
-    /* Extract the type again; tp_del may have changed it */
-    type = Py_TYPE(self);
-
-    /* Call the base tp_dealloc(); first retrack self if
-     * basedealloc knows about gc.
-     */
-    if (_PyType_IS_GC(base)) {
-        _PyObject_GC_TRACK(self);
-    }
-    assert(basedealloc);
-    basedealloc(self);
-
-    /* Can't reference self beyond this point. It's possible tp_del switched
-       our type from a HEAPTYPE to a non-HEAPTYPE, so be careful about
-       reference counting. Only decref if the base type is not already a heap
-       allocated type. Otherwise, basedealloc should have decref'd it already */
-    if (type->tp_flags & Py_TPFLAGS_HEAPTYPE && !(base->tp_flags & Py_TPFLAGS_HEAPTYPE))
-      Py_DECREF(type);
-
-  endlabel:
-    Py_TRASHCAN_END
-
-    /* Explanation of the weirdness around the trashcan macros:
-
-       Q. What do the trashcan macros do?
-
-       A. Read the comment titled "Trashcan mechanism" in object.h.
-          For one, this explains why there must be a call to GC-untrack
-          before the trashcan begin macro.      Without understanding the
-          trashcan code, the answers to the following questions don't make
-          sense.
-
-       Q. Why do we GC-untrack before the trashcan and then immediately
-          GC-track again afterward?
-
-       A. In the case that the base class is GC-aware, the base class
-          probably GC-untracks the object.      If it does that using the
-          UNTRACK macro, this will crash when the object is already
-          untracked.  Because we don't know what the base class does, the
-          only safe thing is to make sure the object is tracked when we
-          call the base class dealloc.  But...  The trashcan begin macro
-          requires that the object is *untracked* before it is called.  So
-          the dance becomes:
-
-         GC untrack
-         trashcan begin
-         GC track
-
-       Q. Why did the last question say "immediately GC-track again"?
-          It's nowhere near immediately.
-
-       A. Because the code *used* to re-track immediately.      Bad Idea.
-          self has a refcount of 0, and if gc ever gets its hands on it
-          (which can happen if any weakref callback gets invoked), it
-          looks like trash to gc too, and gc also tries to delete self
-          then.  But we're already deleting self.  Double deallocation is
-          a subtle disaster.
-    */
 }
 
 static PyTypeObject *solid_base(PyTypeObject *type);
@@ -2627,8 +2362,6 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
     /* Initialize tp_flags */
     type->tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HEAPTYPE |
         Py_TPFLAGS_BASETYPE;
-    if (base->tp_flags & Py_TPFLAGS_HAVE_GC)
-        type->tp_flags |= Py_TPFLAGS_HAVE_GC;
 
     /* Initialize essential fields */
     type->tp_as_async = &et->as_async;
@@ -2773,22 +2506,10 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
         type->tp_getset = NULL;
     
     type->tp_dealloc = subtype_dealloc;
-
-    /* Enable GC unless this class is not adding new instance variables and
-       the base class did not use GC. */
-    if ((base->tp_flags & Py_TPFLAGS_HAVE_GC) ||
-        type->tp_basicsize > base->tp_basicsize)
-        type->tp_flags |= Py_TPFLAGS_HAVE_GC;
-
+    
     /* Always override allocation strategy to use regular heap */
     type->tp_alloc = PyType_GenericAlloc;
-    if (type->tp_flags & Py_TPFLAGS_HAVE_GC) {
-        type->tp_free = PyObject_GC_Del;
-        type->tp_traverse = subtype_traverse;
-        type->tp_clear = subtype_clear;
-    }
-    else
-        type->tp_free = PyObject_Del;
+    type->tp_free = PyObject_Del;
 
     /* store type in class' cell if one is supplied */
     cell = _PyDict_GetItemIdWithError(dict, &PyId___classcell__);
@@ -3406,7 +3127,6 @@ type_dealloc(PyTypeObject *type)
 
     /* Assert this is a heap-allocated type object */
     _PyObject_ASSERT((PyObject *)type, type->tp_flags & Py_TPFLAGS_HEAPTYPE);
-    _PyObject_GC_UNTRACK(type);
     PyErr_Fetch(&tp, &val, &tb);
     remove_all_subclasses(type, type->tp_bases);
     PyErr_Restore(tp, val, tb);
@@ -3691,7 +3411,7 @@ PyTypeObject PyType_Type = {
     (getattrofunc)type_getattro,                /* tp_getattro */
     (setattrofunc)type_setattro,                /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
+    Py_TPFLAGS_DEFAULT | // Py_TPFLAGS_HAVE_GC |
     Py_TPFLAGS_BASETYPE | Py_TPFLAGS_TYPE_SUBCLASS |
     Py_TPFLAGS_HAVE_VECTORCALL,                 /* tp_flags */
     type_doc,                                   /* tp_doc */
@@ -3712,7 +3432,7 @@ PyTypeObject PyType_Type = {
     type_init,                                  /* tp_init */
     0,                                          /* tp_alloc */
     type_new,                                   /* tp_new */
-    PyObject_GC_Del,                            /* tp_free */
+    PyObject_Del,                            /* tp_free */
     (inquiry)type_is_gc,                        /* tp_is_gc */
 };
 
@@ -5179,24 +4899,7 @@ inherit_slots(PyTypeObject *type, PyTypeObject *base)
         COPYSLOT(tp_alloc);
         COPYSLOT(tp_is_gc);
         COPYSLOT(tp_finalize);
-        if ((type->tp_flags & Py_TPFLAGS_HAVE_GC) ==
-            (base->tp_flags & Py_TPFLAGS_HAVE_GC)) {
-            /* They agree about gc. */
-            COPYSLOT(tp_free);
-        }
-        else if ((type->tp_flags & Py_TPFLAGS_HAVE_GC) &&
-                 type->tp_free == NULL &&
-                 base->tp_free == PyObject_Free) {
-            /* A bit of magic to plug in the correct default
-             * tp_free function when a derived class adds gc,
-             * didn't define tp_free, and the base uses the
-             * default non-gc tp_free.
-             */
-            type->tp_free = PyObject_GC_Del;
-        }
-        /* else they didn't agree about gc, and there isn't something
-         * obvious to be done -- the type is on its own.
-         */
+	COPYSLOT(tp_free);
     }
 }
 
@@ -5334,20 +5037,7 @@ PyType_Ready(PyTypeObject *type)
                 goto error;
             }
         }
-
-    /* Sanity check for tp_free. */
-    if (_PyType_IS_GC(type) && (type->tp_flags & Py_TPFLAGS_BASETYPE) &&
-        (type->tp_free == NULL || type->tp_free == PyObject_Del)) {
-        /* This base class needs to call tp_free, but doesn't have
-         * one, or its tp_free is for non-gc'ed objects.
-         */
-        PyErr_Format(PyExc_TypeError, "type '%.100s' participates in "
-                     "gc and is a base type but has inappropriate "
-                     "tp_free slot",
-                     type->tp_name);
-        goto error;
-    }
-
+    
     /* if the type dictionary doesn't contain a __doc__, set it from
        the tp_doc slot.
      */
@@ -7677,7 +7367,6 @@ super_dealloc(PyObject *self)
 {
     superobject *su = (superobject *)self;
 
-    _PyObject_GC_UNTRACK(self);
     Py_XDECREF(su->obj);
     Py_XDECREF(su->type);
     Py_XDECREF(su->obj_type);
@@ -8041,7 +7730,7 @@ PyTypeObject PySuper_Type = {
     super_getattro,                             /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
+    Py_TPFLAGS_DEFAULT | // Py_TPFLAGS_HAVE_GC |
         Py_TPFLAGS_BASETYPE,                    /* tp_flags */
     super_doc,                                  /* tp_doc */
     super_traverse,                             /* tp_traverse */
@@ -8061,5 +7750,5 @@ PyTypeObject PySuper_Type = {
     super_init,                                 /* tp_init */
     PyType_GenericAlloc,                        /* tp_alloc */
     PyType_GenericNew,                          /* tp_new */
-    PyObject_GC_Del,                            /* tp_free */
+    PyObject_Del,                            /* tp_free */
 };

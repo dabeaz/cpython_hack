@@ -272,8 +272,7 @@ COVERAGE_REPORT_OPTIONS=--no-branch-coverage --title "CPython lcov report"
 MODULE_OBJS=	\
 		Modules/config.o \
 		Modules/getpath.o \
-		Modules/main.o \
-		Modules/gcmodule.o
+		Modules/main.o
 
 IO_H=		Modules/_io/_iomodule.h
 

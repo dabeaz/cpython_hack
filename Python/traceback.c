@@ -93,7 +93,7 @@ tb_create_raw(PyTracebackObject *next, PyFrameObject *frame, int lasti,
         PyErr_BadInternalCall();
         return NULL;
     }
-    tb = PyObject_GC_New(PyTracebackObject, &PyTraceBack_Type);
+    tb = PyObject_New(PyTracebackObject, &PyTraceBack_Type);
     if (tb != NULL) {
         Py_XINCREF(next);
         tb->tb_next = next;
@@ -101,7 +101,6 @@ tb_create_raw(PyTracebackObject *next, PyFrameObject *frame, int lasti,
         tb->tb_frame = frame;
         tb->tb_lasti = lasti;
         tb->tb_lineno = lineno;
-        PyObject_GC_Track(tb);
     }
     return (PyObject *)tb;
 }
@@ -211,12 +210,9 @@ static PyGetSetDef tb_getsetters[] = {
 static void
 tb_dealloc(PyTracebackObject *tb)
 {
-    PyObject_GC_UnTrack(tb);
-    Py_TRASHCAN_BEGIN(tb, tb_dealloc)
     Py_XDECREF(tb->tb_next);
     Py_XDECREF(tb->tb_frame);
-    PyObject_GC_Del(tb);
-    Py_TRASHCAN_END
+    PyObject_Del(tb);
 }
 
 static int
@@ -255,7 +251,7 @@ PyTypeObject PyTraceBack_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                  /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
+    Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC,/* tp_flags */
     tb_new__doc__,                              /* tp_doc */
     (traverseproc)tb_traverse,                  /* tp_traverse */
     (inquiry)tb_clear,                          /* tp_clear */

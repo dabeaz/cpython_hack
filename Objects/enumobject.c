@@ -161,20 +161,10 @@ enum_new_impl(PyTypeObject *type, PyObject *iterable, PyObject *start)
 static void
 enum_dealloc(enumobject *en)
 {
-    PyObject_GC_UnTrack(en);
     Py_XDECREF(en->en_sit);
     Py_XDECREF(en->en_result);
     Py_XDECREF(en->en_longindex);
     Py_TYPE(en)->tp_free(en);
-}
-
-static int
-enum_traverse(enumobject *en, visitproc visit, void *arg)
-{
-    Py_VISIT(en->en_sit);
-    Py_VISIT(en->en_result);
-    Py_VISIT(en->en_longindex);
-    return 0;
 }
 
 static PyObject *
@@ -305,10 +295,10 @@ PyTypeObject PyEnum_Type = {
     PyObject_GenericGetAttr,        /* tp_getattro */
     0,                              /* tp_setattro */
     0,                              /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
+    Py_TPFLAGS_DEFAULT | // Py_TPFLAGS_HAVE_GC |
         Py_TPFLAGS_BASETYPE,        /* tp_flags */
     enum_new__doc__,                /* tp_doc */
-    (traverseproc)enum_traverse,    /* tp_traverse */
+    0,    /* tp_traverse */
     0,                              /* tp_clear */
     0,                              /* tp_richcompare */
     0,                              /* tp_weaklistoffset */
@@ -325,7 +315,7 @@ PyTypeObject PyEnum_Type = {
     0,                              /* tp_init */
     PyType_GenericAlloc,            /* tp_alloc */
     enum_new,                       /* tp_new */
-    PyObject_GC_Del,                /* tp_free */
+    PyObject_Del,                /* tp_free */
 };
 
 /* Reversed Object ***************************************************************/
@@ -395,16 +385,8 @@ reversed_new_impl(PyTypeObject *type, PyObject *seq)
 static void
 reversed_dealloc(reversedobject *ro)
 {
-    PyObject_GC_UnTrack(ro);
     Py_XDECREF(ro->seq);
     Py_TYPE(ro)->tp_free(ro);
-}
-
-static int
-reversed_traverse(reversedobject *ro, visitproc visit, void *arg)
-{
-    Py_VISIT(ro->seq);
-    return 0;
 }
 
 static PyObject *
@@ -502,10 +484,10 @@ PyTypeObject PyReversed_Type = {
     PyObject_GenericGetAttr,        /* tp_getattro */
     0,                              /* tp_setattro */
     0,                              /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
+    Py_TPFLAGS_DEFAULT | // Py_TPFLAGS_HAVE_GC |
         Py_TPFLAGS_BASETYPE,        /* tp_flags */
     reversed_new__doc__,            /* tp_doc */
-    (traverseproc)reversed_traverse,/* tp_traverse */
+    0, /* tp_traverse */
     0,                              /* tp_clear */
     0,                              /* tp_richcompare */
     0,                              /* tp_weaklistoffset */
@@ -522,5 +504,5 @@ PyTypeObject PyReversed_Type = {
     0,                              /* tp_init */
     PyType_GenericAlloc,            /* tp_alloc */
     reversed_new,                   /* tp_new */
-    PyObject_GC_Del,                /* tp_free */
+    PyObject_Del,                /* tp_free */
 };

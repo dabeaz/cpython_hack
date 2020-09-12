@@ -109,14 +109,7 @@ PyObject_CallFinalizer(PyObject *self)
 
     if (tp->tp_finalize == NULL)
         return;
-    /* tp_finalize should only be called once. */
-    if (_PyType_IS_GC(tp) && _PyGC_FINALIZED(self))
-        return;
-
     tp->tp_finalize(self);
-    if (_PyType_IS_GC(tp)) {
-        _PyGC_SET_FINALIZED(self);
-    }
 }
 
 int
@@ -150,9 +143,6 @@ PyObject_CallFinalizerFromDealloc(PyObject *self)
     _Py_NewReference(self);
     Py_SET_REFCNT(self, refcnt);
 
-    _PyObject_ASSERT(self,
-                     (!_PyType_IS_GC(Py_TYPE(self))
-                      || _PyObject_GC_IS_TRACKED(self)));
     return -1;
 }
 
@@ -1633,129 +1623,6 @@ finally:
     PyErr_Restore(error_type, error_value, error_traceback);
 }
 
-/* Trashcan support. */
-
-/* Add op to the _PyTrash_delete_later list.  Called when the current
- * call-stack depth gets large.  op must be a currently untracked gc'ed
- * object, with refcount 0.  Py_DECREF must already have been called on it.
- */
-void
-_PyTrash_deposit_object(PyObject *op)
-{
-    PyInterpreterState *interp = _PyInterpreterState_GET();
-    struct _gc_runtime_state *gcstate = &interp->gc;
-
-    _PyObject_ASSERT(op, _PyObject_IS_GC(op));
-    _PyObject_ASSERT(op, !_PyObject_GC_IS_TRACKED(op));
-    _PyObject_ASSERT(op, Py_REFCNT(op) == 0);
-    _PyGCHead_SET_PREV(_Py_AS_GC(op), gcstate->trash_delete_later);
-    gcstate->trash_delete_later = op;
-}
-
-/* The equivalent API, using per-thread state recursion info */
-void
-_PyTrash_thread_deposit_object(PyObject *op)
-{
-    PyThreadState *tstate = PyThreadState_Get();
-    _PyObject_ASSERT(op, _PyObject_IS_GC(op));
-    _PyObject_ASSERT(op, !_PyObject_GC_IS_TRACKED(op));
-    _PyObject_ASSERT(op, Py_REFCNT(op) == 0);
-    _PyGCHead_SET_PREV(_Py_AS_GC(op), tstate->trash_delete_later);
-    tstate->trash_delete_later = op;
-}
-
-/* Deallocate all the objects in the _PyTrash_delete_later list.  Called when
- * the call-stack unwinds again.
- */
-void
-_PyTrash_destroy_chain(void)
-{
-    PyInterpreterState *interp = _PyInterpreterState_GET();
-    struct _gc_runtime_state *gcstate = &interp->gc;
-
-    while (gcstate->trash_delete_later) {
-        PyObject *op = gcstate->trash_delete_later;
-        destructor dealloc = Py_TYPE(op)->tp_dealloc;
-
-        gcstate->trash_delete_later =
-            (PyObject*) _PyGCHead_PREV(_Py_AS_GC(op));
-
-        /* Call the deallocator directly.  This used to try to
-         * fool Py_DECREF into calling it indirectly, but
-         * Py_DECREF was already called on this object, and in
-         * assorted non-release builds calling Py_DECREF again ends
-         * up distorting allocation statistics.
-         */
-        _PyObject_ASSERT(op, Py_REFCNT(op) == 0);
-        ++gcstate->trash_delete_nesting;
-        (*dealloc)(op);
-        --gcstate->trash_delete_nesting;
-    }
-}
-
-/* The equivalent API, using per-thread state recursion info */
-void
-_PyTrash_thread_destroy_chain(void)
-{
-    PyThreadState *tstate = PyThreadState_Get();
-    /* We need to increase trash_delete_nesting here, otherwise,
-       _PyTrash_thread_destroy_chain will be called recursively
-       and then possibly crash.  An example that may crash without
-       increase:
-           N = 500000  # need to be large enough
-           ob = object()
-           tups = [(ob,) for i in range(N)]
-           for i in range(49):
-               tups = [(tup,) for tup in tups]
-           del tups
-    */
-    assert(tstate->trash_delete_nesting == 0);
-    ++tstate->trash_delete_nesting;
-    while (tstate->trash_delete_later) {
-        PyObject *op = tstate->trash_delete_later;
-        destructor dealloc = Py_TYPE(op)->tp_dealloc;
-
-        tstate->trash_delete_later =
-            (PyObject*) _PyGCHead_PREV(_Py_AS_GC(op));
-
-        /* Call the deallocator directly.  This used to try to
-         * fool Py_DECREF into calling it indirectly, but
-         * Py_DECREF was already called on this object, and in
-         * assorted non-release builds calling Py_DECREF again ends
-         * up distorting allocation statistics.
-         */
-        _PyObject_ASSERT(op, Py_REFCNT(op) == 0);
-        (*dealloc)(op);
-        assert(tstate->trash_delete_nesting == 1);
-    }
-    --tstate->trash_delete_nesting;
-}
-
-
-int
-_PyTrash_begin(PyThreadState *tstate, PyObject *op)
-{
-    if (tstate->trash_delete_nesting >= PyTrash_UNWIND_LEVEL) {
-        /* Store the object (to be deallocated later) and jump past
-         * Py_TRASHCAN_END, skipping the body of the deallocator */
-        _PyTrash_thread_deposit_object(op);
-        return 1;
-    }
-    ++tstate->trash_delete_nesting;
-    return 0;
-}
-
-
-void
-_PyTrash_end(PyThreadState *tstate)
-{
-    --tstate->trash_delete_nesting;
-    if (tstate->trash_delete_later && tstate->trash_delete_nesting <= 0) {
-        _PyTrash_thread_destroy_chain();
-    }
-}
-
-
 void _Py_NO_RETURN
 _PyObject_AssertFailed(PyObject *obj, const char *expr, const char *msg,
                        const char *file, int line, const char *function)
@@ -1791,13 +1658,7 @@ _PyObject_AssertFailed(PyObject *obj, const char *expr, const char *msg,
            Do it before dumping repr(obj), since repr() is more likely
            to crash than dumping the traceback. */
         void *ptr;
-        PyTypeObject *type = Py_TYPE(obj);
-        if (_PyType_IS_GC(type)) {
-            ptr = (void *)((char *)obj - sizeof(PyGC_Head));
-        }
-        else {
-            ptr = (void *)obj;
-        }
+	ptr = (void *)obj;
         /* This might succeed or fail, but we're about to abort, so at least
            try to provide any extra info we can: */
         _PyObject_Dump(obj);

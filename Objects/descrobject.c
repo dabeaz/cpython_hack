@@ -18,11 +18,10 @@ class property "propertyobject *" "&PyProperty_Type"
 static void
 descr_dealloc(PyDescrObject *descr)
 {
-    _PyObject_GC_UNTRACK(descr);
     Py_XDECREF(descr->d_type);
     Py_XDECREF(descr->d_name);
     Py_XDECREF(descr->d_qualname);
-    PyObject_GC_Del(descr);
+    PyObject_Del(descr);
 }
 
 static PyObject *
@@ -664,14 +663,6 @@ static PyGetSetDef wrapperdescr_getset[] = {
     {0}
 };
 
-static int
-descr_traverse(PyObject *self, visitproc visit, void *arg)
-{
-    PyDescrObject *descr = (PyDescrObject *)self;
-    Py_VISIT(descr->d_type);
-    return 0;
-}
-
 PyTypeObject PyMethodDescr_Type = {
     PyVarObject_HEAD_INIT(&PyType_Type, 0)
     "method_descriptor",
@@ -692,11 +683,11 @@ PyTypeObject PyMethodDescr_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
+    Py_TPFLAGS_DEFAULT | // Py_TPFLAGS_HAVE_GC |
     Py_TPFLAGS_HAVE_VECTORCALL |
     Py_TPFLAGS_METHOD_DESCRIPTOR,               /* tp_flags */
     0,                                          /* tp_doc */
-    descr_traverse,                             /* tp_traverse */
+    0,                              /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -732,9 +723,9 @@ PyTypeObject PyClassMethodDescr_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC, /* tp_flags */
+    Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC, /* tp_flags */
     0,                                          /* tp_doc */
-    descr_traverse,                             /* tp_traverse */
+    0,                             /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -769,9 +760,9 @@ PyTypeObject PyMemberDescr_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC, /* tp_flags */
+    Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC, /* tp_flags */
     0,                                          /* tp_doc */
-    descr_traverse,                             /* tp_traverse */
+    0,                             /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -806,9 +797,9 @@ PyTypeObject PyGetSetDescr_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC, /* tp_flags */
+    Py_TPFLAGS_DEFAULT, //  | Py_TPFLAGS_HAVE_GC, /* tp_flags */
     0,                                          /* tp_doc */
-    descr_traverse,                             /* tp_traverse */
+    0,                              /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -843,10 +834,10 @@ PyTypeObject PyWrapperDescr_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
+    Py_TPFLAGS_DEFAULT | // Py_TPFLAGS_HAVE_GC |
     Py_TPFLAGS_METHOD_DESCRIPTOR,               /* tp_flags */
     0,                                          /* tp_doc */
-    descr_traverse,                             /* tp_traverse */
+    0,                             /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -1130,9 +1121,8 @@ static PyMethodDef mappingproxy_methods[] = {
 static void
 mappingproxy_dealloc(mappingproxyobject *pp)
 {
-    _PyObject_GC_UNTRACK(pp);
     Py_DECREF(pp->mapping);
-    PyObject_GC_Del(pp);
+    PyObject_Del(pp);
 }
 
 static PyObject *
@@ -1151,14 +1141,6 @@ static PyObject *
 mappingproxy_repr(mappingproxyobject *pp)
 {
     return PyUnicode_FromFormat("mappingproxy(%R)", pp->mapping);
-}
-
-static int
-mappingproxy_traverse(PyObject *self, visitproc visit, void *arg)
-{
-    mappingproxyobject *pp = (mappingproxyobject *)self;
-    Py_VISIT(pp->mapping);
-    return 0;
 }
 
 static PyObject *
@@ -1198,12 +1180,11 @@ mappingproxy_new_impl(PyTypeObject *type, PyObject *mapping)
     if (mappingproxy_check_mapping(mapping) == -1)
         return NULL;
 
-    mappingproxy = PyObject_GC_New(mappingproxyobject, &PyDictProxy_Type);
+    mappingproxy = PyObject_New(mappingproxyobject, &PyDictProxy_Type);
     if (mappingproxy == NULL)
         return NULL;
     Py_INCREF(mapping);
     mappingproxy->mapping = mapping;
-    _PyObject_GC_TRACK(mappingproxy);
     return (PyObject *)mappingproxy;
 }
 
@@ -1215,11 +1196,10 @@ PyDictProxy_New(PyObject *mapping)
     if (mappingproxy_check_mapping(mapping) == -1)
         return NULL;
 
-    pp = PyObject_GC_New(mappingproxyobject, &PyDictProxy_Type);
+    pp = PyObject_New(mappingproxyobject, &PyDictProxy_Type);
     if (pp != NULL) {
         Py_INCREF(mapping);
         pp->mapping = mapping;
-        _PyObject_GC_TRACK(pp);
     }
     return (PyObject *)pp;
 }
@@ -1241,12 +1221,9 @@ typedef struct {
 static void
 wrapper_dealloc(wrapperobject *wp)
 {
-    PyObject_GC_UnTrack(wp);
-    Py_TRASHCAN_BEGIN(wp, wrapper_dealloc)
     Py_XDECREF(wp->descr);
     Py_XDECREF(wp->self);
-    PyObject_GC_Del(wp);
-    Py_TRASHCAN_END
+    PyObject_Del(wp);
 }
 
 static PyObject *
@@ -1363,15 +1340,6 @@ wrapper_call(wrapperobject *wp, PyObject *args, PyObject *kwds)
     return wrapperdescr_raw_call(wp->descr, wp->self, args, kwds);
 }
 
-static int
-wrapper_traverse(PyObject *self, visitproc visit, void *arg)
-{
-    wrapperobject *wp = (wrapperobject *)self;
-    Py_VISIT(wp->descr);
-    Py_VISIT(wp->self);
-    return 0;
-}
-
 PyTypeObject _PyMethodWrapper_Type = {
     PyVarObject_HEAD_INIT(&PyType_Type, 0)
     "method-wrapper",                           /* tp_name */
@@ -1393,9 +1361,9 @@ PyTypeObject _PyMethodWrapper_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC, /* tp_flags */
+    Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC, /* tp_flags */
     0,                                          /* tp_doc */
-    wrapper_traverse,                           /* tp_traverse */
+    0,                           /* tp_traverse */
     0,                                          /* tp_clear */
     wrapper_richcompare,                        /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -1421,13 +1389,12 @@ PyWrapper_New(PyObject *d, PyObject *self)
     assert(_PyObject_RealIsSubclass((PyObject *)Py_TYPE(self),
                                     (PyObject *)PyDescr_TYPE(descr)));
 
-    wp = PyObject_GC_New(wrapperobject, &_PyMethodWrapper_Type);
+    wp = PyObject_New(wrapperobject, &_PyMethodWrapper_Type);
     if (wp != NULL) {
         Py_INCREF(descr);
         wp->descr = descr;
         Py_INCREF(self);
         wp->self = self;
-        _PyObject_GC_TRACK(wp);
     }
     return (PyObject *)wp;
 }
@@ -1528,8 +1495,6 @@ static void
 property_dealloc(PyObject *self)
 {
     propertyobject *gs = (propertyobject *)self;
-
-    _PyObject_GC_UNTRACK(self);
     Py_XDECREF(gs->prop_get);
     Py_XDECREF(gs->prop_set);
     Py_XDECREF(gs->prop_del);
@@ -1710,17 +1675,6 @@ static PyGetSetDef property_getsetlist[] = {
 };
 
 static int
-property_traverse(PyObject *self, visitproc visit, void *arg)
-{
-    propertyobject *pp = (propertyobject *)self;
-    Py_VISIT(pp->prop_get);
-    Py_VISIT(pp->prop_set);
-    Py_VISIT(pp->prop_del);
-    Py_VISIT(pp->prop_doc);
-    return 0;
-}
-
-static int
 property_clear(PyObject *self)
 {
     propertyobject *pp = (propertyobject *)self;
@@ -1869,9 +1823,9 @@ PyTypeObject PyDictProxy_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC, /* tp_flags */
+    Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC, /* tp_flags */
     0,                                          /* tp_doc */
-    mappingproxy_traverse,                      /* tp_traverse */
+    0,                       /* tp_traverse */
     0,                                          /* tp_clear */
     (richcmpfunc)mappingproxy_richcompare,      /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -1911,10 +1865,10 @@ PyTypeObject PyProperty_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
+    Py_TPFLAGS_DEFAULT | // Py_TPFLAGS_HAVE_GC |
         Py_TPFLAGS_BASETYPE,                    /* tp_flags */
     property_init__doc__,                       /* tp_doc */
-    property_traverse,                          /* tp_traverse */
+    0,                           /* tp_traverse */
     (inquiry)property_clear,                    /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -1931,5 +1885,5 @@ PyTypeObject PyProperty_Type = {
     property_init,                              /* tp_init */
     PyType_GenericAlloc,                        /* tp_alloc */
     PyType_GenericNew,                          /* tp_new */
-    PyObject_GC_Del,                            /* tp_free */
+    PyObject_Del,                            /* tp_free */
 };

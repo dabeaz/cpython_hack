@@ -42,7 +42,7 @@ PyStructSequence_New(PyTypeObject *type)
     PyStructSequence *obj;
     Py_ssize_t size = REAL_SIZE_TP(type), i;
 
-    obj = PyObject_GC_NewVar(PyStructSequence, type, size);
+    obj = PyObject_NewVar(PyStructSequence, type, size);
     if (obj == NULL)
         return NULL;
     /* Hack the size of the variable object, so invisible fields don't appear
@@ -67,33 +67,17 @@ PyStructSequence_GetItem(PyObject* op, Py_ssize_t i)
 }
 
 
-static int
-structseq_traverse(PyStructSequence *obj, visitproc visit, void *arg)
-{
-    if (Py_TYPE(obj)->tp_flags & Py_TPFLAGS_HEAPTYPE) {
-        Py_VISIT(Py_TYPE(obj));
-    }
-    Py_ssize_t i, size;
-    size = REAL_SIZE(obj);
-    for (i = 0; i < size; ++i) {
-        Py_VISIT(obj->ob_item[i]);
-    }
-    return 0;
-}
-
 static void
 structseq_dealloc(PyStructSequence *obj)
 {
     Py_ssize_t i, size;
     PyTypeObject *tp;
-    PyObject_GC_UnTrack(obj);
-
     tp = (PyTypeObject *) Py_TYPE(obj);
     size = REAL_SIZE(obj);
     for (i = 0; i < size; ++i) {
         Py_XDECREF(obj->ob_item[i]);
     }
-    PyObject_GC_Del(obj);
+    PyObject_Del(obj);
     if (PyType_GetFlags(tp) & Py_TPFLAGS_HEAPTYPE) {
         Py_DECREF(tp);
     }
@@ -225,7 +209,6 @@ structseq_new_impl(PyTypeObject *type, PyObject *arg, PyObject *dict)
     }
 
     Py_DECREF(arg);
-    _PyObject_GC_TRACK(res);
     return (PyObject*) res;
 }
 
@@ -438,8 +421,8 @@ PyStructSequence_InitType2(PyTypeObject *type, PyStructSequence_Desc *desc)
     type->tp_base = &PyTuple_Type;
     type->tp_methods = structseq_methods;
     type->tp_new = structseq_new;
-    type->tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC;
-    type->tp_traverse = (traverseproc) structseq_traverse;
+    type->tp_flags = Py_TPFLAGS_DEFAULT; // | Py_TPFLAGS_HAVE_GC;
+    type->tp_traverse = 0;
 
     n_members = count_members(desc, &n_unnamed_members);
     members = PyMem_NEW(PyMemberDef, n_members - n_unnamed_members + 1);
@@ -498,7 +481,7 @@ PyStructSequence_NewType(PyStructSequence_Desc *desc)
     slots[3] = (PyType_Slot){Py_tp_methods, structseq_methods};
     slots[4] = (PyType_Slot){Py_tp_new, structseq_new};
     slots[5] = (PyType_Slot){Py_tp_members, members};
-    slots[6] = (PyType_Slot){Py_tp_traverse, (traverseproc)structseq_traverse};
+    slots[6] = (PyType_Slot){Py_tp_traverse, 0};
     slots[7] = (PyType_Slot){0, 0};
 
     /* Initialize Spec */
@@ -507,7 +490,7 @@ PyStructSequence_NewType(PyStructSequence_Desc *desc)
     spec.name = desc->name;
     spec.basicsize = sizeof(PyStructSequence) - sizeof(PyObject *);
     spec.itemsize = sizeof(PyObject *);
-    spec.flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC;
+    spec.flags = Py_TPFLAGS_DEFAULT; // | Py_TPFLAGS_HAVE_GC;
     spec.slots = slots;
 
     bases = PyTuple_Pack(1, &PyTuple_Type);

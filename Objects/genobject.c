@@ -11,27 +11,6 @@
 
 static PyObject *gen_close(PyGenObject *, PyObject *);
 
-static inline int
-exc_state_traverse(_PyErr_StackItem *exc_state, visitproc visit, void *arg)
-{
-    Py_VISIT(exc_state->exc_type);
-    Py_VISIT(exc_state->exc_value);
-    Py_VISIT(exc_state->exc_traceback);
-    return 0;
-}
-
-static int
-gen_traverse(PyGenObject *gen, visitproc visit, void *arg)
-{
-    Py_VISIT((PyObject *)gen->gi_frame);
-    Py_VISIT(gen->gi_code);
-    Py_VISIT(gen->gi_name);
-    Py_VISIT(gen->gi_qualname);
-    /* No need to visit cr_origin, because it's just tuples/str/int, so can't
-       participate in a reference cycle. */
-    return exc_state_traverse(&gen->gi_exc_state, visit, arg);
-}
-
 void
 _PyGen_Finalize(PyObject *self)
 {
@@ -76,18 +55,11 @@ static void
 gen_dealloc(PyGenObject *gen)
 {
     PyObject *self = (PyObject *) gen;
-
-    _PyObject_GC_UNTRACK(gen);
-
     if (gen->gi_weakreflist != NULL)
         PyObject_ClearWeakRefs(self);
-
-    _PyObject_GC_TRACK(self);
-
     if (PyObject_CallFinalizerFromDealloc(self))
         return;                     /* resurrected.  :( */
 
-    _PyObject_GC_UNTRACK(self);
     if (gen->gi_frame != NULL) {
         gen->gi_frame->f_gen = NULL;
         Py_CLEAR(gen->gi_frame);
@@ -99,7 +71,7 @@ gen_dealloc(PyGenObject *gen)
     Py_CLEAR(gen->gi_name);
     Py_CLEAR(gen->gi_qualname);
     _PyErr_ClearExcState(&gen->gi_exc_state);
-    PyObject_GC_Del(gen);
+    PyObject_Del(gen);
 }
 
 static PyObject *
@@ -651,9 +623,9 @@ PyTypeObject PyGen_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,    /* tp_flags */
+    Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC,    /* tp_flags */
     0,                                          /* tp_doc */
-    (traverseproc)gen_traverse,                 /* tp_traverse */
+    0,                  /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     offsetof(PyGenObject, gi_weakreflist),      /* tp_weaklistoffset */
@@ -687,7 +659,7 @@ static PyObject *
 gen_new_with_qualname(PyTypeObject *type, PyFrameObject *f,
                       PyObject *name, PyObject *qualname)
 {
-    PyGenObject *gen = PyObject_GC_New(PyGenObject, type);
+    PyGenObject *gen = PyObject_New(PyGenObject, type);
     if (gen == NULL) {
         Py_DECREF(f);
         return NULL;
@@ -712,7 +684,6 @@ gen_new_with_qualname(PyTypeObject *type, PyFrameObject *f,
     else
         gen->gi_qualname = gen->gi_name;
     Py_INCREF(gen->gi_qualname);
-    _PyObject_GC_TRACK(gen);
     return (PyObject *)gen;
 }
 

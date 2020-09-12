@@ -7,9 +7,7 @@ extern "C" {
 #ifndef Py_BUILD_CORE
 #  error "this header requires Py_BUILD_CORE define"
 #endif
-
-#include "pycore_gc.h"        /* struct _gc_runtime_state */
-
+  
 struct _Py_parser_state {
     struct {
         int level;
@@ -27,8 +25,6 @@ struct _is {
     struct pyruntimestate *runtime;
     int finalizing;
   
-    struct _gc_runtime_state gc;
-
     PyObject *modules;
     PyObject *modules_by_index;
     PyObject *sysdict;

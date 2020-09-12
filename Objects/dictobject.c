@@ -111,7 +111,6 @@ converting the dict to the combined table.
 #define PyDict_MINSIZE 8
 
 #include "Python.h"
-#include "pycore_gc.h"       // _PyObject_GC_IS_TRACKED()
 #include "pycore_object.h"   // _PyObject_GC_TRACK()
 #include "pycore_pyerrors.h" // _PyErr_Fetch()
 #include "pycore_pystate.h"  // PyThreadState_Get()
@@ -699,7 +698,7 @@ new_dict(PyDictKeysObject *keys)
     PyDictObject *mp;
     assert(keys != NULL);
     {
-        mp = PyObject_GC_New(PyDictObject, &PyDict_Type);
+        mp = PyObject_New(PyDictObject, &PyDict_Type);
         if (mp == NULL) {
             dictkeys_decref(keys);
             return NULL;
@@ -749,11 +748,6 @@ clone_combined_dict(PyDictObject *orig)
     }
     new->ma_used = orig->ma_used;
     ASSERT_CONSISTENT(new);
-    if (_PyObject_GC_IS_TRACKED(orig)) {
-        /* Maintain tracking. */
-        _PyObject_GC_TRACK(new);
-    }
-
     /* Since we copied the keys table we now have an extra reference
        in the system.  Manually call increment _Py_RefTotal to signal that
        we have it now; calling dictkeys_incref would be an error as
@@ -868,39 +862,11 @@ top:
     }
     Py_UNREACHABLE();
 }
-
-#define MAINTAIN_TRACKING(mp, key, value) \
-    do { \
-        if (!_PyObject_GC_IS_TRACKED(mp)) { \
-            if (_PyObject_GC_MAY_BE_TRACKED(key) || \
-                _PyObject_GC_MAY_BE_TRACKED(value)) { \
-                _PyObject_GC_TRACK(mp); \
-            } \
-        } \
-    } while(0)
+#define MAINTAIN_TRACKING(mp, key, value)
 
 void
 _PyDict_MaybeUntrack(PyObject *op)
 {
-    PyDictObject *mp;
-    PyObject *value;
-    Py_ssize_t i, numentries;
-    PyDictKeyEntry *ep0;
-
-    if (!PyDict_CheckExact(op) || !_PyObject_GC_IS_TRACKED(op))
-        return;
-
-    mp = (PyDictObject *) op;
-    ep0 = DK_ENTRIES(mp->ma_keys);
-    numentries = mp->ma_keys->dk_nentries;
-    for (i = 0; i < numentries; i++) {
-      if ((value = ep0[i].me_value) == NULL)
-	continue;
-      if (_PyObject_GC_MAY_BE_TRACKED(value) ||
-	  _PyObject_GC_MAY_BE_TRACKED(ep0[i].me_key))
-	return;
-    }
-    _PyObject_GC_UNTRACK(op);
 }
 
 /* Internal function to find slot for an item from its hash
@@ -1688,14 +1654,11 @@ dict_dealloc(PyDictObject *mp)
     PyDictKeysObject *keys = mp->ma_keys;
 
     /* bpo-31095: UnTrack is needed before calling any callbacks */
-    PyObject_GC_UnTrack(mp);
-    Py_TRASHCAN_BEGIN(mp, dict_dealloc);
     if (keys != NULL) {
       assert(keys->dk_refcnt == 1);
       dictkeys_decref(keys);
     }
     Py_TYPE(mp)->tp_free((PyObject *)mp);
-    Py_TRASHCAN_END
 }
 
 
@@ -2680,30 +2643,6 @@ dict_popitem_impl(PyDictObject *self)
 }
 
 static int
-dict_traverse(PyObject *op, visitproc visit, void *arg)
-{
-    PyDictObject *mp = (PyDictObject *)op;
-    PyDictKeysObject *keys = mp->ma_keys;
-    PyDictKeyEntry *entries = DK_ENTRIES(keys);
-    Py_ssize_t i, n = keys->dk_nentries;
-
-    if (keys->dk_lookup == lookdict) {
-        for (i = 0; i < n; i++) {
-            if (entries[i].me_value != NULL) {
-                Py_VISIT(entries[i].me_value);
-                Py_VISIT(entries[i].me_key);
-            }
-        }
-    }
-    else {
-      for (i = 0; i < n; i++) {
-	Py_VISIT(entries[i].me_value);
-      }
-    }
-    return 0;
-}
-
-static int
 dict_tp_clear(PyObject *op)
 {
     PyDict_Clear(op);
@@ -2890,11 +2829,6 @@ dict_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     if (self == NULL)
         return NULL;
     d = (PyDictObject *)self;
-
-    /* The object has been implicitly tracked by tp_alloc */
-    if (type == &PyDict_Type)
-        _PyObject_GC_UNTRACK(d);
-
     d->ma_used = 0;
     d->ma_keys = new_keys_object(PyDict_MINSIZE);
     if (d->ma_keys == NULL) {
@@ -2980,10 +2914,10 @@ PyTypeObject PyDict_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC |
+    Py_TPFLAGS_DEFAULT | // Py_TPFLAGS_HAVE_GC |
         Py_TPFLAGS_BASETYPE | Py_TPFLAGS_DICT_SUBCLASS,         /* tp_flags */
     dictionary_doc,                             /* tp_doc */
-    dict_traverse,                              /* tp_traverse */
+    0,                              /* tp_traverse */
     dict_tp_clear,                              /* tp_clear */
     dict_richcompare,                           /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -3000,7 +2934,7 @@ PyTypeObject PyDict_Type = {
     dict_init,                                  /* tp_init */
     PyType_GenericAlloc,                        /* tp_alloc */
     dict_new,                                   /* tp_new */
-    PyObject_GC_Del,                            /* tp_free */
+    PyObject_Del,                            /* tp_free */
     .tp_vectorcall = dict_vectorcall,
 };
 
@@ -3092,7 +3026,8 @@ static PyObject *
 dictiter_new(PyDictObject *dict, PyTypeObject *itertype)
 {
     dictiterobject *di;
-    di = PyObject_GC_New(dictiterobject, itertype);
+    di = PyObject_New(dictiterobject, itertype);
+    
     if (di == NULL) {
         return NULL;
     }
@@ -3119,7 +3054,6 @@ dictiter_new(PyDictObject *dict, PyTypeObject *itertype)
     else {
         di->di_result = NULL;
     }
-    _PyObject_GC_TRACK(di);
     return (PyObject *)di;
 }
 
@@ -3127,18 +3061,9 @@ static void
 dictiter_dealloc(dictiterobject *di)
 {
     /* bpo-31095: UnTrack is needed before calling any callbacks */
-    _PyObject_GC_UNTRACK(di);
     Py_XDECREF(di->di_dict);
     Py_XDECREF(di->di_result);
-    PyObject_GC_Del(di);
-}
-
-static int
-dictiter_traverse(dictiterobject *di, visitproc visit, void *arg)
-{
-    Py_VISIT(di->di_dict);
-    Py_VISIT(di->di_result);
-    return 0;
+    PyObject_Del(di);
 }
 
 static PyObject *
@@ -3235,9 +3160,9 @@ PyTypeObject PyDictIterKey_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
+    Py_TPFLAGS_DEFAULT, //  | Py_TPFLAGS_HAVE_GC,/* tp_flags */
     0,                                          /* tp_doc */
-    (traverseproc)dictiter_traverse,            /* tp_traverse */
+    0,             /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -3314,9 +3239,9 @@ PyTypeObject PyDictIterValue_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,    /* tp_flags */
+    Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC,    /* tp_flags */
     0,                                          /* tp_doc */
-    (traverseproc)dictiter_traverse,            /* tp_traverse */
+    0,            /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -3412,9 +3337,9 @@ PyTypeObject PyDictIterItem_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
+    Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC,/* tp_flags */
     0,                                          /* tp_doc */
-    (traverseproc)dictiter_traverse,            /* tp_traverse */
+    0,            /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -3509,8 +3434,7 @@ PyTypeObject PyDictRevIterKey_Type = {
     "dict_reversekeyiterator",
     sizeof(dictiterobject),
     .tp_dealloc = (destructor)dictiter_dealloc,
-    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
-    .tp_traverse = (traverseproc)dictiter_traverse,
+    .tp_flags = Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC,
     .tp_iter = PyObject_SelfIter,
     .tp_iternext = (iternextfunc)dictreviter_iternext,
     .tp_methods = dictiter_methods
@@ -3552,8 +3476,7 @@ PyTypeObject PyDictRevIterItem_Type = {
     "dict_reverseitemiterator",
     sizeof(dictiterobject),
     .tp_dealloc = (destructor)dictiter_dealloc,
-    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
-    .tp_traverse = (traverseproc)dictiter_traverse,
+    .tp_flags = Py_TPFLAGS_DEFAULT, //  | Py_TPFLAGS_HAVE_GC,
     .tp_iter = PyObject_SelfIter,
     .tp_iternext = (iternextfunc)dictreviter_iternext,
     .tp_methods = dictiter_methods
@@ -3564,8 +3487,7 @@ PyTypeObject PyDictRevIterValue_Type = {
     "dict_reversevalueiterator",
     sizeof(dictiterobject),
     .tp_dealloc = (destructor)dictiter_dealloc,
-    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
-    .tp_traverse = (traverseproc)dictiter_traverse,
+    .tp_flags = Py_TPFLAGS_DEFAULT, //  | Py_TPFLAGS_HAVE_GC,
     .tp_iter = PyObject_SelfIter,
     .tp_iternext = (iternextfunc)dictreviter_iternext,
     .tp_methods = dictiter_methods
@@ -3581,16 +3503,8 @@ static void
 dictview_dealloc(_PyDictViewObject *dv)
 {
     /* bpo-31095: UnTrack is needed before calling any callbacks */
-    _PyObject_GC_UNTRACK(dv);
     Py_XDECREF(dv->dv_dict);
-    PyObject_GC_Del(dv);
-}
-
-static int
-dictview_traverse(_PyDictViewObject *dv, visitproc visit, void *arg)
-{
-    Py_VISIT(dv->dv_dict);
-    return 0;
+    PyObject_Del(dv);
 }
 
 static Py_ssize_t
@@ -3617,12 +3531,11 @@ _PyDictView_New(PyObject *dict, PyTypeObject *type)
                      type->tp_name, Py_TYPE(dict)->tp_name);
         return NULL;
     }
-    dv = PyObject_GC_New(_PyDictViewObject, type);
+    dv = PyObject_New(_PyDictViewObject, type);
     if (dv == NULL)
         return NULL;
     Py_INCREF(dict);
     dv->dv_dict = (PyDictObject *)dict;
-    _PyObject_GC_TRACK(dv);
     return (PyObject *)dv;
 }
 
@@ -4130,9 +4043,9 @@ PyTypeObject PyDictKeys_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
+    Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC,/* tp_flags */
     0,                                          /* tp_doc */
-    (traverseproc)dictview_traverse,            /* tp_traverse */
+    0,             /* tp_traverse */
     0,                                          /* tp_clear */
     dictview_richcompare,                       /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -4236,9 +4149,9 @@ PyTypeObject PyDictItems_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
+    Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC,/* tp_flags */
     0,                                          /* tp_doc */
-    (traverseproc)dictview_traverse,            /* tp_traverse */
+    0,            /* tp_traverse */
     0,                                          /* tp_clear */
     dictview_richcompare,                       /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -4317,9 +4230,9 @@ PyTypeObject PyDictValues_Type = {
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
+    Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC,/* tp_flags */
     0,                                          /* tp_doc */
-    (traverseproc)dictview_traverse,            /* tp_traverse */
+    0,            /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */

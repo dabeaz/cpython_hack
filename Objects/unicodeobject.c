@@ -2616,20 +2616,6 @@ PyUnicode_GetDefaultEncoding(void)
 #include "stringlib/ucs1lib.h"
 #include "stringlib/undef.h"
 
-/* --- Latin-1 Codec ------------------------------------------------------ */
-
-#if 0
-PyObject *
-PyUnicode_AsBytes(PyObject *unicode)
-{
-    if (!PyUnicode_Check(unicode)) {
-        PyErr_BadArgument();
-        return NULL;
-    }
-    return PyBytes_FromStringAndSize(PyUnicode_DATA(unicode),
-				     PyUnicode_GET_LENGTH(unicode));
-}
-#endif
 
 /* --- 7-bit ASCII Codec -------------------------------------------------- */
 PyObject *
@@ -7352,14 +7338,7 @@ unicode_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         return NULL;
     if (x == NULL)
         _Py_RETURN_UNICODE_EMPTY();
-    #if 0
-    if (encoding == NULL && errors == NULL)
-      #endif
         return PyObject_Str(x);
-    #if 0
-    else
-        return PyUnicode_FromEncodedObject(x, encoding, errors);
-    #endif
 }
 
 static PyObject *
@@ -7576,9 +7555,8 @@ typedef struct {
 static void
 unicodeiter_dealloc(unicodeiterobject *it)
 {
-    _PyObject_GC_UNTRACK(it);
     Py_XDECREF(it->it_seq);
-    PyObject_GC_Del(it);
+    PyObject_Del(it);
 }
 
 static int
@@ -7690,7 +7668,7 @@ PyTypeObject PyUnicodeIter_Type = {
     PyObject_GenericGetAttr,        /* tp_getattro */
     0,                  /* tp_setattro */
     0,                  /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
+    Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC,/* tp_flags */
     0,                  /* tp_doc */
     (traverseproc)unicodeiter_traverse, /* tp_traverse */
     0,                  /* tp_clear */
@@ -7711,13 +7689,12 @@ unicode_iter(PyObject *seq)
         PyErr_BadInternalCall();
         return NULL;
     }
-    it = PyObject_GC_New(unicodeiterobject, &PyUnicodeIter_Type);
+    it = PyObject_New(unicodeiterobject, &PyUnicodeIter_Type);
     if (it == NULL)
         return NULL;
     it->it_index = 0;
     Py_INCREF(seq);
     it->it_seq = seq;
-    _PyObject_GC_TRACK(it);
     return (PyObject *)it;
 }
 

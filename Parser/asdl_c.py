@@ -661,7 +661,6 @@ ast_dealloc(AST_object *self)
 {
     /* bpo-31095: UnTrack is needed before calling any callbacks */
     PyTypeObject *tp = Py_TYPE(self);
-    PyObject_GC_UnTrack(self);
     Py_CLEAR(self->dict);
     freefunc free_func = PyType_GetSlot(tp, Py_tp_free);
     assert(free_func != NULL);
@@ -795,7 +794,7 @@ static PyType_Slot AST_type_slots[] = {
     {Py_tp_init, ast_type_init},
     {Py_tp_alloc, PyType_GenericAlloc},
     {Py_tp_new, PyType_GenericNew},
-    {Py_tp_free, PyObject_GC_Del},
+    {Py_tp_free, PyObject_Del},
     {0, 0},
 };
 
@@ -803,7 +802,7 @@ static PyType_Spec AST_type_spec = {
     "ast.AST",
     sizeof(AST_object),
     0,
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
     AST_type_slots
 };
 
