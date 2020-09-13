@@ -647,7 +647,7 @@ list_dealloc(PyListObject *op)
         while (--i >= 0) {
             Py_XDECREF(op->ob_item[i]);
         }
-        PyMem_FREE(op->ob_item);
+        PyMem_Free(op->ob_item);
     }
     Py_TYPE(op)->tp_free((PyObject *)op);
 }
@@ -887,7 +887,7 @@ _list_clear(PyListObject *a)
         while (--i >= 0) {
             Py_XDECREF(item[i]);
         }
-        PyMem_FREE(item);
+        PyMem_Free(item);
     }
     /* Never fails; the return value can be ignored.
        Note that there is no guarantee that the list is actually empty
@@ -963,7 +963,7 @@ list_ass_slice(PyListObject *a, Py_ssize_t ilow, Py_ssize_t ihigh, PyObject *v)
     /* If norig == 0, item might be NULL, in which case we may not memcpy from it. */
     if (s) {
         if (s > sizeof(recycle_on_stack)) {
-            recycle = (PyObject **)PyMem_MALLOC(s);
+            recycle = (PyObject **)PyMem_Malloc(s);
             if (recycle == NULL) {
                 PyErr_NoMemory();
                 goto Error;
@@ -1001,7 +1001,7 @@ list_ass_slice(PyListObject *a, Py_ssize_t ilow, Py_ssize_t ihigh, PyObject *v)
     result = 0;
  Error:
     if (recycle != recycle_on_stack)
-        PyMem_FREE(recycle);
+        PyMem_Free(recycle);
     Py_XDECREF(v_as_SF);
     return result;
 #undef b
@@ -2525,7 +2525,7 @@ list_sort_impl(PyListObject *self, PyObject *keyfunc, int reverse)
             /* Leverage stack space we allocated but won't otherwise use */
             keys = &ms.temparray[saved_ob_size+1];
         else {
-            keys = PyMem_MALLOC(sizeof(PyObject *) * saved_ob_size);
+            keys = PyMem_Malloc(sizeof(PyObject *) * saved_ob_size);
             if (keys == NULL) {
                 PyErr_NoMemory();
                 goto keyfunc_fail;
@@ -2538,7 +2538,7 @@ list_sort_impl(PyListObject *self, PyObject *keyfunc, int reverse)
                 for (i=i-1 ; i>=0 ; i--)
                     Py_DECREF(keys[i]);
                 if (saved_ob_size >= MERGESTATE_TEMP_SIZE/2)
-                    PyMem_FREE(keys);
+                    PyMem_Free(keys);
                 goto keyfunc_fail;
             }
         }
@@ -2704,7 +2704,7 @@ fail:
         for (i = 0; i < saved_ob_size; i++)
             Py_DECREF(keys[i]);
         if (saved_ob_size >= MERGESTATE_TEMP_SIZE/2)
-            PyMem_FREE(keys);
+            PyMem_Free(keys);
     }
 
     if (self->allocated != -1 && result != NULL) {
@@ -2732,7 +2732,7 @@ keyfunc_fail:
         while (--i >= 0) {
             Py_XDECREF(final_ob_item[i]);
         }
-        PyMem_FREE(final_ob_item);
+        PyMem_Free(final_ob_item);
     }
     Py_XINCREF(result);
     return result;
@@ -3187,7 +3187,7 @@ list_ass_subscript(PyListObject* self, PyObject* item, PyObject* value)
             }
 
             garbage = (PyObject**)
-                PyMem_MALLOC(slicelength*sizeof(PyObject*));
+                PyMem_Malloc(slicelength*sizeof(PyObject*));
             if (!garbage) {
                 PyErr_NoMemory();
                 return -1;
@@ -3228,7 +3228,7 @@ list_ass_subscript(PyListObject* self, PyObject* item, PyObject* value)
             for (i = 0; i < slicelength; i++) {
                 Py_DECREF(garbage[i]);
             }
-            PyMem_FREE(garbage);
+            PyMem_Free(garbage);
 
             return res;
         }
@@ -3269,7 +3269,7 @@ list_ass_subscript(PyListObject* self, PyObject* item, PyObject* value)
             }
 
             garbage = (PyObject**)
-                PyMem_MALLOC(slicelength*sizeof(PyObject*));
+                PyMem_Malloc(slicelength*sizeof(PyObject*));
             if (!garbage) {
                 Py_DECREF(seq);
                 PyErr_NoMemory();
@@ -3290,7 +3290,7 @@ list_ass_subscript(PyListObject* self, PyObject* item, PyObject* value)
                 Py_DECREF(garbage[i]);
             }
 
-            PyMem_FREE(garbage);
+            PyMem_Free(garbage);
             Py_DECREF(seq);
 
             return 0;
@@ -3350,7 +3350,7 @@ PyTypeObject PyList_Type = {
     (initproc)list___init__,                    /* tp_init */
     PyType_GenericAlloc,                        /* tp_alloc */
     PyType_GenericNew,                          /* tp_new */
-    PyObject_Del,                            /* tp_free */
+    PyMem_Free,                            /* tp_free */
     .tp_vectorcall = list_vectorcall,
 };
 
@@ -3436,7 +3436,7 @@ static void
 listiter_dealloc(listiterobject *it)
 {
     Py_XDECREF(it->it_seq);
-    PyObject_Del(it);
+    PyMem_Free(it);
 }
 
 static PyObject *
@@ -3577,7 +3577,7 @@ static void
 listreviter_dealloc(listreviterobject *it)
 {
     Py_XDECREF(it->it_seq);
-    PyObject_Del(it);
+    PyMem_Free(it);
 }
 
 static PyObject *

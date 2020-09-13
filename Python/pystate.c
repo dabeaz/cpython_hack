@@ -6,14 +6,13 @@
 #include "pycore_initconfig.h"
 #include "pycore_pyerrors.h"
 #include "pycore_pylifecycle.h"
-#include "pycore_pymem.h"         // _PyMem_SetDefaultAllocator()
 #include "pycore_pystate.h"       // PyThreadState_Get()
 #include "pycore_sysmodule.h"
 
 /* --------------------------------------------------------------------------
 CAUTION
 
-Always use PyMem_RawMalloc() and PyMem_RawFree() directly in this file.  A
+Always use PyMem_Malloc() and PyMem_Free() directly in this file.  A
 number of these functions are advertised as safe to call when the GIL isn't
 held, and in a debug build Python redirects (e.g.) PyMem_NEW (etc) to Python's
 debugging obmalloc functions.  Those aren't thread-safe (they rely on the GIL
@@ -47,24 +46,13 @@ _PyRuntimeState_Init_impl(_PyRuntimeState *runtime)
 PyStatus
 _PyRuntimeState_Init(_PyRuntimeState *runtime)
 {
-    /* Force default allocator, since _PyRuntimeState_Fini() must
-       use the same allocator than this function. */
-    PyMemAllocatorEx old_alloc;
-    _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-
     PyStatus status = _PyRuntimeState_Init_impl(runtime);
-
-    PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
     return status;
 }
 
 void
 _PyRuntimeState_Fini(_PyRuntimeState *runtime)
 {
-    /* Force the allocator used by _PyRuntimeState_Init(). */
-    PyMemAllocatorEx old_alloc;
-    _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-    PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
 }
 
 PyInterpreterState *
@@ -74,7 +62,7 @@ PyInterpreterState_New(void)
     /* tstate is NULL when Py_InitializeFromConfig() calls
        PyInterpreterState_New() to create the main interpreter. */
 
-    PyInterpreterState *interp = PyMem_RawCalloc(1, sizeof(PyInterpreterState));
+    PyInterpreterState *interp = PyMem_Calloc(1, sizeof(PyInterpreterState));
     if (interp == NULL) {
         return NULL;
     }
@@ -112,7 +100,7 @@ PyInterpreterState_Clear(PyInterpreterState *interp)
 void
 PyInterpreterState_Delete(PyInterpreterState *interp)
 {
-    PyMem_RawFree(interp);
+    PyMem_Free(interp);
 }
 
 
@@ -153,7 +141,7 @@ PyInterpreterState_GetDict(PyInterpreterState *interp)
 static PyThreadState *
 new_threadstate(PyInterpreterState *interp, int init)
 {
-    PyThreadState *tstate = (PyThreadState *)PyMem_RawMalloc(sizeof(PyThreadState));
+    PyThreadState *tstate = (PyThreadState *)PyMem_Malloc(sizeof(PyThreadState));
     if (tstate == NULL) {
         return NULL;
     }
@@ -362,7 +350,7 @@ _PyThreadState_Delete(PyThreadState *tstate, int check_current)
             _Py_FatalErrorFormat(__func__, "tstate %p is still current", tstate);
         }
     }
-    PyMem_RawFree(tstate);
+    PyMem_Free(tstate);
 }
 
 
@@ -377,7 +365,7 @@ void
 _PyThreadState_DeleteCurrent(PyThreadState *tstate)
 {
     _PyRuntimeGILState_SetThreadState(NULL);
-    PyMem_RawFree(tstate);
+    PyMem_Free(tstate);
 }
 
 void

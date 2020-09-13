@@ -978,7 +978,7 @@ static void
 formatteriter_dealloc(formatteriterobject *it)
 {
     Py_XDECREF(it->str);
-    PyObject_FREE(it);
+    PyMem_Free(it);
 }
 
 /* returns a tuple:
@@ -1139,7 +1139,7 @@ static void
 fieldnameiter_dealloc(fieldnameiterobject *it)
 {
     Py_XDECREF(it->str);
-    PyObject_FREE(it);
+    PyMem_Free(it);
 }
 
 /* returns a tuple:

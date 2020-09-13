@@ -109,7 +109,8 @@ How will it end?  Or is this just the start?
 - Day 92 (9/10/2020). Frack to the __future__.
 - Day 93 (9/11/2020). Punctured packages. And importlib. And marshal.
 - Day 94 (9/12/2020). Took gc to the curb.
-
+- Day 95 (9/13/2020). free(PyMalloc).
+  
 Copyright and License Information
 ---------------------------------
 

@@ -77,7 +77,7 @@ structseq_dealloc(PyStructSequence *obj)
     for (i = 0; i < size; ++i) {
         Py_XDECREF(obj->ob_item[i]);
     }
-    PyObject_Del(obj);
+    PyMem_Free(obj);
     if (PyType_GetFlags(tp) & Py_TPFLAGS_HEAPTYPE) {
         Py_DECREF(tp);
     }
@@ -425,7 +425,7 @@ PyStructSequence_InitType2(PyTypeObject *type, PyStructSequence_Desc *desc)
     type->tp_traverse = 0;
 
     n_members = count_members(desc, &n_unnamed_members);
-    members = PyMem_NEW(PyMemberDef, n_members - n_unnamed_members + 1);
+    members = PyMem_New(PyMemberDef, n_members - n_unnamed_members + 1);
     if (members == NULL) {
         PyErr_NoMemory();
         return -1;
@@ -434,14 +434,14 @@ PyStructSequence_InitType2(PyTypeObject *type, PyStructSequence_Desc *desc)
     type->tp_members = members;
 
     if (PyType_Ready(type) < 0) {
-        PyMem_FREE(members);
+        PyMem_Free(members);
         return -1;
     }
     Py_INCREF(type);
 
     if (initialize_structseq_dict(
             desc, type->tp_dict, n_members, n_unnamed_members) < 0) {
-        PyMem_FREE(members);
+        PyMem_Free(members);
         Py_DECREF(type);
         return -1;
     }
@@ -467,7 +467,7 @@ PyStructSequence_NewType(PyStructSequence_Desc *desc)
 
     /* Initialize MemberDefs */
     n_members = count_members(desc, &n_unnamed_members);
-    members = PyMem_NEW(PyMemberDef, n_members - n_unnamed_members + 1);
+    members = PyMem_New(PyMemberDef, n_members - n_unnamed_members + 1);
     if (members == NULL) {
         PyErr_NoMemory();
         return NULL;
@@ -495,12 +495,12 @@ PyStructSequence_NewType(PyStructSequence_Desc *desc)
 
     bases = PyTuple_Pack(1, &PyTuple_Type);
     if (bases == NULL) {
-        PyMem_FREE(members);
+        PyMem_Free(members);
         return NULL;
     }
     type = (PyTypeObject *)PyType_FromSpecWithBases(&spec, bases);
     Py_DECREF(bases);
-    PyMem_FREE(members);
+    PyMem_Free(members);
     if (type == NULL) {
         return NULL;
     }

@@ -70,7 +70,7 @@ PyOS_StdioReadline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
     assert(tstate != NULL);
 
     n = 100;
-    p = (char *)PyMem_RawMalloc(n);
+    p = (char *)PyMem_Malloc(n);
     if (p == NULL) {
         PyErr_NoMemory();
         return NULL;
@@ -86,7 +86,7 @@ PyOS_StdioReadline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
     case 0: /* Normal case */
         break;
     case 1: /* Interrupt */
-        PyMem_RawFree(p);
+        PyMem_Free(p);
         return NULL;
     case -1: /* EOF */
     case -2: /* Error */
@@ -99,14 +99,14 @@ PyOS_StdioReadline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
     while (n > 0 && p[n-1] != '\n') {
         size_t incr = n+2;
         if (incr > INT_MAX) {
-            PyMem_RawFree(p);
+            PyMem_Free(p);
             PyErr_SetString(PyExc_OverflowError, "input line too long");
             return NULL;
         }
 
-        pr = (char *)PyMem_RawRealloc(p, n + incr);
+        pr = (char *)PyMem_Realloc(p, n + incr);
         if (pr == NULL) {
-            PyMem_RawFree(p);
+            PyMem_Free(p);
             PyErr_NoMemory();
             return NULL;
         }
@@ -118,9 +118,9 @@ PyOS_StdioReadline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
         n += strlen(p+n);
     }
 
-    pr = (char *)PyMem_RawRealloc(p, n+1);
+    pr = (char *)PyMem_Realloc(p, n+1);
     if (pr == NULL) {
-        PyMem_RawFree(p);
+        PyMem_Free(p);
         PyErr_NoMemory();
         return NULL;
     }
@@ -182,7 +182,7 @@ PyOS_Readline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
     else {
         PyErr_NoMemory();
     }
-    PyMem_RawFree(rv);
+    PyMem_Free(rv);
 
     return res;
 }

@@ -315,7 +315,7 @@ PyTypeObject PyEnum_Type = {
     0,                              /* tp_init */
     PyType_GenericAlloc,            /* tp_alloc */
     enum_new,                       /* tp_new */
-    PyObject_Del,                /* tp_free */
+    PyMem_Free,                /* tp_free */
 };
 
 /* Reversed Object ***************************************************************/
@@ -504,5 +504,5 @@ PyTypeObject PyReversed_Type = {
     0,                              /* tp_init */
     PyType_GenericAlloc,            /* tp_alloc */
     reversed_new,                   /* tp_new */
-    PyObject_Del,                /* tp_free */
+    PyMem_Free,                /* tp_free */
 };

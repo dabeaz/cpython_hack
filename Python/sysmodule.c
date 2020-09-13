@@ -23,7 +23,6 @@ Data members:
 #include "pycore_pathconfig.h"
 #include "pycore_pyerrors.h"
 #include "pycore_pylifecycle.h"
-#include "pycore_pymem.h"         // _PyMem_SetDefaultAllocator()
 #include "pycore_pystate.h"       // PyThreadState_Get()
 #include "pycore_tupleobject.h"
 

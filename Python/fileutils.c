@@ -598,7 +598,7 @@ _Py_isabs(const char *path)
    On error (ex: fail to get the current directory), return -1.
    On memory allocation failure, set *abspath_p to NULL and return 0.
    On success, return a newly allocated to *abspath_p to and return 0.
-   The string must be freed by PyMem_RawFree(). */
+   The string must be freed by PyMem_Free(). */
 int
 _Py_abspath(const char *path, char **abspath_p)
 {
@@ -618,7 +618,7 @@ _Py_abspath(const char *path, char **abspath_p)
     size_t path_len = strlen(path);
     size_t len = cwd_len + 1 + path_len + 1;
     if (len <= (size_t)PY_SSIZE_T_MAX) {
-      *abspath_p = PyMem_RawMalloc(len);
+      *abspath_p = PyMem_Malloc(len);
     }
     else {
         *abspath_p = NULL;

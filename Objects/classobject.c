@@ -237,7 +237,7 @@ method_dealloc(PyMethodObject *im)
         PyObject_ClearWeakRefs((PyObject *)im);
     Py_DECREF(im->im_func);
     Py_XDECREF(im->im_self);
-    PyObject_Del(im);
+    PyMem_Free(im);
 }
 
 static PyObject *
@@ -438,13 +438,7 @@ instancemethod_getattro(PyObject *self, PyObject *name)
 static void
 instancemethod_dealloc(PyObject *self) {
     Py_DECREF(PyInstanceMethod_GET_FUNCTION(self));
-    PyObject_Del(self);
-}
-
-static int
-instancemethod_traverse(PyObject *self, visitproc visit, void *arg) {
-    Py_VISIT(PyInstanceMethod_GET_FUNCTION(self));
-    return 0;
+    PyMem_Free(self);
 }
 
 static PyObject *
@@ -579,7 +573,7 @@ PyTypeObject PyInstanceMethod_Type = {
     Py_TPFLAGS_DEFAULT,
     //        | Py_TPFLAGS_HAVE_GC,                   /* tp_flags */
     instancemethod_doc,                         /* tp_doc */
-    instancemethod_traverse,                    /* tp_traverse */
+    0, // instancemethod_traverse,                    /* tp_traverse */
     0,                                          /* tp_clear */
     instancemethod_richcompare,                 /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */

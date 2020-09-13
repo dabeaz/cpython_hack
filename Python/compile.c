@@ -492,9 +492,9 @@ compiler_unit_free(struct compiler_unit *u)
     b = u->u_blocks;
     while (b != NULL) {
         if (b->b_instr)
-            PyObject_Free((void *)b->b_instr);
+            PyMem_Free((void *)b->b_instr);
         next = b->b_list;
-        PyObject_Free((void *)b);
+        PyMem_Free((void *)b);
         b = next;
     }
     Py_CLEAR(u->u_ste);
@@ -506,7 +506,7 @@ compiler_unit_free(struct compiler_unit *u)
     Py_CLEAR(u->u_freevars);
     Py_CLEAR(u->u_cellvars);
     Py_CLEAR(u->u_private);
-    PyObject_Free(u);
+    PyMem_Free(u);
 }
 
 static int
@@ -516,7 +516,7 @@ compiler_enter_scope(struct compiler *c, identifier name,
     struct compiler_unit *u;
     basicblock *block;
 
-    u = (struct compiler_unit *)PyObject_Calloc(1, sizeof(
+    u = (struct compiler_unit *)PyMem_Calloc(1, sizeof(
                                             struct compiler_unit));
     if (!u) {
         PyErr_NoMemory();
@@ -724,7 +724,7 @@ compiler_new_block(struct compiler *c)
     struct compiler_unit *u;
 
     u = c->u;
-    b = (basicblock *)PyObject_Calloc(1, sizeof(basicblock));
+    b = (basicblock *)PyMem_Calloc(1, sizeof(basicblock));
     if (b == NULL) {
         PyErr_NoMemory();
         return NULL;
@@ -765,7 +765,7 @@ compiler_next_instr(basicblock *b)
 {
     assert(b != NULL);
     if (b->b_instr == NULL) {
-        b->b_instr = (struct instr *)PyObject_Calloc(
+        b->b_instr = (struct instr *)PyMem_Calloc(
                          DEFAULT_BLOCK_SIZE, sizeof(struct instr));
         if (b->b_instr == NULL) {
             PyErr_NoMemory();
@@ -789,7 +789,7 @@ compiler_next_instr(basicblock *b)
             return -1;
         }
         b->b_ialloc <<= 1;
-        tmp = (struct instr *)PyObject_Realloc(
+        tmp = (struct instr *)PyMem_Realloc(
                                         (void *)b->b_instr, newsize);
         if (tmp == NULL) {
             PyErr_NoMemory();
@@ -4829,7 +4829,7 @@ stackdepth(struct compiler *c)
     }
     if (!entryblock)
         return 0;
-    stack = (basicblock **)PyObject_Malloc(sizeof(basicblock *) * nblocks);
+    stack = (basicblock **)PyMem_Malloc(sizeof(basicblock *) * nblocks);
     if (!stack) {
         PyErr_NoMemory();
         return -1;
@@ -4880,7 +4880,7 @@ stackdepth(struct compiler *c)
             stackdepth_push(&sp, next, depth);
         }
     }
-    PyObject_Free(stack);
+    PyMem_Free(stack);
     return maxdepth;
 }
 
@@ -4899,7 +4899,7 @@ assemble_init(struct assembler *a, int nblocks, int firstlineno)
         PyErr_NoMemory();
         return 0;
     }
-    a->a_postorder = (basicblock **)PyObject_Malloc(
+    a->a_postorder = (basicblock **)PyMem_Malloc(
                                         sizeof(basicblock *) * nblocks);
     if (!a->a_postorder) {
         PyErr_NoMemory();
@@ -4914,7 +4914,7 @@ assemble_free(struct assembler *a)
     Py_XDECREF(a->a_bytecode);
     Py_XDECREF(a->a_lnotab);
     if (a->a_postorder)
-        PyObject_Free(a->a_postorder);
+        PyMem_Free(a->a_postorder);
 }
 
 static int

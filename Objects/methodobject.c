@@ -165,7 +165,7 @@ meth_dealloc(PyCFunctionObject *m)
     Py_XDECREF(m->m_self);
     Py_XDECREF(m->m_module);
     Py_XDECREF(PyCFunction_GET_CLASS(m));
-    PyObject_Del(m);
+    PyMem_Free(m);
 }
 
 static PyObject *

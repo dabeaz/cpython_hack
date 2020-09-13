@@ -92,19 +92,6 @@ readline_clear(PyObject *m)
    return 0;
 }
 
-static int
-readline_traverse(PyObject *m, visitproc visit, void *arg)
-{
-    readlinestate *state = get_readline_state(m);
-    Py_VISIT(state->completion_display_matches_hook);
-    Py_VISIT(state->startup_hook);
-    Py_VISIT(state->pre_input_hook);
-    Py_VISIT(state->completer);
-    Py_VISIT(state->begidx);
-    Py_VISIT(state->endidx);
-    return 0;
-}
-
 static void
 readline_free(void *m)
 {
@@ -1174,7 +1161,7 @@ call_readline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
 
     /* We got an EOF, return an empty string. */
     if (p == NULL) {
-        p = PyMem_RawMalloc(1);
+        p = PyMem_Malloc(1);
         if (p != NULL)
             *p = '\0';
         return p;
@@ -1201,7 +1188,7 @@ call_readline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
     /* Copy the malloc'ed buffer into a PyMem_Malloc'ed one and
        release the original. */
     char *q = p;
-    p = PyMem_RawMalloc(n+2);
+    p = PyMem_Malloc(n+2);
     if (p != NULL) {
         memcpy(p, q, n);
         p[n] = '\n';
@@ -1227,7 +1214,7 @@ static struct PyModuleDef readlinemodule = {
     sizeof(readlinestate),
     readline_methods,
     NULL,
-    readline_traverse,
+    NULL, 
     readline_clear,
     readline_free
 };

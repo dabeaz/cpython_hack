@@ -7,7 +7,6 @@
 #include "pycore_object.h"
 #include "pycore_pyerrors.h"
 #include "pycore_pylifecycle.h"
-#include "pycore_pymem.h"         // _PyMem_IsPtrFreed()
 #include "pycore_pystate.h"       // PyThreadState_Get()
 #include "frameobject.h"
 
@@ -24,8 +23,7 @@ _PyObject_CheckConsistency(PyObject *op, int check_content)
 {
 #define CHECK(expr) \
     do { if (!(expr)) { _PyObject_ASSERT_FAILED_MSG(op, Py_STRINGIFY(expr)); } } while (0)
-
-    CHECK(!_PyObject_IsFreed(op));
+    
     CHECK(Py_REFCNT(op) >= 1);
 
     _PyType_CheckConsistency(Py_TYPE(op));
@@ -83,7 +81,7 @@ PyObject_InitVar(PyVarObject *op, PyTypeObject *tp, Py_ssize_t size)
 PyObject *
 _PyObject_New(PyTypeObject *tp)
 {
-    PyObject *op = (PyObject *) PyObject_MALLOC(_PyObject_SIZE(tp));
+    PyObject *op = (PyObject *) PyMem_Malloc(_PyObject_SIZE(tp));
     if (op == NULL) {
         return PyErr_NoMemory();
     }
@@ -96,7 +94,7 @@ _PyObject_NewVar(PyTypeObject *tp, Py_ssize_t nitems)
 {
     PyVarObject *op;
     const size_t size = _PyObject_VAR_SIZE(tp, nitems);
-    op = (PyVarObject *) PyObject_MALLOC(size);
+    op = (PyVarObject *) PyMem_Malloc(size);
     if (op == NULL)
         return (PyVarObject *)PyErr_NoMemory();
     return PyObject_INIT_VAR(op, tp, nitems);
@@ -193,36 +191,10 @@ PyObject_Print(PyObject *op, FILE *fp, int flags)
 }
 
 
-/* Heuristic checking if the object memory is uninitialized or deallocated.
-   Rely on the debug hooks on Python memory allocators:
-   see _PyMem_IsPtrFreed().
-
-   The function can be used to prevent segmentation fault on dereferencing
-   pointers like 0xDDDDDDDDDDDDDDDD. */
-int
-_PyObject_IsFreed(PyObject *op)
-{
-    if (_PyMem_IsPtrFreed(op) || _PyMem_IsPtrFreed(Py_TYPE(op))) {
-        return 1;
-    }
-    /* ignore op->ob_ref: its value can have be modified
-       by Py_INCREF() and Py_DECREF(). */
-    return 0;
-}
-
-
 /* For debugging convenience.  See Misc/gdbinit for some useful gdb hooks */
 void
 _PyObject_Dump(PyObject* op)
 {
-    if (_PyObject_IsFreed(op)) {
-        /* It seems like the object memory has been freed:
-           don't access it to prevent a segmentation fault. */
-        fprintf(stderr, "<object at %p is freed>\n", op);
-        fflush(stderr);
-        return;
-    }
-
     /* first, write fields which are the least likely to crash */
     fprintf(stderr, "object address  : %p\n", (void *)op);
     /* XXX(twouters) cast refcount to long until %zd is
@@ -1646,14 +1618,7 @@ _PyObject_AssertFailed(PyObject *obj, const char *expr, const char *msg,
     }
     fprintf(stderr, "\n");
     fflush(stderr);
-
-    if (_PyObject_IsFreed(obj)) {
-        /* It seems like the object memory has been freed:
-           don't access it to prevent a segmentation fault. */
-        fprintf(stderr, "<object at %p is freed>\n", obj);
-        fflush(stderr);
-    }
-    else {
+      {
         /* Display the traceback where the object has been allocated.
            Do it before dumping repr(obj), since repr() is more likely
            to crash than dumping the traceback. */

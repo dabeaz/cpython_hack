@@ -421,7 +421,7 @@ PyObject *
 PyFloat_FromDouble(double fval)
 {
   PyFloatObject *op;
-    op = PyObject_Malloc(sizeof(PyFloatObject));
+    op = PyMem_Malloc(sizeof(PyFloatObject));
     if (!op) {
       return PyErr_NoMemory();
     }
@@ -496,7 +496,7 @@ static void
 float_dealloc(PyFloatObject *op)
 {
     if (PyFloat_CheckExact(op)) {
-	PyObject_FREE(op);
+	PyMem_Free(op);
 	return;
     } else {
         Py_TYPE(op)->tp_free((PyObject *)op);

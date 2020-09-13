@@ -76,7 +76,7 @@ static void
 cell_dealloc(PyCellObject *op)
 {
     Py_XDECREF(op->ob_ref);
-    PyObject_Del(op);
+    PyMem_Free(op);
 }
 
 static PyObject *

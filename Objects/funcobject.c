@@ -1,4 +1,5 @@
 
+
 /* Function object implementation */
 
 #include "Python.h"
@@ -562,7 +563,7 @@ func_dealloc(PyFunctionObject *op)
         PyObject_ClearWeakRefs((PyObject *) op);
     }
     (void)func_clear(op);
-    PyObject_Del(op);
+    PyMem_Free(op);
 }
 
 static PyObject*
@@ -775,7 +776,7 @@ PyTypeObject PyClassMethod_Type = {
     cm_init,                                    /* tp_init */
     PyType_GenericAlloc,                        /* tp_alloc */
     PyType_GenericNew,                          /* tp_new */
-    PyObject_Del,                            /* tp_free */
+    PyMem_Free,                            /* tp_free */
 };
 
 PyObject *
@@ -929,7 +930,7 @@ PyTypeObject PyStaticMethod_Type = {
     sm_init,                                    /* tp_init */
     PyType_GenericAlloc,                        /* tp_alloc */
     PyType_GenericNew,                          /* tp_new */
-    PyObject_Del,                            /* tp_free */
+    PyMem_Free,                            /* tp_free */
 };
 
 PyObject *

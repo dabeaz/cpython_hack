@@ -9,10 +9,6 @@
 #include <sys/types.h>
 #include <string.h>
 
-#ifdef __APPLE__
-#  include <mach-o/dyld.h>
-#endif
-
 /* Search in some common locations for the associated Python libraries.
  *
  * Two directories must be found, the platform independent directory
@@ -255,7 +251,7 @@ joinpath(char *path, const char *path2, size_t path_len)
 static char*
 substring(const char *str, size_t len)
 {
-  char *substr = PyMem_RawMalloc((len + 1));
+  char *substr = PyMem_Malloc((len + 1));
     if (substr == NULL) {
         return NULL;
     }
@@ -280,7 +276,7 @@ joinpath2(const char *path, const char *path2)
     len += add_sep;
     len += strlen(path2);
 
-    char *new_path = PyMem_RawMalloc((len + 1));
+    char *new_path = PyMem_Malloc((len + 1));
     if (new_path == NULL) {
         return NULL;
     }
@@ -351,7 +347,7 @@ absolutize(char **path_p)
         return status;
     }
 
-    PyMem_RawFree(*path_p);
+    PyMem_Free(*path_p);
     *path_p = strdup(abs_path);
     if (*path_p == NULL) {
         return _PyStatus_NO_MEMORY();
@@ -370,16 +366,16 @@ ismodule(const char *path, int *result)
     }
 
     if (isfile(filename)) {
-        PyMem_RawFree(filename);
+        PyMem_Free(filename);
         *result = 1;
         return _PyStatus_OK();
     }
 
     /* Check for the compiled version of prefix. */
     size_t len = strlen(filename);
-    char *pyc = PyMem_RawMalloc((len + 2));
+    char *pyc = PyMem_Malloc((len + 2));
     if (pyc == NULL) {
-        PyMem_RawFree(filename);
+        PyMem_Free(filename);
         return _PyStatus_NO_MEMORY();
     }
 
@@ -388,8 +384,8 @@ ismodule(const char *path, int *result)
     pyc[len + 1] = '\0';
     *result = isfile(pyc);
 
-    PyMem_RawFree(filename);
-    PyMem_RawFree(pyc);
+    PyMem_Free(filename);
+    PyMem_Free(pyc);
 
     return _PyStatus_OK();
 }
@@ -430,7 +426,7 @@ search_for_prefix(PyCalculatePath *calculate, _PyPathConfig *pathconfig,
     }
 
     int is_build_dir = isfile(path);
-    PyMem_RawFree(path);
+    PyMem_Free(path);
 
     if (is_build_dir) {
         /* argv0_path is the build directory (BUILD_LANDMARK exists),
@@ -572,7 +568,7 @@ calculate_set_prefix(PyCalculatePath *calculate, _PyPathConfig *pathconfig)
             pathconfig->prefix = prefix;
         }
         else {
-            PyMem_RawFree(prefix);
+            PyMem_Free(prefix);
 
             /* The prefix is the root directory, but reduce() chopped
                off the "/". */
@@ -708,7 +704,7 @@ calculate_exec_prefix(PyCalculatePath *calculate, _PyPathConfig *pathconfig)
 
         calculate->exec_prefix = joinpath2(calculate->exec_prefix_macro,
                                            lib_dynload);
-        PyMem_RawFree(lib_dynload);
+        PyMem_Free(lib_dynload);
 
         if (calculate->exec_prefix == NULL) {
             return _PyStatus_NO_MEMORY();
@@ -744,7 +740,7 @@ calculate_set_exec_prefix(PyCalculatePath *calculate,
         }
         else {
             /* empty string: use SEP instead */
-            PyMem_RawFree(exec_prefix);
+            PyMem_Free(exec_prefix);
 
             /* The exec_prefix is the root directory, but reduce() chopped
                off the "/". */
@@ -780,7 +776,7 @@ calculate_which(const char *path_env, char *program_name,
                 return _PyStatus_NO_MEMORY();
             }
             abs_path = joinpath2(path, program_name);
-            PyMem_RawFree(path);
+            PyMem_Free(path);
         }
         else {
             abs_path = joinpath2(path_env, program_name);
@@ -794,7 +790,7 @@ calculate_which(const char *path_env, char *program_name,
             *abs_path_p = abs_path;
             return _PyStatus_OK();
         }
-        PyMem_RawFree(abs_path);
+        PyMem_Free(abs_path);
 
         if (!delim) {
             break;
@@ -891,7 +887,7 @@ resolve_symlinks(char **path_p)
         }
 
         if (_Py_isabs(new_path)) {
-            PyMem_RawFree(*path_p);
+            PyMem_Free(*path_p);
             *path_p = strdup(new_path);
             if (*path_p == NULL) {
                 return _PyStatus_NO_MEMORY();
@@ -906,7 +902,7 @@ resolve_symlinks(char **path_p)
                 return _PyStatus_NO_MEMORY();
             }
 
-            PyMem_RawFree(*path_p);
+            PyMem_Free(*path_p);
             *path_p = abs_path;
         }
 
@@ -964,7 +960,7 @@ calculate_zip_path(PyCalculatePath *calculate)
         reduce(parent);
         reduce(parent);
         calculate->zip_path = joinpath2(parent, path);
-        PyMem_RawFree(parent);
+        PyMem_Free(parent);
     }
     else {
         calculate->zip_path = joinpath2(calculate->prefix_macro, path);
@@ -978,7 +974,7 @@ calculate_zip_path(PyCalculatePath *calculate)
     res = _PyStatus_OK();
 
 done:
-    PyMem_RawFree(path);
+    PyMem_Free(path);
     return res;
 }
   
@@ -1017,7 +1013,7 @@ calculate_module_search_path(PyCalculatePath *calculate,
     bufsz += strlen(calculate->exec_prefix) + 1;
 
     /* Allocate the buffer */
-    char *buf = PyMem_RawMalloc(bufsz);
+    char *buf = PyMem_Malloc(bufsz);
     if (buf == NULL) {
         return _PyStatus_NO_MEMORY();
     }
@@ -1108,7 +1104,7 @@ calculate_init(PyCalculatePath *calculate, const PyConfig *config)
         return _PyStatus_NO_MEMORY();      
     }
     calculate->lib_python = joinpath2(config->platlibdir, pyversion);
-    PyMem_RawFree(pyversion);
+    PyMem_Free(pyversion);
     if (calculate->lib_python == NULL) {
         return _PyStatus_NO_MEMORY();
     }
@@ -1120,16 +1116,16 @@ calculate_init(PyCalculatePath *calculate, const PyConfig *config)
 static void
 calculate_free(PyCalculatePath *calculate)
 {
-    PyMem_RawFree(calculate->pythonpath_macro);
-    PyMem_RawFree(calculate->prefix_macro);
-    PyMem_RawFree(calculate->exec_prefix_macro);
-    PyMem_RawFree(calculate->vpath_macro);
-    PyMem_RawFree(calculate->lib_python);
-    PyMem_RawFree(calculate->path_env);
-    PyMem_RawFree(calculate->zip_path);
-    PyMem_RawFree(calculate->argv0_path);
-    PyMem_RawFree(calculate->prefix);
-    PyMem_RawFree(calculate->exec_prefix);
+    PyMem_Free(calculate->pythonpath_macro);
+    PyMem_Free(calculate->prefix_macro);
+    PyMem_Free(calculate->exec_prefix_macro);
+    PyMem_Free(calculate->vpath_macro);
+    PyMem_Free(calculate->lib_python);
+    PyMem_Free(calculate->path_env);
+    PyMem_Free(calculate->zip_path);
+    PyMem_Free(calculate->argv0_path);
+    PyMem_Free(calculate->prefix);
+    PyMem_Free(calculate->exec_prefix);
 }
 
 

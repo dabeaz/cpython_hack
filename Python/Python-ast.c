@@ -413,209 +413,6 @@ static int astmodule_clear(PyObject *module)
     return 0;
 }
 
-static int astmodule_traverse(PyObject *module, visitproc visit, void* arg)
-{
-    Py_VISIT(astmodulestate(module)->AST_type);
-    Py_VISIT(astmodulestate(module)->Add_singleton);
-    Py_VISIT(astmodulestate(module)->Add_type);
-    Py_VISIT(astmodulestate(module)->And_singleton);
-    Py_VISIT(astmodulestate(module)->And_type);
-    Py_VISIT(astmodulestate(module)->Assert_type);
-    Py_VISIT(astmodulestate(module)->Assign_type);
-    Py_VISIT(astmodulestate(module)->Attribute_type);
-    Py_VISIT(astmodulestate(module)->AugAssign_type);
-    Py_VISIT(astmodulestate(module)->BinOp_type);
-    Py_VISIT(astmodulestate(module)->BitAnd_singleton);
-    Py_VISIT(astmodulestate(module)->BitAnd_type);
-    Py_VISIT(astmodulestate(module)->BitOr_singleton);
-    Py_VISIT(astmodulestate(module)->BitOr_type);
-    Py_VISIT(astmodulestate(module)->BitXor_singleton);
-    Py_VISIT(astmodulestate(module)->BitXor_type);
-    Py_VISIT(astmodulestate(module)->BoolOp_type);
-    Py_VISIT(astmodulestate(module)->Break_type);
-    Py_VISIT(astmodulestate(module)->Call_type);
-    Py_VISIT(astmodulestate(module)->ClassDef_type);
-    Py_VISIT(astmodulestate(module)->Compare_type);
-    Py_VISIT(astmodulestate(module)->Constant_type);
-    Py_VISIT(astmodulestate(module)->Continue_type);
-    Py_VISIT(astmodulestate(module)->Del_singleton);
-    Py_VISIT(astmodulestate(module)->Del_type);
-    Py_VISIT(astmodulestate(module)->Delete_type);
-    Py_VISIT(astmodulestate(module)->DictComp_type);
-    Py_VISIT(astmodulestate(module)->Dict_type);
-    Py_VISIT(astmodulestate(module)->Div_singleton);
-    Py_VISIT(astmodulestate(module)->Div_type);
-    Py_VISIT(astmodulestate(module)->Eq_singleton);
-    Py_VISIT(astmodulestate(module)->Eq_type);
-    Py_VISIT(astmodulestate(module)->ExceptHandler_type);
-    Py_VISIT(astmodulestate(module)->Expr_type);
-    Py_VISIT(astmodulestate(module)->Expression_type);
-    Py_VISIT(astmodulestate(module)->FloorDiv_singleton);
-    Py_VISIT(astmodulestate(module)->FloorDiv_type);
-    Py_VISIT(astmodulestate(module)->For_type);
-    Py_VISIT(astmodulestate(module)->FormattedValue_type);
-    Py_VISIT(astmodulestate(module)->FunctionDef_type);
-    Py_VISIT(astmodulestate(module)->GeneratorExp_type);
-    Py_VISIT(astmodulestate(module)->Global_type);
-    Py_VISIT(astmodulestate(module)->GtE_singleton);
-    Py_VISIT(astmodulestate(module)->GtE_type);
-    Py_VISIT(astmodulestate(module)->Gt_singleton);
-    Py_VISIT(astmodulestate(module)->Gt_type);
-    Py_VISIT(astmodulestate(module)->IfExp_type);
-    Py_VISIT(astmodulestate(module)->If_type);
-    Py_VISIT(astmodulestate(module)->ImportFrom_type);
-    Py_VISIT(astmodulestate(module)->Import_type);
-    Py_VISIT(astmodulestate(module)->In_singleton);
-    Py_VISIT(astmodulestate(module)->In_type);
-    Py_VISIT(astmodulestate(module)->Interactive_type);
-    Py_VISIT(astmodulestate(module)->Invert_singleton);
-    Py_VISIT(astmodulestate(module)->Invert_type);
-    Py_VISIT(astmodulestate(module)->IsNot_singleton);
-    Py_VISIT(astmodulestate(module)->IsNot_type);
-    Py_VISIT(astmodulestate(module)->Is_singleton);
-    Py_VISIT(astmodulestate(module)->Is_type);
-    Py_VISIT(astmodulestate(module)->JoinedStr_type);
-    Py_VISIT(astmodulestate(module)->LShift_singleton);
-    Py_VISIT(astmodulestate(module)->LShift_type);
-    Py_VISIT(astmodulestate(module)->Lambda_type);
-    Py_VISIT(astmodulestate(module)->ListComp_type);
-    Py_VISIT(astmodulestate(module)->List_type);
-    Py_VISIT(astmodulestate(module)->Load_singleton);
-    Py_VISIT(astmodulestate(module)->Load_type);
-    Py_VISIT(astmodulestate(module)->LtE_singleton);
-    Py_VISIT(astmodulestate(module)->LtE_type);
-    Py_VISIT(astmodulestate(module)->Lt_singleton);
-    Py_VISIT(astmodulestate(module)->Lt_type);
-    Py_VISIT(astmodulestate(module)->MatMult_singleton);
-    Py_VISIT(astmodulestate(module)->MatMult_type);
-    Py_VISIT(astmodulestate(module)->Mod_singleton);
-    Py_VISIT(astmodulestate(module)->Mod_type);
-    Py_VISIT(astmodulestate(module)->Module_type);
-    Py_VISIT(astmodulestate(module)->Mult_singleton);
-    Py_VISIT(astmodulestate(module)->Mult_type);
-    Py_VISIT(astmodulestate(module)->Name_type);
-    Py_VISIT(astmodulestate(module)->NamedExpr_type);
-    Py_VISIT(astmodulestate(module)->Nonlocal_type);
-    Py_VISIT(astmodulestate(module)->NotEq_singleton);
-    Py_VISIT(astmodulestate(module)->NotEq_type);
-    Py_VISIT(astmodulestate(module)->NotIn_singleton);
-    Py_VISIT(astmodulestate(module)->NotIn_type);
-    Py_VISIT(astmodulestate(module)->Not_singleton);
-    Py_VISIT(astmodulestate(module)->Not_type);
-    Py_VISIT(astmodulestate(module)->Or_singleton);
-    Py_VISIT(astmodulestate(module)->Or_type);
-    Py_VISIT(astmodulestate(module)->Pass_type);
-    Py_VISIT(astmodulestate(module)->Pow_singleton);
-    Py_VISIT(astmodulestate(module)->Pow_type);
-    Py_VISIT(astmodulestate(module)->RShift_singleton);
-    Py_VISIT(astmodulestate(module)->RShift_type);
-    Py_VISIT(astmodulestate(module)->Raise_type);
-    Py_VISIT(astmodulestate(module)->Return_type);
-    Py_VISIT(astmodulestate(module)->SetComp_type);
-    Py_VISIT(astmodulestate(module)->Set_type);
-    Py_VISIT(astmodulestate(module)->Slice_type);
-    Py_VISIT(astmodulestate(module)->Starred_type);
-    Py_VISIT(astmodulestate(module)->Store_singleton);
-    Py_VISIT(astmodulestate(module)->Store_type);
-    Py_VISIT(astmodulestate(module)->Sub_singleton);
-    Py_VISIT(astmodulestate(module)->Sub_type);
-    Py_VISIT(astmodulestate(module)->Subscript_type);
-    Py_VISIT(astmodulestate(module)->Try_type);
-    Py_VISIT(astmodulestate(module)->Tuple_type);
-    Py_VISIT(astmodulestate(module)->UAdd_singleton);
-    Py_VISIT(astmodulestate(module)->UAdd_type);
-    Py_VISIT(astmodulestate(module)->USub_singleton);
-    Py_VISIT(astmodulestate(module)->USub_type);
-    Py_VISIT(astmodulestate(module)->UnaryOp_type);
-    Py_VISIT(astmodulestate(module)->While_type);
-    Py_VISIT(astmodulestate(module)->With_type);
-    Py_VISIT(astmodulestate(module)->YieldFrom_type);
-    Py_VISIT(astmodulestate(module)->Yield_type);
-    Py_VISIT(astmodulestate(module)->__dict__);
-    Py_VISIT(astmodulestate(module)->__doc__);
-    Py_VISIT(astmodulestate(module)->__module__);
-    Py_VISIT(astmodulestate(module)->_attributes);
-    Py_VISIT(astmodulestate(module)->_fields);
-    Py_VISIT(astmodulestate(module)->alias_type);
-    Py_VISIT(astmodulestate(module)->arg);
-    Py_VISIT(astmodulestate(module)->arg_type);
-    Py_VISIT(astmodulestate(module)->args);
-    Py_VISIT(astmodulestate(module)->arguments_type);
-    Py_VISIT(astmodulestate(module)->asname);
-    Py_VISIT(astmodulestate(module)->ast);
-    Py_VISIT(astmodulestate(module)->attr);
-    Py_VISIT(astmodulestate(module)->bases);
-    Py_VISIT(astmodulestate(module)->body);
-    Py_VISIT(astmodulestate(module)->boolop_type);
-    Py_VISIT(astmodulestate(module)->cause);
-    Py_VISIT(astmodulestate(module)->cmpop_type);
-    Py_VISIT(astmodulestate(module)->col_offset);
-    Py_VISIT(astmodulestate(module)->comparators);
-    Py_VISIT(astmodulestate(module)->comprehension_type);
-    Py_VISIT(astmodulestate(module)->context_expr);
-    Py_VISIT(astmodulestate(module)->conversion);
-    Py_VISIT(astmodulestate(module)->ctx);
-    Py_VISIT(astmodulestate(module)->decorator_list);
-    Py_VISIT(astmodulestate(module)->defaults);
-    Py_VISIT(astmodulestate(module)->elt);
-    Py_VISIT(astmodulestate(module)->elts);
-    Py_VISIT(astmodulestate(module)->end_col_offset);
-    Py_VISIT(astmodulestate(module)->end_lineno);
-    Py_VISIT(astmodulestate(module)->exc);
-    Py_VISIT(astmodulestate(module)->excepthandler_type);
-    Py_VISIT(astmodulestate(module)->expr_context_type);
-    Py_VISIT(astmodulestate(module)->expr_type);
-    Py_VISIT(astmodulestate(module)->finalbody);
-    Py_VISIT(astmodulestate(module)->format_spec);
-    Py_VISIT(astmodulestate(module)->func);
-    Py_VISIT(astmodulestate(module)->generators);
-    Py_VISIT(astmodulestate(module)->handlers);
-    Py_VISIT(astmodulestate(module)->id);
-    Py_VISIT(astmodulestate(module)->ifs);
-    Py_VISIT(astmodulestate(module)->items);
-    Py_VISIT(astmodulestate(module)->iter);
-    Py_VISIT(astmodulestate(module)->key);
-    Py_VISIT(astmodulestate(module)->keys);
-    Py_VISIT(astmodulestate(module)->keyword_type);
-    Py_VISIT(astmodulestate(module)->keywords);
-    Py_VISIT(astmodulestate(module)->kind);
-    Py_VISIT(astmodulestate(module)->kw_defaults);
-    Py_VISIT(astmodulestate(module)->kwarg);
-    Py_VISIT(astmodulestate(module)->kwonlyargs);
-    Py_VISIT(astmodulestate(module)->left);
-    Py_VISIT(astmodulestate(module)->level);
-    Py_VISIT(astmodulestate(module)->lineno);
-    Py_VISIT(astmodulestate(module)->lower);
-    Py_VISIT(astmodulestate(module)->mod_type);
-    Py_VISIT(astmodulestate(module)->module);
-    Py_VISIT(astmodulestate(module)->msg);
-    Py_VISIT(astmodulestate(module)->name);
-    Py_VISIT(astmodulestate(module)->names);
-    Py_VISIT(astmodulestate(module)->op);
-    Py_VISIT(astmodulestate(module)->operand);
-    Py_VISIT(astmodulestate(module)->operator_type);
-    Py_VISIT(astmodulestate(module)->ops);
-    Py_VISIT(astmodulestate(module)->optional_vars);
-    Py_VISIT(astmodulestate(module)->orelse);
-    Py_VISIT(astmodulestate(module)->posonlyargs);
-    Py_VISIT(astmodulestate(module)->right);
-    Py_VISIT(astmodulestate(module)->slice);
-    Py_VISIT(astmodulestate(module)->step);
-    Py_VISIT(astmodulestate(module)->stmt_type);
-    Py_VISIT(astmodulestate(module)->target);
-    Py_VISIT(astmodulestate(module)->targets);
-    Py_VISIT(astmodulestate(module)->test);
-    Py_VISIT(astmodulestate(module)->type);
-    Py_VISIT(astmodulestate(module)->unaryop_type);
-    Py_VISIT(astmodulestate(module)->upper);
-    Py_VISIT(astmodulestate(module)->value);
-    Py_VISIT(astmodulestate(module)->values);
-    Py_VISIT(astmodulestate(module)->vararg);
-    Py_VISIT(astmodulestate(module)->withitem_type);
-
-    return 0;
-}
-
 static void astmodule_free(void* module) {
     astmodule_clear((PyObject*)module);
 }
@@ -627,7 +424,7 @@ static struct PyModuleDef _astmodule = {
     sizeof(astmodulestate),
     NULL,
     NULL,
-    astmodule_traverse,
+    NULL, // astmodule_traverse,
     astmodule_clear,
     astmodule_free,
 };
@@ -1003,14 +800,6 @@ ast_dealloc(AST_object *self)
 }
 
 static int
-ast_traverse(AST_object *self, visitproc visit, void *arg)
-{
-    Py_VISIT(Py_TYPE(self));
-    Py_VISIT(self->dict);
-    return 0;
-}
-
-static int
 ast_clear(AST_object *self)
 {
     Py_CLEAR(self->dict);
@@ -1120,7 +909,7 @@ static PyType_Slot AST_type_slots[] = {
     {Py_tp_dealloc, ast_dealloc},
     {Py_tp_getattro, PyObject_GenericGetAttr},
     {Py_tp_setattro, PyObject_GenericSetAttr},
-    {Py_tp_traverse, ast_traverse},
+    {Py_tp_traverse, 0},
     {Py_tp_clear, ast_clear},
     {Py_tp_members, ast_type_members},
     {Py_tp_methods, ast_type_methods},
@@ -1128,7 +917,7 @@ static PyType_Slot AST_type_slots[] = {
     {Py_tp_init, ast_type_init},
     {Py_tp_alloc, PyType_GenericAlloc},
     {Py_tp_new, PyType_GenericNew},
-    {Py_tp_free, PyObject_Del},
+    {Py_tp_free, PyMem_Free},
     {0, 0},
 };
 

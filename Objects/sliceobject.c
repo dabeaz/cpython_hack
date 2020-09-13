@@ -298,7 +298,7 @@ slice_dealloc(PySliceObject *r)
     Py_DECREF(r->step);
     Py_DECREF(r->start);
     Py_DECREF(r->stop);
-    PyObject_Del(r);
+    PyMem_Free(r);
 }
 
 static PyObject *
@@ -577,15 +577,6 @@ slice_richcompare(PyObject *v, PyObject *w, int op)
     return res;
 }
 
-static int
-slice_traverse(PySliceObject *v, visitproc visit, void *arg)
-{
-    Py_VISIT(v->start);
-    Py_VISIT(v->stop);
-    Py_VISIT(v->step);
-    return 0;
-}
-
 PyTypeObject PySlice_Type = {
     PyVarObject_HEAD_INIT(&PyType_Type, 0)
     "slice",                    /* Name of this type */
@@ -608,7 +599,7 @@ PyTypeObject PySlice_Type = {
     0,                                          /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC,    /* tp_flags */
     slice_doc,                                  /* tp_doc */
-    (traverseproc)slice_traverse,               /* tp_traverse */
+    0,  // (traverseproc)slice_traverse,               /* tp_traverse */
     0,                                          /* tp_clear */
     slice_richcompare,                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */

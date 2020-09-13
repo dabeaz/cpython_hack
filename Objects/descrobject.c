@@ -21,7 +21,7 @@ descr_dealloc(PyDescrObject *descr)
     Py_XDECREF(descr->d_type);
     Py_XDECREF(descr->d_name);
     Py_XDECREF(descr->d_qualname);
-    PyObject_Del(descr);
+    PyMem_Free(descr);
 }
 
 static PyObject *
@@ -1122,7 +1122,7 @@ static void
 mappingproxy_dealloc(mappingproxyobject *pp)
 {
     Py_DECREF(pp->mapping);
-    PyObject_Del(pp);
+    PyMem_Free(pp);
 }
 
 static PyObject *
@@ -1223,7 +1223,7 @@ wrapper_dealloc(wrapperobject *wp)
 {
     Py_XDECREF(wp->descr);
     Py_XDECREF(wp->self);
-    PyObject_Del(wp);
+    PyMem_Free(wp);
 }
 
 static PyObject *
@@ -1885,5 +1885,5 @@ PyTypeObject PyProperty_Type = {
     property_init,                              /* tp_init */
     PyType_GenericAlloc,                        /* tp_alloc */
     PyType_GenericNew,                          /* tp_new */
-    PyObject_Del,                            /* tp_free */
+    PyMem_Free,                            /* tp_free */
 };

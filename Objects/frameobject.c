@@ -587,7 +587,7 @@ frame_dealloc(PyFrameObject *f)
         co->co_zombieframe = f;
     }
     else {
-	PyObject_Del(f);
+      PyMem_Free(f);
     }
 
     Py_DECREF(co);

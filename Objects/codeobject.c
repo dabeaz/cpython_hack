@@ -399,7 +399,7 @@ PyCode_NewWithPosOnlyArgs(int argcount, int posonlyargcount, int kwonlyargcount,
     /* Create mapping between cells and arguments if needed. */
     if (n_cellvars) {
         bool used_cell2arg = false;
-        cell2arg = PyMem_NEW(Py_ssize_t, n_cellvars);
+        cell2arg = PyMem_New(Py_ssize_t, n_cellvars);
         if (cell2arg == NULL) {
             PyErr_NoMemory();
             return NULL;
@@ -413,7 +413,7 @@ PyCode_NewWithPosOnlyArgs(int argcount, int posonlyargcount, int kwonlyargcount,
                 PyObject *arg = PyTuple_GET_ITEM(varnames, j);
                 int cmp = PyUnicode_Compare(cell, arg);
                 if (cmp == -1 && PyErr_Occurred()) {
-                    PyMem_FREE(cell2arg);
+                    PyMem_Free(cell2arg);
                     return NULL;
                 }
                 if (cmp == 0) {
@@ -424,14 +424,14 @@ PyCode_NewWithPosOnlyArgs(int argcount, int posonlyargcount, int kwonlyargcount,
             }
         }
         if (!used_cell2arg) {
-            PyMem_FREE(cell2arg);
+            PyMem_Free(cell2arg);
             cell2arg = NULL;
         }
     }
     co = PyObject_New(PyCodeObject, &PyCode_Type);
     if (co == NULL) {
         if (cell2arg)
-            PyMem_FREE(cell2arg);
+            PyMem_Free(cell2arg);
         return NULL;
     }
     co->co_argcount = argcount;
@@ -725,12 +725,12 @@ code_dealloc(PyCodeObject *co)
     Py_XDECREF(co->co_name);
     Py_XDECREF(co->co_lnotab);
     if (co->co_cell2arg != NULL)
-        PyMem_FREE(co->co_cell2arg);
+        PyMem_Free(co->co_cell2arg);
     if (co->co_zombieframe != NULL)
-        PyObject_Del(co->co_zombieframe);
+        PyMem_Free(co->co_zombieframe);
     if (co->co_weakreflist != NULL)
         PyObject_ClearWeakRefs((PyObject*)co);
-    PyObject_DEL(co);
+    PyMem_Free(co);
 }
 
 static PyObject *

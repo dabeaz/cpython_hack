@@ -668,13 +668,6 @@ ast_dealloc(AST_object *self)
     Py_DECREF(tp);
 }
 
-static int
-ast_traverse(AST_object *self, visitproc visit, void *arg)
-{
-    Py_VISIT(Py_TYPE(self));
-    Py_VISIT(self->dict);
-    return 0;
-}
 
 static int
 ast_clear(AST_object *self)
@@ -786,7 +779,7 @@ static PyType_Slot AST_type_slots[] = {
     {Py_tp_dealloc, ast_dealloc},
     {Py_tp_getattro, PyObject_GenericGetAttr},
     {Py_tp_setattro, PyObject_GenericSetAttr},
-    {Py_tp_traverse, ast_traverse},
+    {Py_tp_traverse, 0},
     {Py_tp_clear, ast_clear},
     {Py_tp_members, ast_type_members},
     {Py_tp_methods, ast_type_methods},
@@ -794,7 +787,7 @@ static PyType_Slot AST_type_slots[] = {
     {Py_tp_init, ast_type_init},
     {Py_tp_alloc, PyType_GenericAlloc},
     {Py_tp_new, PyType_GenericNew},
-    {Py_tp_free, PyObject_Del},
+    {Py_tp_free, PyMem_Free},
     {0, 0},
 };
 
@@ -1340,15 +1333,6 @@ static int astmodule_clear(PyObject *module)
     return 0;
 }
 
-static int astmodule_traverse(PyObject *module, visitproc visit, void* arg)
-{
-""")
-    for s in module_state:
-        f.write("    Py_VISIT(astmodulestate(module)->" + s + ');\n')
-    f.write("""
-    return 0;
-}
-
 static void astmodule_free(void* module) {
     astmodule_clear((PyObject*)module);
 }
@@ -1360,7 +1344,7 @@ static struct PyModuleDef _astmodule = {
     sizeof(astmodulestate),
     NULL,
     NULL,
-    astmodule_traverse,
+    NULL,
     astmodule_clear,
     astmodule_free,
 };

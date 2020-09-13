@@ -46,7 +46,7 @@ static void tok_backup(struct tok_state *tok, int c);
 static struct tok_state *
 tok_new(void)
 {
-    struct tok_state *tok = (struct tok_state *)PyMem_MALLOC(
+    struct tok_state *tok = (struct tok_state *)PyMem_Malloc(
                                             sizeof(struct tok_state));
     if (tok == NULL)
         return NULL;
@@ -92,7 +92,7 @@ translate_newlines(const char *s, int exec_input, struct tok_state *tok) {
     size_t needed_length = strlen(s) + 2, final_length;
     char *buf, *current;
     char c = '\0';
-    buf = PyMem_MALLOC(needed_length);
+    buf = PyMem_Malloc(needed_length);
     if (buf == NULL) {
         tok->done = E_NOMEM;
         return NULL;
@@ -123,9 +123,9 @@ translate_newlines(const char *s, int exec_input, struct tok_state *tok) {
     final_length = current - buf + 1;
     if (final_length < needed_length && final_length) {
         /* should never fail */
-        char* result = PyMem_REALLOC(buf, final_length);
+        char* result = PyMem_Realloc(buf, final_length);
         if (result == NULL) {
-            PyMem_FREE(buf);
+            PyMem_Free(buf);
         }
         buf = result;
     }
@@ -188,7 +188,7 @@ PyTokenizer_FromFile(FILE *fp,
     struct tok_state *tok = tok_new();
     if (tok == NULL)
         return NULL;
-    if ((tok->buf = (char *)PyMem_MALLOC(BUFSIZ)) == NULL) {
+    if ((tok->buf = (char *)PyMem_Malloc(BUFSIZ)) == NULL) {
         PyTokenizer_Free(tok);
         return NULL;
     }
@@ -208,10 +208,10 @@ PyTokenizer_Free(struct tok_state *tok)
 {
     Py_XDECREF(tok->filename);
     if (tok->fp != NULL && tok->buf != NULL)
-        PyMem_FREE(tok->buf);
+        PyMem_Free(tok->buf);
     if (tok->input)
-        PyMem_FREE(tok->input);
-    PyMem_FREE(tok);
+        PyMem_Free(tok->input);
+    PyMem_Free(tok);
 }
 
 /* Get next char, updating state; error code goes into tok->done */
@@ -247,7 +247,7 @@ tok_nextc(struct tok_state *tok)
             char *newtok = PyOS_Readline(stdin, stdout, tok->prompt);
             if (newtok != NULL) {
                 char *translated = translate_newlines(newtok, 0, tok);
-                PyMem_FREE(newtok);
+                PyMem_Free(newtok);
                 if (translated == NULL)
                     return EOF;
                 newtok = translated;
@@ -257,7 +257,7 @@ tok_nextc(struct tok_state *tok)
             if (newtok == NULL)
                 tok->done = E_INTR;
             else if (*newtok == '\0') {
-                PyMem_FREE(newtok);
+                PyMem_Free(newtok);
                 tok->done = E_EOF;
             }
             else if (tok->start != NULL) {
@@ -266,12 +266,12 @@ tok_nextc(struct tok_state *tok)
                 size_t newlen = oldlen + strlen(newtok);
                 Py_ssize_t cur_multi_line_start = tok->multi_line_start - tok->buf;
                 char *buf = tok->buf;
-                buf = (char *)PyMem_REALLOC(buf, newlen+1);
+                buf = (char *)PyMem_Realloc(buf, newlen+1);
                 tok->lineno++;
                 if (buf == NULL) {
-                    PyMem_FREE(tok->buf);
+                    PyMem_Free(tok->buf);
                     tok->buf = NULL;
-                    PyMem_FREE(newtok);
+                    PyMem_Free(newtok);
                     tok->done = E_NOMEM;
                     return EOF;
                 }
@@ -280,7 +280,7 @@ tok_nextc(struct tok_state *tok)
                 tok->multi_line_start = tok->buf + cur_multi_line_start;
                 tok->line_start = tok->cur;
                 strcpy(tok->buf + oldlen, newtok);
-                PyMem_FREE(newtok);
+                PyMem_Free(newtok);
                 tok->inp = tok->buf + newlen;
                 tok->end = tok->inp + 1;
                 tok->start = tok->buf + start;
@@ -288,7 +288,7 @@ tok_nextc(struct tok_state *tok)
             else {
                 tok->lineno++;
                 if (tok->buf != NULL)
-                    PyMem_FREE(tok->buf);
+                    PyMem_Free(tok->buf);
                 tok->buf = newtok;
                 tok->cur = tok->buf;
                 tok->line_start = tok->buf;
@@ -303,7 +303,7 @@ tok_nextc(struct tok_state *tok)
             if (tok->start == NULL) {
                 if (tok->buf == NULL) {
                     tok->buf = (char *)
-                        PyMem_MALLOC(BUFSIZ);
+                        PyMem_Malloc(BUFSIZ);
                     if (tok->buf == NULL) {
                         tok->done = E_NOMEM;
                         return EOF;
@@ -339,7 +339,7 @@ tok_nextc(struct tok_state *tok)
                 Py_ssize_t curvalid = tok->inp - tok->buf;
                 Py_ssize_t newsize = curvalid + BUFSIZ;
                 char *newbuf = tok->buf;
-                newbuf = (char *)PyMem_REALLOC(newbuf,
+                newbuf = (char *)PyMem_Realloc(newbuf,
                                                newsize);
                 if (newbuf == NULL) {
                     tok->done = E_NOMEM;

@@ -2,7 +2,7 @@
     An implementation of the I/O abstract base classes hierarchy
     as defined by PEP 3116 - "New I/O"
 
-    Classes defined here: IOBase, RawIOBase.
+    Classes defined here: IOBase, IOBase.
 
     Written by Amaury Forgeot d'Arc and Antoine Pitrou
 */
@@ -317,13 +317,6 @@ _PyIOBase_finalize(PyObject *self)
 }
 
 static int
-iobase_traverse(iobase *self, visitproc visit, void *arg)
-{
-    Py_VISIT(self->dict);
-    return 0;
-}
-
-static int
 iobase_clear(iobase *self)
 {
     Py_CLEAR(self->dict);
@@ -534,7 +527,7 @@ _io__IOBase_readline_impl(PyObject *self, Py_ssize_t limit)
     Py_ssize_t bufsize, bufmax;
     char *buffer;
 
-    buffer = (char *) PyMem_RawMalloc(100);
+    buffer = (char *) PyMem_Malloc(100);
     bufsize = 0;
     bufmax = 100;
     
@@ -563,9 +556,9 @@ _io__IOBase_readline_impl(PyObject *self, Py_ssize_t limit)
 	if (bufsize + bsize >= bufmax) {
 	  char *newbuffer;
 	  Py_ssize_t newmax = bufsize + bsize > 2*bufmax ? bufsize+bsize : 2*bufmax;
-	  newbuffer = PyMem_RawRealloc(buffer, newmax);
+	  newbuffer = PyMem_Realloc(buffer, newmax);
 	  if (newbuffer == NULL) {
-	    PyMem_RawFree(buffer);
+	    PyMem_Free(buffer);
 	    return NULL;
 	  }
 	  buffer = newbuffer;
@@ -579,10 +572,10 @@ _io__IOBase_readline_impl(PyObject *self, Py_ssize_t limit)
             break;
     }
     result = PyUnicode_FromStringAndSize(buffer, bufsize);
-    PyMem_RawFree(buffer);
+    PyMem_Free(buffer);
     return result;
   fail:
-    PyMem_RawFree(buffer);
+    PyMem_Free(buffer);
     return NULL;
 }
 
@@ -1053,7 +1046,7 @@ PyTypeObject PyIOBase_Type = {
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
     //        | Py_TPFLAGS_HAVE_GC,   /*tp_flags*/
     iobase_doc,                 /* tp_doc */
-    (traverseproc)iobase_traverse, /* tp_traverse */
+    0, // (traverseproc)iobase_traverse, /* tp_traverse */
     (inquiry)iobase_clear,      /* tp_clear */
     0,                          /* tp_richcompare */
     offsetof(iobase, weakreflist), /* tp_weaklistoffset */

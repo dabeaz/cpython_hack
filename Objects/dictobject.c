@@ -661,7 +661,7 @@ static PyDictKeysObject *new_keys_object(Py_ssize_t size)
         es = sizeof(Py_ssize_t);
     }
     {
-        dk = PyObject_MALLOC(sizeof(PyDictKeysObject)
+        dk = PyMem_Malloc(sizeof(PyDictKeysObject)
                              + es * size
                              + sizeof(PyDictKeyEntry) * usable);
         if (dk == NULL) {
@@ -688,7 +688,7 @@ free_keys_object(PyDictKeysObject *keys)
         Py_XDECREF(entries[i].me_key);
         Py_XDECREF(entries[i].me_value);
     }
-    PyObject_FREE(keys);
+    PyMem_Free(keys);
 }
 
 /* Consumes a reference to the keys object */
@@ -718,7 +718,7 @@ clone_combined_dict(PyDictObject *orig)
     assert(orig->ma_keys->dk_refcnt == 1);
 
     Py_ssize_t keys_size = _PyDict_KeysSize(orig->ma_keys);
-    PyDictKeysObject *keys = PyObject_Malloc(keys_size);
+    PyDictKeysObject *keys = PyMem_Malloc(keys_size);
     if (keys == NULL) {
         PyErr_NoMemory();
         return NULL;
@@ -1062,7 +1062,7 @@ dictresize(PyDictObject *mp, Py_ssize_t minsize)
     if (oldkeys != Py_EMPTY_KEYS) {
       assert(oldkeys->dk_refcnt == 1);
 	{
-	  PyObject_FREE(oldkeys);
+	  PyMem_Free(oldkeys);
 	}
     } else {
       dictkeys_decref(oldkeys);
@@ -2934,7 +2934,7 @@ PyTypeObject PyDict_Type = {
     dict_init,                                  /* tp_init */
     PyType_GenericAlloc,                        /* tp_alloc */
     dict_new,                                   /* tp_new */
-    PyObject_Del,                            /* tp_free */
+    PyMem_Free,                            /* tp_free */
     .tp_vectorcall = dict_vectorcall,
 };
 
@@ -3063,7 +3063,7 @@ dictiter_dealloc(dictiterobject *di)
     /* bpo-31095: UnTrack is needed before calling any callbacks */
     Py_XDECREF(di->di_dict);
     Py_XDECREF(di->di_result);
-    PyObject_Del(di);
+    PyMem_Free(di);
 }
 
 static PyObject *
@@ -3504,7 +3504,7 @@ dictview_dealloc(_PyDictViewObject *dv)
 {
     /* bpo-31095: UnTrack is needed before calling any callbacks */
     Py_XDECREF(dv->dv_dict);
-    PyObject_Del(dv);
+    PyMem_Free(dv);
 }
 
 static Py_ssize_t

@@ -5,7 +5,6 @@
 #include "pycore_initconfig.h"
 #include "pycore_fileutils.h"
 #include "pycore_pathconfig.h"
-#include "pycore_pymem.h"         // _PyMem_SetDefaultAllocator()
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,15 +33,9 @@ copy_str(char **dst, const char *src)
 static void
 pathconfig_clear(_PyPathConfig *config)
 {
-    /* _PyMem_SetDefaultAllocator() is needed to get a known memory allocator,
-       since Py_SetPath(), Py_SetPythonHome() and Py_SetProgramName() can be
-       called before Py_Initialize() which can changes the memory allocator. */
-    PyMemAllocatorEx old_alloc;
-    _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-
 #define CLEAR(ATTR) \
     do { \
-        PyMem_RawFree(ATTR); \
+        PyMem_Free(ATTR); \
         ATTR = NULL; \
     } while (0)
 
@@ -54,8 +47,6 @@ pathconfig_clear(_PyPathConfig *config)
     CLEAR(config->home);
 
 #undef CLEAR
-
-    PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
 }
 
 
@@ -87,12 +78,7 @@ pathconfig_copy(_PyPathConfig *config, const _PyPathConfig *config2)
 void
 _PyPathConfig_ClearGlobal(void)
 {
-    PyMemAllocatorEx old_alloc;
-    _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-
     pathconfig_clear(&_Py_path_config);
-
-    PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
 }
 
 
@@ -107,7 +93,7 @@ _PyStringList_Join(const PyStringList *list, char sep)
         len += strlen(list->items[i]);
     }
 
-    char *text = PyMem_RawMalloc(len * sizeof(char));
+    char *text = PyMem_Malloc(len * sizeof(char));
     if (text == NULL) {
         return NULL;
     }
@@ -129,11 +115,9 @@ static PyStatus
 pathconfig_set_from_config(_PyPathConfig *pathconfig, const PyConfig *config)
 {
     PyStatus status;
-    PyMemAllocatorEx old_alloc;
-    _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
 
     if (config->module_search_paths_set) {
-        PyMem_RawFree(pathconfig->module_search_path);
+        PyMem_Free(pathconfig->module_search_path);
         pathconfig->module_search_path = _PyStringList_Join(&config->module_search_paths, DELIM);
         if (pathconfig->module_search_path == NULL) {
             goto no_memory;
@@ -142,7 +126,7 @@ pathconfig_set_from_config(_PyPathConfig *pathconfig, const PyConfig *config)
 
 #define COPY_CONFIG(PATH_ATTR, CONFIG_ATTR) \
         if (config->CONFIG_ATTR) { \
-            PyMem_RawFree(pathconfig->PATH_ATTR); \
+            PyMem_Free(pathconfig->PATH_ATTR); \
             pathconfig->PATH_ATTR = NULL; \
             if (copy_str(&pathconfig->PATH_ATTR, config->CONFIG_ATTR) < 0) { \
                 goto no_memory; \
@@ -164,7 +148,6 @@ no_memory:
     status = _PyStatus_NO_MEMORY();
 
 done:
-    PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
     return status;
 }
 
@@ -192,7 +175,7 @@ config_init_module_search_paths(PyConfig *config, _PyPathConfig *pathconfig)
         }
 
         size_t path_len = (p - sys_path);
-        char *path = PyMem_RawMalloc((path_len + 1));
+        char *path = PyMem_Malloc((path_len + 1));
         if (path == NULL) {
             return _PyStatus_NO_MEMORY();
         }
@@ -200,7 +183,7 @@ config_init_module_search_paths(PyConfig *config, _PyPathConfig *pathconfig)
         path[path_len] = '\0';
 
         PyStatus status = PyStringList_Append(&config->module_search_paths, path);
-        PyMem_RawFree(path);
+        PyMem_Free(path);
         if (_PyStatus_EXCEPTION(status)) {
             return status;
         }
@@ -243,10 +226,6 @@ static PyStatus
 pathconfig_calculate(_PyPathConfig *pathconfig, const PyConfig *config)
 {
     PyStatus status;
-
-    PyMemAllocatorEx old_alloc;
-    _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-
     status = pathconfig_copy(pathconfig, &_Py_path_config);
     if (_PyStatus_EXCEPTION(status)) {
         goto done;
@@ -265,7 +244,6 @@ pathconfig_calculate(_PyPathConfig *pathconfig, const PyConfig *config)
     }
 
 done:
-    PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
     return status;
 }
 
@@ -414,24 +392,18 @@ Py_SetPath(const char *path)
         pathconfig_clear(&_Py_path_config);
         return;
     }
-
-    PyMemAllocatorEx old_alloc;
-    _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-
     /* Getting the program full path calls pathconfig_global_init() */
     char *program_full_path = strdup(Py_GetProgramFullPath());
 
-    PyMem_RawFree(_Py_path_config.program_full_path);
-    PyMem_RawFree(_Py_path_config.prefix);
-    PyMem_RawFree(_Py_path_config.exec_prefix);
-    PyMem_RawFree(_Py_path_config.module_search_path);
+    PyMem_Free(_Py_path_config.program_full_path);
+    PyMem_Free(_Py_path_config.prefix);
+    PyMem_Free(_Py_path_config.exec_prefix);
+    PyMem_Free(_Py_path_config.module_search_path);
 
     _Py_path_config.program_full_path = program_full_path;
     _Py_path_config.prefix = strdup("");
     _Py_path_config.exec_prefix = strdup("");
     _Py_path_config.module_search_path = strdup(path);
-
-    PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
 
     if (_Py_path_config.program_full_path == NULL
         || _Py_path_config.prefix == NULL
@@ -450,13 +422,8 @@ Py_SetPythonHome(const char *home)
         return;
     }
 
-    PyMemAllocatorEx old_alloc;
-    _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-
-    PyMem_RawFree(_Py_path_config.home);
+    PyMem_Free(_Py_path_config.home);
     _Py_path_config.home = strdup(home);
-
-    PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
 
     if (_Py_path_config.home == NULL) {
         path_out_of_memory(__func__);
@@ -470,15 +437,8 @@ Py_SetProgramName(const char *program_name)
     if (program_name == NULL || program_name[0] == '\0') {
         return;
     }
-
-    PyMemAllocatorEx old_alloc;
-    _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-
-    PyMem_RawFree(_Py_path_config.program_name);
+    PyMem_Free(_Py_path_config.program_name);
     _Py_path_config.program_name = strdup(program_name);
-
-    PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-
     if (_Py_path_config.program_name == NULL) {
         path_out_of_memory(__func__);
     }
@@ -490,15 +450,8 @@ _Py_SetProgramFullPath(const char *program_full_path)
     if (program_full_path == NULL || program_full_path[0] == '\0') {
         return;
     }
-
-    PyMemAllocatorEx old_alloc;
-    _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-
-    PyMem_RawFree(_Py_path_config.program_full_path);
+    PyMem_Free(_Py_path_config.program_full_path);
     _Py_path_config.program_full_path = strdup(program_full_path);
-
-    PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-
     if (_Py_path_config.program_full_path == NULL) {
         path_out_of_memory(__func__);
     }

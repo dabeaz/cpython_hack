@@ -222,7 +222,7 @@ cleanreturn(int retval, freelist_t *freelist)
       }
     }
     if (freelist->entries_malloced)
-        PyMem_FREE(freelist->entries);
+        PyMem_Free(freelist->entries);
     return retval;
 }
 
@@ -305,7 +305,7 @@ vgetargs1_impl(PyObject *compat_args, PyObject *const *stack, Py_ssize_t nargs, 
     format = formatsave;
 
     if (max > STATIC_FREELIST_ENTRIES) {
-        freelist.entries = PyMem_NEW(freelistentry_t, max);
+        freelist.entries = PyMem_New(freelistentry_t, max);
         if (freelist.entries == NULL) {
             PyErr_NoMemory();
             return 0;
@@ -1191,7 +1191,7 @@ vgetargskeywords(PyObject *args, PyObject *kwargs, const char *format,
     }
 
     if (len > STATIC_FREELIST_ENTRIES) {
-        freelist.entries = PyMem_NEW(freelistentry_t, len);
+        freelist.entries = PyMem_New(freelistentry_t, len);
         if (freelist.entries == NULL) {
             PyErr_NoMemory();
             return 0;
@@ -1618,7 +1618,7 @@ vgetargskeywordsfast_impl(PyObject *const *args, Py_ssize_t nargs,
     len = pos + (int)PyTuple_GET_SIZE(kwtuple);
 
     if (len > STATIC_FREELIST_ENTRIES) {
-        freelist.entries = PyMem_NEW(freelistentry_t, len);
+        freelist.entries = PyMem_New(freelistentry_t, len);
         if (freelist.entries == NULL) {
             PyErr_NoMemory();
             return 0;

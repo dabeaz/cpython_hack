@@ -8,7 +8,6 @@
 #include "pycore_pyerrors.h"
 #include "pycore_pyhash.h"
 #include "pycore_pylifecycle.h"
-#include "pycore_pymem.h"         // _PyMem_SetDefaultAllocator()
 #include "pycore_interp.h"        // _PyInterpreterState_ClearModules()
 #include "pycore_pystate.h"       // _PyInterpreterState_GET()
 #include "pycore_sysmodule.h"
@@ -42,15 +41,9 @@ _PyImport_Fini(void)
 void
 _PyImport_Fini2(void)
 {
-    /* Use the same memory allocator than PyImport_ExtendInittab(). */
-    PyMemAllocatorEx old_alloc;
-    _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-
     /* Free memory allocated by PyImport_ExtendInittab() */
-    PyMem_RawFree(inittab_copy);
+    PyMem_Free(inittab_copy);
     inittab_copy = NULL;
-
-    PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
 }
 
 /* Helper for sys */

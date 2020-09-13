@@ -426,13 +426,6 @@ _io_FileIO___init___impl(fileio *self, PyObject *nameobj, const char *mode,
 }
 
 static int
-fileio_traverse(fileio *self, visitproc visit, void *arg)
-{
-    Py_VISIT(self->dict);
-    return 0;
-}
-
-static int
 fileio_clear(fileio *self)
 {
     Py_CLEAR(self->dict);
@@ -600,7 +593,7 @@ _io_FileIO_readall_impl(fileio *self)
         bufsize = SMALLCHUNK;
     }
 
-    buffer = PyMem_RawMalloc(bufsize);
+    buffer = PyMem_Malloc(bufsize);
     if (buffer == NULL)
         return NULL;
 
@@ -611,13 +604,13 @@ _io_FileIO_readall_impl(fileio *self)
                 PyErr_SetString(PyExc_OverflowError,
                                 "unbounded read returned more bytes "
                                 "than a Python bytes object can hold");
-		PyMem_RawFree(buffer);
+		PyMem_Free(buffer);
                 return NULL;
             }
 	    if (bufsize < newbufsize) {
-	      char *newbuffer = PyMem_RawRealloc(buffer, newbufsize);
+	      char *newbuffer = PyMem_Realloc(buffer, newbufsize);
 	      if (newbuffer == NULL) {
-		PyMem_RawFree(buffer);
+		PyMem_Free(buffer);
 		return NULL;
 	      }
 	      buffer = newbuffer;
@@ -631,14 +624,14 @@ _io_FileIO_readall_impl(fileio *self)
         if (n == 0)
             break;
         if (n == -1) {
-	  PyMem_RawFree(buffer);
+	  PyMem_Free(buffer);
 	  return NULL;
         }
         bytes_read += n;
         pos += n;
     }
     result = PyUnicode_FromStringAndSize(buffer, bytes_read);
-    PyMem_RawFree(buffer);
+    PyMem_Free(buffer);
     return result;
 }
 
@@ -674,17 +667,17 @@ _io_FileIO_read_impl(fileio *self, Py_ssize_t size)
         size = _PY_READ_MAX;
     }
 
-    ptr = (char *) PyMem_RawMalloc(size);
+    ptr = (char *) PyMem_Malloc(size);
     if (ptr == NULL) {
       return NULL;
     }
     n = _Py_read(self->fd, ptr, size);
     if (n == -1) {
-	PyMem_RawFree(ptr);
+	PyMem_Free(ptr);
         return NULL;
     }
     bytes = PyUnicode_FromStringAndSize(ptr, n);
-    PyMem_RawFree(ptr);
+    PyMem_Free(ptr);
     return bytes;
 }
 
@@ -1404,7 +1397,7 @@ PyTypeObject PyFileIO_Type = {
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, 
     // | Py_TPFLAGS_HAVE_GC,                   /* tp_flags */
     _io_FileIO___init____doc__,                 /* tp_doc */
-    (traverseproc)fileio_traverse,              /* tp_traverse */
+    0, // (traverseproc)fileio_traverse,              /* tp_traverse */
     (inquiry)fileio_clear,                      /* tp_clear */
     0,                                          /* tp_richcompare */
     offsetof(fileio, weakreflist),              /* tp_weaklistoffset */
@@ -1421,7 +1414,7 @@ PyTypeObject PyFileIO_Type = {
     _io_FileIO___init__,                        /* tp_init */
     PyType_GenericAlloc,                        /* tp_alloc */
     fileio_new,                                 /* tp_new */
-    PyObject_Del,                            /* tp_free */
+    PyMem_Free,                            /* tp_free */
     0,                                          /* tp_is_gc */
     0,                                          /* tp_bases */
     0,                                          /* tp_mro */

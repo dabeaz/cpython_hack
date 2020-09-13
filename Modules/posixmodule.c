@@ -1095,16 +1095,6 @@ _posix_clear(PyObject *module)
     return 0;
 }
 
-static int
-_posix_traverse(PyObject *module, visitproc visit, void *arg)
-{
-    _posixstate *state = get_posix_state(module);
-    Py_VISIT(state->billion);
-    Py_VISIT(state->StatResultType);
-    Py_VISIT(state->st_mode);
-    return 0;
-}
-
 static void
 _posix_free(void *module)
 {
@@ -1676,13 +1666,13 @@ posix_getcwd(int use_bytes)
         char *newbuf;
         if (buflen <= PY_SSIZE_T_MAX - chunk) {
             buflen += chunk;
-            newbuf = PyMem_RawRealloc(buf, buflen);
+            newbuf = PyMem_Realloc(buf, buflen);
         }
         else {
             newbuf = NULL;
         }
         if (newbuf == NULL) {
-            PyMem_RawFree(buf);
+            PyMem_Free(buf);
             buf = NULL;
             break;
         }
@@ -1696,13 +1686,13 @@ posix_getcwd(int use_bytes)
         return PyErr_NoMemory();
     }
     if (cwd == NULL) {
-        PyMem_RawFree(buf);
+        PyMem_Free(buf);
         return posix_error();
     }
 
     PyObject *obj;
     obj = PyUnicode_FromString(buf);
-    PyMem_RawFree(buf);
+    PyMem_Free(buf);
 
     return obj;
 }
@@ -3932,7 +3922,7 @@ static struct PyModuleDef posixmodule = {
     .m_size = sizeof(_posixstate),
     .m_methods = posix_methods,
     .m_slots = posixmodile_slots,
-    .m_traverse = _posix_traverse,
+    .m_traverse = NULL,
     .m_clear = _posix_clear,
     .m_free = _posix_free,
 };

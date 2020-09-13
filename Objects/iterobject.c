@@ -34,7 +34,7 @@ static void
 iter_dealloc(seqiterobject *it)
 {
     Py_XDECREF(it->it_seq);
-    PyObject_Del(it);
+    PyMem_Free(it);
 }
 
 static PyObject *
@@ -187,7 +187,7 @@ calliter_dealloc(calliterobject *it)
 {
     Py_XDECREF(it->it_callable);
     Py_XDECREF(it->it_sentinel);
-    PyObject_Del(it);
+    PyMem_Free(it);
 }
 
 static PyObject *

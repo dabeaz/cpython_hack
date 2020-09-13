@@ -6,7 +6,6 @@
 #include "pycore_pathconfig.h"    // _Py_path_config
 #include "pycore_pyerrors.h"      // _PyErr_Fetch()
 #include "pycore_pylifecycle.h"   // _Py_PreInitializeFromConfig()
-#include "pycore_pymem.h"         // _PyMem_SetDefaultAllocator()
 #include "pycore_pystate.h"       // PyThreadState_Get()
 
 #include "osdefs.h"               // DELIM
@@ -225,9 +224,9 @@ _PyStringList_Clear(PyStringList *list)
 {
     assert(_PyStringList_CheckConsistency(list));
     for (Py_ssize_t i=0; i < list->length; i++) {
-        PyMem_RawFree(list->items[i]);
+        PyMem_Free(list->items[i]);
     }
-    PyMem_RawFree(list->items);
+    PyMem_Free(list->items);
     list->length = 0;
     list->items = NULL;
 }
@@ -247,7 +246,7 @@ _PyStringList_Copy(PyStringList *list, const PyStringList *list2)
     PyStringList copy = _PyStringList_INIT;
 
     size_t size = list2->length * sizeof(list2->items[0]);
-    copy.items = PyMem_RawMalloc(size);
+    copy.items = PyMem_Malloc(size);
     if (copy.items == NULL) {
         return -1;
     }
@@ -289,9 +288,9 @@ PyStringList_Insert(PyStringList *list,
     }
 
     size_t size = (len + 1) * sizeof(list->items[0]);
-    char **items2 = (char **)PyMem_RawRealloc(list->items, size);
+    char **items2 = (char **)PyMem_Realloc(list->items, size);
     if (items2 == NULL) {
-        PyMem_RawFree(item2);
+        PyMem_Free(item2);
         return _PyStatus_NO_MEMORY();
     }
 
@@ -367,33 +366,26 @@ Py_SetStandardStreamEncoding(const char *encoding, const char *errors)
     }
 
     int res = 0;
-
-    /* Py_SetStandardStreamEncoding() can be called before Py_Initialize(),
-       but Py_Initialize() can change the allocator. Use a known allocator
-       to be able to release the memory later. */
-    PyMemAllocatorEx old_alloc;
-    _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-
     /* Can't call PyErr_NoMemory() on errors, as Python hasn't been
      * initialised yet.
      *
      * However, the raw memory allocators are initialised appropriately
-     * as C static variables, so _PyMem_RawStrdup is OK even though
+     * as C static variables, so _PyMem_Strdup is OK even though
      * Py_Initialize hasn't been called yet.
      */
     if (encoding) {
-        PyMem_RawFree(_Py_StandardStreamEncoding);
-        _Py_StandardStreamEncoding = _PyMem_RawStrdup(encoding);
+        PyMem_Free(_Py_StandardStreamEncoding);
+        _Py_StandardStreamEncoding = _PyMem_Strdup(encoding);
         if (!_Py_StandardStreamEncoding) {
             res = -2;
             goto done;
         }
     }
     if (errors) {
-        PyMem_RawFree(_Py_StandardStreamErrors);
-        _Py_StandardStreamErrors = _PyMem_RawStrdup(errors);
+        PyMem_Free(_Py_StandardStreamErrors);
+        _Py_StandardStreamErrors = _PyMem_Strdup(errors);
         if (!_Py_StandardStreamErrors) {
-            PyMem_RawFree(_Py_StandardStreamEncoding);
+            PyMem_Free(_Py_StandardStreamEncoding);
             _Py_StandardStreamEncoding = NULL;
             res = -3;
             goto done;
@@ -401,8 +393,6 @@ Py_SetStandardStreamEncoding(const char *encoding, const char *errors)
     }
 
 done:
-    PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-
     return res;
 }
 
@@ -410,21 +400,16 @@ done:
 void
 _Py_ClearStandardStreamEncoding(void)
 {
-    /* Use the same allocator than Py_SetStandardStreamEncoding() */
-    PyMemAllocatorEx old_alloc;
-    _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-
+    
     /* We won't need them anymore. */
     if (_Py_StandardStreamEncoding) {
-        PyMem_RawFree(_Py_StandardStreamEncoding);
+        PyMem_Free(_Py_StandardStreamEncoding);
         _Py_StandardStreamEncoding = NULL;
     }
     if (_Py_StandardStreamErrors) {
-        PyMem_RawFree(_Py_StandardStreamErrors);
+        PyMem_Free(_Py_StandardStreamErrors);
         _Py_StandardStreamErrors = NULL;
     }
-
-    PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
 }
 
 
@@ -437,12 +422,7 @@ static PyStringList orig_argv = {.length = 0, .items = NULL};
 void
 _Py_ClearArgcArgv(void)
 {
-    PyMemAllocatorEx old_alloc;
-    _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-
     _PyStringList_Clear(&orig_argv);
-
-    PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
 }
 
 
@@ -451,13 +431,8 @@ _Py_SetArgcArgv(Py_ssize_t argc, char * const *argv)
 {
     const PyStringList argv_list = {.length = argc, .items = (char **)argv};
     int res;
-
-    PyMemAllocatorEx old_alloc;
-    _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
-
+    
     res = _PyStringList_Copy(&orig_argv, &argv_list);
-
-    PyMem_SetAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
     return res;
 }
 
@@ -484,7 +459,7 @@ PyConfig_Clear(PyConfig *config)
 {
 #define CLEAR(ATTR) \
     do { \
-        PyMem_RawFree(ATTR); \
+        PyMem_Free(ATTR); \
         ATTR = NULL; \
     } while (0)
 
@@ -586,7 +561,7 @@ PyConfig_SetChar(PyConfig *config, char **config_str, const char *str)
     else {
         str2 = NULL;
     }
-    PyMem_RawFree(*config_str);
+    PyMem_Free(*config_str);
     *config_str = str2;
     return _PyStatus_OK();
 }
@@ -605,7 +580,7 @@ config_set_bytes_string(PyConfig *config, char **config_str,
     if (str2 == NULL) {
       return _PyStatus_NO_MEMORY();
     }
-    PyMem_RawFree(*config_str);
+    PyMem_Free(*config_str);
     *config_str = str2;
     return _PyStatus_OK();
 }
@@ -1209,7 +1184,7 @@ config_parse_cmdline(PyConfig *config,
                    that look like options are left for the
                    command to interpret. */
                 size_t len = strlen(_PyOS_optarg) + 1 + 1;
-                char *command = PyMem_RawMalloc(sizeof(char) * len);
+                char *command = PyMem_Malloc(sizeof(char) * len);
                 if (command == NULL) {
                     return _PyStatus_NO_MEMORY();
                 }
@@ -1372,7 +1347,7 @@ config_update_argv(PyConfig *config, Py_ssize_t opt_index)
             return _PyStatus_NO_MEMORY();
         }
 
-        PyMem_RawFree(config_argv.items[0]);
+        PyMem_Free(config_argv.items[0]);
         config_argv.items[0] = arg0;
     }
 
@@ -1438,7 +1413,7 @@ config_run_filename_abspath(PyConfig *config)
         return _PyStatus_NO_MEMORY();
     }
 
-    PyMem_RawFree(config->run_filename);
+    PyMem_Free(config->run_filename);
     config->run_filename = abs_filename;
     return _PyStatus_OK();
 }

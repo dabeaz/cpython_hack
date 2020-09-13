@@ -391,9 +391,7 @@ _PyType_CheckConsistency(PyTypeObject *type)
 {
 #define CHECK(expr) \
     do { if (!(expr)) { _PyObject_ASSERT_FAILED_MSG((PyObject *)type, Py_STRINGIFY(expr)); } } while (0)
-
-    CHECK(!_PyObject_IsFreed((PyObject *)type));
-
+    
     if (!(type->tp_flags & Py_TPFLAGS_READY)) {
         /* don't check static types before PyType_Ready() */
         return 1;
@@ -1214,7 +1212,7 @@ PyType_GenericAlloc(PyTypeObject *type, Py_ssize_t nitems)
     const size_t size = _PyObject_VAR_SIZE(type, nitems+1);
     /* note that we need to add one, for the sentinel */
     {
-        obj = (PyObject *)PyObject_MALLOC(size);
+        obj = (PyObject *)PyMem_Malloc(size);
     }
 
     if (obj == NULL) {
@@ -1673,7 +1671,7 @@ pmerge(PyObject *acc, PyObject **to_merge, Py_ssize_t to_merge_size)
     }
 
   out:
-    PyMem_Del(remain);
+    PyMem_Free(remain);
 
     return res;
 }
@@ -1753,7 +1751,7 @@ mro_implementation(PyTypeObject *type)
 
     result = PyList_New(1);
     if (result == NULL) {
-        PyMem_Del(to_merge);
+        PyMem_Free(to_merge);
         return NULL;
     }
 
@@ -1763,7 +1761,7 @@ mro_implementation(PyTypeObject *type)
         Py_CLEAR(result);
     }
 
-    PyMem_Del(to_merge);
+    PyMem_Free(to_merge);
     return result;
 }
 
@@ -2447,7 +2445,7 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
                 goto error;
             /* Silently truncate the docstring if it contains null bytes. */
             len = strlen(doc_str);
-            tp_doc = (char *)PyObject_MALLOC(len + 1);
+            tp_doc = (char *)PyMem_Malloc(len + 1);
             if (tp_doc == NULL) {
                 PyErr_NoMemory();
                 goto error;
@@ -2509,7 +2507,7 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
     
     /* Always override allocation strategy to use regular heap */
     type->tp_alloc = PyType_GenericAlloc;
-    type->tp_free = PyObject_Del;
+    type->tp_free = PyMem_Free;
 
     /* store type in class' cell if one is supplied */
     cell = _PyDict_GetItemIdWithError(dict, &PyId___classcell__);
@@ -2697,7 +2695,7 @@ PyType_FromModuleAndSpec(PyObject *module, PyType_Spec *spec, PyObject *bases)
                literal, we need to make a copy */
             const char *old_doc = _PyType_DocWithoutSignature(type->tp_name, slot->pfunc);
             size_t len = strlen(old_doc)+1;
-            char *tp_doc = PyObject_MALLOC(len);
+            char *tp_doc = PyMem_Malloc(len);
             if (tp_doc == NULL) {
                 type->tp_doc = NULL;
                 PyErr_NoMemory();
@@ -3141,7 +3139,7 @@ type_dealloc(PyTypeObject *type)
     /* A type's tp_doc is heap allocated, unlike the tp_doc slots
      * of most other objects.  It's okay to cast it to char *.
      */
-    PyObject_Free((char *)type->tp_doc);
+    PyMem_Free((char *)type->tp_doc);
     Py_XDECREF(et->ht_name);
     Py_XDECREF(et->ht_qualname);
     Py_XDECREF(et->ht_slots);
@@ -3317,27 +3315,6 @@ PyDoc_STRVAR(type_doc,
 "type(name, bases, dict) -> a new type");
 
 static int
-type_traverse(PyTypeObject *type, visitproc visit, void *arg)
-{
-    /* Because of type_is_gc(), the collector only calls this
-       for heaptypes. */
-    if (!(type->tp_flags & Py_TPFLAGS_HEAPTYPE)) {
-        char msg[200];
-        sprintf(msg, "type_traverse() called on non-heap type '%.100s'",
-                type->tp_name);
-        _PyObject_ASSERT_FAILED_MSG((PyObject *)type, msg);
-    }
-
-    Py_VISIT(type->tp_dict);
-    Py_VISIT(type->tp_cache);
-    Py_VISIT(type->tp_mro);
-    Py_VISIT(type->tp_bases);
-    Py_VISIT(type->tp_base);
-    Py_VISIT(((PyHeapTypeObject *)type)->ht_module);
-    return 0;
-}
-
-static int
 type_clear(PyTypeObject *type)
 {
   // PyDictKeysObject *cached_keys;
@@ -3415,7 +3392,7 @@ PyTypeObject PyType_Type = {
     Py_TPFLAGS_BASETYPE | Py_TPFLAGS_TYPE_SUBCLASS |
     Py_TPFLAGS_HAVE_VECTORCALL,                 /* tp_flags */
     type_doc,                                   /* tp_doc */
-    (traverseproc)type_traverse,                /* tp_traverse */
+    0, // (traverseproc)type_traverse,                /* tp_traverse */
     (inquiry)type_clear,                        /* tp_clear */
     0,                                          /* tp_richcompare */
     offsetof(PyTypeObject, tp_weaklist),        /* tp_weaklistoffset */
@@ -3432,7 +3409,7 @@ PyTypeObject PyType_Type = {
     type_init,                                  /* tp_init */
     0,                                          /* tp_alloc */
     type_new,                                   /* tp_new */
-    PyObject_Del,                            /* tp_free */
+    PyMem_Free,                            /* tp_free */
     (inquiry)type_is_gc,                        /* tp_is_gc */
 };
 
@@ -4526,7 +4503,7 @@ PyTypeObject PyBaseObject_Type = {
     object_init,                                /* tp_init */
     PyType_GenericAlloc,                        /* tp_alloc */
     object_new,                                 /* tp_new */
-    PyObject_Del,                               /* tp_free */
+    PyMem_Free,                               /* tp_free */
 };
 
 
@@ -7697,18 +7674,6 @@ PyDoc_STRVAR(super_doc,
 "    def cmeth(cls, arg):\n"
 "        super().cmeth(arg)\n");
 
-static int
-super_traverse(PyObject *self, visitproc visit, void *arg)
-{
-    superobject *su = (superobject *)self;
-
-    Py_VISIT(su->obj);
-    Py_VISIT(su->type);
-    Py_VISIT(su->obj_type);
-
-    return 0;
-}
-
 PyTypeObject PySuper_Type = {
     PyVarObject_HEAD_INIT(&PyType_Type, 0)
     "super",                                    /* tp_name */
@@ -7733,7 +7698,7 @@ PyTypeObject PySuper_Type = {
     Py_TPFLAGS_DEFAULT | // Py_TPFLAGS_HAVE_GC |
         Py_TPFLAGS_BASETYPE,                    /* tp_flags */
     super_doc,                                  /* tp_doc */
-    super_traverse,                             /* tp_traverse */
+    0, // super_traverse,                             /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
@@ -7750,5 +7715,5 @@ PyTypeObject PySuper_Type = {
     super_init,                                 /* tp_init */
     PyType_GenericAlloc,                        /* tp_alloc */
     PyType_GenericNew,                          /* tp_new */
-    PyObject_Del,                            /* tp_free */
+    PyMem_Free,                            /* tp_free */
 };

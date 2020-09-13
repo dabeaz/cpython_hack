@@ -880,7 +880,7 @@ PyTypeObject PyTuple_Type = {
     0,                                          /* tp_init */
     0,                                          /* tp_alloc */
     tuple_new,                                  /* tp_new */
-    PyObject_Del,
+    PyMem_Free,
     .tp_vectorcall = tuple_vectorcall,
 };
 
@@ -952,7 +952,7 @@ static void
 tupleiter_dealloc(tupleiterobject *it)
 {
     Py_XDECREF(it->it_seq);
-    PyObject_Del(it);
+    PyMem_Free(it);
 }
 
 static PyObject *

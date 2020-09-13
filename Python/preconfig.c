@@ -1,7 +1,6 @@
 #include "Python.h"
 #include "pycore_getopt.h"        // _PyOS_GetOpt()
 #include "pycore_initconfig.h"    // _PyArgv
-#include "pycore_pymem.h"         // _PyMem_GetAllocatorName()
 #include "pycore_runtime.h"       // _PyRuntime_Initialize()
 
 #define DECODE_LOCALE_ERR(NAME, LEN) \
@@ -24,7 +23,7 @@ _PyArgv_AsCharList(const _PyArgv *args, PyStringList *list)
     PyStringList wargv = _PyStringList_INIT;
     { 
         size_t size = sizeof(char *) * args->argc;
-        wargv.items = (char **)PyMem_RawMalloc(size);
+        wargv.items = (char **)PyMem_Malloc(size);
         if (wargv.items == NULL) {
             return _PyStatus_NO_MEMORY();
         }
@@ -171,7 +170,7 @@ _PyPreConfig_InitCompatConfig(PyPreConfig *config)
     config->_config_init = (int)_PyConfig_INIT_COMPAT;
     config->parse_argv = 0;
     config->use_environment = -1;
-    config->allocator = PYMEM_ALLOCATOR_NOT_SET;
+
 }
 
 
@@ -379,20 +378,6 @@ _Py_get_env_flag(int use_environment, int *flag, const char *name)
 static PyStatus
 preconfig_init_allocator(PyPreConfig *config)
 {
-    if (config->allocator == PYMEM_ALLOCATOR_NOT_SET) {
-        /* bpo-34247. The PYTHONMALLOC environment variable has the priority
-           over PYTHONDEV env var and "-X dev" command line option.
-           For example, PYTHONMALLOC=malloc PYTHONDEVMODE=1 sets the memory
-           allocators to "malloc" (and not to "debug"). */
-        const char *envvar = _Py_GetEnv(config->use_environment, "PYTHONMALLOC");
-        if (envvar) {
-            PyMemAllocatorName name;
-            if (_PyMem_GetAllocatorName(envvar, &name) < 0) {
-                return _PyStatus_ERR("PYTHONMALLOC: unknown allocator");
-            }
-            config->allocator = (int)name;
-        }
-    }
     return _PyStatus_OK();
 }
 
@@ -507,14 +492,6 @@ _PyPreConfig_Write(const PyPreConfig *src_config)
            the new configuration. */
         return _PyStatus_OK();
     }
-
-    PyMemAllocatorName name = (PyMemAllocatorName)config.allocator;
-    if (name != PYMEM_ALLOCATOR_NOT_SET) {
-        if (_PyMem_SetupAllocators(name) < 0) {
-            return _PyStatus_ERR("Unknown PYTHONMALLOC allocator");
-        }
-    }
-
     preconfig_set_global_vars(&config);
 
     /* Write the new pre-configuration into _PyRuntime */

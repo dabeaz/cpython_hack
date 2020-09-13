@@ -291,18 +291,6 @@ _PyIO_get_locale_module(_PyIO_State *state)
     return mod;
 }
 
-
-static int
-iomodule_traverse(PyObject *mod, visitproc visit, void *arg) {
-    _PyIO_State *state = get_io_state(mod);
-    if (!state->initialized)
-        return 0;
-    Py_VISIT(state->locale_module);
-    Py_VISIT(state->unsupported_operation);
-    return 0;
-}
-
-
 static int
 iomodule_clear(PyObject *mod) {
     _PyIO_State *state = get_io_state(mod);
@@ -425,7 +413,7 @@ struct PyModuleDef _PyIO_Module = {
     sizeof(_PyIO_State),
     module_methods,
     NULL,
-    iomodule_traverse,
+    NULL, 
     iomodule_clear,
     (freefunc)iomodule_free,
 };

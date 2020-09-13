@@ -1602,7 +1602,7 @@ resize_inplace(PyObject *unicode, Py_ssize_t length)
         }
         new_size = (length + 1);
 	
-        data = (PyObject *)PyObject_REALLOC(data, new_size);
+        data = (PyObject *)PyMem_Realloc(data, new_size);
         if (data == NULL) {
             PyErr_NoMemory();
             return -1;
@@ -1670,7 +1670,7 @@ _PyUnicode_New(Py_ssize_t length)
     _PyUnicode_LENGTH(unicode) = length;
     _PyUnicode_HASH(unicode) = -1;
     _PyUnicode_STATE(unicode).interned = 0;
-    _PyUnicode_DATA_ANY(unicode) = (void *) PyObject_MALLOC(new_size);
+    _PyUnicode_DATA_ANY(unicode) = (void *) PyMem_Malloc(new_size);
     if (!_PyUnicode_DATA_ANY(unicode)) {
         Py_DECREF(unicode);
         PyErr_NoMemory();
@@ -1714,7 +1714,7 @@ PyUnicode_New(Py_ssize_t size)
      * PyObject_New() so we are able to allocate space for the object and
      * it's data buffer.
      */
-    obj = (PyObject *) PyObject_MALLOC(struct_size);
+    obj = (PyObject *) PyMem_Malloc(struct_size);
     if (obj == NULL)
         return PyErr_NoMemory();
     obj = PyObject_INIT(obj, &PyUnicode_Type);
@@ -1722,7 +1722,7 @@ PyUnicode_New(Py_ssize_t size)
         return NULL;
 
     unicode = (PyUnicodeObject *)obj;
-    _PyUnicode_DATA_ANY(unicode) = (void *) PyObject_MALLOC(size+1);
+    _PyUnicode_DATA_ANY(unicode) = (void *) PyMem_Malloc(size+1);
     if (!_PyUnicode_DATA_ANY(unicode)) {
         Py_DECREF(unicode);
         PyErr_NoMemory();
@@ -1854,7 +1854,7 @@ unicode_dealloc(PyObject *unicode)
         Py_UNREACHABLE();
     }
     if (_PyUnicode_DATA_ANY(unicode)) {
-        PyObject_DEL(_PyUnicode_DATA_ANY(unicode));
+      PyMem_Free(_PyUnicode_DATA_ANY(unicode));
     }
 
     Py_TYPE(unicode)->tp_free(unicode);
@@ -3114,7 +3114,7 @@ case_operation(PyObject *self,
         PyErr_SetString(PyExc_OverflowError, "string is too long");
         return NULL;
     }
-    tmp = PyMem_MALLOC(sizeof(Py_UCS4) * 3 * length);
+    tmp = PyMem_Malloc(sizeof(Py_UCS4) * 3 * length);
     if (tmp == NULL)
         return PyErr_NoMemory();
     newlength = perform(data, length, tmp);
@@ -3125,7 +3125,7 @@ case_operation(PyObject *self,
     outdata = PyUnicode_DATA(res);
     _PyUnicode_CONVERT_BYTES(Py_UCS4, Py_UCS1, tmp, tmpend, outdata);
   leave:
-    PyMem_FREE(tmp);
+    PyMem_Free(tmp);
     return res;
 }
 
@@ -3658,11 +3658,11 @@ replace(PyObject *self, PyObject *str1,
     assert(release1 == (buf1 != PyUnicode_DATA(str1)));
     assert(release2 == (buf2 != PyUnicode_DATA(str2)));
     if (srelease)
-        PyMem_FREE((void *)sbuf);
+        PyMem_Free((void *)sbuf);
     if (release1)
-        PyMem_FREE((void *)buf1);
+        PyMem_Free((void *)buf1);
     if (release2)
-        PyMem_FREE((void *)buf2);
+        PyMem_Free((void *)buf2);
     assert(_PyUnicode_CheckConsistency(u, 1));
     return u;
 
@@ -3672,11 +3672,11 @@ replace(PyObject *self, PyObject *str1,
     assert(release1 == (buf1 != PyUnicode_DATA(str1)));
     assert(release2 == (buf2 != PyUnicode_DATA(str2)));
     if (srelease)
-        PyMem_FREE((void *)sbuf);
+        PyMem_Free((void *)sbuf);
     if (release1)
-        PyMem_FREE((void *)buf1);
+        PyMem_Free((void *)buf1);
     if (release2)
-        PyMem_FREE((void *)buf2);
+        PyMem_Free((void *)buf2);
     return unicode_result_unchanged(self);
 
   error:
@@ -3684,11 +3684,11 @@ replace(PyObject *self, PyObject *str1,
     assert(release1 == (buf1 != PyUnicode_DATA(str1)));
     assert(release2 == (buf2 != PyUnicode_DATA(str2)));
     if (srelease)
-        PyMem_FREE((void *)sbuf);
+        PyMem_Free((void *)sbuf);
     if (release1)
-        PyMem_FREE((void *)buf1);
+        PyMem_Free((void *)buf1);
     if (release2)
-        PyMem_FREE((void *)buf2);
+        PyMem_Free((void *)buf2);
     return NULL;
 }
 
@@ -7371,7 +7371,7 @@ unicode_subtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         PyErr_NoMemory();
         goto onError;
     }
-    data = PyObject_MALLOC((length + 1));
+    data = PyMem_Malloc((length + 1));
     if (data == NULL) {
         PyErr_NoMemory();
         goto onError;
@@ -7445,7 +7445,7 @@ PyTypeObject PyUnicode_Type = {
     0,                            /* tp_init */
     0,                            /* tp_alloc */
     unicode_new,                  /* tp_new */
-    PyObject_Del,                 /* tp_free */
+    PyMem_Free,                 /* tp_free */
 };
 
 /* Initialize the Unicode implementation */
@@ -7556,14 +7556,7 @@ static void
 unicodeiter_dealloc(unicodeiterobject *it)
 {
     Py_XDECREF(it->it_seq);
-    PyObject_Del(it);
-}
-
-static int
-unicodeiter_traverse(unicodeiterobject *it, visitproc visit, void *arg)
-{
-    Py_VISIT(it->it_seq);
-    return 0;
+    PyMem_Free(it);
 }
 
 static PyObject *
@@ -7670,7 +7663,7 @@ PyTypeObject PyUnicodeIter_Type = {
     0,                  /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC,/* tp_flags */
     0,                  /* tp_doc */
-    (traverseproc)unicodeiter_traverse, /* tp_traverse */
+    0, // (traverseproc)unicodeiter_traverse, /* tp_traverse */
     0,                  /* tp_clear */
     0,                  /* tp_richcompare */
     0,                  /* tp_weaklistoffset */

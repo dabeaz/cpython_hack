@@ -482,7 +482,7 @@ PyTypeObject PyStdPrinter_Type = {
     stdprinter_init,                            /* tp_init */
     PyType_GenericAlloc,                        /* tp_alloc */
     stdprinter_new,                             /* tp_new */
-    PyObject_Del,                               /* tp_free */
+    PyMem_Free,                               /* tp_free */
 };
 
 PyObject *

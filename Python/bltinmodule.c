@@ -1373,14 +1373,6 @@ filter_dealloc(filterobject *lz)
     Py_TYPE(lz)->tp_free(lz);
 }
 
-static int
-filter_traverse(filterobject *lz, visitproc visit, void *arg)
-{
-    Py_VISIT(lz->it);
-    Py_VISIT(lz->func);
-    return 0;
-}
-
 static PyObject *
 filter_next(filterobject *lz)
 {
@@ -1459,7 +1451,7 @@ PyTypeObject PyFilter_Type = {
     Py_TPFLAGS_DEFAULT | // Py_TPFLAGS_HAVE_GC |
         Py_TPFLAGS_BASETYPE,            /* tp_flags */
     filter_doc,                         /* tp_doc */
-    (traverseproc)filter_traverse,      /* tp_traverse */
+    0, // (traverseproc)filter_traverse,      /* tp_traverse */
     0,                                  /* tp_clear */
     0,                                  /* tp_richcompare */
     0,                                  /* tp_weaklistoffset */
@@ -1476,7 +1468,7 @@ PyTypeObject PyFilter_Type = {
     0,                                  /* tp_init */
     PyType_GenericAlloc,                /* tp_alloc */
     filter_new,                         /* tp_new */
-    PyObject_Del,                    /* tp_free */
+    PyMem_Free,                    /* tp_free */
 };
 
 
@@ -2037,14 +2029,6 @@ map_dealloc(mapobject *lz)
     Py_TYPE(lz)->tp_free(lz);
 }
 
-static int
-map_traverse(mapobject *lz, visitproc visit, void *arg)
-{
-    Py_VISIT(lz->iters);
-    Py_VISIT(lz->func);
-    return 0;
-}
-
 static PyObject *
 map_next(mapobject *lz)
 {
@@ -2143,7 +2127,7 @@ PyTypeObject PyMap_Type = {
     Py_TPFLAGS_DEFAULT | // Py_TPFLAGS_HAVE_GC |
         Py_TPFLAGS_BASETYPE,            /* tp_flags */
     map_doc,                            /* tp_doc */
-    (traverseproc)map_traverse,         /* tp_traverse */
+    0, // (traverseproc)map_traverse,         /* tp_traverse */
     0,                                  /* tp_clear */
     0,                                  /* tp_richcompare */
     0,                                  /* tp_weaklistoffset */
@@ -2160,7 +2144,7 @@ PyTypeObject PyMap_Type = {
     0,                                  /* tp_init */
     PyType_GenericAlloc,                /* tp_alloc */
     map_new,                            /* tp_new */
-    PyObject_Del,                    /* tp_free */
+    PyMem_Free,                    /* tp_free */
 };
 
 
@@ -2833,7 +2817,7 @@ builtin_input_impl(PyObject *module, PyObject *prompt)
         Py_DECREF(stdin_encoding);
         Py_DECREF(stdin_errors);
         Py_XDECREF(po);
-        PyMem_FREE(s);
+        PyMem_Free(s);
 
         return result;
 
@@ -3311,14 +3295,6 @@ zip_dealloc(zipobject *lz)
     Py_TYPE(lz)->tp_free(lz);
 }
 
-static int
-zip_traverse(zipobject *lz, visitproc visit, void *arg)
-{
-    Py_VISIT(lz->ittuple);
-    Py_VISIT(lz->result);
-    return 0;
-}
-
 static PyObject *
 zip_next(zipobject *lz)
 {
@@ -3408,7 +3384,7 @@ PyTypeObject PyZip_Type = {
     Py_TPFLAGS_DEFAULT | // Py_TPFLAGS_HAVE_GC |
         Py_TPFLAGS_BASETYPE,            /* tp_flags */
     zip_doc,                            /* tp_doc */
-    (traverseproc)zip_traverse,    /* tp_traverse */
+    0, // (traverseproc)zip_traverse,    /* tp_traverse */
     0,                                  /* tp_clear */
     0,                                  /* tp_richcompare */
     0,                                  /* tp_weaklistoffset */
@@ -3425,7 +3401,7 @@ PyTypeObject PyZip_Type = {
     0,                                  /* tp_init */
     PyType_GenericAlloc,                /* tp_alloc */
     zip_new,                            /* tp_new */
-    PyObject_Del,                    /* tp_free */
+    PyMem_Free,                    /* tp_free */
 };
 
 

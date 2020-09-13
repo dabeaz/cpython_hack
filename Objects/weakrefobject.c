@@ -396,7 +396,7 @@ _PyWeakref_RefType = {
     weakref___init__,           /*tp_init*/
     PyType_GenericAlloc,        /*tp_alloc*/
     weakref___new__,            /*tp_new*/
-    PyObject_Del,            /*tp_free*/
+    PyMem_Free,            /*tp_free*/
 };
 
 
@@ -568,7 +568,7 @@ static void
 proxy_dealloc(PyWeakReference *self)
 {
     clear_weakref(self);
-    PyObject_Del(self);
+    PyMem_Free(self);
 }
 
 /* sequence slots */

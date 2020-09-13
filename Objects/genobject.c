@@ -71,7 +71,7 @@ gen_dealloc(PyGenObject *gen)
     Py_CLEAR(gen->gi_name);
     Py_CLEAR(gen->gi_qualname);
     _PyErr_ClearExcState(&gen->gi_exc_state);
-    PyObject_Del(gen);
+    PyMem_Free(gen);
 }
 
 static PyObject *

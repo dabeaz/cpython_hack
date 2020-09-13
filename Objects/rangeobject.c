@@ -170,7 +170,7 @@ range_dealloc(rangeobject *r)
     Py_DECREF(r->stop);
     Py_DECREF(r->step);
     Py_DECREF(r->length);
-    PyObject_Del(r);
+    PyMem_Free(r);
 }
 
 /* Return number of items in range (lo, hi, step) as a PyLong object,
@@ -836,7 +836,7 @@ PyTypeObject PyRangeIter_Type = {
         sizeof(rangeiterobject),                /* tp_basicsize */
         0,                                      /* tp_itemsize */
         /* methods */
-        (destructor)PyObject_Del,               /* tp_dealloc */
+        (destructor)PyMem_Free,               /* tp_dealloc */
         0,                                      /* tp_vectorcall_offset */
         0,                                      /* tp_getattr */
         0,                                      /* tp_setattr */
@@ -1000,7 +1000,7 @@ longrangeiter_dealloc(longrangeiterobject *r)
     Py_XDECREF(r->start);
     Py_XDECREF(r->step);
     Py_XDECREF(r->len);
-    PyObject_Del(r);
+    PyMem_Free(r);
 }
 
 static PyObject *

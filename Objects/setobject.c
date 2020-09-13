@@ -257,7 +257,7 @@ set_table_resize(PySetObject *so, Py_ssize_t minused)
         }
     }
     else {
-        newtable = PyMem_NEW(setentry, newsize);
+        newtable = PyMem_New(setentry, newsize);
         if (newtable == NULL) {
             PyErr_NoMemory();
             return -1;
@@ -289,7 +289,7 @@ set_table_resize(PySetObject *so, Py_ssize_t minused)
     }
 
     if (is_oldtable_malloced)
-        PyMem_DEL(oldtable);
+        PyMem_Free(oldtable);
     return 0;
 }
 
@@ -424,7 +424,7 @@ set_clear_internal(PySetObject *so)
     }
 
     if (table_is_malloced)
-        PyMem_DEL(table);
+        PyMem_Free(table);
     return 0;
 }
 
@@ -482,7 +482,7 @@ set_dealloc(PySetObject *so)
         }
     }
     if (so->table != so->smalltable)
-        PyMem_DEL(so->table);
+        PyMem_Free(so->table);
     Py_TYPE(so)->tp_free(so);
 }
 
@@ -715,7 +715,7 @@ setiter_dealloc(setiterobject *si)
 {
     /* bpo-31095: UnTrack is needed before calling any callbacks */
     Py_XDECREF(si->si_set);
-    PyObject_Del(si);
+    PyMem_Free(si);
 }
 
 static PyObject *
@@ -2094,7 +2094,7 @@ PyTypeObject PySet_Type = {
     (initproc)set_init,                 /* tp_init */
     PyType_GenericAlloc,                /* tp_alloc */
     set_new,                            /* tp_new */
-    PyObject_Del,                    /* tp_free */
+    PyMem_Free,                    /* tp_free */
     .tp_vectorcall = set_vectorcall,
 };
 
@@ -2193,7 +2193,7 @@ PyTypeObject PyFrozenSet_Type = {
     0,                                  /* tp_init */
     PyType_GenericAlloc,                /* tp_alloc */
     frozenset_new,                      /* tp_new */
-    PyObject_Del,                    /* tp_free */
+    PyMem_Free,                    /* tp_free */
     .tp_vectorcall = frozenset_vectorcall,
 };
 

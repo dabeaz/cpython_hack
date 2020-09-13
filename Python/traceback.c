@@ -212,15 +212,7 @@ tb_dealloc(PyTracebackObject *tb)
 {
     Py_XDECREF(tb->tb_next);
     Py_XDECREF(tb->tb_frame);
-    PyObject_Del(tb);
-}
-
-static int
-tb_traverse(PyTracebackObject *tb, visitproc visit, void *arg)
-{
-    Py_VISIT(tb->tb_next);
-    Py_VISIT(tb->tb_frame);
-    return 0;
+    PyMem_Free(tb);
 }
 
 static int
@@ -253,7 +245,7 @@ PyTypeObject PyTraceBack_Type = {
     0,                                          /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC,/* tp_flags */
     tb_new__doc__,                              /* tp_doc */
-    (traverseproc)tb_traverse,                  /* tp_traverse */
+    0, // (traverseproc)tb_traverse,                  /* tp_traverse */
     (inquiry)tb_clear,                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
