@@ -19,7 +19,6 @@ extern "C" {
 #define UNARY_NOT                12
 #define UNARY_INVERT             15
 #define BINARY_MATRIX_MULTIPLY   16
-#define INPLACE_MATRIX_MULTIPLY  17
 #define BINARY_POWER             19
 #define BINARY_MULTIPLY          20
 #define BINARY_MODULO            22
@@ -28,18 +27,12 @@ extern "C" {
 #define BINARY_SUBSCR            25
 #define BINARY_FLOOR_DIVIDE      26
 #define BINARY_TRUE_DIVIDE       27
-#define INPLACE_FLOOR_DIVIDE     28
-#define INPLACE_TRUE_DIVIDE      29
 #define RERAISE                  48
 #define WITH_EXCEPT_START        49
 #define GET_AITER                50
 #define GET_ANEXT                51
 #define BEFORE_ASYNC_WITH        52
 #define END_ASYNC_FOR            54
-#define INPLACE_ADD              55
-#define INPLACE_SUBTRACT         56
-#define INPLACE_MULTIPLY         57
-#define INPLACE_MODULO           59
 #define STORE_SUBSCR             60
 #define DELETE_SUBSCR            61
 #define BINARY_LSHIFT            62
@@ -47,7 +40,6 @@ extern "C" {
 #define BINARY_AND               64
 #define BINARY_XOR               65
 #define BINARY_OR                66
-#define INPLACE_POWER            67
 #define GET_ITER                 68
 #define GET_YIELD_FROM_ITER      69
 #define PRINT_EXPR               70
@@ -55,11 +47,6 @@ extern "C" {
 #define YIELD_FROM               72
 #define GET_AWAITABLE            73
 #define LOAD_ASSERTION_ERROR     74
-#define INPLACE_LSHIFT           75
-#define INPLACE_RSHIFT           76
-#define INPLACE_AND              77
-#define INPLACE_XOR              78
-#define INPLACE_OR               79
 #define LIST_TO_TUPLE            82
 #define RETURN_VALUE             83
 #define IMPORT_STAR              84

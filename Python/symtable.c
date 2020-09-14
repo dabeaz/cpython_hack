@@ -718,7 +718,6 @@ analyze_block(PySTEntryObject *ste, PyObject *bound, PyObject *free,
 {
     PyObject *name, *v, *local = NULL, *scopes = NULL, *newbound = NULL;
     PyObject *newglobal = NULL, *newfree = NULL, *allfree = NULL;
-    PyObject *temp;
     int i, success = 0;
     Py_ssize_t pos = 0;
 
@@ -756,17 +755,12 @@ analyze_block(PySTEntryObject *ste, PyObject *bound, PyObject *free,
        this one.
      */
     if (ste->ste_type == ClassBlock) {
-        /* Pass down known globals */
-        temp = PyNumber_InPlaceOr(newglobal, global);
-        if (!temp)
-            goto error;
-        Py_DECREF(temp);
+      if (_PySet_Update(newglobal, global) < 0)
+	goto error;
         /* Pass down previously bound symbols */
         if (bound) {
-            temp = PyNumber_InPlaceOr(newbound, bound);
-            if (!temp)
-                goto error;
-            Py_DECREF(temp);
+	  if (_PySet_Update(newbound, bound) < 0)
+	    goto error;
         }
     }
 
@@ -781,23 +775,17 @@ analyze_block(PySTEntryObject *ste, PyObject *bound, PyObject *free,
     if (ste->ste_type != ClassBlock) {
         /* Add function locals to bound set */
         if (ste->ste_type == FunctionBlock) {
-            temp = PyNumber_InPlaceOr(newbound, local);
-            if (!temp)
-                goto error;
-            Py_DECREF(temp);
+	  if (_PySet_Update(newbound, local) < 0)
+	    goto error;
         }
         /* Pass down previously bound symbols */
         if (bound) {
-            temp = PyNumber_InPlaceOr(newbound, bound);
-            if (!temp)
-                goto error;
-            Py_DECREF(temp);
+	  if (_PySet_Update(newbound, bound) < 0)
+	    goto error;
         }
         /* Pass down known globals */
-        temp = PyNumber_InPlaceOr(newglobal, global);
-        if (!temp)
-            goto error;
-        Py_DECREF(temp);
+	if (_PySet_Update(newglobal, global) < 0)
+	  goto error;
     }
     else {
         /* Special-case __class__ */
@@ -829,10 +817,8 @@ analyze_block(PySTEntryObject *ste, PyObject *bound, PyObject *free,
             ste->ste_child_free = 1;
     }
 
-    temp = PyNumber_InPlaceOr(newfree, allfree);
-    if (!temp)
-        goto error;
-    Py_DECREF(temp);
+    if (_PySet_Update(newfree, allfree) < 0)
+      goto error;
 
     /* Check if any local variables must be converted to cell variables */
     if (ste->ste_type == FunctionBlock && !analyze_cells(scopes, newfree))
@@ -844,10 +830,8 @@ analyze_block(PySTEntryObject *ste, PyObject *bound, PyObject *free,
                         ste->ste_type == ClassBlock))
         goto error;
 
-    temp = PyNumber_InPlaceOr(free, newfree);
-    if (!temp)
-        goto error;
-    Py_DECREF(temp);
+    if (_PySet_Update(free, newfree) < 0)
+      goto error;
     success = 1;
  error:
     Py_XDECREF(scopes);
@@ -866,7 +850,6 @@ analyze_child_block(PySTEntryObject *entry, PyObject *bound, PyObject *free,
                     PyObject *global, PyObject* child_free)
 {
     PyObject *temp_bound = NULL, *temp_global = NULL, *temp_free = NULL;
-    PyObject *temp;
 
     /* Copy the bound and global dictionaries.
 
@@ -887,10 +870,8 @@ analyze_child_block(PySTEntryObject *entry, PyObject *bound, PyObject *free,
 
     if (!analyze_block(entry, temp_bound, temp_free, temp_global))
         goto error;
-    temp = PyNumber_InPlaceOr(child_free, temp_free);
-    if (!temp)
-        goto error;
-    Py_DECREF(temp);
+    if (_PySet_Update(child_free, temp_free) < 0)
+      goto error;
     Py_DECREF(temp_bound);
     Py_DECREF(temp_free);
     Py_DECREF(temp_global);

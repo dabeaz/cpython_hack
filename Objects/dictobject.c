@@ -2700,16 +2700,6 @@ dict_or(PyObject *self, PyObject *other)
     return new;
 }
 
-static PyObject *
-dict_ior(PyObject *self, PyObject *other)
-{
-    if (dict_update_arg(self, other)) {
-        return NULL;
-    }
-    Py_INCREF(self);
-    return self;
-}
-
 PyDoc_STRVAR(getitem__doc__, "x.__getitem__(y) <==> x[y]");
 
 PyDoc_STRVAR(sizeof__doc__,
@@ -2815,7 +2805,6 @@ static PySequenceMethods dict_as_sequence = {
 
 static PyNumberMethods dict_as_number = {
     .nb_or = dict_or,
-    .nb_inplace_or = dict_ior,
 };
 
 static PyObject *

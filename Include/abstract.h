@@ -473,90 +473,7 @@ PyAPI_FUNC(PyObject *) PyNumber_Long(PyObject *o);
   This is the equivalent of the Python expression: float(o). */
 PyAPI_FUNC(PyObject *) PyNumber_Float(PyObject *o);
 
-
-/* --- In-place variants of (some of) the above number protocol functions -- */
-
-/* Returns the result of adding o2 to o1, possibly in-place, or NULL
-   on failure.
-
-   This is the equivalent of the Python expression: o1 += o2. */
-PyAPI_FUNC(PyObject *) PyNumber_InPlaceAdd(PyObject *o1, PyObject *o2);
-
-/* Returns the result of subtracting o2 from o1, possibly in-place or
-   NULL on failure.
-
-   This is the equivalent of the Python expression: o1 -= o2. */
-PyAPI_FUNC(PyObject *) PyNumber_InPlaceSubtract(PyObject *o1, PyObject *o2);
-
-/* Returns the result of multiplying o1 by o2, possibly in-place, or NULL on
-   failure.
-
-   This is the equivalent of the Python expression: o1 *= o2. */
-PyAPI_FUNC(PyObject *) PyNumber_InPlaceMultiply(PyObject *o1, PyObject *o2);
-
-#if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03050000
-/* This is the equivalent of the Python expression: o1 @= o2. */
-PyAPI_FUNC(PyObject *) PyNumber_InPlaceMatrixMultiply(PyObject *o1, PyObject *o2);
-#endif
-
-/* Returns the result of dividing o1 by o2 giving an integral result, possibly
-   in-place, or NULL on failure.
-
-   This is the equivalent of the Python expression: o1 /= o2. */
-PyAPI_FUNC(PyObject *) PyNumber_InPlaceFloorDivide(PyObject *o1,
-                                                   PyObject *o2);
-
-/* Returns the result of dividing o1 by o2 giving a float result, possibly
-   in-place, or null on failure.
-
-   This is the equivalent of the Python expression: o1 /= o2. */
-PyAPI_FUNC(PyObject *) PyNumber_InPlaceTrueDivide(PyObject *o1,
-                                                  PyObject *o2);
-
-/* Returns the remainder of dividing o1 by o2, possibly in-place, or NULL on
-   failure.
-
-   This is the equivalent of the Python expression: o1 %= o2. */
-PyAPI_FUNC(PyObject *) PyNumber_InPlaceRemainder(PyObject *o1, PyObject *o2);
-
-/* Returns the result of raising o1 to the power of o2, possibly in-place,
-   or NULL on failure.
-
-   This is the equivalent of the Python expression: o1 **= o2,
-   or o1 = pow(o1, o2, o3) if o3 is present. */
-PyAPI_FUNC(PyObject *) PyNumber_InPlacePower(PyObject *o1, PyObject *o2,
-                                             PyObject *o3);
-
-/* Returns the result of left shifting o1 by o2, possibly in-place, or NULL
-   on failure.
-
-   This is the equivalent of the Python expression: o1 <<= o2. */
-PyAPI_FUNC(PyObject *) PyNumber_InPlaceLshift(PyObject *o1, PyObject *o2);
-
-/* Returns the result of right shifting o1 by o2, possibly in-place or NULL
-   on failure.
-
-   This is the equivalent of the Python expression: o1 >>= o2. */
-PyAPI_FUNC(PyObject *) PyNumber_InPlaceRshift(PyObject *o1, PyObject *o2);
-
-/* Returns the result of bitwise and of o1 and o2, possibly in-place, or NULL
-   on failure.
-
-   This is the equivalent of the Python expression: o1 &= o2. */
-PyAPI_FUNC(PyObject *) PyNumber_InPlaceAnd(PyObject *o1, PyObject *o2);
-
-/* Returns the bitwise exclusive or of o1 by o2, possibly in-place, or NULL
-   on failure.
-
-   This is the equivalent of the Python expression: o1 ^= o2. */
-PyAPI_FUNC(PyObject *) PyNumber_InPlaceXor(PyObject *o1, PyObject *o2);
-
-/* Returns the result of bitwise or of o1 and o2, possibly in-place,
-   or NULL on failure.
-
-   This is the equivalent of the Python expression: o1 |= o2. */
-PyAPI_FUNC(PyObject *) PyNumber_InPlaceOr(PyObject *o1, PyObject *o2);
-
+  
 /* Returns the integer n converted to a string with a base, with a base
    marker of 0b, 0o or 0x prefixed if applicable.
 
@@ -690,21 +607,6 @@ PyAPI_FUNC(int) PySequence_In(PyObject *o, PyObject *value);
 
    This is equivalent to the Python expression: o.index(value). */
 PyAPI_FUNC(Py_ssize_t) PySequence_Index(PyObject *o, PyObject *value);
-
-
-/* --- In-place versions of some of the above Sequence functions --- */
-
-/* Append sequence 'o2' to sequence 'o1', in-place when possible. Return the
-   resulting object, which could be 'o1', or NULL on failure.
-
-  This is the equivalent of the Python expression: o1 += o2. */
-PyAPI_FUNC(PyObject *) PySequence_InPlaceConcat(PyObject *o1, PyObject *o2);
-
-/* Repeat sequence 'o' by 'count', in-place when possible. Return the resulting
-   object, which could be 'o', or NULL on failure.
-
-   This is the equivalent of the Python expression: o1 *= count.  */
-PyAPI_FUNC(PyObject *) PySequence_InPlaceRepeat(PyObject *o, Py_ssize_t count);
 
 
 /* === Mapping protocol ================================================= */

@@ -481,8 +481,7 @@ PyStructSequence_NewType(PyStructSequence_Desc *desc)
     slots[3] = (PyType_Slot){Py_tp_methods, structseq_methods};
     slots[4] = (PyType_Slot){Py_tp_new, structseq_new};
     slots[5] = (PyType_Slot){Py_tp_members, members};
-    slots[6] = (PyType_Slot){Py_tp_traverse, 0};
-    slots[7] = (PyType_Slot){0, 0};
+    slots[6] = (PyType_Slot){0, 0};
 
     /* Initialize Spec */
     /* The name in this PyType_Spec is statically allocated so it is */

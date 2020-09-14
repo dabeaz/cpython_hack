@@ -1145,18 +1145,6 @@ set_or(PySetObject *so, PyObject *other)
 }
 
 static PyObject *
-set_ior(PySetObject *so, PyObject *other)
-{
-    if (!PyAnySet_Check(other))
-        Py_RETURN_NOTIMPLEMENTED;
-
-    if (set_update_internal(so, other))
-        return NULL;
-    Py_INCREF(so);
-    return (PyObject *)so;
-}
-
-static PyObject *
 set_intersection(PySetObject *so, PyObject *other)
 {
     PySetObject *result;
@@ -1260,19 +1248,6 @@ PyDoc_STRVAR(intersection_doc,
 (i.e. all elements that are in both sets.)");
 
 static PyObject *
-set_intersection_update(PySetObject *so, PyObject *other)
-{
-    PyObject *tmp;
-
-    tmp = set_intersection(so, other);
-    if (tmp == NULL)
-        return NULL;
-    set_swap_bodies(so, (PySetObject *)tmp);
-    Py_DECREF(tmp);
-    Py_RETURN_NONE;
-}
-
-static PyObject *
 set_intersection_update_multi(PySetObject *so, PyObject *args)
 {
     PyObject *tmp;
@@ -1294,21 +1269,6 @@ set_and(PySetObject *so, PyObject *other)
     if (!PyAnySet_Check(so) || !PyAnySet_Check(other))
         Py_RETURN_NOTIMPLEMENTED;
     return set_intersection(so, other);
-}
-
-static PyObject *
-set_iand(PySetObject *so, PyObject *other)
-{
-    PyObject *result;
-
-    if (!PyAnySet_Check(other))
-        Py_RETURN_NOTIMPLEMENTED;
-    result = set_intersection_update(so, other);
-    if (result == NULL)
-        return NULL;
-    Py_DECREF(result);
-    Py_INCREF(so);
-    return (PyObject *)so;
 }
 
 static PyObject *
@@ -1563,17 +1523,6 @@ set_sub(PySetObject *so, PyObject *other)
 }
 
 static PyObject *
-set_isub(PySetObject *so, PyObject *other)
-{
-    if (!PyAnySet_Check(other))
-        Py_RETURN_NOTIMPLEMENTED;
-    if (set_difference_update_internal(so, other))
-        return NULL;
-    Py_INCREF(so);
-    return (PyObject *)so;
-}
-
-static PyObject *
 set_symmetric_difference_update(PySetObject *so, PyObject *other)
 {
     PySetObject *otherset;
@@ -1666,21 +1615,6 @@ set_xor(PySetObject *so, PyObject *other)
     if (!PyAnySet_Check(so) || !PyAnySet_Check(other))
         Py_RETURN_NOTIMPLEMENTED;
     return set_symmetric_difference(so, other);
-}
-
-static PyObject *
-set_ixor(PySetObject *so, PyObject *other)
-{
-    PyObject *result;
-
-    if (!PyAnySet_Check(other))
-        Py_RETURN_NOTIMPLEMENTED;
-    result = set_symmetric_difference_update(so, other);
-    if (result == NULL)
-        return NULL;
-    Py_DECREF(result);
-    Py_INCREF(so);
-    return (PyObject *)so;
 }
 
 static PyObject *
@@ -2036,15 +1970,15 @@ static PyNumberMethods set_as_number = {
     0,                                  /*nb_reserved*/
     0,                                  /*nb_float*/
     0,                                  /*nb_inplace_add*/
-    (binaryfunc)set_isub,               /*nb_inplace_subtract*/
+    0, // (binaryfunc)set_isub,               /*nb_inplace_subtract*/
     0,                                  /*nb_inplace_multiply*/
     0,                                  /*nb_inplace_remainder*/
     0,                                  /*nb_inplace_power*/
     0,                                  /*nb_inplace_lshift*/
     0,                                  /*nb_inplace_rshift*/
-    (binaryfunc)set_iand,               /*nb_inplace_and*/
-    (binaryfunc)set_ixor,               /*nb_inplace_xor*/
-    (binaryfunc)set_ior,                /*nb_inplace_or*/
+    0, // (binaryfunc)set_iand,               /*nb_inplace_and*/
+    0, //(binaryfunc)set_ixor,               /*nb_inplace_xor*/
+    0, //(binaryfunc)set_ior,                /*nb_inplace_or*/
 };
 
 PyDoc_STRVAR(set_doc,

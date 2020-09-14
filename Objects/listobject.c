@@ -1017,45 +1017,6 @@ PyList_SetSlice(PyObject *a, Py_ssize_t ilow, Py_ssize_t ihigh, PyObject *v)
     return list_ass_slice((PyListObject *)a, ilow, ihigh, v);
 }
 
-static PyObject *
-list_inplace_repeat(PyListObject *self, Py_ssize_t n)
-{
-    PyObject **items;
-    Py_ssize_t size, i, j, p;
-
-
-    size = PyList_GET_SIZE(self);
-    if (size == 0 || n == 1) {
-        Py_INCREF(self);
-        return (PyObject *)self;
-    }
-
-    if (n < 1) {
-        (void)_list_clear(self);
-        Py_INCREF(self);
-        return (PyObject *)self;
-    }
-
-    if (size > PY_SSIZE_T_MAX / n) {
-        return PyErr_NoMemory();
-    }
-
-    if (list_resize(self, size*n) < 0)
-        return NULL;
-
-    p = size;
-    items = self->ob_item;
-    for (i = 1; i < n; i++) { /* Start counting at 1, not 0 */
-        for (j = 0; j < size; j++) {
-            PyObject *o = items[j];
-            Py_INCREF(o);
-            items[p++] = o;
-        }
-    }
-    Py_INCREF(self);
-    return (PyObject *)self;
-}
-
 static int
 list_ass_item(PyListObject *a, Py_ssize_t i, PyObject *v)
 {
@@ -1266,19 +1227,6 @@ PyObject *
 _PyList_Extend(PyListObject *self, PyObject *iterable)
 {
     return list_extend(self, iterable);
-}
-
-static PyObject *
-list_inplace_concat(PyListObject *self, PyObject *other)
-{
-    PyObject *result;
-
-    result = list_extend(self, other);
-    if (result == NULL)
-        return result;
-    Py_DECREF(result);
-    Py_INCREF(self);
-    return (PyObject *)self;
 }
 
 /*[clinic input]
@@ -3082,8 +3030,8 @@ static PySequenceMethods list_as_sequence = {
     (ssizeobjargproc)list_ass_item,             /* sq_ass_item */
     0,                                          /* sq_ass_slice */
     (objobjproc)list_contains,                  /* sq_contains */
-    (binaryfunc)list_inplace_concat,            /* sq_inplace_concat */
-    (ssizeargfunc)list_inplace_repeat,          /* sq_inplace_repeat */
+    0, // (binaryfunc)list_inplace_concat,            /* sq_inplace_concat */
+    0, // (ssizeargfunc)list_inplace_repeat,          /* sq_inplace_repeat */
 };
 
 static PyObject *

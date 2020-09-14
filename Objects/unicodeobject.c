@@ -48,7 +48,6 @@ OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "pycore_pathconfig.h"
 #include "pycore_pylifecycle.h"
 #include "pycore_pystate.h"        // _PyInterpreterState_GET()
-#include "ucnhash.h"
 #include "stringlib/eq.h"
 
 

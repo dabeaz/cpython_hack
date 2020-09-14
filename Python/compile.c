@@ -869,16 +869,6 @@ stack_effect(int opcode, int oparg, int jump)
         case BINARY_FLOOR_DIVIDE:
         case BINARY_TRUE_DIVIDE:
             return -1;
-        case INPLACE_FLOOR_DIVIDE:
-        case INPLACE_TRUE_DIVIDE:
-            return -1;
-
-        case INPLACE_ADD:
-        case INPLACE_SUBTRACT:
-        case INPLACE_MULTIPLY:
-        case INPLACE_MATRIX_MULTIPLY:
-        case INPLACE_MODULO:
-            return -1;
         case STORE_SUBSCR:
             return -3;
         case DELETE_SUBSCR:
@@ -890,8 +880,6 @@ stack_effect(int opcode, int oparg, int jump)
         case BINARY_XOR:
         case BINARY_OR:
             return -1;
-        case INPLACE_POWER:
-            return -1;
         case GET_ITER:
             return 0;
 
@@ -899,12 +887,6 @@ stack_effect(int opcode, int oparg, int jump)
             return -1;
         case LOAD_BUILD_CLASS:
             return 1;
-        case INPLACE_LSHIFT:
-        case INPLACE_RSHIFT:
-        case INPLACE_AND:
-        case INPLACE_XOR:
-        case INPLACE_OR:
-            return -1;
 
         case SETUP_WITH:
             /* 1 in the normal flow.
@@ -3210,31 +3192,31 @@ inplace_binop(operator_ty op)
 {
     switch (op) {
     case Add:
-        return INPLACE_ADD;
+        return BINARY_ADD;
     case Sub:
-        return INPLACE_SUBTRACT;
+        return BINARY_SUBTRACT;
     case Mult:
-        return INPLACE_MULTIPLY;
+        return BINARY_MULTIPLY;
     case MatMult:
-        return INPLACE_MATRIX_MULTIPLY;
+        return BINARY_MATRIX_MULTIPLY;
     case Div:
-        return INPLACE_TRUE_DIVIDE;
+        return BINARY_TRUE_DIVIDE;
     case Mod:
-        return INPLACE_MODULO;
+        return BINARY_MODULO;
     case Pow:
-        return INPLACE_POWER;
+        return BINARY_POWER;
     case LShift:
-        return INPLACE_LSHIFT;
+        return BINARY_LSHIFT;
     case RShift:
-        return INPLACE_RSHIFT;
+        return BINARY_RSHIFT;
     case BitOr:
-        return INPLACE_OR;
+        return BINARY_OR;
     case BitXor:
-        return INPLACE_XOR;
+        return BINARY_XOR;
     case BitAnd:
-        return INPLACE_AND;
+        return BINARY_AND;
     case FloorDiv:
-        return INPLACE_FLOOR_DIVIDE;
+        return BINARY_FLOOR_DIVIDE;
     default:
         PyErr_Format(PyExc_SystemError,
             "inplace binary op %d should not be possible", op);

@@ -1010,16 +1010,8 @@ mappingproxy_or(PyObject *left, PyObject *right)
     return PyNumber_Or(left, right);
 }
 
-static PyObject *
-mappingproxy_ior(PyObject *self, PyObject *Py_UNUSED(other))
-{
-    return PyErr_Format(PyExc_TypeError,
-        "'|=' is not supported by %s; use '|' instead", Py_TYPE(self)->tp_name);
-}
-
 static PyNumberMethods mappingproxy_as_number = {
     .nb_or = mappingproxy_or,
-    .nb_inplace_or = mappingproxy_ior,
 };
 
 static int

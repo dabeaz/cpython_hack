@@ -4726,11 +4726,9 @@ inherit_slots(PyTypeObject *type, PyTypeObject *base)
 #define COPYSLOT(SLOT) \
     if (!type->SLOT && SLOTDEFINED(SLOT)) type->SLOT = base->SLOT
 
-#define COPYASYNC(SLOT) COPYSLOT(tp_as_async->SLOT)
 #define COPYNUM(SLOT) COPYSLOT(tp_as_number->SLOT)
 #define COPYSEQ(SLOT) COPYSLOT(tp_as_sequence->SLOT)
 #define COPYMAP(SLOT) COPYSLOT(tp_as_mapping->SLOT)
-#define COPYBUF(SLOT) COPYSLOT(tp_as_buffer->SLOT)
     
     /* This won't inherit indirect slots (from tp_as_number etc.)
        if type doesn't provide the space. */
@@ -4757,32 +4755,10 @@ inherit_slots(PyTypeObject *type, PyTypeObject *base)
         COPYNUM(nb_or);
         COPYNUM(nb_int);
         COPYNUM(nb_float);
-        COPYNUM(nb_inplace_add);
-        COPYNUM(nb_inplace_subtract);
-        COPYNUM(nb_inplace_multiply);
-        COPYNUM(nb_inplace_remainder);
-        COPYNUM(nb_inplace_power);
-        COPYNUM(nb_inplace_lshift);
-        COPYNUM(nb_inplace_rshift);
-        COPYNUM(nb_inplace_and);
-        COPYNUM(nb_inplace_xor);
-        COPYNUM(nb_inplace_or);
         COPYNUM(nb_true_divide);
         COPYNUM(nb_floor_divide);
-        COPYNUM(nb_inplace_true_divide);
-        COPYNUM(nb_inplace_floor_divide);
         COPYNUM(nb_index);
         COPYNUM(nb_matrix_multiply);
-        COPYNUM(nb_inplace_matrix_multiply);
-    }
-
-    if (type->tp_as_async != NULL && base->tp_as_async != NULL) {
-        basebase = base->tp_base;
-        if (basebase->tp_as_async == NULL)
-            basebase = NULL;
-        COPYASYNC(am_await);
-        COPYASYNC(am_aiter);
-        COPYASYNC(am_anext);
     }
     if (type->tp_as_sequence != NULL && base->tp_as_sequence != NULL) {
         basebase = base->tp_base;
@@ -4794,8 +4770,6 @@ inherit_slots(PyTypeObject *type, PyTypeObject *base)
         COPYSEQ(sq_item);
         COPYSEQ(sq_ass_item);
         COPYSEQ(sq_contains);
-        COPYSEQ(sq_inplace_concat);
-        COPYSEQ(sq_inplace_repeat);
     }
 
     if (type->tp_as_mapping != NULL && base->tp_as_mapping != NULL) {
@@ -4805,14 +4779,6 @@ inherit_slots(PyTypeObject *type, PyTypeObject *base)
         COPYMAP(mp_length);
         COPYMAP(mp_subscript);
         COPYMAP(mp_ass_subscript);
-    }
-
-    if (type->tp_as_buffer != NULL && base->tp_as_buffer != NULL) {
-        basebase = base->tp_base;
-        if (basebase->tp_as_buffer == NULL)
-            basebase = NULL;
-        COPYBUF(bf_getbuffer);
-        COPYBUF(bf_releasebuffer);
     }
     basebase = base->tp_base;
 
@@ -4874,7 +4840,6 @@ inherit_slots(PyTypeObject *type, PyTypeObject *base)
         COPYSLOT(tp_dictoffset);
         COPYSLOT(tp_init);
         COPYSLOT(tp_alloc);
-        COPYSLOT(tp_is_gc);
         COPYSLOT(tp_finalize);
 	COPYSLOT(tp_free);
     }
@@ -6060,29 +6025,9 @@ SLOT1BIN(slot_nb_or, nb_or, "__or__", "__ror__")
 
 SLOT0(slot_nb_int, "__int__")
 SLOT0(slot_nb_float, "__float__")
-SLOT1(slot_nb_inplace_add, "__iadd__", PyObject *)
-SLOT1(slot_nb_inplace_subtract, "__isub__", PyObject *)
-SLOT1(slot_nb_inplace_multiply, "__imul__", PyObject *)
-SLOT1(slot_nb_inplace_matrix_multiply, "__imatmul__", PyObject *)
-SLOT1(slot_nb_inplace_remainder, "__imod__", PyObject *)
-/* Can't use SLOT1 here, because nb_inplace_power is ternary */
-static PyObject *
-slot_nb_inplace_power(PyObject *self, PyObject * arg1, PyObject *arg2)
-{
-    PyObject *stack[2] = {self, arg1};
-    _Py_IDENTIFIER(__ipow__);
-    return vectorcall_method(&PyId___ipow__, stack, 2);
-}
-SLOT1(slot_nb_inplace_lshift, "__ilshift__", PyObject *)
-SLOT1(slot_nb_inplace_rshift, "__irshift__", PyObject *)
-SLOT1(slot_nb_inplace_and, "__iand__", PyObject *)
-SLOT1(slot_nb_inplace_xor, "__ixor__", PyObject *)
-SLOT1(slot_nb_inplace_or, "__ior__", PyObject *)
 SLOT1BIN(slot_nb_floor_divide, nb_floor_divide,
          "__floordiv__", "__rfloordiv__")
 SLOT1BIN(slot_nb_true_divide, nb_true_divide, "__truediv__", "__rtruediv__")
-SLOT1(slot_nb_inplace_floor_divide, "__ifloordiv__", PyObject *)
-SLOT1(slot_nb_inplace_true_divide, "__itruediv__", PyObject *)
 
 static PyObject *
 slot_tp_repr(PyObject *self)
@@ -6467,63 +6412,6 @@ slot_tp_finalize(PyObject *self)
     PyErr_Restore(error_type, error_value, error_traceback);
 }
 
-static PyObject *
-slot_am_await(PyObject *self)
-{
-    int unbound;
-    PyObject *func, *res;
-    _Py_IDENTIFIER(__await__);
-
-    func = lookup_maybe_method(self, &PyId___await__, &unbound);
-    if (func != NULL) {
-        res = call_unbound_noarg(unbound, func, self);
-        Py_DECREF(func);
-        return res;
-    }
-    PyErr_Format(PyExc_AttributeError,
-                 "object %.50s does not have __await__ method",
-                 Py_TYPE(self)->tp_name);
-    return NULL;
-}
-
-static PyObject *
-slot_am_aiter(PyObject *self)
-{
-    int unbound;
-    PyObject *func, *res;
-    _Py_IDENTIFIER(__aiter__);
-
-    func = lookup_maybe_method(self, &PyId___aiter__, &unbound);
-    if (func != NULL) {
-        res = call_unbound_noarg(unbound, func, self);
-        Py_DECREF(func);
-        return res;
-    }
-    PyErr_Format(PyExc_AttributeError,
-                 "object %.50s does not have __aiter__ method",
-                 Py_TYPE(self)->tp_name);
-    return NULL;
-}
-
-static PyObject *
-slot_am_anext(PyObject *self)
-{
-    int unbound;
-    PyObject *func, *res;
-    _Py_IDENTIFIER(__anext__);
-
-    func = lookup_maybe_method(self, &PyId___anext__, &unbound);
-    if (func != NULL) {
-        res = call_unbound_noarg(unbound, func, self);
-        Py_DECREF(func);
-        return res;
-    }
-    PyErr_Format(PyExc_AttributeError,
-                 "object %.50s does not have __anext__ method",
-                 Py_TYPE(self)->tp_name);
-    return NULL;
-}
-
 /*
 Table mapping __foo__ names to tp_foo offsets and slot_tp_foo wrapper functions.
 
@@ -6559,8 +6447,6 @@ typedef struct wrapperbase slotdef;
 #define ETSLOT(NAME, SLOT, FUNCTION, WRAPPER, DOC) \
     {NAME, offsetof(PyHeapTypeObject, SLOT), (void *)(FUNCTION), WRAPPER, \
      PyDoc_STR(DOC)}
-#define AMSLOT(NAME, SLOT, FUNCTION, WRAPPER, DOC) \
-    ETSLOT(NAME, as_async.SLOT, FUNCTION, WRAPPER, DOC)
 #define SQSLOT(NAME, SLOT, FUNCTION, WRAPPER, DOC) \
     ETSLOT(NAME, as_sequence.SLOT, FUNCTION, WRAPPER, DOC)
 #define MPSLOT(NAME, SLOT, FUNCTION, WRAPPER, DOC) \
@@ -6639,13 +6525,6 @@ static slotdef slotdefs[] = {
            "__new__(type, /, *args, **kwargs)\n--\n\n"
            "Create and return new object.  See help(type) for accurate signature."),
     TPSLOT("__del__", tp_finalize, slot_tp_finalize, (wrapperfunc)wrap_del, ""),
-
-    AMSLOT("__await__", am_await, slot_am_await, wrap_unaryfunc,
-           "__await__($self, /)\n--\n\nReturn an iterator to be used in await expression."),
-    AMSLOT("__aiter__", am_aiter, slot_am_aiter, wrap_unaryfunc,
-           "__aiter__($self, /)\n--\n\nReturn an awaitable, that resolves in asynchronous iterator."),
-    AMSLOT("__anext__", am_anext, slot_am_anext, wrap_unaryfunc,
-           "__anext__($self, /)\n--\n\nReturn a value or raise StopAsyncIteration."),
     BINSLOT("__add__", nb_add, slot_nb_add,
            "+"),
     RBINSLOT("__radd__", nb_add, slot_nb_add,
@@ -6691,34 +6570,10 @@ static slotdef slotdefs[] = {
            "int(self)"),
     UNSLOT("__float__", nb_float, slot_nb_float, wrap_unaryfunc,
            "float(self)"),
-    IBSLOT("__iadd__", nb_inplace_add, slot_nb_inplace_add,
-           wrap_binaryfunc, "+="),
-    IBSLOT("__isub__", nb_inplace_subtract, slot_nb_inplace_subtract,
-           wrap_binaryfunc, "-="),
-    IBSLOT("__imul__", nb_inplace_multiply, slot_nb_inplace_multiply,
-           wrap_binaryfunc, "*="),
-    IBSLOT("__imod__", nb_inplace_remainder, slot_nb_inplace_remainder,
-           wrap_binaryfunc, "%="),
-    IBSLOT("__ipow__", nb_inplace_power, slot_nb_inplace_power,
-           wrap_ternaryfunc, "**="),
-    IBSLOT("__ilshift__", nb_inplace_lshift, slot_nb_inplace_lshift,
-           wrap_binaryfunc, "<<="),
-    IBSLOT("__irshift__", nb_inplace_rshift, slot_nb_inplace_rshift,
-           wrap_binaryfunc, ">>="),
-    IBSLOT("__iand__", nb_inplace_and, slot_nb_inplace_and,
-           wrap_binaryfunc, "&="),
-    IBSLOT("__ixor__", nb_inplace_xor, slot_nb_inplace_xor,
-           wrap_binaryfunc, "^="),
-    IBSLOT("__ior__", nb_inplace_or, slot_nb_inplace_or,
-           wrap_binaryfunc, "|="),
     BINSLOT("__floordiv__", nb_floor_divide, slot_nb_floor_divide, "//"),
     RBINSLOT("__rfloordiv__", nb_floor_divide, slot_nb_floor_divide, "//"),
     BINSLOT("__truediv__", nb_true_divide, slot_nb_true_divide, "/"),
     RBINSLOT("__rtruediv__", nb_true_divide, slot_nb_true_divide, "/"),
-    IBSLOT("__ifloordiv__", nb_inplace_floor_divide,
-           slot_nb_inplace_floor_divide, wrap_binaryfunc, "//="),
-    IBSLOT("__itruediv__", nb_inplace_true_divide,
-           slot_nb_inplace_true_divide, wrap_binaryfunc, "/="),
     NBSLOT("__index__", nb_index, slot_nb_index, wrap_unaryfunc,
            "__index__($self, /)\n--\n\n"
            "Return self converted to an integer, if self is suitable "
@@ -6727,8 +6582,6 @@ static slotdef slotdefs[] = {
             "@"),
     RBINSLOT("__rmatmul__", nb_matrix_multiply, slot_nb_matrix_multiply,
              "@"),
-    IBSLOT("__imatmul__", nb_inplace_matrix_multiply, slot_nb_inplace_matrix_multiply,
-           wrap_binaryfunc, "@="),
     MPSLOT("__len__", mp_length, slot_mp_length, wrap_lenfunc,
            "__len__($self, /)\n--\n\nReturn len(self)."),
     MPSLOT("__getitem__", mp_subscript, slot_mp_subscript,
@@ -6762,13 +6615,6 @@ static slotdef slotdefs[] = {
            "__delitem__($self, key, /)\n--\n\nDelete self[key]."),
     SQSLOT("__contains__", sq_contains, slot_sq_contains, wrap_objobjproc,
            "__contains__($self, key, /)\n--\n\nReturn key in self."),
-    SQSLOT("__iadd__", sq_inplace_concat, NULL,
-           wrap_binaryfunc,
-           "__iadd__($self, value, /)\n--\n\nImplement self+=value."),
-    SQSLOT("__imul__", sq_inplace_repeat, NULL,
-           wrap_indexargfunc,
-           "__imul__($self, value, /)\n--\n\nImplement self*=value."),
-
     {NULL}
 };
 

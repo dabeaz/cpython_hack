@@ -110,7 +110,8 @@ How will it end?  Or is this just the start?
 - Day 93 (9/11/2020). Punctured packages. And importlib. And marshal.
 - Day 94 (9/12/2020). Took gc to the curb.
 - Day 95 (9/13/2020). free(PyMalloc).
-  
+- Day 96 (9/14/2020). Nothing is "in-place".
+
 Copyright and License Information
 ---------------------------------
 

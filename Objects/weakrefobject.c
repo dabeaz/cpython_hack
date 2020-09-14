@@ -535,21 +535,8 @@ WRAP_BINARY(proxy_xor, PyNumber_Xor)
 WRAP_BINARY(proxy_or, PyNumber_Or)
 WRAP_UNARY(proxy_int, PyNumber_Long)
 WRAP_UNARY(proxy_float, PyNumber_Float)
-WRAP_BINARY(proxy_iadd, PyNumber_InPlaceAdd)
-WRAP_BINARY(proxy_isub, PyNumber_InPlaceSubtract)
-WRAP_BINARY(proxy_imul, PyNumber_InPlaceMultiply)
-WRAP_BINARY(proxy_ifloor_div, PyNumber_InPlaceFloorDivide)
-WRAP_BINARY(proxy_itrue_div, PyNumber_InPlaceTrueDivide)
-WRAP_BINARY(proxy_imod, PyNumber_InPlaceRemainder)
-WRAP_TERNARY(proxy_ipow, PyNumber_InPlacePower)
-WRAP_BINARY(proxy_ilshift, PyNumber_InPlaceLshift)
-WRAP_BINARY(proxy_irshift, PyNumber_InPlaceRshift)
-WRAP_BINARY(proxy_iand, PyNumber_InPlaceAnd)
-WRAP_BINARY(proxy_ixor, PyNumber_InPlaceXor)
-WRAP_BINARY(proxy_ior, PyNumber_InPlaceOr)
 WRAP_UNARY(proxy_index, PyNumber_Index)
 WRAP_BINARY(proxy_matmul, PyNumber_MatrixMultiply)
-WRAP_BINARY(proxy_imatmul, PyNumber_InPlaceMatrixMultiply)
 
 static int
 proxy_bool(PyWeakReference *proxy)
@@ -680,23 +667,23 @@ static PyNumberMethods proxy_as_number = {
     proxy_int,              /*nb_int*/
     0,                      /*nb_reserved*/
     proxy_float,            /*nb_float*/
-    proxy_iadd,             /*nb_inplace_add*/
-    proxy_isub,             /*nb_inplace_subtract*/
-    proxy_imul,             /*nb_inplace_multiply*/
-    proxy_imod,             /*nb_inplace_remainder*/
-    proxy_ipow,             /*nb_inplace_power*/
-    proxy_ilshift,          /*nb_inplace_lshift*/
-    proxy_irshift,          /*nb_inplace_rshift*/
-    proxy_iand,             /*nb_inplace_and*/
-    proxy_ixor,             /*nb_inplace_xor*/
-    proxy_ior,              /*nb_inplace_or*/
+    0, // proxy_iadd,             /*nb_inplace_add*/
+    0, //proxy_isub,             /*nb_inplace_subtract*/
+    0, //proxy_imul,             /*nb_inplace_multiply*/
+    0, //proxy_imod,             /*nb_inplace_remainder*/
+    0, //proxy_ipow,             /*nb_inplace_power*/
+    0, //proxy_ilshift,          /*nb_inplace_lshift*/
+    0, //proxy_irshift,          /*nb_inplace_rshift*/
+    0, //proxy_iand,             /*nb_inplace_and*/
+    0, //proxy_ixor,             /*nb_inplace_xor*/
+    0, //proxy_ior,              /*nb_inplace_or*/
     proxy_floor_div,        /*nb_floor_divide*/
     proxy_true_div,         /*nb_true_divide*/
-    proxy_ifloor_div,       /*nb_inplace_floor_divide*/
-    proxy_itrue_div,        /*nb_inplace_true_divide*/
+    0, // proxy_ifloor_div,       /*nb_inplace_floor_divide*/
+    0, // proxy_itrue_div,        /*nb_inplace_true_divide*/
     proxy_index,            /*nb_index*/
     proxy_matmul,           /*nb_matrix_multiply*/
-    proxy_imatmul,          /*nb_inplace_matrix_multiply*/
+    0, // proxy_imatmul,          /*nb_inplace_matrix_multiply*/
 };
 
 static PySequenceMethods proxy_as_sequence = {
