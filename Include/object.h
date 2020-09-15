@@ -622,10 +622,6 @@ typedef struct _Py_Identifier {
 #define _Py_static_string(varname, value)  static _Py_Identifier varname = _Py_static_string_init(value)
 #define _Py_IDENTIFIER(varname) _Py_static_string(PyId_##varname, #varname)
 
-
-typedef int (*getbufferproc)(PyObject *, void *, int);
-typedef void (*releasebufferproc)(PyObject *, void *);
-
 typedef PyObject *(*vectorcallfunc)(PyObject *callable, PyObject *const *args,
                                     size_t nargsf, PyObject *kwnames);
 
@@ -653,27 +649,10 @@ typedef struct {
     unaryfunc nb_int;
     void *nb_reserved;  /* the slot formerly known as nb_long */
     unaryfunc nb_float;
-
-    binaryfunc nb_inplace_add;
-    binaryfunc nb_inplace_subtract;
-    binaryfunc nb_inplace_multiply;
-    binaryfunc nb_inplace_remainder;
-    ternaryfunc nb_inplace_power;
-    binaryfunc nb_inplace_lshift;
-    binaryfunc nb_inplace_rshift;
-    binaryfunc nb_inplace_and;
-    binaryfunc nb_inplace_xor;
-    binaryfunc nb_inplace_or;
-
     binaryfunc nb_floor_divide;
     binaryfunc nb_true_divide;
-    binaryfunc nb_inplace_floor_divide;
-    binaryfunc nb_inplace_true_divide;
-
     unaryfunc nb_index;
-
     binaryfunc nb_matrix_multiply;
-    binaryfunc nb_inplace_matrix_multiply;
 } PyNumberMethods;
 
 typedef struct {
@@ -685,9 +664,6 @@ typedef struct {
     ssizeobjargproc sq_ass_item;
     void *was_sq_ass_slice;
     objobjproc sq_contains;
-
-    binaryfunc sq_inplace_concat;
-    ssizeargfunc sq_inplace_repeat;
 } PySequenceMethods;
 
 typedef struct {
@@ -695,17 +671,6 @@ typedef struct {
     binaryfunc mp_subscript;
     objobjargproc mp_ass_subscript;
 } PyMappingMethods;
-
-typedef struct {
-    unaryfunc am_await;
-    unaryfunc am_aiter;
-    unaryfunc am_anext;
-} PyAsyncMethods;
-
-typedef struct {
-     getbufferproc bf_getbuffer;
-     releasebufferproc bf_releasebuffer;
-} PyBufferProcs;
 
 /* Allow printfunc in the tp_vectorcall_offset slot for
  * backwards-compatibility */
@@ -722,7 +687,7 @@ struct _typeobject {
     Py_ssize_t tp_vectorcall_offset;
     getattrfunc tp_getattr;
     setattrfunc tp_setattr;
-    PyAsyncMethods *tp_as_async; /* formerly known as tp_compare (Python 2)
+    void *tp_as_async; /* formerly known as tp_compare (Python 2)
                                     or tp_reserved (Python 3) */
     reprfunc tp_repr;
 
@@ -741,7 +706,7 @@ struct _typeobject {
     setattrofunc tp_setattro;
 
     /* Functions to access object as input/output buffer */
-    PyBufferProcs *tp_as_buffer;
+    void *tp_as_buffer;
 
     /* Flags to define presence of optional/expanded features */
     unsigned long tp_flags;
@@ -799,7 +764,6 @@ typedef struct _heaptypeobject {
     /* Note: there's a dependency on the order of these members
        in slotptr() in typeobject.c . */
     PyTypeObject ht_type;
-    PyAsyncMethods as_async;
     PyNumberMethods as_number;
     PyMappingMethods as_mapping;
     PySequenceMethods as_sequence; /* as_sequence comes after as_mapping,
@@ -807,7 +771,6 @@ typedef struct _heaptypeobject {
                                       the mapping and the sequence define
                                       a given operator (e.g. __getitem__).
                                       see add_operators() in typeobject.c . */
-    PyBufferProcs as_buffer;
     PyObject *ht_name, *ht_slots, *ht_qualname;
     PyObject *ht_module;
     /* here are optional user slots, followed by the members. */

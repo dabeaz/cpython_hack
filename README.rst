@@ -111,7 +111,8 @@ How will it end?  Or is this just the start?
 - Day 94 (9/12/2020). Took gc to the curb.
 - Day 95 (9/13/2020). free(PyMalloc).
 - Day 96 (9/14/2020). Nothing is "in-place".
-
+- Day 97 (9/15/2020). Cleaned up some type slots.
+  
 Copyright and License Information
 ---------------------------------
 

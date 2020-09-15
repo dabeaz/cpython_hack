@@ -2046,20 +2046,8 @@ static PyNumberMethods float_as_number = {
     float___trunc___impl, /* nb_int */
     0,                  /* nb_reserved */
     float_float,        /* nb_float */
-    0,                  /* nb_inplace_add */
-    0,                  /* nb_inplace_subtract */
-    0,                  /* nb_inplace_multiply */
-    0,                  /* nb_inplace_remainder */
-    0,                  /* nb_inplace_power */
-    0,                  /* nb_inplace_lshift */
-    0,                  /* nb_inplace_rshift */
-    0,                  /* nb_inplace_and */
-    0,                  /* nb_inplace_xor */
-    0,                  /* nb_inplace_or */
     float_floor_div,    /* nb_floor_divide */
     float_div,          /* nb_true_divide */
-    0,                  /* nb_inplace_floor_divide */
-    0,                  /* nb_inplace_true_divide */
 };
 
 PyTypeObject PyFloat_Type = {

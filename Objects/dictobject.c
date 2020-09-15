@@ -2799,8 +2799,6 @@ static PySequenceMethods dict_as_sequence = {
     0,                          /* sq_ass_item */
     0,                          /* sq_ass_slice */
     PyDict_Contains,            /* sq_contains */
-    0,                          /* sq_inplace_concat */
-    0,                          /* sq_inplace_repeat */
 };
 
 static PyNumberMethods dict_as_number = {

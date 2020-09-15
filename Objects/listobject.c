@@ -3030,8 +3030,6 @@ static PySequenceMethods list_as_sequence = {
     (ssizeobjargproc)list_ass_item,             /* sq_ass_item */
     0,                                          /* sq_ass_slice */
     (objobjproc)list_contains,                  /* sq_contains */
-    0, // (binaryfunc)list_inplace_concat,            /* sq_inplace_concat */
-    0, // (ssizeargfunc)list_inplace_repeat,          /* sq_inplace_repeat */
 };
 
 static PyObject *

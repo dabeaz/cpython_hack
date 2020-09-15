@@ -667,23 +667,10 @@ static PyNumberMethods proxy_as_number = {
     proxy_int,              /*nb_int*/
     0,                      /*nb_reserved*/
     proxy_float,            /*nb_float*/
-    0, // proxy_iadd,             /*nb_inplace_add*/
-    0, //proxy_isub,             /*nb_inplace_subtract*/
-    0, //proxy_imul,             /*nb_inplace_multiply*/
-    0, //proxy_imod,             /*nb_inplace_remainder*/
-    0, //proxy_ipow,             /*nb_inplace_power*/
-    0, //proxy_ilshift,          /*nb_inplace_lshift*/
-    0, //proxy_irshift,          /*nb_inplace_rshift*/
-    0, //proxy_iand,             /*nb_inplace_and*/
-    0, //proxy_ixor,             /*nb_inplace_xor*/
-    0, //proxy_ior,              /*nb_inplace_or*/
     proxy_floor_div,        /*nb_floor_divide*/
     proxy_true_div,         /*nb_true_divide*/
-    0, // proxy_ifloor_div,       /*nb_inplace_floor_divide*/
-    0, // proxy_itrue_div,        /*nb_inplace_true_divide*/
     proxy_index,            /*nb_index*/
     proxy_matmul,           /*nb_matrix_multiply*/
-    0, // proxy_imatmul,          /*nb_inplace_matrix_multiply*/
 };
 
 static PySequenceMethods proxy_as_sequence = {

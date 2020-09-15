@@ -1032,8 +1032,6 @@ static PySequenceMethods mappingproxy_as_sequence = {
     0,                                          /* sq_ass_item */
     0,                                          /* sq_ass_slice */
     (objobjproc)mappingproxy_contains,                 /* sq_contains */
-    0,                                          /* sq_inplace_concat */
-    0,                                          /* sq_inplace_repeat */
 };
 
 static PyObject *

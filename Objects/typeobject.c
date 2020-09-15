@@ -2362,12 +2362,9 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
         Py_TPFLAGS_BASETYPE;
 
     /* Initialize essential fields */
-    type->tp_as_async = &et->as_async;
     type->tp_as_number = &et->as_number;
     type->tp_as_sequence = &et->as_sequence;
     type->tp_as_mapping = &et->as_mapping;
-    type->tp_as_buffer = &et->as_buffer;
-    
     type->tp_name = PyUnicode_AsCharAndSize(name, &name_size);
     if (!type->tp_name)
         goto error;
@@ -2665,12 +2662,9 @@ PyType_FromModuleAndSpec(PyObject *module, PyType_Spec *spec, PyObject *bases)
     }
 
     /* Initialize essential fields */
-    type->tp_as_async = &res->as_async;
     type->tp_as_number = &res->as_number;
     type->tp_as_sequence = &res->as_sequence;
     type->tp_as_mapping = &res->as_mapping;
-    type->tp_as_buffer = &res->as_buffer;
-    
     /* Set tp_base and tp_bases */
     type->tp_bases = bases;
     bases = NULL;
@@ -6643,10 +6637,6 @@ slotptr(PyTypeObject *type, int ioffset)
     else if ((size_t)offset >= offsetof(PyHeapTypeObject, as_number)) {
         ptr = (char *)type->tp_as_number;
         offset -= offsetof(PyHeapTypeObject, as_number);
-    }
-    else if ((size_t)offset >= offsetof(PyHeapTypeObject, as_async)) {
-        ptr = (char *)type->tp_as_async;
-        offset -= offsetof(PyHeapTypeObject, as_async);
     }
     else {
         ptr = (char *)type;

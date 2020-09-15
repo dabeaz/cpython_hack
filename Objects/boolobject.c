@@ -112,20 +112,8 @@ static PyNumberMethods bool_as_number = {
     0,                          /* nb_int */
     0,                          /* nb_reserved */
     0,                          /* nb_float */
-    0,                          /* nb_inplace_add */
-    0,                          /* nb_inplace_subtract */
-    0,                          /* nb_inplace_multiply */
-    0,                          /* nb_inplace_remainder */
-    0,                          /* nb_inplace_power */
-    0,                          /* nb_inplace_lshift */
-    0,                          /* nb_inplace_rshift */
-    0,                          /* nb_inplace_and */
-    0,                          /* nb_inplace_xor */
-    0,                          /* nb_inplace_or */
     0,                          /* nb_floor_divide */
     0,                          /* nb_true_divide */
-    0,                          /* nb_inplace_floor_divide */
-    0,                          /* nb_inplace_true_divide */
     0,                          /* nb_index */
 };
 

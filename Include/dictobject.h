@@ -149,9 +149,7 @@ typedef struct {
 
 PyAPI_FUNC(PyObject *) _PyDictView_New(PyObject *, PyTypeObject *);
 PyAPI_FUNC(PyObject *) _PyDictView_Intersect(PyObject* self, PyObject *other);
-
-#define _PyDict_HasSplitTable(d) ((d)->ma_values != NULL)
-
+  
 
 #ifdef __cplusplus
 }

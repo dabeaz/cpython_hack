@@ -1969,16 +1969,6 @@ static PyNumberMethods set_as_number = {
     0,                                  /*nb_int*/
     0,                                  /*nb_reserved*/
     0,                                  /*nb_float*/
-    0,                                  /*nb_inplace_add*/
-    0, // (binaryfunc)set_isub,               /*nb_inplace_subtract*/
-    0,                                  /*nb_inplace_multiply*/
-    0,                                  /*nb_inplace_remainder*/
-    0,                                  /*nb_inplace_power*/
-    0,                                  /*nb_inplace_lshift*/
-    0,                                  /*nb_inplace_rshift*/
-    0, // (binaryfunc)set_iand,               /*nb_inplace_and*/
-    0, //(binaryfunc)set_ixor,               /*nb_inplace_xor*/
-    0, //(binaryfunc)set_ior,                /*nb_inplace_or*/
 };
 
 PyDoc_STRVAR(set_doc,

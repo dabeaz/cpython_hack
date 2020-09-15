@@ -586,51 +586,6 @@ PyNumber_Power(PyObject *v, PyObject *w, PyObject *z)
     return ternary_op(v, w, z, NB_SLOT(nb_power), "** or pow()");
 }
 
-/* Binary in-place operators */
-
-/* The in-place operators are defined to fall back to the 'normal',
-   non in-place operations, if the in-place methods are not in place.
-
-   - If the left hand object has the appropriate struct members, and
-     they are filled, call the appropriate function and return the
-     result.  No coercion is done on the arguments; the left-hand object
-     is the one the operation is performed on, and it's up to the
-     function to deal with the right-hand object.
-
-   - Otherwise, in-place modification is not supported. Handle it exactly as
-     a non in-place operation of the same kind.
-
-   */
-
-static PyObject *
-binary_iop1(PyObject *v, PyObject *w, const int iop_slot, const int op_slot)
-{
-    PyNumberMethods *mv = Py_TYPE(v)->tp_as_number;
-    if (mv != NULL) {
-        binaryfunc slot = NB_BINOP(mv, iop_slot);
-        if (slot) {
-            PyObject *x = (slot)(v, w);
-            if (x != Py_NotImplemented) {
-                return x;
-            }
-            Py_DECREF(x);
-        }
-    }
-    return binary_op1(v, w, op_slot);
-}
-
-static PyObject *
-binary_iop(PyObject *v, PyObject *w, const int iop_slot, const int op_slot,
-                const char *op_name)
-{
-    PyObject *result = binary_iop1(v, w, iop_slot, op_slot);
-    if (result == Py_NotImplemented) {
-        Py_DECREF(result);
-        return binop_type_error(v, w, op_name);
-    }
-    return result;
-}
-
 /* Unary operators and functions */
 
 PyObject *
