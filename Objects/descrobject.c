@@ -1017,10 +1017,7 @@ static PyNumberMethods mappingproxy_as_number = {
 static int
 mappingproxy_contains(mappingproxyobject *pp, PyObject *key)
 {
-    if (PyDict_CheckExact(pp->mapping))
-        return PyDict_Contains(pp->mapping, key);
-    else
-        return PySequence_Contains(pp->mapping, key);
+  return PySequence_Contains(pp->mapping, key);
 }
 
 static PySequenceMethods mappingproxy_as_sequence = {

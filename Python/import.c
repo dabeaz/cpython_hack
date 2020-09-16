@@ -108,11 +108,7 @@ import_get_module(PyThreadState *tstate, PyObject *name)
 
     PyObject *m;
     Py_INCREF(modules);
-    if (PyDict_CheckExact(modules)) {
-        m = PyDict_GetItemWithError(modules, name);  /* borrowed */
-        Py_XINCREF(m);
-    }
-    else {
+    {
         m = PyObject_GetItem(modules, name);
         if (m == NULL && _PyErr_ExceptionMatches(tstate, PyExc_KeyError)) {
             _PyErr_Clear(tstate);
@@ -215,14 +211,7 @@ _PyImport_Cleanup(PyThreadState *tstate)
 
     /* Remove all modules from sys.modules, hoping that garbage collection
        can reclaim most of them. */
-    if (PyDict_CheckExact(modules)) {
-        Py_ssize_t pos = 0;
-        PyObject *key, *value;
-        while (PyDict_Next(modules, &pos, &key, &value)) {
-            CLEAR_MODULE(key, value);
-        }
-    }
-    else {
+      {
         PyObject *iterator = PyObject_GetIter(modules);
         if (iterator == NULL) {
             PyErr_WriteUnraisable(NULL);
@@ -247,10 +236,7 @@ _PyImport_Cleanup(PyThreadState *tstate)
     }
 
     /* Clear the modules dict. */
-    if (PyDict_CheckExact(modules)) {
-        PyDict_Clear(modules);
-    }
-    else {
+      {
         _Py_IDENTIFIER(clear);
         if (_PyObject_CallMethodIdNoArgs(modules, &PyId_clear) == NULL) {
             PyErr_WriteUnraisable(NULL);
@@ -502,10 +488,7 @@ import_add_module(PyThreadState *tstate, PyObject *name)
     }
 
     PyObject *m;
-    if (PyDict_CheckExact(modules)) {
-        m = PyDict_GetItemWithError(modules, name);
-    }
-    else {
+      {
         m = PyObject_GetItem(modules, name);
         // For backward-compatibility we copy the behavior
         // of PyDict_GetItemWithError().

@@ -392,21 +392,6 @@ binary_op(PyObject *v, PyObject *w, const int op_slot, const char *op_name)
     PyObject *result = binary_op1(v, w, op_slot);
     if (result == Py_NotImplemented) {
         Py_DECREF(result);
-
-        if (op_slot == NB_SLOT(nb_rshift) &&
-            PyCFunction_CheckExact(v) &&
-            strcmp(((PyCFunctionObject *)v)->m_ml->ml_name, "print") == 0)
-        {
-            PyErr_Format(PyExc_TypeError,
-                "unsupported operand type(s) for %.100s: "
-                "'%.100s' and '%.100s'. Did you mean \"print(<message>, "
-                "file=<output_stream>)\"?",
-                op_name,
-                Py_TYPE(v)->tp_name,
-                Py_TYPE(w)->tp_name);
-            return NULL;
-        }
-
         return binop_type_error(v, w, op_name);
     }
     return result;
@@ -1174,19 +1159,6 @@ PySequence_Tuple(PyObject *v)
     if (v == NULL) {
         return null_error();
     }
-
-    /* Special-case the common tuple and list cases, for efficiency. */
-    if (PyTuple_CheckExact(v)) {
-        /* Note that we can't know whether it's safe to return
-           a tuple *subclass* instance as-is, hence the restriction
-           to exact tuples here.  In contrast, lists always make
-           a copy, so there's no need for exactness below. */
-        Py_INCREF(v);
-        return v;
-    }
-    if (PyList_CheckExact(v))
-        return PyList_AsTuple(v);
-
     /* Get iterator. */
     it = PyObject_GetIter(v);
     if (it == NULL)
@@ -1566,9 +1538,6 @@ PyMapping_Keys(PyObject *o)
     if (o == NULL) {
         return null_error();
     }
-    if (PyDict_CheckExact(o)) {
-        return PyDict_Keys(o);
-    }
     return method_output_as_list(o, &PyId_keys);
 }
 
@@ -1580,9 +1549,6 @@ PyMapping_Items(PyObject *o)
     if (o == NULL) {
         return null_error();
     }
-    if (PyDict_CheckExact(o)) {
-        return PyDict_Items(o);
-    }
     return method_output_as_list(o, &PyId_items);
 }
 
@@ -1592,10 +1558,7 @@ PyMapping_Values(PyObject *o)
     _Py_IDENTIFIER(values);
 
     if (o == NULL) {
-        return null_error();
-    }
-    if (PyDict_CheckExact(o)) {
-        return PyDict_Values(o);
+      return null_error();
     }
     return method_output_as_list(o, &PyId_values);
 }

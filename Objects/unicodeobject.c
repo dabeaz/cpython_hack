@@ -1246,61 +1246,6 @@ unicode_swapcase(PyObject *self, PyObject *Py_UNUSED(ignored))
     return unicode_swapcase_impl(self);
 }
 
-PyDoc_STRVAR(unicode_maketrans__doc__,
-"maketrans(x, y=<unrepresentable>, z=<unrepresentable>, /)\n"
-"--\n"
-"\n"
-"Return a translation table usable for str.translate().\n"
-"\n"
-"If there is only one argument, it must be a dictionary mapping Unicode\n"
-"ordinals (integers) or characters to Unicode ordinals, strings or None.\n"
-"Character keys will be then converted to ordinals.\n"
-"If there are two arguments, they must be strings of equal length, and\n"
-"in the resulting dictionary, each character in x will be mapped to the\n"
-"character at the same position in y. If there is a third argument, it\n"
-"must be a string, whose characters will be mapped to None in the result.");
-
-#define UNICODE_MAKETRANS_METHODDEF    \
-    {"maketrans", (PyCFunction)(void(*)(void))unicode_maketrans, METH_FASTCALL|METH_STATIC, unicode_maketrans__doc__},
-
-static PyObject *
-unicode_maketrans_impl(PyObject *x, PyObject *y, PyObject *z);
-
-static PyObject *
-unicode_maketrans(void *null, PyObject *const *args, Py_ssize_t nargs)
-{
-    PyObject *return_value = NULL;
-    PyObject *x;
-    PyObject *y = NULL;
-    PyObject *z = NULL;
-
-    if (!_PyArg_CheckPositional("maketrans", nargs, 1, 3)) {
-        goto exit;
-    }
-    x = args[0];
-    if (nargs < 2) {
-        goto skip_optional;
-    }
-    if (!PyUnicode_Check(args[1])) {
-        _PyArg_BadArgument("maketrans", "argument 2", "str", args[1]);
-        goto exit;
-    }
-    y = args[1];
-    if (nargs < 3) {
-        goto skip_optional;
-    }
-    if (!PyUnicode_Check(args[2])) {
-        _PyArg_BadArgument("maketrans", "argument 3", "str", args[2]);
-        goto exit;
-    }
-    z = args[2];
-skip_optional:
-    return_value = unicode_maketrans_impl(x, y, z);
-
-exit:
-    return return_value;
-}
-
 PyDoc_STRVAR(unicode_upper__doc__,
 "upper($self, /)\n"
 "--\n"
@@ -2602,12 +2547,6 @@ PyUnicode_WriteChar(PyObject *unicode, Py_ssize_t index, Py_UCS4 ch)
     }
     PyUnicode_WRITE(PyUnicode_DATA(unicode),index, ch);
     return 0;
-}
-
-const char *
-PyUnicode_GetDefaultEncoding(void)
-{
-    return "latin-1";
 }
 
 /* --- UTF-8 Codec -------------------------------------------------------- */
@@ -5675,130 +5614,6 @@ unicode_swapcase_impl(PyObject *self)
 }
 
 /*[clinic input]
-
-@staticmethod
-str.maketrans as unicode_maketrans
-
-  x: object
-
-  y: unicode=NULL
-
-  z: unicode=NULL
-
-  /
-
-Return a translation table usable for str.translate().
-
-If there is only one argument, it must be a dictionary mapping Unicode
-ordinals (integers) or characters to Unicode ordinals, strings or None.
-Character keys will be then converted to ordinals.
-If there are two arguments, they must be strings of equal length, and
-in the resulting dictionary, each character in x will be mapped to the
-character at the same position in y. If there is a third argument, it
-must be a string, whose characters will be mapped to None in the result.
-[clinic start generated code]*/
-
-static PyObject *
-unicode_maketrans_impl(PyObject *x, PyObject *y, PyObject *z)
-/*[clinic end generated code: output=a925c89452bd5881 input=7bfbf529a293c6c5]*/
-{
-    PyObject *new = NULL, *key, *value;
-    Py_ssize_t i = 0;
-    int res;
-
-    new = PyDict_New();
-    if (!new)
-        return NULL;
-    if (y != NULL) {
-        const void *x_data, *y_data, *z_data;
-
-        /* x must be a string too, of equal length */
-        if (!PyUnicode_Check(x)) {
-            PyErr_SetString(PyExc_TypeError, "first maketrans argument must "
-                            "be a string if there is a second argument");
-            goto err;
-        }
-        if (PyUnicode_GET_LENGTH(x) != PyUnicode_GET_LENGTH(y)) {
-            PyErr_SetString(PyExc_ValueError, "the first two maketrans "
-                            "arguments must have equal length");
-            goto err;
-        }
-        /* create entries for translating chars in x to those in y */
-        x_data = PyUnicode_DATA(x);
-        y_data = PyUnicode_DATA(y);
-        for (i = 0; i < PyUnicode_GET_LENGTH(x); i++) {
-            key = PyLong_FromLong(PyUnicode_READ(x_data, i));
-            if (!key)
-                goto err;
-            value = PyLong_FromLong(PyUnicode_READ(y_data, i));
-            if (!value) {
-                Py_DECREF(key);
-                goto err;
-            }
-            res = PyDict_SetItem(new, key, value);
-            Py_DECREF(key);
-            Py_DECREF(value);
-            if (res < 0)
-                goto err;
-        }
-        /* create entries for deleting chars in z */
-        if (z != NULL) {
-            z_data = PyUnicode_DATA(z);
-            for (i = 0; i < PyUnicode_GET_LENGTH(z); i++) {
-                key = PyLong_FromLong(PyUnicode_READ(z_data, i));
-                if (!key)
-                    goto err;
-                res = PyDict_SetItem(new, key, Py_None);
-                Py_DECREF(key);
-                if (res < 0)
-                    goto err;
-            }
-        }
-    } else {
-        const void *data;
-
-        /* x must be a dict */
-        if (!PyDict_CheckExact(x)) {
-            PyErr_SetString(PyExc_TypeError, "if you give only one argument "
-                            "to maketrans it must be a dict");
-            goto err;
-        }
-        /* copy entries into the new dict, converting string keys to int keys */
-        while (PyDict_Next(x, &i, &key, &value)) {
-            if (PyUnicode_Check(key)) {
-                /* convert string keys to integer keys */
-                PyObject *newkey;
-                if (PyUnicode_GET_LENGTH(key) != 1) {
-                    PyErr_SetString(PyExc_ValueError, "string keys in translate "
-                                    "table must be of length 1");
-                    goto err;
-                }
-                data = PyUnicode_DATA(key);
-                newkey = PyLong_FromLong(PyUnicode_READ( data, 0));
-                if (!newkey)
-                    goto err;
-                res = PyDict_SetItem(new, newkey, value);
-                Py_DECREF(newkey);
-                if (res < 0)
-                    goto err;
-            } else if (PyLong_Check(key)) {
-                /* just keep integer keys */
-                if (PyDict_SetItem(new, key, value) < 0)
-                    goto err;
-            } else {
-                PyErr_SetString(PyExc_TypeError, "keys in translate table must "
-                                "be strings or integers");
-                goto err;
-            }
-        }
-    }
-    return new;
-  err:
-    Py_DECREF(new);
-    return NULL;
-}
-
-/*[clinic input]
 str.upper as unicode_upper
 
 Return a copy of the string converted to uppercase.
@@ -6295,7 +6110,6 @@ static PyMethodDef unicode_methods[] = {
     {"format", (PyCFunction)(void(*)(void)) do_string_format, METH_VARARGS | METH_KEYWORDS, format__doc__},
     {"format_map", (PyCFunction) do_string_format_map, METH_O, format_map__doc__},
     UNICODE___FORMAT___METHODDEF
-    UNICODE_MAKETRANS_METHODDEF
     UNICODE_SIZEOF_METHODDEF
     {"__getnewargs__",  unicode_getnewargs, METH_NOARGS},
     {NULL, NULL}

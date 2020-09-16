@@ -848,30 +848,7 @@ set_update_internal(PySetObject *so, PyObject *other)
 
     if (PyAnySet_Check(other))
         return set_merge(so, other);
-
-    if (PyDict_CheckExact(other)) {
-        PyObject *value;
-        Py_ssize_t pos = 0;
-        Py_hash_t hash;
-        Py_ssize_t dictsize = PyDict_GET_SIZE(other);
-
-        /* Do one big resize at the start, rather than
-        * incrementally resizing as we insert new keys.  Expect
-        * that there will be no (or few) overlapping keys.
-        */
-        if (dictsize < 0)
-            return -1;
-        if ((so->fill + dictsize)*5 >= so->mask*3) {
-            if (set_table_resize(so, (so->used + dictsize)*2) != 0)
-                return -1;
-        }
-        while (_PyDict_Next(other, &pos, &key, &value, &hash)) {
-            if (set_add_entry(so, key, hash))
-                return -1;
-        }
-        return 0;
-    }
-
+    
     it = PyObject_GetIter(other);
     if (it == NULL)
         return -1;
@@ -1431,9 +1408,6 @@ set_difference(PySetObject *so, PyObject *other)
     if (PyAnySet_Check(other)) {
         other_size = PySet_GET_SIZE(other);
     }
-    else if (PyDict_CheckExact(other)) {
-        other_size = PyDict_GET_SIZE(other);
-    }
     else {
         return set_copy_and_difference(so, other);
     }
@@ -1447,26 +1421,6 @@ set_difference(PySetObject *so, PyObject *other)
     result = make_new_set_basetype(Py_TYPE(so), NULL);
     if (result == NULL)
         return NULL;
-
-    if (PyDict_CheckExact(other)) {
-        while (set_next(so, &pos, &entry)) {
-            key = entry->key;
-            hash = entry->hash;
-            rv = _PyDict_Contains(other, key, hash);
-            if (rv < 0) {
-                Py_DECREF(result);
-                return NULL;
-            }
-            if (!rv) {
-                if (set_add_entry((PySetObject *)result, key, hash)) {
-                    Py_DECREF(result);
-                    return NULL;
-                }
-            }
-        }
-        return result;
-    }
-
     /* Iterate over so, checking for common elements in other. */
     while (set_next(so, &pos, &entry)) {
         key = entry->key;
@@ -1534,27 +1488,7 @@ set_symmetric_difference_update(PySetObject *so, PyObject *other)
 
     if ((PyObject *)so == other)
         return set_clear(so, NULL);
-
-    if (PyDict_CheckExact(other)) {
-        PyObject *value;
-        while (_PyDict_Next(other, &pos, &key, &value, &hash)) {
-            Py_INCREF(key);
-            rv = set_discard_entry(so, key, hash);
-            if (rv < 0) {
-                Py_DECREF(key);
-                return NULL;
-            }
-            if (rv == DISCARD_NOTFOUND) {
-                if (set_add_entry(so, key, hash)) {
-                    Py_DECREF(key);
-                    return NULL;
-                }
-            }
-            Py_DECREF(key);
-        }
-        Py_RETURN_NONE;
-    }
-
+    
     if (PyAnySet_Check(other)) {
         Py_INCREF(other);
         otherset = (PySetObject *)other;

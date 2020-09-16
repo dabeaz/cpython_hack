@@ -155,24 +155,6 @@ exit:
     return return_value;
 }
 
-PyDoc_STRVAR(sys_getdefaultencoding__doc__,
-"getdefaultencoding($module, /)\n"
-"--\n"
-"\n"
-"Return the current default encoding used by the Unicode implementation.");
-
-#define SYS_GETDEFAULTENCODING_METHODDEF    \
-    {"getdefaultencoding", (PyCFunction)sys_getdefaultencoding, METH_NOARGS, sys_getdefaultencoding__doc__},
-
-static PyObject *
-sys_getdefaultencoding_impl(PyObject *module);
-
-static PyObject *
-sys_getdefaultencoding(PyObject *module, PyObject *Py_UNUSED(ignored))
-{
-    return sys_getdefaultencoding_impl(module);
-}
-
 PyDoc_STRVAR(sys_intern__doc__,
 "intern($module, string, /)\n"
 "--\n"
@@ -551,21 +533,6 @@ sys_exit_impl(PyObject *module, PyObject *status)
     return NULL;
 }
 
-
-
-/*[clinic input]
-sys.getdefaultencoding
-
-Return the current default encoding used by the Unicode implementation.
-[clinic start generated code]*/
-
-static PyObject *
-sys_getdefaultencoding_impl(PyObject *module)
-/*[clinic end generated code: output=256d19dfcc0711e6 input=d416856ddbef6909]*/
-{
-    return PyUnicode_FromString(PyUnicode_GetDefaultEncoding());
-}
-
 /*[clinic input]
 sys.intern
 
@@ -798,7 +765,6 @@ static PyMethodDef sys_methods[] = {
     SYS_EXC_INFO_METHODDEF
     SYS_EXCEPTHOOK_METHODDEF
     SYS_EXIT_METHODDEF
-    SYS_GETDEFAULTENCODING_METHODDEF
     SYS_GETREFCOUNT_METHODDEF
     {"getsizeof",   (PyCFunction)(void(*)(void))sys_getsizeof,
      METH_VARARGS | METH_KEYWORDS, getsizeof_doc},
@@ -968,18 +934,12 @@ _PySys_InitCore(PyThreadState *tstate, PyObject *sysdict)
                                PyDict_GetItemString(sysdict, "excepthook"));
     SET_SYS_FROM_STRING_BORROW("__unraisablehook__",
                                PyDict_GetItemString(sysdict, "unraisablehook"));
-    SET_SYS_FROM_STRING("_git",
-                        Py_BuildValue("(szz)", "CPython", _Py_gitidentifier(),
-                                      _Py_gitversion()));
-    SET_SYS_FROM_STRING("_framework", PyUnicode_FromString(_PYTHONFRAMEWORK));
     SET_SYS_FROM_STRING("api_version",
                         PyLong_FromLong(PYTHON_API_VERSION));
     SET_SYS_FROM_STRING("platform",
                         PyUnicode_FromString(Py_GetPlatform()));
     SET_SYS_FROM_STRING("maxsize",
                         PyLong_FromSsize_t(PY_SSIZE_T_MAX));
-    SET_SYS_FROM_STRING("maxunicode",
-                        PyLong_FromLong(0x10FFFF));
     SET_SYS_FROM_STRING("builtin_module_names",
                         list_builtin_module_names());
 #if PY_BIG_ENDIAN
