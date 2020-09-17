@@ -22,22 +22,14 @@ _PyGen_Finalize(PyObject *self)
         /* Generator isn't paused, so no need to close */
         return;
     }
-
+    if (gen->gi_frame->f_lasti == -1) {
+      /* Generator never started. */
+      return;
+    }
+    
     /* Save the current exception, if any. */
     PyErr_Fetch(&error_type, &error_value, &error_traceback);
-
-    /* If `gen` is a coroutine, and if it was never awaited on,
-       issue a RuntimeWarning. */
-    if (gen->gi_code != NULL &&
-        ((PyCodeObject *)gen->gi_code)->co_flags & CO_COROUTINE &&
-        gen->gi_frame->f_lasti == -1)
-    {
-      /* _PyErr_WarnUnawaitedCoroutine((PyObject *)gen); */
-    }
-    else {
-        res = gen_close(gen, NULL);
-    }
-
+    res = gen_close(gen, NULL);
     if (res == NULL) {
         if (PyErr_Occurred()) {
             PyErr_WriteUnraisable(self);
@@ -46,7 +38,6 @@ _PyGen_Finalize(PyObject *self)
     else {
         Py_DECREF(res);
     }
-
     /* Restore the saved exception. */
     PyErr_Restore(error_type, error_value, error_traceback);
 }
@@ -63,9 +54,6 @@ gen_dealloc(PyGenObject *gen)
     if (gen->gi_frame != NULL) {
         gen->gi_frame->f_gen = NULL;
         Py_CLEAR(gen->gi_frame);
-    }
-    if (((PyCodeObject *)gen->gi_code)->co_flags & CO_COROUTINE) {
-        Py_CLEAR(((PyCoroObject *)gen)->cr_origin);
     }
     Py_CLEAR(gen->gi_code);
     Py_CLEAR(gen->gi_name);
@@ -168,10 +156,6 @@ gen_send_ex(PyGenObject *gen, PyObject *arg, int exc, int closing)
     return result;
 }
 
-PyDoc_STRVAR(send_doc,
-"send(arg) -> send 'arg' into generator,\n\
-return next yielded value or raise StopIteration.");
-
 PyObject *
 _PyGen_Send(PyGenObject *gen, PyObject *arg)
 {
@@ -269,154 +253,6 @@ gen_close(PyGenObject *gen, PyObject *args)
     }
     return NULL;
 }
-
-
-PyDoc_STRVAR(throw_doc,
-"throw(typ[,val[,tb]]) -> raise exception in generator,\n\
-return next yielded value or raise StopIteration.");
-
-static PyObject *
-_gen_throw(PyGenObject *gen, int close_on_genexit,
-           PyObject *typ, PyObject *val, PyObject *tb)
-{
-    PyObject *yf = _PyGen_yf(gen);
-    _Py_IDENTIFIER(throw);
-
-    if (yf) {
-        PyObject *ret;
-        int err;
-        if (PyErr_GivenExceptionMatches(typ, PyExc_GeneratorExit) &&
-            close_on_genexit
-        ) {
-            /* Asynchronous generators *should not* be closed right away.
-               We have to allow some awaits to work it through, hence the
-               `close_on_genexit` parameter here.
-            */
-            gen->gi_running = 1;
-            err = gen_close_iter(yf);
-            gen->gi_running = 0;
-            Py_DECREF(yf);
-            if (err < 0)
-                return gen_send_ex(gen, Py_None, 1, 0);
-            goto throw_here;
-        }
-        if (PyGen_CheckExact(yf)) {
-            /* `yf` is a generator or a coroutine. */
-            gen->gi_running = 1;
-            /* Close the generator that we are currently iterating with
-               'yield from' or awaiting on with 'await'. */
-            ret = _gen_throw((PyGenObject *)yf, close_on_genexit,
-                             typ, val, tb);
-            gen->gi_running = 0;
-        } else {
-            /* `yf` is an iterator or a coroutine-like object. */
-            PyObject *meth;
-            if (_PyObject_LookupAttrId(yf, &PyId_throw, &meth) < 0) {
-                Py_DECREF(yf);
-                return NULL;
-            }
-            if (meth == NULL) {
-                Py_DECREF(yf);
-                goto throw_here;
-            }
-            gen->gi_running = 1;
-            ret = PyObject_CallFunctionObjArgs(meth, typ, val, tb, NULL);
-            gen->gi_running = 0;
-            Py_DECREF(meth);
-        }
-        Py_DECREF(yf);
-        if (!ret) {
-            PyObject *val;
-            /* Pop subiterator from stack */
-            ret = *(--gen->gi_frame->f_stacktop);
-            assert(ret == yf);
-            Py_DECREF(ret);
-            /* Termination repetition of YIELD_FROM */
-            assert(gen->gi_frame->f_lasti >= 0);
-            gen->gi_frame->f_lasti += sizeof(_Py_CODEUNIT);
-            if (_PyGen_FetchStopIterationValue(&val) == 0) {
-                ret = gen_send_ex(gen, val, 0, 0);
-                Py_DECREF(val);
-            } else {
-                ret = gen_send_ex(gen, Py_None, 1, 0);
-            }
-        }
-        return ret;
-    }
-
-throw_here:
-    /* First, check the traceback argument, replacing None with
-       NULL. */
-    if (tb == Py_None) {
-        tb = NULL;
-    }
-    else if (tb != NULL && !PyTraceBack_Check(tb)) {
-        PyErr_SetString(PyExc_TypeError,
-            "throw() third argument must be a traceback object");
-        return NULL;
-    }
-
-    Py_INCREF(typ);
-    Py_XINCREF(val);
-    Py_XINCREF(tb);
-
-    if (PyExceptionClass_Check(typ))
-        PyErr_NormalizeException(&typ, &val, &tb);
-
-    else if (PyExceptionInstance_Check(typ)) {
-        /* Raising an instance.  The value should be a dummy. */
-        if (val && val != Py_None) {
-            PyErr_SetString(PyExc_TypeError,
-              "instance exception may not have a separate value");
-            goto failed_throw;
-        }
-        else {
-            /* Normalize to raise <class>, <instance> */
-            Py_XDECREF(val);
-            val = typ;
-            typ = PyExceptionInstance_Class(typ);
-            Py_INCREF(typ);
-
-            if (tb == NULL)
-                /* Returns NULL if there's no traceback */
-                tb = PyException_GetTraceback(val);
-        }
-    }
-    else {
-        /* Not something you can raise.  throw() fails. */
-        PyErr_Format(PyExc_TypeError,
-                     "exceptions must be classes or instances "
-                     "deriving from BaseException, not %s",
-                     Py_TYPE(typ)->tp_name);
-            goto failed_throw;
-    }
-
-    PyErr_Restore(typ, val, tb);
-    return gen_send_ex(gen, Py_None, 1, 0);
-
-failed_throw:
-    /* Didn't use our arguments, so restore their original refcounts */
-    Py_DECREF(typ);
-    Py_XDECREF(val);
-    Py_XDECREF(tb);
-    return NULL;
-}
-
-
-static PyObject *
-gen_throw(PyGenObject *gen, PyObject *args)
-{
-    PyObject *typ;
-    PyObject *tb = NULL;
-    PyObject *val = NULL;
-
-    if (!PyArg_UnpackTuple(args, "throw", 1, 3, &typ, &val, &tb)) {
-        return NULL;
-    }
-
-    return _gen_throw(gen, 1, typ, val, tb);
-}
-
 
 static PyObject *
 gen_iternext(PyGenObject *gen)
@@ -596,8 +432,6 @@ static PyMemberDef gen_memberlist[] = {
 };
 
 static PyMethodDef gen_methods[] = {
-    {"send",(PyCFunction)_PyGen_Send, METH_O, send_doc},
-    {"throw",(PyCFunction)gen_throw, METH_VARARGS, throw_doc},
     {"close",(PyCFunction)gen_close, METH_NOARGS, close_doc},
     {NULL, NULL}        /* Sentinel */
 };

@@ -672,7 +672,6 @@ main_loop:
             goto exiting;
         }
 
-
         case YIELD_FROM: {
             PyObject *v = POP();
             PyObject *receiver = TOP();
@@ -710,7 +709,7 @@ main_loop:
             f->f_stacktop = stack_pointer;
             goto exiting;
         }
-
+	  
         case POP_EXCEPT: {
             PyObject *type, *value, *traceback;
             _PyErr_StackItem *exc_info;
@@ -1533,7 +1532,7 @@ main_loop:
             }
             continue;
         }
-
+	  
         case FOR_ITER: {
             /* before: [iter]; after: [iter, iter()] *or* [] */
             PyObject *iter = TOP();
@@ -2482,7 +2481,7 @@ _PyEval_EvalCode(PyThreadState *tstate,
 
         return gen;
     }
-
+    
     retval = _PyEval_EvalFrame(tstate, f, 0);
 
 fail: /* Jump here from prelude on failure */
