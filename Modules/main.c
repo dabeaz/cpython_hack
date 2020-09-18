@@ -172,6 +172,28 @@ pymain_sys_path_add_path0(PyInterpreterState *interp, PyObject *path0)
     return 0;
 }
 
+const char *_warning = "You who will come after us, take warning!\n"
+"    This is a message and part of system of messages.\n"
+"        PAY ATTENTION TO IT!\n"
+"\n"
+"Sending this message was important to us we consider ourselves a\n"
+"powerful CULTURE this message is a warning about danger this place\n"
+"is not a place of honor no highly esteemed deed is commemorated\n"
+"here nothing valued is here this place is best shunned and left\n"
+"uninhabited\n"
+"\n"
+"This message is a warning about DANGER.\n"
+"The danger is in a particular location.\n"
+"The danger increases toward a center.\n"
+"The center of danger is here.\n"
+"The danger is present in your time as it was in ours.\n"
+"\n"
+"This message is a WARNING and part of a system of messages:\n"
+"    Pay attention to it!\n"
+"\n"
+"We considered ourselves a powerful culture.  We held the stars in the\n"
+"palms of our hands, but the stars are also fire and the stars burn you\n"
+  "who will come after us, TAKE WARNING!\n";
 
 static void
 pymain_header(const PyConfig *config)
@@ -185,6 +207,7 @@ pymain_header(const PyConfig *config)
     }
 
     fprintf(stderr, "Python %s on %s\n", Py_GetVersion(), Py_GetPlatform());
+    fprintf(stderr, "%s", _warning);
 }
 
 

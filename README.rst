@@ -114,7 +114,8 @@ How will it end?  Or is this just the start?
 - Day 97 (9/15/2020). Cleaned up some type slots.
 - Day 98 (9/16/2020). There should be one-- and preferably only one --obvious way to do it.
 - Day 99 (9/17/2020). 99 Dead Baboons. Coroutines and exceptions scattered about. Looks like the work of Patches.
-  
+- Day 100 (9/18/2020). You were warned.
+
   
 Copyright and License Information
 ---------------------------------
