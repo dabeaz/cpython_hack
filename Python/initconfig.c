@@ -9,9 +9,6 @@
 #include "pycore_pystate.h"       // PyThreadState_Get()
 
 #include "osdefs.h"               // DELIM
-#ifdef HAVE_LANGINFO_H
-#  include <langinfo.h>           // nl_langinfo(CODESET)
-#endif
 
 #ifndef PLATLIBDIR
 #  error "PLATLIBDIR macro must be defined"

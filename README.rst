@@ -116,6 +116,13 @@ How will it end?  Or is this just the start?
 - Day 99 (9/17/2020). 99 Dead Baboons. Coroutines and exceptions scattered about. Looks like the work of Patches.
 - Day 100 (9/18/2020). You were warned.
 
+- ??? (12/07/2020). Yawn.
+
+What is this mess?  Let's do 100 days of cleanup...
+
+- Day 1 (1/1/2021).  Removed some conditional compilation.
+  
+
   
 Copyright and License Information
 ---------------------------------

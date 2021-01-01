@@ -9,9 +9,6 @@ PyAPI_DATA(const char *) Py_hexdigits;
 #include "frameobject.h"          // PyFrame_GetBack()
 #include "structmember.h"         // PyMemberDef
 #include "osdefs.h"               // SEP
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 
 #define OFF(x) offsetof(PyTracebackObject, x)
 

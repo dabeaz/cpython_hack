@@ -700,20 +700,6 @@ sys__getframe_impl(PyObject *module, int depth)
 }
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifdef DYNAMIC_EXECUTION_PROFILE
-/* Defined in ceval.c because it uses static globals if that file */
-extern PyObject *_Py_GetDXProfile(PyObject *,  PyObject *);
-#endif
-
-#ifdef __cplusplus
-}
-#endif
-
-
 /*[clinic input]
 sys._clear_type_cache
 
@@ -740,22 +726,6 @@ sys_is_finalizing_impl(PyObject *module)
 {
     return PyBool_FromLong(_Py_IsFinalizing());
 }
-
-#ifdef ANDROID_API_LEVEL
-/*[clinic input]
-sys.getandroidapilevel
-
-Return the build time API version of Android as an integer.
-[clinic start generated code]*/
-
-static PyObject *
-sys_getandroidapilevel_impl(PyObject *module)
-/*[clinic end generated code: output=214abf183a1c70c1 input=3e6d6c9fcdd24ac6]*/
-{
-    return PyLong_FromLong(ANDROID_API_LEVEL);
-}
-#endif   /* ANDROID_API_LEVEL */
-
 
 
 static PyMethodDef sys_methods[] = {

@@ -24,29 +24,7 @@ int _PyArg_ParseTupleAndKeywordsFast(PyObject *, PyObject *,
                                             struct _PyArg_Parser *, ...);
 int _PyArg_VaParseTupleAndKeywordsFast(PyObject *, PyObject *,
                                             struct _PyArg_Parser *, va_list);
-
-#ifdef HAVE_DECLSPEC_DLL
-/* Export functions */
-PyAPI_FUNC(int) _PyArg_Parse_SizeT(PyObject *, const char *, ...);
-PyAPI_FUNC(int) _PyArg_ParseStack_SizeT(PyObject *const *args, Py_ssize_t nargs,
-                                        const char *format, ...);
-PyAPI_FUNC(int) _PyArg_ParseStackAndKeywords_SizeT(PyObject *const *args, Py_ssize_t nargs,
-                                        PyObject *kwnames,
-                                        struct _PyArg_Parser *parser, ...);
-PyAPI_FUNC(int) _PyArg_ParseTuple_SizeT(PyObject *, const char *, ...);
-PyAPI_FUNC(int) _PyArg_ParseTupleAndKeywords_SizeT(PyObject *, PyObject *,
-                                                  const char *, char **, ...);
-PyAPI_FUNC(PyObject *) _Py_BuildValue_SizeT(const char *, ...);
-PyAPI_FUNC(int) _PyArg_VaParse_SizeT(PyObject *, const char *, va_list);
-PyAPI_FUNC(int) _PyArg_VaParseTupleAndKeywords_SizeT(PyObject *, PyObject *,
-                                              const char *, char **, va_list);
-
-PyAPI_FUNC(int) _PyArg_ParseTupleAndKeywordsFast_SizeT(PyObject *, PyObject *,
-                                            struct _PyArg_Parser *, ...);
-PyAPI_FUNC(int) _PyArg_VaParseTupleAndKeywordsFast_SizeT(PyObject *, PyObject *,
-                                            struct _PyArg_Parser *, va_list);
-#endif
-
+  
 #define FLAG_COMPAT 1
 #define FLAG_SIZE_T 2
 
@@ -2252,12 +2230,7 @@ PyArg_UnpackTuple(PyObject *args, const char *name, Py_ssize_t min, Py_ssize_t m
     }
     stack = _PyTuple_ITEMS(args);
     nargs = PyTuple_GET_SIZE(args);
-
-#ifdef HAVE_STDARG_PROTOTYPES
     va_start(vargs, max);
-#else
-    va_start(vargs);
-#endif
     retval = unpack_stack(stack, nargs, name, min, max, vargs);
     va_end(vargs);
     return retval;
@@ -2270,11 +2243,7 @@ _PyArg_UnpackStack(PyObject *const *args, Py_ssize_t nargs, const char *name,
     int retval;
     va_list vargs;
 
-#ifdef HAVE_STDARG_PROTOTYPES
     va_start(vargs, max);
-#else
-    va_start(vargs);
-#endif
     retval = unpack_stack(args, nargs, name, min, max, vargs);
     va_end(vargs);
     return retval;

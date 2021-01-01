@@ -16,15 +16,6 @@
 #include "pycore_pystate.h"       // PyThreadState_Get()
 #include "pycore_traceback.h"     // _Py_DumpTracebackThreads()
 
-#ifdef HAVE_SIGNAL_H
-#  include <signal.h>             // SIG_IGN
-#endif
-
-#ifdef HAVE_LANGINFO_H
-#  include <langinfo.h>           // nl_langinfo(CODESET)
-#endif
-
-
 _Py_IDENTIFIER(flush);
 _Py_IDENTIFIER(name);
 _Py_IDENTIFIER(stdin);
@@ -1274,11 +1265,7 @@ _Py_FatalErrorFormat(const char *func, const char *format, ...)
     fflush(stream);
 
     va_list vargs;
-#ifdef HAVE_STDARG_PROTOTYPES
     va_start(vargs, format);
-#else
-    va_start(vargs);
-#endif
     vfprintf(stream, format, vargs);
     va_end(vargs);
 

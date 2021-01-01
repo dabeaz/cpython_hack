@@ -17,6 +17,7 @@
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

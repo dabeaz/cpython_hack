@@ -25,12 +25,6 @@ extern PyHash_FuncDef PyHash_Func;
 static PyHash_FuncDef PyHash_Func;
 #endif
 
-/* Count _Py_HashBytes() calls */
-#ifdef Py_HASH_STATS
-#define Py_HASH_STATS_MAX 32
-static Py_ssize_t hashstats[Py_HASH_STATS_MAX + 1] = {0};
-#endif
-
 /* For numeric types, the hash of a number x is based on the reduction
    of x modulo the prime P = 2**_PyHASH_BITS - 1.  It's designed so that
    hash(x) == hash(y) whenever x and y are numerically equal, even if
@@ -160,10 +154,6 @@ _Py_HashBytes(const void *src, Py_ssize_t len)
         return 0;
     }
 
-#ifdef Py_HASH_STATS
-    hashstats[(len <= Py_HASH_STATS_MAX) ? len : 0]++;
-#endif
-
 #if Py_HASH_CUTOFF > 0
     if (len < Py_HASH_CUTOFF) {
         /* Optimize hashing of very small strings with inline DJBX33A. */
@@ -199,16 +189,6 @@ _Py_HashBytes(const void *src, Py_ssize_t len)
 void
 _PyHash_Fini(void)
 {
-#ifdef Py_HASH_STATS
-    fprintf(stderr, "len   calls    total\n");
-    Py_ssize_t total = 0;
-    for (int i = 1; i <= Py_HASH_STATS_MAX; i++) {
-        total += hashstats[i];
-        fprintf(stderr, "%2i %8zd %8zd\n", i, hashstats[i], total);
-    }
-    total += hashstats[0];
-    fprintf(stderr, ">  %8zd %8zd\n", hashstats[0], total);
-#endif
 }
 
 PyHash_FuncDef *
