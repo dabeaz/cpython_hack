@@ -118,10 +118,11 @@ How will it end?  Or is this just the start?
 
 - ??? (12/07/2020). Yawn.
 
-What is this mess?  Let's do 100 days of cleanup...
+What is this mess?  Let's do 100 days of cleanup... However, there are some ground rules.
+No more than 15 minutes can be spent each day.  No removal of core functionality.
 
 - Day 1 (1/1/2021).  Removed some conditional compilation.
-  
+- Day 2 (1/2/2021).  Removed PyFloat_AS_DOUBLE macro.  
 
   
 Copyright and License Information

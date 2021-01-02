@@ -70,7 +70,7 @@ append_repr(_PyUnicodeWriter *writer, PyObject *obj)
         return -1;
     }
 
-    if ((PyFloat_CheckExact(obj) && Py_IS_INFINITY(PyFloat_AS_DOUBLE(obj))))
+    if ((PyFloat_CheckExact(obj) && Py_IS_INFINITY(PyFloat_AsDouble(obj))))
     {
         PyObject *new_repr = PyUnicode_Replace(
             repr,

@@ -44,13 +44,9 @@ PyAPI_FUNC(PyObject *) PyFloat_FromString(PyObject*);
 /* Return Python float from C double. */
 PyAPI_FUNC(PyObject *) PyFloat_FromDouble(double);
 
-/* Extract C double from Python float.  The macro version trades safety for
-   speed. */
+/* Extract C double from Python float. */
 PyAPI_FUNC(double) PyFloat_AsDouble(PyObject *);
-#ifndef Py_LIMITED_API
-#define PyFloat_AS_DOUBLE(op) (((PyFloatObject *)(op))->ob_fval)
-#endif
-
+  
 #ifndef Py_LIMITED_API
 /* _PyFloat_{Pack,Unpack}{4,8}
  *

@@ -516,7 +516,7 @@ PyFloat_AsDouble(PyObject *op)
     }
 
     if (PyFloat_Check(op)) {
-        return PyFloat_AS_DOUBLE(op);
+      return ((PyFloatObject *)op)->ob_fval;
     }
 
     nb = Py_TYPE(op)->tp_as_number;
@@ -549,7 +549,7 @@ PyFloat_AsDouble(PyObject *op)
         }
     }
 
-    val = PyFloat_AS_DOUBLE(res);
+    val = PyFloat_AsDouble(res);
     Py_DECREF(res);
     return val;
 }
@@ -562,7 +562,7 @@ PyFloat_AsDouble(PyObject *op)
 */
 #define CONVERT_TO_DOUBLE(obj, dbl)                     \
     if (PyFloat_Check(obj))                             \
-        dbl = PyFloat_AS_DOUBLE(obj);                   \
+        dbl = PyFloat_AsDouble(obj);                   \
     else if (convert_to_double(&(obj), &(dbl)) < 0)     \
         return obj;
 
@@ -594,7 +594,7 @@ float_repr(PyFloatObject *v)
     PyObject *result;
     char *buf;
 
-    buf = PyOS_double_to_string(PyFloat_AS_DOUBLE(v),
+    buf = PyOS_double_to_string(PyFloat_AsDouble((PyObject *)v),
                                 'r', 0,
                                 Py_DTSF_ADD_DOT_0,
                                 NULL);
@@ -627,13 +627,13 @@ float_richcompare(PyObject *v, PyObject *w, int op)
     int r = 0;
 
     assert(PyFloat_Check(v));
-    i = PyFloat_AS_DOUBLE(v);
+    i = PyFloat_AsDouble(v);
 
     /* Switch on the type of w.  Set i and j to doubles to be compared,
      * and op to the richcomp to use.
      */
     if (PyFloat_Check(w))
-        j = PyFloat_AS_DOUBLE(w);
+        j = PyFloat_AsDouble(w);
 
     else if (!Py_IS_FINITE(i)) {
         if (PyLong_Check(w))
@@ -1129,7 +1129,7 @@ static PyObject *
 float___trunc___impl(PyObject *self)
 /*[clinic end generated code: output=dd3e289dd4c6b538 input=591b9ba0d650fdff]*/
 {
-    return PyLong_FromDouble(PyFloat_AS_DOUBLE(self));
+    return PyLong_FromDouble(PyFloat_AsDouble(self));
 }
 
 /*[clinic input]
@@ -1142,7 +1142,7 @@ static PyObject *
 float___floor___impl(PyObject *self)
 /*[clinic end generated code: output=e0551dbaea8c01d1 input=77bb13eb12e268df]*/
 {
-    double x = PyFloat_AS_DOUBLE(self);
+    double x = PyFloat_AsDouble(self);
     return PyLong_FromDouble(floor(x));
 }
 
@@ -1156,7 +1156,7 @@ static PyObject *
 float___ceil___impl(PyObject *self)
 /*[clinic end generated code: output=a2fd8858f73736f9 input=79e41ae94aa0a516]*/
 {
-    double x = PyFloat_AS_DOUBLE(self);
+    double x = PyFloat_AsDouble(self);
     return PyLong_FromDouble(ceil(x));
 }
 

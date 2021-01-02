@@ -841,7 +841,7 @@ PyNumber_Float(PyObject *o)
             Py_DECREF(res);
             return NULL;
         }
-        val = PyFloat_AS_DOUBLE(res);
+        val = PyFloat_AsDouble(res);
         Py_DECREF(res);
         return PyFloat_FromDouble(val);
     }
@@ -858,7 +858,7 @@ PyNumber_Float(PyObject *o)
         return PyFloat_FromDouble(val);
     }
     if (PyFloat_Check(o)) { /* A float subclass with nb_float == NULL */
-        return PyFloat_FromDouble(PyFloat_AS_DOUBLE(o));
+        return PyFloat_FromDouble(PyFloat_AsDouble(o));
     }
     return PyFloat_FromString(o);
 }

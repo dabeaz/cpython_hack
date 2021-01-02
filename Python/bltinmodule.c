@@ -3090,7 +3090,7 @@ builtin_sum_impl(PyObject *module, PyObject *iterable, PyObject *start)
     }
 
     if (PyFloat_CheckExact(result)) {
-        double f_result = PyFloat_AS_DOUBLE(result);
+        double f_result = PyFloat_AsDouble(result);
         Py_DECREF(result);
         result = NULL;
         while(result == NULL) {
@@ -3102,7 +3102,7 @@ builtin_sum_impl(PyObject *module, PyObject *iterable, PyObject *start)
                 return PyFloat_FromDouble(f_result);
             }
             if (PyFloat_CheckExact(item)) {
-                f_result += PyFloat_AS_DOUBLE(item);
+                f_result += PyFloat_AsDouble(item);
                 Py_DECREF(item);
                 continue;
             }

@@ -850,7 +850,7 @@ _PyCode_ConstantKey(PyObject *op)
         key = PyTuple_Pack(2, Py_TYPE(op), op);
     }
     else if (PyFloat_CheckExact(op)) {
-        double d = PyFloat_AS_DOUBLE(op);
+        double d = PyFloat_AsDouble(op);
         /* all we need is to make the tuple different in either the 0.0
          * or -0.0 case from all others, just to avoid the "coercion".
          */

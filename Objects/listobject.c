@@ -2361,7 +2361,7 @@ unsafe_float_compare(PyObject *v, PyObject *w, MergeState *ms)
     assert(Py_IS_TYPE(v, &PyFloat_Type));
     assert(Py_IS_TYPE(w, &PyFloat_Type));
 
-    res = PyFloat_AS_DOUBLE(v) < PyFloat_AS_DOUBLE(w);
+    res = PyFloat_AsDouble(v) < PyFloat_AsDouble(w);
     assert(res == PyObject_RichCompareBool(v, w, Py_LT));
     return res;
 }
