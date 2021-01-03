@@ -12,7 +12,7 @@ typedef struct _longobject PyLongObject; /* Revealed in longintrepr.h */
 PyAPI_DATA(PyTypeObject) PyLong_Type;
 
 #define PyLong_Check(op) \
-        PyType_FastSubclass(Py_TYPE(op), Py_TPFLAGS_LONG_SUBCLASS)
+        PyType_HasFeature(Py_TYPE(op), Py_TPFLAGS_LONG_SUBCLASS)
 #define PyLong_CheckExact(op) Py_IS_TYPE(op, &PyLong_Type)
 
 PyAPI_FUNC(PyObject *) PyLong_FromLong(long);
@@ -30,11 +30,7 @@ PyAPI_FUNC(unsigned long) PyLong_AsUnsignedLongMask(PyObject *);
 PyAPI_FUNC(int) _PyLong_AsInt(PyObject *);
 #endif
 PyAPI_FUNC(PyObject *) PyLong_GetInfo(void);
-
-/* It may be useful in the future. I've added it in the PyInt -> PyLong
-   cleanup to keep the extra information. [CH] */
-#define PyLong_AS_LONG(op) PyLong_AsLong(op)
-
+  
 /* Issue #1983: pid_t can be longer than a C long on some systems */
 #if !defined(SIZEOF_PID_T) || SIZEOF_PID_T == SIZEOF_INT
 #define _Py_PARSE_PID "i"
@@ -180,15 +176,6 @@ PyAPI_FUNC(int) _PyLong_FormatWriter(
     PyObject *obj,
     int base,
     int alternate);
-
-#if 0
-PyAPI_FUNC(char*) _PyLong_FormatBytesWriter(
-    _PyBytesWriter *writer,
-    char *str,
-    PyObject *obj,
-    int base,
-    int alternate);
-#endif
   
 /* Format the object based on the format_spec, as defined in PEP 3101
    (Advanced String Formatting). */

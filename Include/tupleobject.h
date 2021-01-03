@@ -24,7 +24,7 @@ PyAPI_DATA(PyTypeObject) PyTuple_Type;
 PyAPI_DATA(PyTypeObject) PyTupleIter_Type;
 
 #define PyTuple_Check(op) \
-                 PyType_FastSubclass(Py_TYPE(op), Py_TPFLAGS_TUPLE_SUBCLASS)
+                 PyType_HasFeature(Py_TYPE(op), Py_TPFLAGS_TUPLE_SUBCLASS)
 #define PyTuple_CheckExact(op) Py_IS_TYPE(op, &PyTuple_Type)
 
 PyAPI_FUNC(PyObject *) PyTuple_New(Py_ssize_t size);

@@ -398,7 +398,7 @@ _PyType_CheckConsistency(PyTypeObject *type)
     }
 
     CHECK(Py_REFCNT(type) >= 1);
-    CHECK(PyType_Check(type));
+    CHECK(PyType_Check((PyObject *)type));
 
     CHECK(!(type->tp_flags & Py_TPFLAGS_READYING));
     CHECK(type->tp_dict != NULL);
@@ -7426,7 +7426,7 @@ super_init_without_args(PyFrameObject *f, PyCodeObject *co,
                   "super(): empty __class__ cell");
                 return -1;
             }
-            if (!PyType_Check(type)) {
+            if (!PyType_Check((PyObject *)type)) {
                 PyErr_Format(PyExc_RuntimeError,
                   "super(): __class__ is not a type (%s)",
                   Py_TYPE(type)->tp_name);

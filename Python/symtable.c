@@ -115,7 +115,7 @@ ste_repr(PySTEntryObject *ste)
 {
     return PyUnicode_FromFormat("<symtable entry %U(%ld), line %d>",
                                 ste->ste_name,
-                                PyLong_AS_LONG(ste->ste_id), ste->ste_lineno);
+                                PyLong_AsLong(ste->ste_id), ste->ste_lineno);
 }
 
 static void
@@ -375,7 +375,7 @@ _PyST_GetSymbol(PySTEntryObject *ste, PyObject *name)
     if (!v)
         return 0;
     assert(PyLong_Check(v));
-    return PyLong_AS_LONG(v);
+    return PyLong_AsLong(v);
 }
 
 int
@@ -562,7 +562,7 @@ analyze_cells(PyObject *scopes, PyObject *free)
     while (PyDict_Next(scopes, &pos, &name, &v)) {
         long scope;
         assert(PyLong_Check(v));
-        scope = PyLong_AS_LONG(v);
+        scope = PyLong_AsLong(v);
         if (scope != LOCAL)
             continue;
         if (!PySet_Contains(free, name))
@@ -612,10 +612,10 @@ update_symbols(PyObject *symbols, PyObject *scopes,
     while (PyDict_Next(symbols, &pos, &name, &v)) {
         long scope, flags;
         assert(PyLong_Check(v));
-        flags = PyLong_AS_LONG(v);
+        flags = PyLong_AsLong(v);
         v_scope = PyDict_GetItem(scopes, name);
         assert(v_scope && PyLong_Check(v_scope));
-        scope = PyLong_AS_LONG(v_scope);
+        scope = PyLong_AsLong(v_scope);
         flags |= (scope << SCOPE_OFFSET);
         v_new = PyLong_FromLong(flags);
         if (!v_new)
@@ -648,8 +648,8 @@ update_symbols(PyObject *symbols, PyObject *scopes,
                or global in the class scope.
             */
             if  (classflag &&
-                 PyLong_AS_LONG(v) & (DEF_BOUND | DEF_GLOBAL)) {
-                long flags = PyLong_AS_LONG(v) | DEF_FREE_CLASS;
+                 PyLong_AsLong(v) & (DEF_BOUND | DEF_GLOBAL)) {
+                long flags = PyLong_AsLong(v) | DEF_FREE_CLASS;
                 v_new = PyLong_FromLong(flags);
                 if (!v_new) {
                     goto error;
@@ -765,7 +765,7 @@ analyze_block(PySTEntryObject *ste, PyObject *bound, PyObject *free,
     }
 
     while (PyDict_Next(ste->ste_symbols, &pos, &name, &v)) {
-        long flags = PyLong_AS_LONG(v);
+        long flags = PyLong_AsLong(v);
         if (!analyze_name(ste, scopes, name, flags,
                           bound, local, free, global))
             goto error;
@@ -982,7 +982,7 @@ symtable_add_def_helper(struct symtable *st, PyObject *name, int flag, struct _s
         return 0;
     dict = ste->ste_symbols;
     if ((o = PyDict_GetItemWithError(dict, mangled))) {
-        val = PyLong_AS_LONG(o);
+        val = PyLong_AsLong(o);
         if ((flag & DEF_PARAM) && (val & DEF_PARAM)) {
             /* Is it better to use 'mangled' or 'name' here? */
             PyErr_Format(PyExc_SyntaxError, DUPLICATE_ARGUMENT, name);
@@ -1032,7 +1032,7 @@ symtable_add_def_helper(struct symtable *st, PyObject *name, int flag, struct _s
            perhaps only DEF_FREE_GLOBAL */
         val = flag;
         if ((o = PyDict_GetItem(st->st_global, mangled))) {
-            val |= PyLong_AS_LONG(o);
+            val |= PyLong_AsLong(o);
         }
         o = PyLong_FromLong(val);
         if (o == NULL)

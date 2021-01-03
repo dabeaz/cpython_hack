@@ -439,7 +439,7 @@ dictbytype(PyObject *src, int scope_type, int flag, Py_ssize_t offset)
         k = PyList_GET_ITEM(sorted_keys, key_i);
         v = PyDict_GetItem(src, k);
         assert(PyLong_Check(v));
-        vi = PyLong_AS_LONG(v);
+        vi = PyLong_AsLong(v);
         scope = (vi >> SCOPE_OFFSET) & SCOPE_MASK;
 
         if (scope == scope_type || vi & flag) {
@@ -1768,7 +1768,7 @@ compiler_lookup_arg(PyObject *dict, PyObject *name)
     v = PyDict_GetItem(dict, name);
     if (v == NULL)
         return -1;
-    return PyLong_AS_LONG(v);
+    return PyLong_AsLong(v);
 }
 
 static int
@@ -3725,7 +3725,7 @@ check_index(struct compiler *c, expr_ty e, expr_ty s)
 
     PyTypeObject *index_type = infer_type(s);
     if (index_type == NULL
-        || PyType_FastSubclass(index_type, Py_TPFLAGS_LONG_SUBCLASS)
+        || PyType_HasFeature(index_type, Py_TPFLAGS_LONG_SUBCLASS)
         || index_type == &PySlice_Type) {
         return 1;
     }
@@ -5110,7 +5110,7 @@ dict_keys_inorder(PyObject *dict, Py_ssize_t offset)
     if (tuple == NULL)
         return NULL;
     while (PyDict_Next(dict, &pos, &k, &v)) {
-        i = PyLong_AS_LONG(v);
+        i = PyLong_AsLong(v);
         Py_INCREF(k);
         assert((i - offset) < size);
         assert((i - offset) >= 0);
@@ -5129,7 +5129,7 @@ consts_dict_keys_inorder(PyObject *dict)
     if (consts == NULL)
         return NULL;
     while (PyDict_Next(dict, &pos, &k, &v)) {
-        i = PyLong_AS_LONG(v);
+        i = PyLong_AsLong(v);
         /* The keys of the dictionary can be tuples wrapping a contant.
          * (see compiler_add_o and _PyCode_ConstantKey). In that case
          * the object we want is always second. */

@@ -942,17 +942,13 @@ PyType_HasFeature(PyTypeObject *type, unsigned long feature) {
     return ((PyType_GetFlags(type) & feature) != 0);
 }
 
-#define PyType_FastSubclass(type, flag) PyType_HasFeature(type, flag)
-
-static inline int _PyType_Check(PyObject *op) {
-    return PyType_FastSubclass(Py_TYPE(op), Py_TPFLAGS_TYPE_SUBCLASS);
+static inline int PyType_Check(PyObject *op) {
+    return PyType_HasFeature(Py_TYPE(op), Py_TPFLAGS_TYPE_SUBCLASS);
 }
-#define PyType_Check(op) _PyType_Check(_PyObject_CAST(op))
 
-static inline int _PyType_CheckExact(PyObject *op) {
+static inline int PyType_CheckExact(PyObject *op) {
     return Py_IS_TYPE(op, &PyType_Type);
 }
-#define PyType_CheckExact(op) _PyType_CheckExact(_PyObject_CAST(op))
 
 #ifdef __cplusplus
 }

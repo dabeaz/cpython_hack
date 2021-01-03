@@ -123,7 +123,7 @@ No more than 15 minutes can be spent each day.  No removal of core functionality
 
 - Day 1 (1/1/2021).  Removed some conditional compilation.
 - Day 2 (1/2/2021).  Removed PyFloat_AS_DOUBLE macro.  
-
+- Day 3 (1/3/2021).  Removed PyLong_AS_LONG, PyType_FastSubclass, PyType_Check, PyType_CheckExact macros.  
   
 Copyright and License Information
 ---------------------------------
