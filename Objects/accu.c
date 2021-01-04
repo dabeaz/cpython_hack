@@ -28,7 +28,7 @@ _PyAccu_Init(_PyAccu *acc)
 static int
 flush_accumulator(_PyAccu *acc)
 {
-    Py_ssize_t nsmall = PyList_GET_SIZE(acc->small);
+    Py_ssize_t nsmall = PyList_Size(acc->small);
     if (nsmall) {
         int ret;
         PyObject *joined;
@@ -59,7 +59,7 @@ _PyAccu_Accumulate(_PyAccu *acc, PyObject *unicode)
 
     if (PyList_Append(acc->small, unicode))
         return -1;
-    nsmall = PyList_GET_SIZE(acc->small);
+    nsmall = PyList_Size(acc->small);
     /* Each item in a list of unicode objects has an overhead (in 64-bit
      * builds) of:
      *   - 8 bytes for the list slot

@@ -584,6 +584,7 @@ static PyDictKeysObject empty_keys_struct = {
 /* Uncomment to check the dict content in _PyDict_CheckConsistency() */
 /* #define DEBUG_PYDICT */
 
+
 #ifdef DEBUG_PYDICT
 #  define ASSERT_CONSISTENT(op) assert(_PyDict_CheckConsistency((PyObject *)(op), 1))
 #else
@@ -1885,7 +1886,7 @@ dict_items(PyDictObject *mp)
         value_ptr = (PyObject **)(((char *)value_ptr) + offset);
         if (value != NULL) {
             key = ep[i].me_key;
-            item = PyList_GET_ITEM(v, j);
+            item = PyList_GetItem(v, j);
             Py_INCREF(key);
             PyTuple_SET_ITEM(item, 0, key);
             Py_INCREF(value);

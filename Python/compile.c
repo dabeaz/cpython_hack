@@ -389,7 +389,7 @@ list2dict(PyObject *list)
             Py_DECREF(dict);
             return NULL;
         }
-        k = PyList_GET_ITEM(list, i);
+        k = PyList_GetItem(list, i);
         if (PyDict_SetItem(dict, k, v) < 0) {
             Py_DECREF(v);
             Py_DECREF(dict);
@@ -431,12 +431,12 @@ dictbytype(PyObject *src, int scope_type, int flag, Py_ssize_t offset)
         Py_DECREF(sorted_keys);
         return NULL;
     }
-    num_keys = PyList_GET_SIZE(sorted_keys);
+    num_keys = PyList_Size(sorted_keys);
 
     for (key_i = 0; key_i < num_keys; key_i++) {
         /* XXX this should probably be a macro in symtable.h */
         long vi;
-        k = PyList_GET_ITEM(sorted_keys, key_i);
+        k = PyList_GetItem(sorted_keys, key_i);
         v = PyDict_GetItem(src, k);
         assert(PyLong_Check(v));
         vi = PyLong_AsLong(v);
@@ -621,9 +621,9 @@ compiler_exit_scope(struct compiler *c)
     c->c_nestlevel--;
     compiler_unit_free(c->u);
     /* Restore c->u to the parent unit. */
-    n = PyList_GET_SIZE(c->c_stack) - 1;
+    n = PyList_Size(c->c_stack) - 1;
     if (n >= 0) {
-        capsule = PyList_GET_ITEM(c->c_stack, n);
+        capsule = PyList_GetItem(c->c_stack, n);
         c->u = (struct compiler_unit *)PyCapsule_GetPointer(capsule, CAPSULE_NAME);
         assert(c->u);
         /* we are deleting from a list so this really shouldn't fail */
@@ -646,14 +646,14 @@ compiler_set_qualname(struct compiler *c)
     PyObject *name, *base, *dot_str, *dot_locals_str;
 
     base = NULL;
-    stack_size = PyList_GET_SIZE(c->c_stack);
+    stack_size = PyList_Size(c->c_stack);
     assert(stack_size >= 1);
     if (stack_size > 1) {
         int scope, force_global = 0;
         struct compiler_unit *parent;
         PyObject *mangled, *capsule;
 
-        capsule = PyList_GET_ITEM(c->c_stack, stack_size - 1);
+        capsule = PyList_GetItem(c->c_stack, stack_size - 1);
         parent = (struct compiler_unit *)PyCapsule_GetPointer(capsule, CAPSULE_NAME);
         assert(parent);
 
@@ -1872,7 +1872,7 @@ compiler_visit_kwonlydefaults(struct compiler *c, asdl_seq *kwonlyargs,
         }
     }
     if (keys != NULL) {
-        Py_ssize_t default_count = PyList_GET_SIZE(keys);
+        Py_ssize_t default_count = PyList_Size(keys);
         PyObject *keys_tuple = PyList_AsTuple(keys);
         Py_DECREF(keys);
         ADDOP_LOAD_CONST_NEW(c, keys_tuple);

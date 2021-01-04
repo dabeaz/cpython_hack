@@ -12,6 +12,9 @@
 #include <sys/types.h>          /* For size_t */
 #endif
 
+#define PyList_GET_SIZE(op)    Py_SIZE(_PyList_CAST(op))
+#define PyList_GET_ITEM(op, i) (_PyList_CAST(op)->ob_item[i])
+
 /*[clinic input]
 class list "PyListObject *" "&PyList_Type"
 [clinic start generated code]*/

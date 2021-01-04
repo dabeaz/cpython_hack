@@ -206,9 +206,9 @@ PyState_FindModule(struct PyModuleDef* module)
         return NULL;
     if (state->modules_by_index == NULL)
         return NULL;
-    if (index >= PyList_GET_SIZE(state->modules_by_index))
+    if (index >= PyList_Size(state->modules_by_index))
         return NULL;
-    res = PyList_GET_ITEM(state->modules_by_index, index);
+    res = PyList_GetItem(state->modules_by_index, index);
     return res==Py_None ? NULL : res;
 }
 
@@ -234,7 +234,7 @@ _PyState_AddModule(PyThreadState *tstate, PyObject* module, struct PyModuleDef* 
         }
     }
 
-    while (PyList_GET_SIZE(interp->modules_by_index) <= def->m_base.m_index) {
+    while (PyList_Size(interp->modules_by_index) <= def->m_base.m_index) {
         if (PyList_Append(interp->modules_by_index, Py_None) < 0) {
             return -1;
         }
@@ -257,8 +257,8 @@ PyState_AddModule(PyObject* module, struct PyModuleDef* def)
     PyInterpreterState *interp = tstate->interp;
     Py_ssize_t index = def->m_base.m_index;
     if (interp->modules_by_index &&
-        index < PyList_GET_SIZE(interp->modules_by_index) &&
-        module == PyList_GET_ITEM(interp->modules_by_index, index))
+        index < PyList_Size(interp->modules_by_index) &&
+        module == PyList_GetItem(interp->modules_by_index, index))
     {
         _Py_FatalErrorFormat(__func__, "module %p already added", module);
         return -1;
@@ -286,7 +286,7 @@ PyState_RemoveModule(struct PyModuleDef* def)
     if (interp->modules_by_index == NULL) {
         Py_FatalError("Interpreters module-list not accessible.");
     }
-    if (index > PyList_GET_SIZE(interp->modules_by_index)) {
+    if (index > PyList_Size(interp->modules_by_index)) {
         Py_FatalError("Module index out of bounds.");
     }
 
@@ -303,8 +303,8 @@ _PyInterpreterState_ClearModules(PyInterpreterState *interp)
     }
 
     Py_ssize_t i;
-    for (i = 0; i < PyList_GET_SIZE(interp->modules_by_index); i++) {
-        PyObject *m = PyList_GET_ITEM(interp->modules_by_index, i);
+    for (i = 0; i < PyList_Size(interp->modules_by_index); i++) {
+        PyObject *m = PyList_GetItem(interp->modules_by_index, i);
         if (PyModule_Check(m)) {
             /* cleanup the saved copy of module dicts */
             PyModuleDef *md = PyModule_GetDef(m);
@@ -317,7 +317,7 @@ _PyInterpreterState_ClearModules(PyInterpreterState *interp)
     /* Setting modules_by_index to NULL could be dangerous, so we
        clear the list instead. */
     if (PyList_SetSlice(interp->modules_by_index,
-                        0, PyList_GET_SIZE(interp->modules_by_index),
+                        0, PyList_Size(interp->modules_by_index),
                         NULL)) {
         PyErr_WriteUnraisable(interp->modules_by_index);
     }

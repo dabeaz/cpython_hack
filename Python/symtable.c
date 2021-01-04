@@ -391,8 +391,8 @@ error_at_directive(PySTEntryObject *ste, PyObject *name)
     Py_ssize_t i;
     PyObject *data;
     assert(ste->ste_directives);
-    for (i = 0; i < PyList_GET_SIZE(ste->ste_directives); i++) {
-        data = PyList_GET_ITEM(ste->ste_directives, i);
+    for (i = 0; i < PyList_Size(ste->ste_directives); i++) {
+        data = PyList_GetItem(ste->ste_directives, i);
         assert(PyTuple_CheckExact(data));
         assert(PyUnicode_CheckExact(PyTuple_GET_ITEM(data, 0)));
         if (PyUnicode_Compare(PyTuple_GET_ITEM(data, 0), name) == 0) {
@@ -804,8 +804,8 @@ analyze_block(PySTEntryObject *ste, PyObject *bound, PyObject *free,
     allfree = PySet_New(NULL);
     if (!allfree)
         goto error;
-    for (i = 0; i < PyList_GET_SIZE(ste->ste_children); ++i) {
-        PyObject *c = PyList_GET_ITEM(ste->ste_children, i);
+    for (i = 0; i < PyList_Size(ste->ste_children); ++i) {
+        PyObject *c = PyList_GetItem(ste->ste_children, i);
         PySTEntryObject* entry;
         assert(c && PySTEntry_Check(c));
         entry = (PySTEntryObject*)c;
@@ -914,12 +914,12 @@ symtable_exit_block(struct symtable *st)
     Py_ssize_t size;
 
     st->st_cur = NULL;
-    size = PyList_GET_SIZE(st->st_stack);
+    size = PyList_Size(st->st_stack);
     if (size) {
         if (PyList_SetSlice(st->st_stack, size - 1, size, NULL) < 0)
             return 0;
         if (--size)
-            st->st_cur = (PySTEntryObject *)PyList_GET_ITEM(st->st_stack, size - 1);
+            st->st_cur = (PySTEntryObject *)PyList_GetItem(st->st_stack, size - 1);
     }
     return 1;
 }
@@ -1321,12 +1321,12 @@ symtable_extend_namedexpr_scope(struct symtable *st, expr_ty e)
     PyObject *target_name = e->v.Name.id;
     Py_ssize_t i, size;
     struct _symtable_entry *ste;
-    size = PyList_GET_SIZE(st->st_stack);
+    size = PyList_Size(st->st_stack);
     assert(size);
 
     /* Iterate over the stack in reverse and add to the nearest adequate scope */
     for (i = size - 1; i >= 0; i--) {
-        ste = (struct _symtable_entry *) PyList_GET_ITEM(st->st_stack, i);
+        ste = (struct _symtable_entry *) PyList_GetItem(st->st_stack, i);
 
         /* If we find a comprehension scope, check for a target
          * binding conflict with iteration variables, otherwise skip it

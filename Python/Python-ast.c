@@ -4311,17 +4311,17 @@ obj2ast_mod(PyObject* obj, mod_ty* out)
                 PyErr_Format(PyExc_TypeError, "Module field \"body\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             body = _Py_asdl_seq_new(len);
             if (body == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 stmt_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_stmt(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "Module field \"body\" changed size during iteration");
                     goto failed;
                 }
@@ -4356,17 +4356,17 @@ obj2ast_mod(PyObject* obj, mod_ty* out)
                 PyErr_Format(PyExc_TypeError, "Interactive field \"body\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             body = _Py_asdl_seq_new(len);
             if (body == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 stmt_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_stmt(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "Interactive field \"body\" changed size during iteration");
                     goto failed;
                 }
@@ -4533,17 +4533,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "FunctionDef field \"body\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             body = _Py_asdl_seq_new(len);
             if (body == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 stmt_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_stmt(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "FunctionDef field \"body\" changed size during iteration");
                     goto failed;
                 }
@@ -4567,17 +4567,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "FunctionDef field \"decorator_list\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             decorator_list = _Py_asdl_seq_new(len);
             if (decorator_list == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 expr_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_expr(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "FunctionDef field \"decorator_list\" changed size during iteration");
                     goto failed;
                 }
@@ -4630,17 +4630,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "ClassDef field \"bases\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             bases = _Py_asdl_seq_new(len);
             if (bases == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 expr_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_expr(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "ClassDef field \"bases\" changed size during iteration");
                     goto failed;
                 }
@@ -4664,17 +4664,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "ClassDef field \"keywords\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             keywords = _Py_asdl_seq_new(len);
             if (keywords == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 keyword_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_keyword(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "ClassDef field \"keywords\" changed size during iteration");
                     goto failed;
                 }
@@ -4697,17 +4697,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "ClassDef field \"body\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             body = _Py_asdl_seq_new(len);
             if (body == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 stmt_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_stmt(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "ClassDef field \"body\" changed size during iteration");
                     goto failed;
                 }
@@ -4731,17 +4731,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "ClassDef field \"decorator_list\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             decorator_list = _Py_asdl_seq_new(len);
             if (decorator_list == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 expr_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_expr(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "ClassDef field \"decorator_list\" changed size during iteration");
                     goto failed;
                 }
@@ -4803,17 +4803,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "Delete field \"targets\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             targets = _Py_asdl_seq_new(len);
             if (targets == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 expr_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_expr(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "Delete field \"targets\" changed size during iteration");
                     goto failed;
                 }
@@ -4850,17 +4850,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "Assign field \"targets\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             targets = _Py_asdl_seq_new(len);
             if (targets == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 expr_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_expr(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "Assign field \"targets\" changed size during iteration");
                     goto failed;
                 }
@@ -4994,17 +4994,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "For field \"body\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             body = _Py_asdl_seq_new(len);
             if (body == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 stmt_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_stmt(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "For field \"body\" changed size during iteration");
                     goto failed;
                 }
@@ -5028,17 +5028,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "For field \"orelse\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             orelse = _Py_asdl_seq_new(len);
             if (orelse == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 stmt_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_stmt(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "For field \"orelse\" changed size during iteration");
                     goto failed;
                 }
@@ -5089,17 +5089,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "While field \"body\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             body = _Py_asdl_seq_new(len);
             if (body == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 stmt_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_stmt(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "While field \"body\" changed size during iteration");
                     goto failed;
                 }
@@ -5123,17 +5123,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "While field \"orelse\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             orelse = _Py_asdl_seq_new(len);
             if (orelse == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 stmt_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_stmt(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "While field \"orelse\" changed size during iteration");
                     goto failed;
                 }
@@ -5184,17 +5184,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "If field \"body\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             body = _Py_asdl_seq_new(len);
             if (body == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 stmt_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_stmt(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "If field \"body\" changed size during iteration");
                     goto failed;
                 }
@@ -5218,17 +5218,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "If field \"orelse\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             orelse = _Py_asdl_seq_new(len);
             if (orelse == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 stmt_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_stmt(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "If field \"orelse\" changed size during iteration");
                     goto failed;
                 }
@@ -5265,17 +5265,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "With field \"items\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             items = _Py_asdl_seq_new(len);
             if (items == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 withitem_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_withitem(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "With field \"items\" changed size during iteration");
                     goto failed;
                 }
@@ -5298,17 +5298,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "With field \"body\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             body = _Py_asdl_seq_new(len);
             if (body == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 stmt_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_stmt(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "With field \"body\" changed size during iteration");
                     goto failed;
                 }
@@ -5387,17 +5387,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "Try field \"body\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             body = _Py_asdl_seq_new(len);
             if (body == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 stmt_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_stmt(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "Try field \"body\" changed size during iteration");
                     goto failed;
                 }
@@ -5421,17 +5421,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "Try field \"handlers\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             handlers = _Py_asdl_seq_new(len);
             if (handlers == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 excepthandler_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_excepthandler(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "Try field \"handlers\" changed size during iteration");
                     goto failed;
                 }
@@ -5455,17 +5455,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "Try field \"orelse\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             orelse = _Py_asdl_seq_new(len);
             if (orelse == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 stmt_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_stmt(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "Try field \"orelse\" changed size during iteration");
                     goto failed;
                 }
@@ -5489,17 +5489,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "Try field \"finalbody\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             finalbody = _Py_asdl_seq_new(len);
             if (finalbody == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 stmt_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_stmt(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "Try field \"finalbody\" changed size during iteration");
                     goto failed;
                 }
@@ -5575,17 +5575,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "Import field \"names\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             names = _Py_asdl_seq_new(len);
             if (names == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 alias_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_alias(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "Import field \"names\" changed size during iteration");
                     goto failed;
                 }
@@ -5636,17 +5636,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "ImportFrom field \"names\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             names = _Py_asdl_seq_new(len);
             if (names == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 alias_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_alias(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "ImportFrom field \"names\" changed size during iteration");
                     goto failed;
                 }
@@ -5695,17 +5695,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "Global field \"names\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             names = _Py_asdl_seq_new(len);
             if (names == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 identifier val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_identifier(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "Global field \"names\" changed size during iteration");
                     goto failed;
                 }
@@ -5740,17 +5740,17 @@ obj2ast_stmt(PyObject* obj, stmt_ty* out)
                 PyErr_Format(PyExc_TypeError, "Nonlocal field \"names\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             names = _Py_asdl_seq_new(len);
             if (names == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 identifier val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_identifier(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "Nonlocal field \"names\" changed size during iteration");
                     goto failed;
                 }
@@ -5936,17 +5936,17 @@ obj2ast_expr(PyObject* obj, expr_ty* out)
                 PyErr_Format(PyExc_TypeError, "BoolOp field \"values\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             values = _Py_asdl_seq_new(len);
             if (values == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 expr_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_expr(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "BoolOp field \"values\" changed size during iteration");
                     goto failed;
                 }
@@ -6214,17 +6214,17 @@ obj2ast_expr(PyObject* obj, expr_ty* out)
                 PyErr_Format(PyExc_TypeError, "Dict field \"keys\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             keys = _Py_asdl_seq_new(len);
             if (keys == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 expr_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_expr(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "Dict field \"keys\" changed size during iteration");
                     goto failed;
                 }
@@ -6248,17 +6248,17 @@ obj2ast_expr(PyObject* obj, expr_ty* out)
                 PyErr_Format(PyExc_TypeError, "Dict field \"values\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             values = _Py_asdl_seq_new(len);
             if (values == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 expr_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_expr(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "Dict field \"values\" changed size during iteration");
                     goto failed;
                 }
@@ -6294,17 +6294,17 @@ obj2ast_expr(PyObject* obj, expr_ty* out)
                 PyErr_Format(PyExc_TypeError, "Set field \"elts\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             elts = _Py_asdl_seq_new(len);
             if (elts == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 expr_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_expr(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "Set field \"elts\" changed size during iteration");
                     goto failed;
                 }
@@ -6354,17 +6354,17 @@ obj2ast_expr(PyObject* obj, expr_ty* out)
                 PyErr_Format(PyExc_TypeError, "ListComp field \"generators\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             generators = _Py_asdl_seq_new(len);
             if (generators == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 comprehension_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_comprehension(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "ListComp field \"generators\" changed size during iteration");
                     goto failed;
                 }
@@ -6415,17 +6415,17 @@ obj2ast_expr(PyObject* obj, expr_ty* out)
                 PyErr_Format(PyExc_TypeError, "SetComp field \"generators\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             generators = _Py_asdl_seq_new(len);
             if (generators == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 comprehension_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_comprehension(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "SetComp field \"generators\" changed size during iteration");
                     goto failed;
                 }
@@ -6490,17 +6490,17 @@ obj2ast_expr(PyObject* obj, expr_ty* out)
                 PyErr_Format(PyExc_TypeError, "DictComp field \"generators\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             generators = _Py_asdl_seq_new(len);
             if (generators == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 comprehension_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_comprehension(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "DictComp field \"generators\" changed size during iteration");
                     goto failed;
                 }
@@ -6551,17 +6551,17 @@ obj2ast_expr(PyObject* obj, expr_ty* out)
                 PyErr_Format(PyExc_TypeError, "GeneratorExp field \"generators\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             generators = _Py_asdl_seq_new(len);
             if (generators == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 comprehension_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_comprehension(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "GeneratorExp field \"generators\" changed size during iteration");
                     goto failed;
                 }
@@ -6662,17 +6662,17 @@ obj2ast_expr(PyObject* obj, expr_ty* out)
                 PyErr_Format(PyExc_TypeError, "Compare field \"ops\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             ops = _Py_asdl_int_seq_new(len);
             if (ops == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 cmpop_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_cmpop(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "Compare field \"ops\" changed size during iteration");
                     goto failed;
                 }
@@ -6696,17 +6696,17 @@ obj2ast_expr(PyObject* obj, expr_ty* out)
                 PyErr_Format(PyExc_TypeError, "Compare field \"comparators\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             comparators = _Py_asdl_seq_new(len);
             if (comparators == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 expr_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_expr(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "Compare field \"comparators\" changed size during iteration");
                     goto failed;
                 }
@@ -6757,17 +6757,17 @@ obj2ast_expr(PyObject* obj, expr_ty* out)
                 PyErr_Format(PyExc_TypeError, "Call field \"args\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             args = _Py_asdl_seq_new(len);
             if (args == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 expr_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_expr(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "Call field \"args\" changed size during iteration");
                     goto failed;
                 }
@@ -6791,17 +6791,17 @@ obj2ast_expr(PyObject* obj, expr_ty* out)
                 PyErr_Format(PyExc_TypeError, "Call field \"keywords\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             keywords = _Py_asdl_seq_new(len);
             if (keywords == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 keyword_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_keyword(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "Call field \"keywords\" changed size during iteration");
                     goto failed;
                 }
@@ -6894,17 +6894,17 @@ obj2ast_expr(PyObject* obj, expr_ty* out)
                 PyErr_Format(PyExc_TypeError, "JoinedStr field \"values\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             values = _Py_asdl_seq_new(len);
             if (values == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 expr_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_expr(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "JoinedStr field \"values\" changed size during iteration");
                     goto failed;
                 }
@@ -7168,17 +7168,17 @@ obj2ast_expr(PyObject* obj, expr_ty* out)
                 PyErr_Format(PyExc_TypeError, "List field \"elts\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             elts = _Py_asdl_seq_new(len);
             if (elts == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 expr_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_expr(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "List field \"elts\" changed size during iteration");
                     goto failed;
                 }
@@ -7227,17 +7227,17 @@ obj2ast_expr(PyObject* obj, expr_ty* out)
                 PyErr_Format(PyExc_TypeError, "Tuple field \"elts\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             elts = _Py_asdl_seq_new(len);
             if (elts == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 expr_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_expr(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "Tuple field \"elts\" changed size during iteration");
                     goto failed;
                 }
@@ -7678,17 +7678,17 @@ obj2ast_comprehension(PyObject* obj, comprehension_ty* out)
             PyErr_Format(PyExc_TypeError, "comprehension field \"ifs\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
             goto failed;
         }
-        len = PyList_GET_SIZE(tmp);
+        len = PyList_Size(tmp);
         ifs = _Py_asdl_seq_new(len);
         if (ifs == NULL) goto failed;
         for (i = 0; i < len; i++) {
             expr_ty val;
-            PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+            PyObject *tmp2 = PyList_GetItem(tmp, i);
             Py_INCREF(tmp2);
             res = obj2ast_expr(tmp2, &val);
             Py_DECREF(tmp2);
             if (res != 0) goto failed;
-            if (len != PyList_GET_SIZE(tmp)) {
+            if (len != PyList_Size(tmp)) {
                 PyErr_SetString(PyExc_RuntimeError, "comprehension field \"ifs\" changed size during iteration");
                 goto failed;
             }
@@ -7825,17 +7825,17 @@ obj2ast_excepthandler(PyObject* obj, excepthandler_ty* out)
                 PyErr_Format(PyExc_TypeError, "ExceptHandler field \"body\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
                 goto failed;
             }
-            len = PyList_GET_SIZE(tmp);
+            len = PyList_Size(tmp);
             body = _Py_asdl_seq_new(len);
             if (body == NULL) goto failed;
             for (i = 0; i < len; i++) {
                 stmt_ty val;
-                PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+                PyObject *tmp2 = PyList_GetItem(tmp, i);
                 Py_INCREF(tmp2);
                 res = obj2ast_stmt(tmp2, &val);
                 Py_DECREF(tmp2);
                 if (res != 0) goto failed;
-                if (len != PyList_GET_SIZE(tmp)) {
+                if (len != PyList_Size(tmp)) {
                     PyErr_SetString(PyExc_RuntimeError, "ExceptHandler field \"body\" changed size during iteration");
                     goto failed;
                 }
@@ -7883,17 +7883,17 @@ obj2ast_arguments(PyObject* obj, arguments_ty* out)
             PyErr_Format(PyExc_TypeError, "arguments field \"posonlyargs\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
             goto failed;
         }
-        len = PyList_GET_SIZE(tmp);
+        len = PyList_Size(tmp);
         posonlyargs = _Py_asdl_seq_new(len);
         if (posonlyargs == NULL) goto failed;
         for (i = 0; i < len; i++) {
             arg_ty val;
-            PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+            PyObject *tmp2 = PyList_GetItem(tmp, i);
             Py_INCREF(tmp2);
             res = obj2ast_arg(tmp2, &val);
             Py_DECREF(tmp2);
             if (res != 0) goto failed;
-            if (len != PyList_GET_SIZE(tmp)) {
+            if (len != PyList_Size(tmp)) {
                 PyErr_SetString(PyExc_RuntimeError, "arguments field \"posonlyargs\" changed size during iteration");
                 goto failed;
             }
@@ -7916,17 +7916,17 @@ obj2ast_arguments(PyObject* obj, arguments_ty* out)
             PyErr_Format(PyExc_TypeError, "arguments field \"args\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
             goto failed;
         }
-        len = PyList_GET_SIZE(tmp);
+        len = PyList_Size(tmp);
         args = _Py_asdl_seq_new(len);
         if (args == NULL) goto failed;
         for (i = 0; i < len; i++) {
             arg_ty val;
-            PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+            PyObject *tmp2 = PyList_GetItem(tmp, i);
             Py_INCREF(tmp2);
             res = obj2ast_arg(tmp2, &val);
             Py_DECREF(tmp2);
             if (res != 0) goto failed;
-            if (len != PyList_GET_SIZE(tmp)) {
+            if (len != PyList_Size(tmp)) {
                 PyErr_SetString(PyExc_RuntimeError, "arguments field \"args\" changed size during iteration");
                 goto failed;
             }
@@ -7963,17 +7963,17 @@ obj2ast_arguments(PyObject* obj, arguments_ty* out)
             PyErr_Format(PyExc_TypeError, "arguments field \"kwonlyargs\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
             goto failed;
         }
-        len = PyList_GET_SIZE(tmp);
+        len = PyList_Size(tmp);
         kwonlyargs = _Py_asdl_seq_new(len);
         if (kwonlyargs == NULL) goto failed;
         for (i = 0; i < len; i++) {
             arg_ty val;
-            PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+            PyObject *tmp2 = PyList_GetItem(tmp, i);
             Py_INCREF(tmp2);
             res = obj2ast_arg(tmp2, &val);
             Py_DECREF(tmp2);
             if (res != 0) goto failed;
-            if (len != PyList_GET_SIZE(tmp)) {
+            if (len != PyList_Size(tmp)) {
                 PyErr_SetString(PyExc_RuntimeError, "arguments field \"kwonlyargs\" changed size during iteration");
                 goto failed;
             }
@@ -7997,17 +7997,17 @@ obj2ast_arguments(PyObject* obj, arguments_ty* out)
             PyErr_Format(PyExc_TypeError, "arguments field \"kw_defaults\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
             goto failed;
         }
-        len = PyList_GET_SIZE(tmp);
+        len = PyList_Size(tmp);
         kw_defaults = _Py_asdl_seq_new(len);
         if (kw_defaults == NULL) goto failed;
         for (i = 0; i < len; i++) {
             expr_ty val;
-            PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+            PyObject *tmp2 = PyList_GetItem(tmp, i);
             Py_INCREF(tmp2);
             res = obj2ast_expr(tmp2, &val);
             Py_DECREF(tmp2);
             if (res != 0) goto failed;
-            if (len != PyList_GET_SIZE(tmp)) {
+            if (len != PyList_Size(tmp)) {
                 PyErr_SetString(PyExc_RuntimeError, "arguments field \"kw_defaults\" changed size during iteration");
                 goto failed;
             }
@@ -8043,17 +8043,18 @@ obj2ast_arguments(PyObject* obj, arguments_ty* out)
             PyErr_Format(PyExc_TypeError, "arguments field \"defaults\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
             goto failed;
         }
-        len = PyList_GET_SIZE(tmp);
+        len = PyList_Size(tmp);
         defaults = _Py_asdl_seq_new(len);
         if (defaults == NULL) goto failed;
         for (i = 0; i < len; i++) {
             expr_ty val;
-            PyObject *tmp2 = PyList_GET_ITEM(tmp, i);
+            PyObject *tmp2 = PyList_GetItem(tmp, i);
             Py_INCREF(tmp2);
             res = obj2ast_expr(tmp2, &val);
             Py_DECREF(tmp2);
             if (res != 0) goto failed;
-            if (len != PyList_GET_SIZE(tmp)) {
+            if (len != PyList_Size
+		(tmp)) {
                 PyErr_SetString(PyExc_RuntimeError, "arguments field \"defaults\" changed size during iteration");
                 goto failed;
             }

@@ -2002,7 +2002,7 @@ format_missing(PyThreadState *tstate, const char *kind,
                PyCodeObject *co, PyObject *names, PyObject *qualname)
 {
     int err;
-    Py_ssize_t len = PyList_GET_SIZE(names);
+    Py_ssize_t len = PyList_Size(names);
     PyObject *name_str, *comma, *tail, *tmp;
 
     assert(PyList_CheckExact(names));
@@ -2010,18 +2010,18 @@ format_missing(PyThreadState *tstate, const char *kind,
     /* Deal with the joys of natural language. */
     switch (len) {
     case 1:
-        name_str = PyList_GET_ITEM(names, 0);
+        name_str = PyList_GetItem(names, 0);
         Py_INCREF(name_str);
         break;
     case 2:
         name_str = PyUnicode_FromFormat("%U and %U",
-                                        PyList_GET_ITEM(names, len - 2),
-                                        PyList_GET_ITEM(names, len - 1));
+                                        PyList_GetItem(names, len - 2),
+                                        PyList_GetItem(names, len - 1));
         break;
     default:
         tail = PyUnicode_FromFormat(", %U, and %U",
-                                    PyList_GET_ITEM(names, len - 2),
-                                    PyList_GET_ITEM(names, len - 1));
+                                    PyList_GetItem(names, len - 2),
+                                    PyList_GetItem(names, len - 1));
         if (tail == NULL)
             return;
         /* Chop off the last two objects in the list. This shouldn't actually
@@ -2723,7 +2723,7 @@ unpack_iterable(PyThreadState *tstate, PyObject *v,
     *--sp = l;
     i++;
 
-    ll = PyList_GET_SIZE(l);
+    ll = PyList_Size(l);
     if (ll < argcntafter) {
         _PyErr_Format(tstate, PyExc_ValueError,
             "not enough values to unpack (expected at least %d, got %zd)",
@@ -2733,7 +2733,7 @@ unpack_iterable(PyThreadState *tstate, PyObject *v,
 
     /* Pop the "after-variable" args off the list. */
     for (j = argcntafter; j > 0; j--, i++) {
-        *--sp = PyList_GET_ITEM(l, ll - j);
+        *--sp = PyList_GetItem(l, ll - j);
     }
     /* Resize the list. */
     Py_SET_SIZE(l, ll - argcntafter);

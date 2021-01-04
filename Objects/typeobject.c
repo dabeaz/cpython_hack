@@ -878,10 +878,10 @@ mro_hierarchy(PyTypeObject *type, PyObject *temp)
     subclasses = type___subclasses___impl(type);
     if (subclasses == NULL)
         return -1;
-    n = PyList_GET_SIZE(subclasses);
+    n = PyList_Size(subclasses);
     for (i = 0; i < n; i++) {
         PyTypeObject *subclass;
-        subclass = (PyTypeObject *)PyList_GET_ITEM(subclasses, i);
+        subclass = (PyTypeObject *)PyList_GetItem(subclasses, i);
         res = mro_hierarchy(subclass, temp);
         if (res < 0)
             break;
@@ -990,11 +990,11 @@ type_set_bases(PyTypeObject *type, PyObject *new_bases, void *context)
     return res;
 
   undo:
-    for (i = PyList_GET_SIZE(temp) - 1; i >= 0; i--) {
+    for (i = PyList_Size(temp) - 1; i >= 0; i--) {
         PyTypeObject *cls;
         PyObject *new_mro, *old_mro = NULL;
 
-        PyArg_UnpackTuple(PyList_GET_ITEM(temp, i),
+        PyArg_UnpackTuple(PyList_GetItem(temp, i),
                           "", 2, 3, &cls, &new_mro, &old_mro);
         /* Do not rollback if cls has a newer version of MRO.  */
         if (cls->tp_mro == new_mro) {
@@ -3885,7 +3885,7 @@ _PyObject_GetState(PyObject *obj, int required)
             if (Py_TYPE(obj)->tp_weaklistoffset)
                 basicsize += sizeof(PyObject *);
             if (slotnames != Py_None)
-                basicsize += sizeof(PyObject *) * PyList_GET_SIZE(slotnames);
+                basicsize += sizeof(PyObject *) * PyList_Size(slotnames);
             if (Py_TYPE(obj)->tp_basicsize > basicsize) {
                 Py_DECREF(slotnames);
                 Py_DECREF(state);
@@ -3896,7 +3896,7 @@ _PyObject_GetState(PyObject *obj, int required)
             }
         }
 
-        if (slotnames != Py_None && PyList_GET_SIZE(slotnames) > 0) {
+        if (slotnames != Py_None && PyList_Size(slotnames) > 0) {
             PyObject *slots;
             Py_ssize_t slotnames_size, i;
 
@@ -3907,11 +3907,11 @@ _PyObject_GetState(PyObject *obj, int required)
                 return NULL;
             }
 
-            slotnames_size = PyList_GET_SIZE(slotnames);
+            slotnames_size = PyList_Size(slotnames);
             for (i = 0; i < slotnames_size; i++) {
                 PyObject *name, *value;
 
-                name = PyList_GET_ITEM(slotnames, i);
+                name = PyList_GetItem(slotnames, i);
                 Py_INCREF(name);
                 if (_PyObject_LookupAttr(obj, name, &value) < 0) {
                     goto error;
@@ -3931,7 +3931,7 @@ _PyObject_GetState(PyObject *obj, int required)
 
                 /* The list is stored on the class so it may mutate while we
                    iterate over it */
-                if (slotnames_size != PyList_GET_SIZE(slotnames)) {
+                if (slotnames_size != PyList_Size(slotnames)) {
                     PyErr_Format(PyExc_RuntimeError,
                                  "__slotsname__ changed size during iteration");
                     goto error;

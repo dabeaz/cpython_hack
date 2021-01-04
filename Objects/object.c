@@ -1541,9 +1541,9 @@ Py_ReprEnter(PyObject *obj)
             return -1;
         Py_DECREF(list);
     }
-    i = PyList_GET_SIZE(list);
+    i = PyList_Size(list);
     while (--i >= 0) {
-        if (PyList_GET_ITEM(list, i) == obj)
+        if (PyList_GetItem(list, i) == obj)
             return 1;
     }
     if (PyList_Append(list, obj) < 0)
@@ -1569,10 +1569,10 @@ Py_ReprLeave(PyObject *obj)
     if (list == NULL || !PyList_Check(list))
         goto finally;
 
-    i = PyList_GET_SIZE(list);
+    i = PyList_Size(list);
     /* Count backwards because we always expect obj to be list[-1] */
     while (--i >= 0) {
-        if (PyList_GET_ITEM(list, i) == obj) {
+        if (PyList_GetItem(list, i) == obj) {
             PyList_SetSlice(list, i, i + 1, NULL);
             break;
         }

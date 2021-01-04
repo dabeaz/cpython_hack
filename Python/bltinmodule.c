@@ -909,7 +909,7 @@ update_bases(PyObject *bases, PyObject *const *args, Py_ssize_t nargs)
                 Py_INCREF(base);
             }
         }
-        j = PyList_GET_SIZE(new_bases);
+        j = PyList_Size(new_bases);
         if (PyList_SetSlice(new_bases, j, j, new_base) < 0) {
             goto error;
         }

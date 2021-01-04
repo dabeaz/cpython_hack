@@ -1691,9 +1691,9 @@ _Py_DumpPathConfig(PyThreadState *tstate)
     PyObject *sys_path = PySys_GetObject("path");  /* borrowed reference */
     if (sys_path != NULL && PyList_Check(sys_path)) {
         PySys_WriteStderr("  sys.path = [\n");
-        Py_ssize_t len = PyList_GET_SIZE(sys_path);
+        Py_ssize_t len = PyList_Size(sys_path);
         for (Py_ssize_t i=0; i < len; i++) {
-            PyObject *path = PyList_GET_ITEM(sys_path, i);
+            PyObject *path = PyList_GetItem(sys_path, i);
             PySys_FormatStderr("    %A,\n", path);
         }
         PySys_WriteStderr("  ]\n");

@@ -271,8 +271,8 @@ _PyImport_Cleanup(PyThreadState *tstate)
         Py_ssize_t i;
         /* Since dict is ordered in CPython 3.6+, modules are saved in
            importing order.  First clear modules imported later. */
-        for (i = PyList_GET_SIZE(weaklist) - 1; i >= 0; i--) {
-            PyObject *tup = PyList_GET_ITEM(weaklist, i);
+        for (i = PyList_Size(weaklist) - 1; i >= 0; i--) {
+            PyObject *tup = PyList_GetItem(weaklist, i);
             PyObject *mod = PyWeakref_GET_OBJECT(PyTuple_GET_ITEM(tup, 1));
             if (mod == Py_None)
                 continue;
@@ -791,7 +791,7 @@ import_find_and_load(PyThreadState *tstate, PyObject *abs_name)
     /* Python modules */
     {
       Py_ssize_t n = 0;
-      Py_ssize_t len = PyList_GET_SIZE(sys_path);
+      Py_ssize_t len = PyList_Size(sys_path);
       for (n = 0; n < len; n++) {
 	char name[MAXPATHLEN];
 	PyObject *p = PySequence_GetItem(sys_path, n);
