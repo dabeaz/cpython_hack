@@ -200,7 +200,7 @@ builtin_compile(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObj
     static const char * const _keywords[] = {"source", "filename", "mode", "flags", "dont_inherit", "optimize", "_feature_version", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "compile", 0};
     PyObject *argsbuf[7];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 3;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 3;
     PyObject *source;
     PyObject *filename;
     const char *mode;
@@ -628,7 +628,7 @@ builtin_pow(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject 
     static const char * const _keywords[] = {"base", "exp", "mod", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "pow", 0};
     PyObject *argsbuf[3];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 2;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 2;
     PyObject *base;
     PyObject *exp;
     PyObject *mod = Py_None;
@@ -721,7 +721,7 @@ builtin_round(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObjec
     static const char * const _keywords[] = {"number", "ndigits", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "round", 0};
     PyObject *argsbuf[2];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 1;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 1;
     PyObject *number;
     PyObject *ndigits = Py_None;
 
@@ -764,7 +764,7 @@ builtin_sum(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject 
     static const char * const _keywords[] = {"", "start", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "sum", 0};
     PyObject *argsbuf[2];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 1;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 1;
     PyObject *iterable;
     PyObject *start = NULL;
 
@@ -994,12 +994,12 @@ builtin___build_class__(PyObject *self, PyObject *const *args, Py_ssize_t nargs,
     }
     if (meta == NULL) {
         /* if there are no bases, use type: */
-        if (PyTuple_GET_SIZE(bases) == 0) {
+        if (PyTuple_Size(bases) == 0) {
             meta = (PyObject *) (&PyType_Type);
         }
         /* else get the type of the first base */
         else {
-            PyObject *base0 = PyTuple_GET_ITEM(bases, 0);
+            PyObject *base0 = PyTuple_GetItem(bases, 0);
             meta = (PyObject *)Py_TYPE(base0);
         }
         Py_INCREF(meta);
@@ -1999,7 +1999,7 @@ map_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
     for (i=1 ; i<numargs ; i++) {
         /* Get iterator. */
-        it = PyObject_GetIter(PyTuple_GET_ITEM(args, i));
+        it = PyObject_GetIter(PyTuple_GetItem(args, i));
         if (it == NULL) {
             Py_DECREF(iters);
             return NULL;
@@ -2014,7 +2014,7 @@ map_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         return NULL;
     }
     lz->iters = iters;
-    func = PyTuple_GET_ITEM(args, 0);
+    func = PyTuple_GetItem(args, 0);
     Py_INCREF(func);
     lz->func = func;
 
@@ -2037,7 +2037,7 @@ map_next(mapobject *lz)
     PyObject *result = NULL;
     PyThreadState *tstate = PyThreadState_Get();
 
-    const Py_ssize_t niters = PyTuple_GET_SIZE(lz->iters);
+    const Py_ssize_t niters = PyTuple_Size(lz->iters);
     if (niters <= (Py_ssize_t)Py_ARRAY_LENGTH(small_stack)) {
         stack = small_stack;
     }
@@ -2051,7 +2051,7 @@ map_next(mapobject *lz)
 
     Py_ssize_t nargs = 0;
     for (Py_ssize_t i=0; i < niters; i++) {
-        PyObject *it = PyTuple_GET_ITEM(lz->iters, i);
+        PyObject *it = PyTuple_GetItem(lz->iters, i);
         PyObject *val = Py_TYPE(it)->tp_iternext(it);
         if (val == NULL) {
             goto exit;
@@ -2075,7 +2075,7 @@ exit:
 static PyObject *
 map_reduce(mapobject *lz, PyObject *Py_UNUSED(ignored))
 {
-    Py_ssize_t numargs = PyTuple_GET_SIZE(lz->iters);
+    Py_ssize_t numargs = PyTuple_Size(lz->iters);
     PyObject *args = PyTuple_New(numargs+1);
     Py_ssize_t i;
     if (args == NULL)
@@ -2083,7 +2083,7 @@ map_reduce(mapobject *lz, PyObject *Py_UNUSED(ignored))
     Py_INCREF(lz->func);
     PyTuple_SET_ITEM(args, 0, lz->func);
     for (i = 0; i<numargs; i++){
-        PyObject *it = PyTuple_GET_ITEM(lz->iters, i);
+        PyObject *it = PyTuple_GetItem(lz->iters, i);
         Py_INCREF(it);
         PyTuple_SET_ITEM(args, i+1, it);
     }
@@ -3246,14 +3246,14 @@ zip_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
     /* args must be a tuple */
     assert(PyTuple_Check(args));
-    tuplesize = PyTuple_GET_SIZE(args);
+    tuplesize = PyTuple_Size(args);
 
     /* obtain iterators */
     ittuple = PyTuple_New(tuplesize);
     if (ittuple == NULL)
         return NULL;
     for (i=0; i < tuplesize; ++i) {
-        PyObject *item = PyTuple_GET_ITEM(args, i);
+        PyObject *item = PyTuple_GetItem(args, i);
         PyObject *it = PyObject_GetIter(item);
         if (it == NULL) {
             Py_DECREF(ittuple);
@@ -3310,13 +3310,13 @@ zip_next(zipobject *lz)
     if (Py_REFCNT(result) == 1) {
         Py_INCREF(result);
         for (i=0 ; i < tuplesize ; i++) {
-            it = PyTuple_GET_ITEM(lz->ittuple, i);
+            it = PyTuple_GetItem(lz->ittuple, i);
             item = (*Py_TYPE(it)->tp_iternext)(it);
             if (item == NULL) {
                 Py_DECREF(result);
                 return NULL;
             }
-            olditem = PyTuple_GET_ITEM(result, i);
+            olditem = PyTuple_GetItem(result, i);
             PyTuple_SET_ITEM(result, i, item);
             Py_DECREF(olditem);
         }
@@ -3325,7 +3325,7 @@ zip_next(zipobject *lz)
         if (result == NULL)
             return NULL;
         for (i=0 ; i < tuplesize ; i++) {
-            it = PyTuple_GET_ITEM(lz->ittuple, i);
+            it = PyTuple_GetItem(lz->ittuple, i);
             item = (*Py_TYPE(it)->tp_iternext)(it);
             if (item == NULL) {
                 Py_DECREF(result);

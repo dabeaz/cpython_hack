@@ -95,9 +95,9 @@ check_complexity(PyObject *obj, Py_ssize_t limit)
 {
     if (PyTuple_Check(obj)) {
         Py_ssize_t i;
-        limit -= PyTuple_GET_SIZE(obj);
-        for (i = 0; limit >= 0 && i < PyTuple_GET_SIZE(obj); i++) {
-            limit = check_complexity(PyTuple_GET_ITEM(obj, i), limit);
+        limit -= PyTuple_Size(obj);
+        for (i = 0; limit >= 0 && i < PyTuple_Size(obj); i++) {
+            limit = check_complexity(PyTuple_GetItem(obj, i), limit);
         }
         return limit;
     }
@@ -132,7 +132,7 @@ safe_multiply(PyObject *v, PyObject *w)
         }
     }
     else if (PyLong_Check(v) && (PyTuple_Check(w) || PyFrozenSet_Check(w))) {
-        Py_ssize_t size = PyTuple_Check(w) ? PyTuple_GET_SIZE(w) :
+        Py_ssize_t size = PyTuple_Check(w) ? PyTuple_Size(w) :
                                              PySet_GET_SIZE(w);
         if (size) {
             long n = PyLong_AsLong(v);

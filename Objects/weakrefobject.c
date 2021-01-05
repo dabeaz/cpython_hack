@@ -993,11 +993,11 @@ PyObject_ClearWeakRefs(PyObject *object)
                 current = next;
             }
             for (i = 0; i < count; ++i) {
-                PyObject *callback = PyTuple_GET_ITEM(tuple, i * 2 + 1);
+                PyObject *callback = PyTuple_GetItem(tuple, i * 2 + 1);
 
                 /* The tuple may have slots left to NULL */
                 if (callback != NULL) {
-                    PyObject *item = PyTuple_GET_ITEM(tuple, i * 2);
+                    PyObject *item = PyTuple_GetItem(tuple, i * 2);
                     handle_callback((PyWeakReference *)item, callback);
                 }
             }

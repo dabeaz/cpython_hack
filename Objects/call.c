@@ -166,7 +166,7 @@ _PyObject_MakeTpCall(PyThreadState *tstate, PyObject *callable,
         kwdict = keywords;
     }
     else {
-        if (PyTuple_GET_SIZE(keywords)) {
+        if (PyTuple_Size(keywords)) {
             assert(args != NULL);
             kwdict = _PyStack_AsDict(args + nargs, keywords);
             if (kwdict == NULL) {
@@ -213,7 +213,7 @@ PyVectorcall_Call(PyObject *callable, PyObject *tuple, PyObject *kwargs)
         return NULL;
     }
 
-    Py_ssize_t nargs = PyTuple_GET_SIZE(tuple);
+    Py_ssize_t nargs = PyTuple_Size(tuple);
 
     /* Fast path for no keywords */
     if (kwargs == NULL || PyDict_GET_SIZE(kwargs) == 0) {
@@ -323,7 +323,7 @@ _PyFunction_Vectorcall(PyObject *func, PyObject* const* stack,
 
     Py_ssize_t nargs = PyVectorcall_NARGS(nargsf);
     assert(nargs >= 0);
-    Py_ssize_t nkwargs = (kwnames == NULL) ? 0 : PyTuple_GET_SIZE(kwnames);
+    Py_ssize_t nkwargs = (kwnames == NULL) ? 0 : PyTuple_Size(kwnames);
     assert((nargs == 0 && nkwargs == 0) || stack != NULL);
     /* kwnames must only contain strings and all keys must be unique */
 
@@ -339,12 +339,12 @@ _PyFunction_Vectorcall(PyObject *func, PyObject* const* stack,
             return function_code_fastcall(tstate, co, stack, nargs, globals);
         }
         else if (nargs == 0 && argdefs != NULL
-                 && co->co_argcount == PyTuple_GET_SIZE(argdefs)) {
+                 && co->co_argcount == PyTuple_Size(argdefs)) {
             /* function called with no arguments, but all parameters have
                a default value: use default values as arguments .*/
             stack = _PyTuple_ITEMS(argdefs);
             return function_code_fastcall(tstate, co,
-                                          stack, PyTuple_GET_SIZE(argdefs),
+                                          stack, PyTuple_Size(argdefs),
                                           globals);
         }
     }
@@ -358,7 +358,7 @@ _PyFunction_Vectorcall(PyObject *func, PyObject* const* stack,
     Py_ssize_t nd;
     if (argdefs != NULL) {
         d = _PyTuple_ITEMS(argdefs);
-        nd = PyTuple_GET_SIZE(argdefs);
+        nd = PyTuple_Size(argdefs);
         assert(nd <= INT_MAX);
     }
     else {
@@ -403,7 +403,7 @@ _PyObject_Call_Prepend(PyThreadState *tstate, PyObject *callable,
     PyObject *small_stack[_PY_FASTCALL_SMALL_STACK];
     PyObject **stack;
 
-    Py_ssize_t argcount = PyTuple_GET_SIZE(args);
+    Py_ssize_t argcount = PyTuple_Size(args);
     if (argcount + 1 <= (Py_ssize_t)Py_ARRAY_LENGTH(small_stack)) {
         stack = small_stack;
     }
@@ -471,7 +471,7 @@ _PyObject_CallFunctionVa(PyThreadState *tstate, PyObject *callable,
         PyObject *args = stack[0];
         result = _PyObject_VectorcallTstate(tstate, callable,
                                             _PyTuple_ITEMS(args),
-                                            PyTuple_GET_SIZE(args),
+                                            PyTuple_Size(args),
                                             NULL);
     }
     else {
@@ -802,14 +802,14 @@ _PyStack_AsDict(PyObject *const *values, PyObject *kwnames)
     Py_ssize_t i;
 
     assert(kwnames != NULL);
-    nkwargs = PyTuple_GET_SIZE(kwnames);
+    nkwargs = PyTuple_Size(kwnames);
     kwdict = _PyDict_NewPresized(nkwargs);
     if (kwdict == NULL) {
         return NULL;
     }
 
     for (i = 0; i < nkwargs; i++) {
-        PyObject *key = PyTuple_GET_ITEM(kwnames, i);
+        PyObject *key = PyTuple_GetItem(kwnames, i);
         PyObject *value = *values++;
         /* If key already exists, replace it with the new value */
         if (PyDict_SetItem(kwdict, key, value)) {
@@ -909,7 +909,7 @@ static void
 _PyStack_UnpackDict_Free(PyObject *const *stack, Py_ssize_t nargs,
                          PyObject *kwnames)
 {
-    Py_ssize_t n = PyTuple_GET_SIZE(kwnames) + nargs;
+    Py_ssize_t n = PyTuple_Size(kwnames) + nargs;
     for (Py_ssize_t i = 0; i < n; i++) {
         Py_DECREF(stack[i]);
     }

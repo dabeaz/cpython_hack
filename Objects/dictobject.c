@@ -2823,8 +2823,8 @@ dict_vectorcall(PyObject *type, PyObject * const*args,
         args++;
     }
     if (kwnames != NULL) {
-        for (Py_ssize_t i = 0; i < PyTuple_GET_SIZE(kwnames); i++) {
-            if (PyDict_SetItem(self, PyTuple_GET_ITEM(kwnames, i), args[i]) < 0) {
+        for (Py_ssize_t i = 0; i < PyTuple_Size(kwnames); i++) {
+            if (PyDict_SetItem(self, PyTuple_GetItem(kwnames, i), args[i]) < 0) {
                 Py_DECREF(self);
                 return NULL;
             }
@@ -3249,8 +3249,8 @@ dictiter_iternextitem(dictiterobject *di)
     Py_INCREF(value);
     result = di->di_result;
     if (Py_REFCNT(result) == 1) {
-        PyObject *oldkey = PyTuple_GET_ITEM(result, 0);
-        PyObject *oldvalue = PyTuple_GET_ITEM(result, 1);
+        PyObject *oldkey = PyTuple_GetItem(result, 0);
+        PyObject *oldvalue = PyTuple_GetItem(result, 1);
         PyTuple_SET_ITEM(result, 0, key);  /* steals reference */
         PyTuple_SET_ITEM(result, 1, value);  /* steals reference */
         Py_INCREF(result);
@@ -3357,8 +3357,8 @@ dictreviter_iternext(dictiterobject *di)
         Py_INCREF(value);
         result = di->di_result;
         if (Py_REFCNT(result) == 1) {
-            PyObject *oldkey = PyTuple_GET_ITEM(result, 0);
-            PyObject *oldvalue = PyTuple_GET_ITEM(result, 1);
+            PyObject *oldkey = PyTuple_GetItem(result, 0);
+            PyObject *oldvalue = PyTuple_GetItem(result, 1);
             PyTuple_SET_ITEM(result, 0, key);  /* steals reference */
             PyTuple_SET_ITEM(result, 1, value);  /* steals reference */
             Py_INCREF(result);
@@ -4044,10 +4044,10 @@ dictitems_contains(_PyDictViewObject *dv, PyObject *obj)
     PyObject *key, *value, *found;
     if (dv->dv_dict == NULL)
         return 0;
-    if (!PyTuple_Check(obj) || PyTuple_GET_SIZE(obj) != 2)
+    if (!PyTuple_Check(obj) || PyTuple_Size(obj) != 2)
         return 0;
-    key = PyTuple_GET_ITEM(obj, 0);
-    value = PyTuple_GET_ITEM(obj, 1);
+    key = PyTuple_GetItem(obj, 0);
+    value = PyTuple_GetItem(obj, 1);
     found = PyDict_GetItemWithError((PyObject *)dv->dv_dict, key);
     if (found == NULL) {
         if (PyErr_Occurred())

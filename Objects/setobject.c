@@ -872,8 +872,8 @@ set_update(PySetObject *so, PyObject *args)
 {
     Py_ssize_t i;
 
-    for (i=0 ; i<PyTuple_GET_SIZE(args) ; i++) {
-        PyObject *other = PyTuple_GET_ITEM(args, i);
+    for (i=0 ; i<PyTuple_Size(args) ; i++) {
+        PyObject *other = PyTuple_GetItem(args, i);
         if (set_update_internal(so, other))
             return NULL;
     }
@@ -1084,8 +1084,8 @@ set_union(PySetObject *so, PyObject *args)
     if (result == NULL)
         return NULL;
 
-    for (i=0 ; i<PyTuple_GET_SIZE(args) ; i++) {
-        other = PyTuple_GET_ITEM(args, i);
+    for (i=0 ; i<PyTuple_Size(args) ; i++) {
+        other = PyTuple_GetItem(args, i);
         if ((PyObject *)so == other)
             continue;
         if (set_update_internal(result, other)) {
@@ -1202,12 +1202,12 @@ set_intersection_multi(PySetObject *so, PyObject *args)
     Py_ssize_t i;
     PyObject *result = (PyObject *)so;
 
-    if (PyTuple_GET_SIZE(args) == 0)
+    if (PyTuple_Size(args) == 0)
         return set_copy(so, NULL);
 
     Py_INCREF(so);
-    for (i=0 ; i<PyTuple_GET_SIZE(args) ; i++) {
-        PyObject *other = PyTuple_GET_ITEM(args, i);
+    for (i=0 ; i<PyTuple_Size(args) ; i++) {
+        PyObject *other = PyTuple_GetItem(args, i);
         PyObject *newresult = set_intersection((PySetObject *)result, other);
         if (newresult == NULL) {
             Py_DECREF(result);
@@ -1370,8 +1370,8 @@ set_difference_update(PySetObject *so, PyObject *args)
 {
     Py_ssize_t i;
 
-    for (i=0 ; i<PyTuple_GET_SIZE(args) ; i++) {
-        PyObject *other = PyTuple_GET_ITEM(args, i);
+    for (i=0 ; i<PyTuple_Size(args) ; i++) {
+        PyObject *other = PyTuple_GetItem(args, i);
         if (set_difference_update_internal(so, other))
             return NULL;
     }
@@ -1446,16 +1446,16 @@ set_difference_multi(PySetObject *so, PyObject *args)
     Py_ssize_t i;
     PyObject *result, *other;
 
-    if (PyTuple_GET_SIZE(args) == 0)
+    if (PyTuple_Size(args) == 0)
         return set_copy(so, NULL);
 
-    other = PyTuple_GET_ITEM(args, 0);
+    other = PyTuple_GetItem(args, 0);
     result = set_difference(so, other);
     if (result == NULL)
         return NULL;
 
-    for (i=1 ; i<PyTuple_GET_SIZE(args) ; i++) {
-        other = PyTuple_GET_ITEM(args, i);
+    for (i=1 ; i<PyTuple_Size(args) ; i++) {
+        other = PyTuple_GetItem(args, i);
         if (set_difference_update_internal((PySetObject *)result, other)) {
             Py_DECREF(result);
             return NULL;

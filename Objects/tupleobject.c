@@ -6,6 +6,9 @@
 #include "pycore_accu.h"
 #include "pycore_object.h"
 
+#define PyTuple_GET_SIZE(op)    Py_SIZE(_PyTuple_CAST(op))
+#define PyTuple_GET_ITEM(op, i) (_PyTuple_CAST(op)->ob_item[i])
+
 /*[clinic input]
 class tuple "PyTupleObject *" "&PyTuple_Type"
 [clinic start generated code]*/

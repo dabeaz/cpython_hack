@@ -978,7 +978,7 @@ _io_FileIO___init__(PyObject *self, PyObject *args, PyObject *kwargs)
     static _PyArg_Parser _parser = {NULL, _keywords, "FileIO", 0};
     PyObject *argsbuf[4];
     PyObject * const *fastargs;
-    Py_ssize_t nargs = PyTuple_GET_SIZE(args);
+    Py_ssize_t nargs = PyTuple_Size(args);
     Py_ssize_t noptargs = nargs + (kwargs ? PyDict_GET_SIZE(kwargs) : 0) - 1;
     PyObject *nameobj;
     const char *mode = "r";

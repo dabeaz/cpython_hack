@@ -823,7 +823,7 @@ ast_type_init(PyObject *self, PyObject *args, PyObject *kw)
     }
 
     res = 0; /* if no error occurs, this stays 0 to the end */
-    if (numfields < PyTuple_GET_SIZE(args)) {
+    if (numfields < PyTuple_Size(args)) {
         PyErr_Format(PyExc_TypeError, "%.400s constructor takes at most "
                      "%zd positional argument%s",
                      _PyType_Name(Py_TYPE(self)),
@@ -831,14 +831,14 @@ ast_type_init(PyObject *self, PyObject *args, PyObject *kw)
         res = -1;
         goto cleanup;
     }
-    for (i = 0; i < PyTuple_GET_SIZE(args); i++) {
+    for (i = 0; i < PyTuple_Size(args); i++) {
         /* cannot be reached when fields is NULL */
         PyObject *name = PySequence_GetItem(fields, i);
         if (!name) {
             res = -1;
             goto cleanup;
         }
-        res = PyObject_SetAttr(self, name, PyTuple_GET_ITEM(args, i));
+        res = PyObject_SetAttr(self, name, PyTuple_GetItem(args, i));
         Py_DECREF(name);
         if (res < 0) {
             goto cleanup;
@@ -857,7 +857,7 @@ ast_type_init(PyObject *self, PyObject *args, PyObject *kw)
                     res = -1;
                     goto cleanup;
                 }
-                if (p < PyTuple_GET_SIZE(args)) {
+                if (p < PyTuple_Size(args)) {
                     PyErr_Format(PyExc_TypeError,
                         "%.400s got multiple values for argument '%U'",
                         Py_TYPE(self)->tp_name, key);

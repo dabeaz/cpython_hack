@@ -564,12 +564,12 @@ PyAPI_FUNC(PyObject *) PySequence_Fast(PyObject *o, const char* m);
 /* Return the size of the sequence 'o', assuming that 'o' was returned by
    PySequence_Fast and is not NULL. */
 #define PySequence_Fast_GET_SIZE(o) \
-    (PyList_Check(o) ? PyList_Size(o) : PyTuple_GET_SIZE(o))
+    (PyList_Check(o) ? PyList_Size(o) : PyTuple_Size(o))
 
 /* Return the 'i'-th element of the sequence 'o', assuming that o was returned
    by PySequence_Fast, and that i is within bounds. */
 #define PySequence_Fast_GET_ITEM(o, i)\
-     (PyList_Check(o) ? PyList_GetItem(o, i) : PyTuple_GET_ITEM(o, i))
+     (PyList_Check(o) ? PyList_GetItem(o, i) : PyTuple_GetItem(o, i))
 
 /* Return a pointer to the underlying item array for
    an object returned by PySequence_Fast */

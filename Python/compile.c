@@ -1154,9 +1154,9 @@ merge_consts_recursive(struct compiler *c, PyObject *o)
     // When o is a tuple or frozenset, we want to merge its
     // items too.
     if (PyTuple_CheckExact(o)) {
-        Py_ssize_t len = PyTuple_GET_SIZE(o);
+        Py_ssize_t len = PyTuple_Size(o);
         for (Py_ssize_t i = 0; i < len; i++) {
-            PyObject *item = PyTuple_GET_ITEM(o, i);
+            PyObject *item = PyTuple_GetItem(o, i);
             PyObject *u = merge_consts_recursive(c, item);
             if (u == NULL) {
                 Py_DECREF(key);
@@ -1166,7 +1166,7 @@ merge_consts_recursive(struct compiler *c, PyObject *o)
             // See _PyCode_ConstantKey()
             PyObject *v;  // borrowed
             if (PyTuple_CheckExact(u)) {
-                v = PyTuple_GET_ITEM(u, 1);
+                v = PyTuple_GetItem(u, 1);
             }
             else {
                 v = u;
@@ -1185,7 +1185,7 @@ merge_consts_recursive(struct compiler *c, PyObject *o)
         // constant keys.
         // See _PyCode_ConstantKey() for detail.
         assert(PyTuple_CheckExact(key));
-        assert(PyTuple_GET_SIZE(key) == 2);
+        assert(PyTuple_Size(key) == 2);
 
         Py_ssize_t len = PySet_GET_SIZE(o);
         if (len == 0) {  // empty frozenset should not be re-created.
@@ -1208,7 +1208,7 @@ merge_consts_recursive(struct compiler *c, PyObject *o)
             }
             PyObject *u;
             if (PyTuple_CheckExact(k)) {
-                u = PyTuple_GET_ITEM(k, 1);
+                u = PyTuple_GetItem(k, 1);
                 Py_INCREF(u);
                 Py_DECREF(k);
             }
@@ -1227,7 +1227,7 @@ merge_consts_recursive(struct compiler *c, PyObject *o)
             Py_DECREF(key);
             return NULL;
         }
-        assert(PyTuple_GET_ITEM(key, 1) == o);
+        assert(PyTuple_GetItem(key, 1) == o);
         Py_DECREF(o);
         PyTuple_SET_ITEM(key, 1, new);
     }
@@ -1783,7 +1783,7 @@ compiler_make_closure(struct compiler *c, PyCodeObject *co, Py_ssize_t flags, Py
             /* Bypass com_addop_varname because it will generate
                LOAD_DEREF but LOAD_CLOSURE is needed.
             */
-            PyObject *name = PyTuple_GET_ITEM(co->co_freevars, i);
+            PyObject *name = PyTuple_GetItem(co->co_freevars, i);
             int arg, reftype;
 
             /* Special case: If a class contains a method with a
@@ -5134,7 +5134,7 @@ consts_dict_keys_inorder(PyObject *dict)
          * (see compiler_add_o and _PyCode_ConstantKey). In that case
          * the object we want is always second. */
         if (PyTuple_CheckExact(k)) {
-            k = PyTuple_GET_ITEM(k, 1);
+            k = PyTuple_GetItem(k, 1);
         }
         Py_INCREF(k);
         assert(i < size);
@@ -5197,7 +5197,7 @@ merge_const_tuple(struct compiler *c, PyObject **tuple)
         return 1;
     }
 
-    PyObject *u = PyTuple_GET_ITEM(t, 1);
+    PyObject *u = PyTuple_GetItem(t, 1);
     Py_INCREF(u);
     Py_DECREF(*tuple);
     *tuple = u;
@@ -5229,7 +5229,7 @@ makecode(struct compiler *c, struct assembler *a)
     cellvars = dict_keys_inorder(c->u->u_cellvars, 0);
     if (!cellvars)
         goto error;
-    freevars = dict_keys_inorder(c->u->u_freevars, PyTuple_GET_SIZE(cellvars));
+    freevars = dict_keys_inorder(c->u->u_freevars, PyTuple_Size(cellvars));
     if (!freevars)
         goto error;
 

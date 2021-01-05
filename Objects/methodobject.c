@@ -372,7 +372,7 @@ cfunction_check_kwargs(PyThreadState *tstate, PyObject *func, PyObject *kwnames)
 {
     assert(!_PyErr_Occurred(tstate));
     assert(PyCFunction_Check(func));
-    if (kwnames && PyTuple_GET_SIZE(kwnames)) {
+    if (kwnames && PyTuple_Size(kwnames)) {
         PyObject *funcstr = _PyObject_FunctionStr(func);
         if (funcstr != NULL) {
             _PyErr_Format(tstate, PyExc_TypeError,

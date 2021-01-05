@@ -231,13 +231,13 @@ float_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
         !_PyArg_NoKeywords("float", kwargs)) {
         goto exit;
     }
-    if (!_PyArg_CheckPositional("float", PyTuple_GET_SIZE(args), 0, 1)) {
+    if (!_PyArg_CheckPositional("float", PyTuple_Size(args), 0, 1)) {
         goto exit;
     }
-    if (PyTuple_GET_SIZE(args) < 1) {
+    if (PyTuple_Size(args) < 1) {
         goto skip_optional;
     }
-    x = PyTuple_GET_ITEM(args, 0);
+    x = PyTuple_GetItem(args, 0);
 skip_optional:
     return_value = float_new_impl(type, x);
 

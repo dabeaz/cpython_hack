@@ -55,7 +55,7 @@ method_vectorcall(PyObject *method, PyObject *const *args,
         newargs[0] = tmp;
     }
     else {
-        Py_ssize_t nkwargs = (kwnames == NULL) ? 0 : PyTuple_GET_SIZE(kwnames);
+        Py_ssize_t nkwargs = (kwnames == NULL) ? 0 : PyTuple_Size(kwnames);
         Py_ssize_t totalargs = nargs + nkwargs;
         if (totalargs == 0) {
             return _PyObject_VectorcallTstate(tstate, func, &self, 1, NULL);

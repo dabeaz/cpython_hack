@@ -364,7 +364,7 @@ _io_open(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *kw
     static const char * const _keywords[] = {"file", "mode", NULL };
     static _PyArg_Parser _parser = {NULL, _keywords, "open", 0};
     PyObject *argsbuf[2];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 1;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 1;
     PyObject *file;
     const char *mode = "r";
 

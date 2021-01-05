@@ -145,7 +145,7 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
 
 /* Tuple access macros */
 
-#define GETITEM(v, i) PyTuple_GET_ITEM((PyTupleObject *)(v), (i))
+#define GETITEM(v, i) PyTuple_GetItem((PyTupleObject *)(v), (i))
 
 /* Code access macros */
 
@@ -1002,10 +1002,10 @@ main_loop:
             PyObject *name, *value, *locals = f->f_locals;
             Py_ssize_t idx;
             assert(locals);
-            assert(oparg >= PyTuple_GET_SIZE(co->co_cellvars));
-            idx = oparg - PyTuple_GET_SIZE(co->co_cellvars);
-            assert(idx >= 0 && idx < PyTuple_GET_SIZE(co->co_freevars));
-            name = PyTuple_GET_ITEM(co->co_freevars, idx);
+            assert(oparg >= PyTuple_Size(co->co_cellvars));
+            idx = oparg - PyTuple_Size(co->co_cellvars);
+            assert(idx >= 0 && idx < PyTuple_Size(co->co_freevars));
+            name = PyTuple_GetItem(co->co_freevars, idx);
 	      {
                 value = PyObject_GetItem(locals, name);
                 if (value == NULL) {
@@ -1184,7 +1184,7 @@ main_loop:
             PyObject *map;
             PyObject *keys = TOP();
             if (!PyTuple_CheckExact(keys) ||
-                PyTuple_GET_SIZE(keys) != (Py_ssize_t)oparg) {
+                PyTuple_Size(keys) != (Py_ssize_t)oparg) {
                 _PyErr_SetString(tstate, PyExc_SystemError,
                                  "bad BUILD_CONST_KEY_MAP keys argument");
                 goto error;
@@ -1195,7 +1195,7 @@ main_loop:
             }
             for (i = oparg; i > 0; i--) {
                 int err;
-                PyObject *key = PyTuple_GET_ITEM(keys, oparg - i);
+                PyObject *key = PyTuple_GetItem(keys, oparg - i);
                 PyObject *value = PEEK(i + 1);
                 err = PyDict_SetItem(map, key, value);
                 if (err != 0) {
@@ -1316,9 +1316,9 @@ main_loop:
             PyObject *left = POP();
             if (PyTuple_Check(right)) {
                 Py_ssize_t i, length;
-                length = PyTuple_GET_SIZE(right);
+                length = PyTuple_Size(right);
                 for (i = 0; i < length; i++) {
-                    PyObject *exc = PyTuple_GET_ITEM(right, i);
+                    PyObject *exc = PyTuple_GetItem(right, i);
                     if (!PyExceptionClass_Check(exc)) {
                         _PyErr_SetString(tstate, PyExc_TypeError,
                                         CANNOT_CATCH_MSG);
@@ -1720,7 +1720,7 @@ main_loop:
 
             names = POP();
             assert(PyTuple_Check(names));
-            assert(PyTuple_GET_SIZE(names) <= oparg);
+            assert(PyTuple_Size(names) <= oparg);
             /* We assume without checking that names contains only strings */
             sp = stack_pointer;
             res = call_function(tstate, &sp, oparg, names);
@@ -2085,7 +2085,7 @@ missing_arguments(PyThreadState *tstate, PyCodeObject *co,
     }
     for (i = start; i < end; i++) {
         if (GETLOCAL(i) == NULL) {
-            PyObject *raw = PyTuple_GET_ITEM(co->co_varnames, i);
+            PyObject *raw = PyTuple_GetItem(co->co_varnames, i);
             PyObject *name = PyObject_Repr(raw);
             if (name == NULL) {
                 Py_DECREF(missing_names);
@@ -2165,7 +2165,7 @@ positional_only_passed_as_keyword(PyThreadState *tstate, PyCodeObject *co,
     PyObject* posonly_names = PyList_New(0);
 
     for(int k=0; k < co->co_posonlyargcount; k++){
-        PyObject* posonly_name = PyTuple_GET_ITEM(co->co_varnames, k);
+        PyObject* posonly_name = PyTuple_GetItem(co->co_varnames, k);
 
         for (int k2=0; k2<kwcount; k2++){
             /* Compare the pointers first and fallback to PyObject_RichCompareBool*/
@@ -2415,7 +2415,7 @@ _PyEval_EvalCode(PyThreadState *tstate,
         for (i = co->co_argcount; i < total_args; i++) {
             if (GETLOCAL(i) != NULL)
                 continue;
-            PyObject *varname = PyTuple_GET_ITEM(co->co_varnames, i);
+            PyObject *varname = PyTuple_GetItem(co->co_varnames, i);
             if (kwdefs != NULL) {
                 PyObject *def = PyDict_GetItemWithError(kwdefs, varname);
                 if (def) {
@@ -2438,7 +2438,7 @@ _PyEval_EvalCode(PyThreadState *tstate,
 
     /* Allocate and initialize storage for cell vars, and copy free
        vars into frame. */
-    for (i = 0; i < PyTuple_GET_SIZE(co->co_cellvars); ++i) {
+    for (i = 0; i < PyTuple_Size(co->co_cellvars); ++i) {
         PyObject *c;
         Py_ssize_t arg;
         /* Possibly account for the cell variable being an argument. */
@@ -2457,10 +2457,10 @@ _PyEval_EvalCode(PyThreadState *tstate,
     }
 
     /* Copy closure variables to free variables */
-    for (i = 0; i < PyTuple_GET_SIZE(co->co_freevars); ++i) {
-        PyObject *o = PyTuple_GET_ITEM(closure, i);
+    for (i = 0; i < PyTuple_Size(co->co_freevars); ++i) {
+        PyObject *o = PyTuple_GetItem(closure, i);
         Py_INCREF(o);
-        freevars[PyTuple_GET_SIZE(co->co_cellvars) + i] = o;
+        freevars[PyTuple_Size(co->co_cellvars) + i] = o;
     }
 
     /* Handle generator/coroutine/asynchronous generator */
@@ -2864,7 +2864,7 @@ call_function(PyThreadState *tstate, PyObject ***pp_stack, Py_ssize_t oparg, PyO
     PyObject **pfunc = (*pp_stack) - oparg - 1;
     PyObject *func = *pfunc;
     PyObject *x, *w;
-    Py_ssize_t nkwargs = (kwnames == NULL) ? 0 : PyTuple_GET_SIZE(kwnames);
+    Py_ssize_t nkwargs = (kwnames == NULL) ? 0 : PyTuple_Size(kwnames);
     Py_ssize_t nargs = oparg - nkwargs;
     PyObject **stack = (*pp_stack) - nargs - nkwargs;
     x = PyObject_Vectorcall(func, stack, nargs | PY_VECTORCALL_ARGUMENTS_OFFSET, kwnames);
@@ -3146,11 +3146,11 @@ format_kwargs_error(PyThreadState *tstate, PyObject *func, PyObject *kwargs)
     else if (_PyErr_ExceptionMatches(tstate, PyExc_KeyError)) {
         PyObject *exc, *val, *tb;
         _PyErr_Fetch(tstate, &exc, &val, &tb);
-        if (val && PyTuple_Check(val) && PyTuple_GET_SIZE(val) == 1) {
+        if (val && PyTuple_Check(val) && PyTuple_Size(val) == 1) {
             _PyErr_Clear(tstate);
             PyObject *funcstr = _PyObject_FunctionStr(func);
             if (funcstr != NULL) {
-                PyObject *key = PyTuple_GET_ITEM(val, 0);
+                PyObject *key = PyTuple_GetItem(val, 0);
                 _PyErr_Format(
                     tstate, PyExc_TypeError,
                     "%U got multiple values for keyword argument '%S'",
@@ -3190,16 +3190,16 @@ format_exc_unbound(PyThreadState *tstate, PyCodeObject *co, int oparg)
     /* Don't stomp existing exception */
     if (_PyErr_Occurred(tstate))
         return;
-    if (oparg < PyTuple_GET_SIZE(co->co_cellvars)) {
-        name = PyTuple_GET_ITEM(co->co_cellvars,
+    if (oparg < PyTuple_Size(co->co_cellvars)) {
+        name = PyTuple_GetItem(co->co_cellvars,
                                 oparg);
         format_exc_check_arg(tstate,
             PyExc_UnboundLocalError,
             UNBOUNDLOCAL_ERROR_MSG,
             name);
     } else {
-        name = PyTuple_GET_ITEM(co->co_freevars, oparg -
-                                PyTuple_GET_SIZE(co->co_cellvars));
+        name = PyTuple_GetItem(co->co_freevars, oparg -
+                                PyTuple_Size(co->co_cellvars));
         format_exc_check_arg(tstate, PyExc_NameError,
                              UNBOUNDFREE_ERROR_MSG, name);
     }

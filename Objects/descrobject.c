@@ -260,7 +260,7 @@ method_check_args(PyObject *func, PyObject *const *args, Py_ssize_t nargs, PyObj
     if (descr_check((PyDescrObject *)func, self, &dummy)) {
         return -1;
     }
-    if (kwnames && PyTuple_GET_SIZE(kwnames)) {
+    if (kwnames && PyTuple_Size(kwnames)) {
         PyObject *funcstr = _PyObject_FunctionStr(func);
         if (funcstr != NULL) {
             PyErr_Format(PyExc_TypeError,
@@ -320,7 +320,7 @@ method_vectorcall_VARARGS_KEYWORDS(
     PyObject *result = NULL;
     /* Create a temporary dict for keyword arguments */
     PyObject *kwdict = NULL;
-    if (kwnames != NULL && PyTuple_GET_SIZE(kwnames) > 0) {
+    if (kwnames != NULL && PyTuple_Size(kwnames) > 0) {
         kwdict = _PyStack_AsDict(args + nargs, kwnames);
         if (kwdict == NULL) {
             goto exit;
@@ -459,7 +459,7 @@ static PyObject *
 classmethoddescr_call(PyMethodDescrObject *descr, PyObject *args,
                       PyObject *kwds)
 {
-    Py_ssize_t argc = PyTuple_GET_SIZE(args);
+    Py_ssize_t argc = PyTuple_Size(args);
     if (argc < 1) {
         PyErr_Format(PyExc_TypeError,
                      "descriptor '%V' of '%.100s' "
@@ -468,7 +468,7 @@ classmethoddescr_call(PyMethodDescrObject *descr, PyObject *args,
                      PyDescr_TYPE(descr)->tp_name);
         return NULL;
     }
-    PyObject *self = PyTuple_GET_ITEM(args, 0);
+    PyObject *self = PyTuple_GetItem(args, 0);
     PyObject *bound = classmethod_get(descr, NULL, self);
     if (bound == NULL) {
         return NULL;
@@ -507,7 +507,7 @@ wrapperdescr_call(PyWrapperDescrObject *descr, PyObject *args, PyObject *kwds)
 
     /* Make sure that the first argument is acceptable as 'self' */
     assert(PyTuple_Check(args));
-    argc = PyTuple_GET_SIZE(args);
+    argc = PyTuple_Size(args);
     if (argc < 1) {
         PyErr_Format(PyExc_TypeError,
                      "descriptor '%V' of '%.100s' "
@@ -516,7 +516,7 @@ wrapperdescr_call(PyWrapperDescrObject *descr, PyObject *args, PyObject *kwds)
                      PyDescr_TYPE(descr)->tp_name);
         return NULL;
     }
-    self = PyTuple_GET_ITEM(args, 0);
+    self = PyTuple_GetItem(args, 0);
     if (!_PyObject_RealIsSubclass((PyObject *)Py_TYPE(self),
                                   (PyObject *)PyDescr_TYPE(descr))) {
         PyErr_Format(PyExc_TypeError,
@@ -1684,7 +1684,7 @@ mappingproxy_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     static _PyArg_Parser _parser = {NULL, _keywords, "mappingproxy", 0};
     PyObject *argsbuf[1];
     PyObject * const *fastargs;
-    Py_ssize_t nargs = PyTuple_GET_SIZE(args);
+    Py_ssize_t nargs = PyTuple_Size(args);
     PyObject *mapping;
 
     fastargs = _PyArg_UnpackKeywords(_PyTuple_CAST(args)->ob_item, nargs, kwargs, NULL, &_parser, 1, 1, 0, argsbuf);
@@ -1747,7 +1747,7 @@ property_init(PyObject *self, PyObject *args, PyObject *kwargs)
     static _PyArg_Parser _parser = {NULL, _keywords, "property", 0};
     PyObject *argsbuf[4];
     PyObject * const *fastargs;
-    Py_ssize_t nargs = PyTuple_GET_SIZE(args);
+    Py_ssize_t nargs = PyTuple_Size(args);
     Py_ssize_t noptargs = nargs + (kwargs ? PyDict_GET_SIZE(kwargs) : 0) - 0;
     PyObject *fget = NULL;
     PyObject *fset = NULL;

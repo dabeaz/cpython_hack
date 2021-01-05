@@ -716,11 +716,11 @@ append_ast_constant(_PyUnicodeWriter *writer, PyObject *constant)
     if (PyTuple_CheckExact(constant)) {
         Py_ssize_t i, elem_count;
 
-        elem_count = PyTuple_GET_SIZE(constant);
+        elem_count = PyTuple_Size(constant);
         APPEND_STR("(");
         for (i = 0; i < elem_count; i++) {
             APPEND_STR_IF(i > 0, ", ");
-            if (append_ast_constant(writer, PyTuple_GET_ITEM(constant, i)) < 0) {
+            if (append_ast_constant(writer, PyTuple_GetItem(constant, i)) < 0) {
                 return -1;
             }
         }

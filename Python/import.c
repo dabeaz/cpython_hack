@@ -273,7 +273,7 @@ _PyImport_Cleanup(PyThreadState *tstate)
            importing order.  First clear modules imported later. */
         for (i = PyList_Size(weaklist) - 1; i >= 0; i--) {
             PyObject *tup = PyList_GetItem(weaklist, i);
-            PyObject *mod = PyWeakref_GET_OBJECT(PyTuple_GET_ITEM(tup, 1));
+            PyObject *mod = PyWeakref_GET_OBJECT(PyTuple_GetItem(tup, 1));
             if (mod == Py_None)
                 continue;
             assert(PyModule_Check(mod));

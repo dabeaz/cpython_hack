@@ -32,7 +32,7 @@ enum_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     static _PyArg_Parser _parser = {NULL, _keywords, "enumerate", 0};
     PyObject *argsbuf[2];
     PyObject * const *fastargs;
-    Py_ssize_t nargs = PyTuple_GET_SIZE(args);
+    Py_ssize_t nargs = PyTuple_Size(args);
     Py_ssize_t noptargs = nargs + (kwargs ? PyDict_GET_SIZE(kwargs) : 0) - 1;
     PyObject *iterable;
     PyObject *start = 0;
@@ -72,10 +72,10 @@ reversed_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
         !_PyArg_NoKeywords("reversed", kwargs)) {
         goto exit;
     }
-    if (!_PyArg_CheckPositional("reversed", PyTuple_GET_SIZE(args), 1, 1)) {
+    if (!_PyArg_CheckPositional("reversed", PyTuple_Size(args), 1, 1)) {
         goto exit;
     }
-    seq = PyTuple_GET_ITEM(args, 0);
+    seq = PyTuple_GetItem(args, 0);
     return_value = reversed_new_impl(type, seq);
 
 exit:
@@ -194,8 +194,8 @@ enum_next_long(enumobject *en, PyObject* next_item)
 
     if (Py_REFCNT(result) == 1) {
         Py_INCREF(result);
-        old_index = PyTuple_GET_ITEM(result, 0);
-        old_item = PyTuple_GET_ITEM(result, 1);
+        old_index = PyTuple_GetItem(result, 0);
+        old_item = PyTuple_GetItem(result, 1);
         PyTuple_SET_ITEM(result, 0, next_index);
         PyTuple_SET_ITEM(result, 1, next_item);
         Py_DECREF(old_index);
@@ -239,8 +239,8 @@ enum_next(enumobject *en)
 
     if (Py_REFCNT(result) == 1) {
         Py_INCREF(result);
-        old_index = PyTuple_GET_ITEM(result, 0);
-        old_item = PyTuple_GET_ITEM(result, 1);
+        old_index = PyTuple_GetItem(result, 0);
+        old_item = PyTuple_GetItem(result, 1);
         PyTuple_SET_ITEM(result, 0, next_index);
         PyTuple_SET_ITEM(result, 1, next_item);
         Py_DECREF(old_index);

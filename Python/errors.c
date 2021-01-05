@@ -231,7 +231,7 @@ PyErr_GivenExceptionMatches(PyObject *err, PyObject *exc)
         for (i = 0; i < n; i++) {
             /* Test recursively */
              if (PyErr_GivenExceptionMatches(
-                 err, PyTuple_GET_ITEM(exc, i)))
+                 err, PyTuple_GetItem(exc, i)))
              {
                  return 1;
              }

@@ -574,9 +574,9 @@ type_mro_modified(PyTypeObject *type, PyObject *bases) {
         Py_XDECREF(mro_meth);
         Py_XDECREF(type_mro_meth);
     }
-    n = PyTuple_GET_SIZE(bases);
+    n = PyTuple_Size(bases);
     for (i = 0; i < n; i++) {
-        PyObject *b = PyTuple_GET_ITEM(bases, i);
+        PyObject *b = PyTuple_GetItem(bases, i);
         PyTypeObject *cls;
 
         assert(PyType_Check(b));
@@ -632,9 +632,9 @@ assign_version_tag(PyTypeObject *type)
         return 1;
     }
     bases = type->tp_bases;
-    n = PyTuple_GET_SIZE(bases);
+    n = PyTuple_Size(bases);
     for (i = 0; i < n; i++) {
-        PyObject *b = PyTuple_GET_ITEM(bases, i);
+        PyObject *b = PyTuple_GetItem(bases, i);
         assert(PyType_Check(b));
         if (!assign_version_tag((PyTypeObject *)b))
             return 0;
@@ -908,17 +908,17 @@ type_set_bases(PyTypeObject *type, PyObject *new_bases, void *context)
                  type->tp_name, Py_TYPE(new_bases)->tp_name);
         return -1;
     }
-    if (PyTuple_GET_SIZE(new_bases) == 0) {
+    if (PyTuple_Size(new_bases) == 0) {
         PyErr_Format(PyExc_TypeError,
              "can only assign non-empty tuple to %s.__bases__, not ()",
                  type->tp_name);
         return -1;
     }
-    for (i = 0; i < PyTuple_GET_SIZE(new_bases); i++) {
+    for (i = 0; i < PyTuple_Size(new_bases); i++) {
         PyObject *ob;
         PyTypeObject *base;
 
-        ob = PyTuple_GET_ITEM(new_bases, i);
+        ob = PyTuple_GetItem(new_bases, i);
         if (!PyType_Check(ob)) {
             PyErr_Format(PyExc_TypeError,
                          "%s.__bases__ must be tuple of classes, not '%s'",
@@ -1155,10 +1155,10 @@ type_call(PyTypeObject *type, PyObject *args, PyObject *kwds)
     if (type == &PyType_Type) {
         assert(args != NULL && PyTuple_Check(args));
         assert(kwds == NULL || PyDict_Check(kwds));
-        Py_ssize_t nargs = PyTuple_GET_SIZE(args);
+        Py_ssize_t nargs = PyTuple_Size(args);
 
         if (nargs == 1 && (kwds == NULL || !PyDict_GET_SIZE(kwds))) {
-            obj = (PyObject *) Py_TYPE(PyTuple_GET_ITEM(args, 0));
+            obj = (PyObject *) Py_TYPE(PyTuple_GetItem(args, 0));
             Py_INCREF(obj);
             return obj;
         }
@@ -1315,9 +1315,9 @@ PyType_IsSubtype(PyTypeObject *a, PyTypeObject *b)
            by walking the MRO tuple */
         Py_ssize_t i, n;
         assert(PyTuple_Check(mro));
-        n = PyTuple_GET_SIZE(mro);
+        n = PyTuple_Size(mro);
         for (i = 0; i < n; i++) {
-            if (PyTuple_GET_ITEM(mro, i) == (PyObject *)b)
+            if (PyTuple_GetItem(mro, i) == (PyObject *)b)
                 return 1;
         }
         return 0;
@@ -1496,10 +1496,10 @@ static int
 tail_contains(PyObject *tuple, int whence, PyObject *o)
 {
     Py_ssize_t j, size;
-    size = PyTuple_GET_SIZE(tuple);
+    size = PyTuple_Size(tuple);
 
     for (j = whence+1; j < size; j++) {
-        if (PyTuple_GET_ITEM(tuple, j) == o)
+        if (PyTuple_GetItem(tuple, j) == o)
             return 1;
     }
     return 0;
@@ -1522,11 +1522,11 @@ check_duplicates(PyObject *tuple)
     /* Let's use a quadratic time algorithm,
        assuming that the bases tuples is short.
     */
-    n = PyTuple_GET_SIZE(tuple);
+    n = PyTuple_Size(tuple);
     for (i = 0; i < n; i++) {
-        PyObject *o = PyTuple_GET_ITEM(tuple, i);
+        PyObject *o = PyTuple_GetItem(tuple, i);
         for (j = i + 1; j < n; j++) {
-            if (PyTuple_GET_ITEM(tuple, j) == o) {
+            if (PyTuple_GetItem(tuple, j) == o) {
                 o = class_name(o);
                 if (o != NULL) {
                     if (PyUnicode_Check(o)) {
@@ -1566,8 +1566,8 @@ set_mro_error(PyObject **to_merge, Py_ssize_t to_merge_size, int *remain)
 
     for (i = 0; i < to_merge_size; i++) {
         PyObject *L = to_merge[i];
-        if (remain[i] < PyTuple_GET_SIZE(L)) {
-            PyObject *c = PyTuple_GET_ITEM(L, remain[i]);
+        if (remain[i] < PyTuple_Size(L)) {
+            PyObject *c = PyTuple_GetItem(L, remain[i]);
             if (PyDict_SetItem(set, c, Py_None) < 0) {
                 Py_DECREF(set);
                 return;
@@ -1632,7 +1632,7 @@ pmerge(PyObject *acc, PyObject **to_merge, Py_ssize_t to_merge_size)
 
         PyObject *cur_tuple = to_merge[i];
 
-        if (remain[i] >= PyTuple_GET_SIZE(cur_tuple)) {
+        if (remain[i] >= PyTuple_Size(cur_tuple)) {
             empty_cnt++;
             continue;
         }
@@ -1644,7 +1644,7 @@ pmerge(PyObject *acc, PyObject **to_merge, Py_ssize_t to_merge_size)
            of the earliest direct superclass of the new class.
         */
 
-        candidate = PyTuple_GET_ITEM(cur_tuple, remain[i]);
+        candidate = PyTuple_GetItem(cur_tuple, remain[i]);
         for (j = 0; j < to_merge_size; j++) {
             PyObject *j_lst = to_merge[j];
             if (tail_contains(j_lst, remain[j], candidate))
@@ -1656,8 +1656,8 @@ pmerge(PyObject *acc, PyObject **to_merge, Py_ssize_t to_merge_size)
 
         for (j = 0; j < to_merge_size; j++) {
             PyObject *j_lst = to_merge[j];
-            if (remain[j] < PyTuple_GET_SIZE(j_lst) &&
-                PyTuple_GET_ITEM(j_lst, remain[j]) == candidate) {
+            if (remain[j] < PyTuple_Size(j_lst) &&
+                PyTuple_GetItem(j_lst, remain[j]) == candidate) {
                 remain[j]++;
             }
         }
@@ -1691,9 +1691,9 @@ mro_implementation(PyTypeObject *type)
 
     bases = type->tp_bases;
     assert(PyTuple_Check(bases));
-    n = PyTuple_GET_SIZE(bases);
+    n = PyTuple_Size(bases);
     for (i = 0; i < n; i++) {
-        PyTypeObject *base = (PyTypeObject *)PyTuple_GET_ITEM(bases, i);
+        PyTypeObject *base = (PyTypeObject *)PyTuple_GetItem(bases, i);
         if (base->tp_mro == NULL) {
             PyErr_Format(PyExc_TypeError,
                          "Cannot extend an incomplete type '%.100s'",
@@ -1707,8 +1707,8 @@ mro_implementation(PyTypeObject *type)
         /* Fast path: if there is a single base, constructing the MRO
          * is trivial.
          */
-        PyTypeObject *base = (PyTypeObject *)PyTuple_GET_ITEM(bases, 0);
-        Py_ssize_t k = PyTuple_GET_SIZE(base->tp_mro);
+        PyTypeObject *base = (PyTypeObject *)PyTuple_GetItem(bases, 0);
+        Py_ssize_t k = PyTuple_Size(base->tp_mro);
         result = PyTuple_New(k + 1);
         if (result == NULL) {
             return NULL;
@@ -1716,7 +1716,7 @@ mro_implementation(PyTypeObject *type)
         Py_INCREF(type);
         PyTuple_SET_ITEM(result, 0, (PyObject *) type);
         for (i = 0; i < k; i++) {
-            PyObject *cls = PyTuple_GET_ITEM(base->tp_mro, i);
+            PyObject *cls = PyTuple_GetItem(base->tp_mro, i);
             Py_INCREF(cls);
             PyTuple_SET_ITEM(result, i + 1, cls);
         }
@@ -1744,7 +1744,7 @@ mro_implementation(PyTypeObject *type)
     }
 
     for (i = 0; i < n; i++) {
-        PyTypeObject *base = (PyTypeObject *)PyTuple_GET_ITEM(bases, i);
+        PyTypeObject *base = (PyTypeObject *)PyTuple_GetItem(bases, i);
         to_merge[i] = base->tp_mro;
     }
     to_merge[n] = bases;
@@ -1791,12 +1791,12 @@ mro_check(PyTypeObject *type, PyObject *mro)
 
     solid = solid_base(type);
 
-    n = PyTuple_GET_SIZE(mro);
+    n = PyTuple_Size(mro);
     for (i = 0; i < n; i++) {
         PyTypeObject *base;
         PyObject *tmp;
 
-        tmp = PyTuple_GET_ITEM(mro, i);
+        tmp = PyTuple_GetItem(mro, i);
         if (!PyType_Check(tmp)) {
             PyErr_Format(
                 PyExc_TypeError,
@@ -1940,12 +1940,12 @@ best_base(PyObject *bases)
     PyObject *base_proto;
 
     assert(PyTuple_Check(bases));
-    n = PyTuple_GET_SIZE(bases);
+    n = PyTuple_Size(bases);
     assert(n > 0);
     base = NULL;
     winner = NULL;
     for (i = 0; i < n; i++) {
-        base_proto = PyTuple_GET_ITEM(bases, i);
+        base_proto = PyTuple_GetItem(bases, i);
         if (!PyType_Check(base_proto)) {
             PyErr_SetString(
                 PyExc_TypeError,
@@ -2192,7 +2192,7 @@ type_init(PyObject *cls, PyObject *args, PyObject *kwds)
     assert(args != NULL && PyTuple_Check(args));
     assert(kwds == NULL || PyDict_Check(kwds));
 
-    if (kwds != NULL && PyTuple_Check(args) && PyTuple_GET_SIZE(args) == 1 &&
+    if (kwds != NULL && PyTuple_Check(args) && PyTuple_Size(args) == 1 &&
         PyDict_Check(kwds) && PyDict_GET_SIZE(kwds) != 0) {
         PyErr_SetString(PyExc_TypeError,
                         "type.__init__() takes no keyword arguments");
@@ -2200,7 +2200,7 @@ type_init(PyObject *cls, PyObject *args, PyObject *kwds)
     }
 
     if (args != NULL && PyTuple_Check(args) &&
-        (PyTuple_GET_SIZE(args) != 1 && PyTuple_GET_SIZE(args) != 3)) {
+        (PyTuple_Size(args) != 1 && PyTuple_Size(args) != 3)) {
         PyErr_SetString(PyExc_TypeError,
                         "type.__init__() takes 1 or 3 arguments");
         return -1;
@@ -2237,10 +2237,10 @@ _PyType_CalculateMetaclass(PyTypeObject *metatype, PyObject *bases)
        Note that if some other metatype wins to contract,
        it's possible that its instances are not types. */
 
-    nbases = PyTuple_GET_SIZE(bases);
+    nbases = PyTuple_Size(bases);
     winner = metatype;
     for (i = 0; i < nbases; i++) {
-        tmp = PyTuple_GET_ITEM(bases, i);
+        tmp = PyTuple_GetItem(bases, i);
         tmptype = Py_TYPE(tmp);
         if (PyType_IsSubtype(winner, tmptype))
             continue;
@@ -2281,7 +2281,7 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
         return NULL;
 
     /* Adjust for empty tuple bases */
-    nbases = PyTuple_GET_SIZE(bases);
+    nbases = PyTuple_Size(bases);
     if (nbases == 0) {
         base = &PyBaseObject_Type;
         bases = PyTuple_Pack(1, base);
@@ -2292,7 +2292,7 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
     else {
         _Py_IDENTIFIER(__mro_entries__);
         for (i = 0; i < nbases; i++) {
-            tmp = PyTuple_GET_ITEM(bases, i);
+            tmp = PyTuple_GetItem(bases, i);
             if (PyType_Check(tmp)) {
                 continue;
             }
@@ -2857,9 +2857,9 @@ find_name_in_mro(PyTypeObject *type, PyObject *name, int *error)
        during dict lookup, e.g. when comparing to non-string keys. */
     Py_INCREF(mro);
     assert(PyTuple_Check(mro));
-    n = PyTuple_GET_SIZE(mro);
+    n = PyTuple_Size(mro);
     for (i = 0; i < n; i++) {
-        base = PyTuple_GET_ITEM(mro, i);
+        base = PyTuple_GetItem(mro, i);
         assert(PyType_Check(base));
         dict = ((PyTypeObject *)base)->tp_dict;
         assert(dict && PyDict_Check(dict));
@@ -3457,7 +3457,7 @@ object_new(PyTypeObject *type, PyObject *args, PyObject *kwds);
 static int
 excess_args(PyObject *args, PyObject *kwds)
 {
-    return PyTuple_GET_SIZE(args) ||
+    return PyTuple_Size(args) ||
         (kwds && PyDict_Check(kwds) && PyDict_GET_SIZE(kwds));
 }
 
@@ -4003,16 +4003,16 @@ _PyObject_GetNewArguments(PyObject *obj, PyObject **args, PyObject **kwargs)
             Py_DECREF(newargs);
             return -1;
         }
-        if (PyTuple_GET_SIZE(newargs) != 2) {
+        if (PyTuple_Size(newargs) != 2) {
             PyErr_Format(PyExc_ValueError,
                          "__getnewargs_ex__ should return a tuple of "
-                         "length 2, not %zd", PyTuple_GET_SIZE(newargs));
+                         "length 2, not %zd", PyTuple_Size(newargs));
             Py_DECREF(newargs);
             return -1;
         }
-        *args = PyTuple_GET_ITEM(newargs, 0);
+        *args = PyTuple_GetItem(newargs, 0);
         Py_INCREF(*args);
-        *kwargs = PyTuple_GET_ITEM(newargs, 1);
+        *kwargs = PyTuple_GetItem(newargs, 1);
         Py_INCREF(*kwargs);
         Py_DECREF(newargs);
 
@@ -4153,7 +4153,7 @@ reduce_newobj(PyObject *obj)
             Py_XDECREF(args);
             return NULL;
         }
-        n = args ? PyTuple_GET_SIZE(args) : 0;
+        n = args ? PyTuple_Size(args) : 0;
         newargs = PyTuple_New(n+1);
         if (newargs == NULL) {
             Py_XDECREF(args);
@@ -4164,7 +4164,7 @@ reduce_newobj(PyObject *obj)
         Py_INCREF(cls);
         PyTuple_SET_ITEM(newargs, 0, cls);
         for (i = 0; i < n; i++) {
-            PyObject *v = PyTuple_GET_ITEM(args, i);
+            PyObject *v = PyTuple_GetItem(args, i);
             Py_INCREF(v);
             PyTuple_SET_ITEM(newargs, i+1, v);
         }
@@ -4953,9 +4953,9 @@ PyType_Ready(PyTypeObject *type)
     bases = type->tp_mro;
     assert(bases != NULL);
     assert(PyTuple_Check(bases));
-    n = PyTuple_GET_SIZE(bases);
+    n = PyTuple_Size(bases);
     for (i = 1; i < n; i++) {
-        PyObject *b = PyTuple_GET_ITEM(bases, i);
+        PyObject *b = PyTuple_GetItem(bases, i);
         if (PyType_Check(b))
             inherit_slots(type, (PyTypeObject *)b);
     }
@@ -4963,7 +4963,7 @@ PyType_Ready(PyTypeObject *type)
     /* All bases of statically allocated type should be statically allocated */
     if (!(type->tp_flags & Py_TPFLAGS_HEAPTYPE))
         for (i = 0; i < n; i++) {
-            PyObject *b = PyTuple_GET_ITEM(bases, i);
+            PyObject *b = PyTuple_GetItem(bases, i);
             if (PyType_Check(b) &&
                 (((PyTypeObject *)b)->tp_flags & Py_TPFLAGS_HEAPTYPE)) {
                 PyErr_Format(PyExc_TypeError,
@@ -5033,9 +5033,9 @@ PyType_Ready(PyTypeObject *type)
 
     /* Link into each base class's list of subclasses */
     bases = type->tp_bases;
-    n = PyTuple_GET_SIZE(bases);
+    n = PyTuple_Size(bases);
     for (i = 0; i < n; i++) {
-        PyObject *b = PyTuple_GET_ITEM(bases, i);
+        PyObject *b = PyTuple_GetItem(bases, i);
         if (PyType_Check(b) &&
             add_subclass((PyTypeObject *)b, type) < 0)
             goto error;
@@ -5084,8 +5084,8 @@ add_all_subclasses(PyTypeObject *type, PyObject *bases)
 
     if (bases) {
         Py_ssize_t i;
-        for (i = 0; i < PyTuple_GET_SIZE(bases); i++) {
-            PyObject *base = PyTuple_GET_ITEM(bases, i);
+        for (i = 0; i < PyTuple_Size(bases); i++) {
+            PyObject *base = PyTuple_GetItem(bases, i);
             if (PyType_Check(base) &&
                 add_subclass((PyTypeObject*)base, type) < 0)
                 res = -1;
@@ -5120,8 +5120,8 @@ remove_all_subclasses(PyTypeObject *type, PyObject *bases)
 {
     if (bases) {
         Py_ssize_t i;
-        for (i = 0; i < PyTuple_GET_SIZE(bases); i++) {
-            PyObject *base = PyTuple_GET_ITEM(bases, i);
+        for (i = 0; i < PyTuple_Size(bases); i++) {
+            PyObject *base = PyTuple_GetItem(bases, i);
             if (PyType_Check(base))
                 remove_subclass((PyTypeObject*) base, type);
         }
@@ -5136,11 +5136,11 @@ check_num_args(PyObject *ob, int n)
             "PyArg_UnpackTuple() argument list is not a tuple");
         return 0;
     }
-    if (n == PyTuple_GET_SIZE(ob))
+    if (n == PyTuple_Size(ob))
         return 1;
     PyErr_Format(
         PyExc_TypeError,
-        "expected %d argument%s, got %zd", n, n == 1 ? "" : "s", PyTuple_GET_SIZE(ob));
+        "expected %d argument%s, got %zd", n, n == 1 ? "" : "s", PyTuple_Size(ob));
     return 0;
 }
 
@@ -5188,7 +5188,7 @@ wrap_binaryfunc(PyObject *self, PyObject *args, void *wrapped)
 
     if (!check_num_args(args, 1))
         return NULL;
-    other = PyTuple_GET_ITEM(args, 0);
+    other = PyTuple_GetItem(args, 0);
     return (*func)(self, other);
 }
 
@@ -5200,7 +5200,7 @@ wrap_binaryfunc_l(PyObject *self, PyObject *args, void *wrapped)
 
     if (!check_num_args(args, 1))
         return NULL;
-    other = PyTuple_GET_ITEM(args, 0);
+    other = PyTuple_GetItem(args, 0);
     return (*func)(self, other);
 }
 
@@ -5212,7 +5212,7 @@ wrap_binaryfunc_r(PyObject *self, PyObject *args, void *wrapped)
 
     if (!check_num_args(args, 1))
         return NULL;
-    other = PyTuple_GET_ITEM(args, 0);
+    other = PyTuple_GetItem(args, 0);
     return (*func)(other, self);
 }
 
@@ -5298,8 +5298,8 @@ wrap_sq_item(PyObject *self, PyObject *args, void *wrapped)
     PyObject *arg;
     Py_ssize_t i;
 
-    if (PyTuple_GET_SIZE(args) == 1) {
-        arg = PyTuple_GET_ITEM(args, 0);
+    if (PyTuple_Size(args) == 1) {
+        arg = PyTuple_GetItem(args, 0);
         i = getindex(self, arg);
         if (i == -1 && PyErr_Occurred())
             return NULL;
@@ -5339,7 +5339,7 @@ wrap_sq_delitem(PyObject *self, PyObject *args, void *wrapped)
 
     if (!check_num_args(args, 1))
         return NULL;
-    arg = PyTuple_GET_ITEM(args, 0);
+    arg = PyTuple_GetItem(args, 0);
     i = getindex(self, arg);
     if (i == -1 && PyErr_Occurred())
         return NULL;
@@ -5359,7 +5359,7 @@ wrap_objobjproc(PyObject *self, PyObject *args, void *wrapped)
 
     if (!check_num_args(args, 1))
         return NULL;
-    value = PyTuple_GET_ITEM(args, 0);
+    value = PyTuple_GetItem(args, 0);
     res = (*func)(self, value);
     if (res == -1 && PyErr_Occurred())
         return NULL;
@@ -5391,7 +5391,7 @@ wrap_delitem(PyObject *self, PyObject *args, void *wrapped)
 
     if (!check_num_args(args, 1))
         return NULL;
-    key = PyTuple_GET_ITEM(args, 0);
+    key = PyTuple_GetItem(args, 0);
     res = (*func)(self, key, NULL);
     if (res == -1 && PyErr_Occurred())
         return NULL;
@@ -5444,7 +5444,7 @@ wrap_delattr(PyObject *self, PyObject *args, void *wrapped)
 
     if (!check_num_args(args, 1))
         return NULL;
-    name = PyTuple_GET_ITEM(args, 0);
+    name = PyTuple_GetItem(args, 0);
     if (!hackcheck(self, func, "__delattr__"))
         return NULL;
     res = (*func)(self, name, NULL);
@@ -5495,7 +5495,7 @@ wrap_richcmpfunc(PyObject *self, PyObject *args, void *wrapped, int op)
 
     if (!check_num_args(args, 1))
         return NULL;
-    other = PyTuple_GET_ITEM(args, 0);
+    other = PyTuple_GetItem(args, 0);
     return (*func)(self, other, op);
 }
 
@@ -5573,7 +5573,7 @@ wrap_descr_delete(PyObject *self, PyObject *args, void *wrapped)
 
     if (!check_num_args(args, 1))
         return NULL;
-    obj = PyTuple_GET_ITEM(args, 0);
+    obj = PyTuple_GetItem(args, 0);
     ret = (*func)(self, obj, NULL);
     if (ret < 0)
         return NULL;
@@ -5603,13 +5603,13 @@ tp_new_wrapper(PyObject *self, PyObject *args, PyObject *kwds)
     }
 
     type = (PyTypeObject *)self;
-    if (!PyTuple_Check(args) || PyTuple_GET_SIZE(args) < 1) {
+    if (!PyTuple_Check(args) || PyTuple_Size(args) < 1) {
         PyErr_Format(PyExc_TypeError,
                      "%s.__new__(): not enough arguments",
                      type->tp_name);
         return NULL;
     }
-    arg0 = PyTuple_GET_ITEM(args, 0);
+    arg0 = PyTuple_GetItem(args, 0);
     if (!PyType_Check(arg0)) {
         PyErr_Format(PyExc_TypeError,
                      "%s.__new__(X): X is not a type object (%s)",
@@ -5645,7 +5645,7 @@ tp_new_wrapper(PyObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    args = PyTuple_GetSlice(args, 1, PyTuple_GET_SIZE(args));
+    args = PyTuple_GetSlice(args, 1, PyTuple_Size(args));
     if (args == NULL)
         return NULL;
     res = type->tp_new(subtype, args, kwds);
@@ -7226,11 +7226,11 @@ super_getattro(PyObject *self, PyObject *name)
         goto skip;
 
     assert(PyTuple_Check(mro));
-    n = PyTuple_GET_SIZE(mro);
+    n = PyTuple_Size(mro);
 
     /* No need to check the last one: it's gonna be skipped anyway.  */
     for (i = 0; i+1 < n; i++) {
-        if ((PyObject *)(su->type) == PyTuple_GET_ITEM(mro, i))
+        if ((PyObject *)(su->type) == PyTuple_GetItem(mro, i))
             break;
     }
     i++;  /* skip su->type (if any)  */
@@ -7244,7 +7244,7 @@ super_getattro(PyObject *self, PyObject *name)
         PyObject *res, *tmp, *dict;
         descrgetfunc f;
 
-        tmp = PyTuple_GET_ITEM(mro, i);
+        tmp = PyTuple_GetItem(mro, i);
         assert(PyType_Check(tmp));
 
         dict = ((PyTypeObject *)tmp)->tp_dict;
@@ -7383,7 +7383,7 @@ super_init_without_args(PyFrameObject *f, PyCodeObject *co,
     Py_ssize_t i, n;
     if (obj == NULL && co->co_cell2arg) {
         /* The first argument might be a cell. */
-        n = PyTuple_GET_SIZE(co->co_cellvars);
+        n = PyTuple_Size(co->co_cellvars);
         for (i = 0; i < n; i++) {
             if (co->co_cell2arg[i] == 0) {
                 PyObject *cell = f->f_localsplus[co->co_nlocals + i];
@@ -7404,16 +7404,16 @@ super_init_without_args(PyFrameObject *f, PyCodeObject *co,
     }
     else {
         assert(PyTuple_Check(co->co_freevars));
-        n = PyTuple_GET_SIZE(co->co_freevars);
+        n = PyTuple_Size(co->co_freevars);
     }
 
     PyTypeObject *type = NULL;
     for (i = 0; i < n; i++) {
-        PyObject *name = PyTuple_GET_ITEM(co->co_freevars, i);
+        PyObject *name = PyTuple_GetItem(co->co_freevars, i);
         assert(PyUnicode_Check(name));
         if (_PyUnicode_EqualToASCIIId(name, &PyId___class__)) {
             Py_ssize_t index = co->co_nlocals +
-                PyTuple_GET_SIZE(co->co_cellvars) + i;
+                PyTuple_Size(co->co_cellvars) + i;
             PyObject *cell = f->f_localsplus[index];
             if (cell == NULL || !PyCell_Check(cell)) {
                 PyErr_SetString(PyExc_RuntimeError,

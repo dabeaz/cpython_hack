@@ -27,7 +27,7 @@ long_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     static _PyArg_Parser _parser = {NULL, _keywords, "int", 0};
     PyObject *argsbuf[2];
     PyObject * const *fastargs;
-    Py_ssize_t nargs = PyTuple_GET_SIZE(args);
+    Py_ssize_t nargs = PyTuple_Size(args);
     Py_ssize_t noptargs = nargs + (kwargs ? PyDict_GET_SIZE(kwargs) : 0) - 0;
     PyObject *x = NULL;
     PyObject *obase = NULL;
@@ -236,7 +236,7 @@ int_to_bytes(PyObject *self, PyObject *const *args, Py_ssize_t nargs, PyObject *
     static const char * const _keywords[] = {"length", "byteorder", "signed", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "to_bytes", 0};
     PyObject *argsbuf[3];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 2;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 2;
     Py_ssize_t length;
     PyObject *byteorder;
     int is_signed = 0;
@@ -310,7 +310,7 @@ int_from_bytes(PyTypeObject *type, PyObject *const *args, Py_ssize_t nargs, PyOb
     static const char * const _keywords[] = {"bytes", "byteorder", "signed", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "from_bytes", 0};
     PyObject *argsbuf[3];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 2;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 2;
     PyObject *bytes_obj;
     PyObject *byteorder;
     int is_signed = 0;
@@ -5351,7 +5351,7 @@ long_round(PyObject *self, PyObject *args)
         return NULL;
 
     temp = long_sub((PyLongObject *)self,
-                    (PyLongObject *)PyTuple_GET_ITEM(result, 1));
+                    (PyLongObject *)PyTuple_GetItem(result, 1));
     Py_DECREF(result);
     result = temp;
 

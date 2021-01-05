@@ -191,7 +191,7 @@ list_sort(PyListObject *self, PyObject *const *args, Py_ssize_t nargs, PyObject 
     static const char * const _keywords[] = {"key", "reverse", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "sort", 0};
     PyObject *argsbuf[2];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 0;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 0;
     PyObject *keyfunc = Py_None;
     int reverse = 0;
 
@@ -325,13 +325,13 @@ list___init__(PyObject *self, PyObject *args, PyObject *kwargs)
         !_PyArg_NoKeywords("list", kwargs)) {
         goto exit;
     }
-    if (!_PyArg_CheckPositional("list", PyTuple_GET_SIZE(args), 0, 1)) {
+    if (!_PyArg_CheckPositional("list", PyTuple_Size(args), 0, 1)) {
         goto exit;
     }
-    if (PyTuple_GET_SIZE(args) < 1) {
+    if (PyTuple_Size(args) < 1) {
         goto skip_optional;
     }
-    iterable = PyTuple_GET_ITEM(args, 0);
+    iterable = PyTuple_GetItem(args, 0);
 skip_optional:
     return_value = list___init___impl((PyListObject *)self, iterable);
 
@@ -2509,7 +2509,7 @@ list_sort_impl(PyListObject *self, PyObject *keyfunc, int reverse)
                                   Py_SIZE(lo.keys[0]) > 0);
 
         PyTypeObject* key_type = (keys_are_in_tuples ?
-                                  Py_TYPE(PyTuple_GET_ITEM(lo.keys[0], 0)) :
+                                  Py_TYPE(PyTuple_GetItem(lo.keys[0], 0)) :
                                   Py_TYPE(lo.keys[0]));
 
         int keys_are_all_same_type = 1;
@@ -2530,7 +2530,7 @@ list_sort_impl(PyListObject *self, PyObject *keyfunc, int reverse)
              * lo.keys[i], not lo.keys[i] itself! We verify type-homogeneity
              * for lists of tuples in the if-statement directly above. */
             PyObject *key = (keys_are_in_tuples ?
-                             PyTuple_GET_ITEM(lo.keys[i], 0) :
+                             PyTuple_GetItem(lo.keys[i], 0) :
                              lo.keys[i]);
 
             if (!Py_IS_TYPE(key, key_type)) {

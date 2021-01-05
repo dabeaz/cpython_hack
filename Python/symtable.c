@@ -394,11 +394,11 @@ error_at_directive(PySTEntryObject *ste, PyObject *name)
     for (i = 0; i < PyList_Size(ste->ste_directives); i++) {
         data = PyList_GetItem(ste->ste_directives, i);
         assert(PyTuple_CheckExact(data));
-        assert(PyUnicode_CheckExact(PyTuple_GET_ITEM(data, 0)));
-        if (PyUnicode_Compare(PyTuple_GET_ITEM(data, 0), name) == 0) {
+        assert(PyUnicode_CheckExact(PyTuple_GetItem(data, 0)));
+        if (PyUnicode_Compare(PyTuple_GetItem(data, 0), name) == 0) {
             PyErr_SyntaxLocationObject(ste->ste_table->st_filename,
-                                       PyLong_AsLong(PyTuple_GET_ITEM(data, 1)),
-                                       PyLong_AsLong(PyTuple_GET_ITEM(data, 2)) + 1);
+                                       PyLong_AsLong(PyTuple_GetItem(data, 1)),
+                                       PyLong_AsLong(PyTuple_GetItem(data, 2)) + 1);
 
             return 0;
         }

@@ -378,7 +378,7 @@ vgetargs1(PyObject *args, const char *format, va_list *p_va, int flags)
         }
 
         stack = _PyTuple_ITEMS(args);
-        nargs = PyTuple_GET_SIZE(args);
+        nargs = PyTuple_Size(args);
     }
     else {
         stack = NULL;
@@ -1177,7 +1177,7 @@ vgetargskeywords(PyObject *args, PyObject *kwargs, const char *format,
         freelist.entries_malloced = 1;
     }
 
-    nargs = PyTuple_GET_SIZE(args);
+    nargs = PyTuple_Size(args);
     nkwargs = (kwargs == NULL) ? 0 : PyDict_GET_SIZE(kwargs);
     if (nargs + nkwargs > len) {
         /* Adding "keyword" (when nargs == 0) prevents producing wrong error
@@ -1261,7 +1261,7 @@ vgetargskeywords(PyObject *args, PyObject *kwargs, const char *format,
         }
         if (!skip) {
             if (i < nargs) {
-                current_arg = PyTuple_GET_ITEM(args, i);
+                current_arg = PyTuple_GetItem(args, i);
             }
             else if (nkwargs && i >= pos) {
                 current_arg = _PyDict_GetItemStringWithError(kwargs, kwlist[i]);
@@ -1529,9 +1529,9 @@ find_keyword(PyObject *kwnames, PyObject *const *kwstack, PyObject *key)
 {
     Py_ssize_t i, nkwargs;
 
-    nkwargs = PyTuple_GET_SIZE(kwnames);
+    nkwargs = PyTuple_Size(kwnames);
     for (i = 0; i < nkwargs; i++) {
-        PyObject *kwname = PyTuple_GET_ITEM(kwnames, i);
+        PyObject *kwname = PyTuple_GetItem(kwnames, i);
 
         /* kwname == key will normally find a match in since keyword keys
            should be interned strings; if not retry below in a new loop. */
@@ -1541,7 +1541,7 @@ find_keyword(PyObject *kwnames, PyObject *const *kwstack, PyObject *key)
     }
 
     for (i = 0; i < nkwargs; i++) {
-        PyObject *kwname = PyTuple_GET_ITEM(kwnames, i);
+        PyObject *kwname = PyTuple_GetItem(kwnames, i);
         assert(PyUnicode_Check(kwname));
         if (_PyUnicode_EQ(kwname, key)) {
             return kwstack[i];
@@ -1593,7 +1593,7 @@ vgetargskeywordsfast_impl(PyObject *const *args, Py_ssize_t nargs,
 
     kwtuple = parser->kwtuple;
     pos = parser->pos;
-    len = pos + (int)PyTuple_GET_SIZE(kwtuple);
+    len = pos + (int)PyTuple_Size(kwtuple);
 
     if (len > STATIC_FREELIST_ENTRIES) {
         freelist.entries = PyMem_New(freelistentry_t, len);
@@ -1608,7 +1608,7 @@ vgetargskeywordsfast_impl(PyObject *const *args, Py_ssize_t nargs,
         nkwargs = PyDict_GET_SIZE(kwargs);
     }
     else if (kwnames != NULL) {
-        nkwargs = PyTuple_GET_SIZE(kwnames);
+        nkwargs = PyTuple_Size(kwnames);
         kwstack = args + nargs;
     }
     else {
@@ -1662,7 +1662,7 @@ vgetargskeywordsfast_impl(PyObject *const *args, Py_ssize_t nargs,
             current_arg = args[i];
         }
         else if (nkwargs && i >= pos) {
-            keyword = PyTuple_GET_ITEM(kwtuple, i - pos);
+            keyword = PyTuple_GetItem(kwtuple, i - pos);
             if (kwargs != NULL) {
                 current_arg = PyDict_GetItemWithError(kwargs, keyword);
                 if (!current_arg && PyErr_Occurred()) {
@@ -1705,7 +1705,7 @@ vgetargskeywordsfast_impl(PyObject *const *args, Py_ssize_t nargs,
                              nargs);
             }
             else {
-                keyword = PyTuple_GET_ITEM(kwtuple, i - pos);
+                keyword = PyTuple_GetItem(kwtuple, i - pos);
                 PyErr_Format(PyExc_TypeError,  "%.200s%s missing required "
                              "argument '%U' (pos %d)",
                              (parser->fname == NULL) ? "function" : parser->fname,
@@ -1734,7 +1734,7 @@ vgetargskeywordsfast_impl(PyObject *const *args, Py_ssize_t nargs,
         Py_ssize_t j;
         /* make sure there are no arguments given by name and position */
         for (i = pos; i < nargs; i++) {
-            keyword = PyTuple_GET_ITEM(kwtuple, i - pos);
+            keyword = PyTuple_GetItem(kwtuple, i - pos);
             if (kwargs != NULL) {
                 current_arg = PyDict_GetItemWithError(kwargs, keyword);
                 if (!current_arg && PyErr_Occurred()) {
@@ -1764,9 +1764,9 @@ vgetargskeywordsfast_impl(PyObject *const *args, Py_ssize_t nargs,
                     break;
             }
             else {
-                if (j >= PyTuple_GET_SIZE(kwnames))
+                if (j >= PyTuple_Size(kwnames))
                     break;
-                keyword = PyTuple_GET_ITEM(kwnames, j);
+                keyword = PyTuple_GetItem(kwnames, j);
                 j++;
             }
 
@@ -1804,7 +1804,7 @@ vgetargskeywordsfast(PyObject *args, PyObject *keywords,
     }
 
     stack = _PyTuple_ITEMS(args);
-    nargs = PyTuple_GET_SIZE(args);
+    nargs = PyTuple_Size(args);
     return vgetargskeywordsfast_impl(stack, nargs, keywords, NULL,
                                      parser, p_va, flags);
 }
@@ -1851,13 +1851,13 @@ _PyArg_UnpackKeywords(PyObject *const *args, Py_ssize_t nargs,
     kwtuple = parser->kwtuple;
     posonly = parser->pos;
     minposonly = Py_MIN(posonly, minpos);
-    maxargs = posonly + (int)PyTuple_GET_SIZE(kwtuple);
+    maxargs = posonly + (int)PyTuple_Size(kwtuple);
 
     if (kwargs != NULL) {
         nkwargs = PyDict_GET_SIZE(kwargs);
     }
     else if (kwnames != NULL) {
-        nkwargs = PyTuple_GET_SIZE(kwnames);
+        nkwargs = PyTuple_Size(kwnames);
         kwstack = args + nargs;
     }
     else {
@@ -1920,7 +1920,7 @@ _PyArg_UnpackKeywords(PyObject *const *args, Py_ssize_t nargs,
     /* copy keyword args using kwtuple to drive process */
     for (i = Py_MAX((int)nargs, posonly); i < maxargs; i++) {
         if (nkwargs) {
-            keyword = PyTuple_GET_ITEM(kwtuple, i - posonly);
+            keyword = PyTuple_GetItem(kwtuple, i - posonly);
             if (kwargs != NULL) {
                 current_arg = PyDict_GetItemWithError(kwargs, keyword);
                 if (!current_arg && PyErr_Occurred()) {
@@ -1945,7 +1945,7 @@ _PyArg_UnpackKeywords(PyObject *const *args, Py_ssize_t nargs,
         }
         else if (i < minpos || (maxpos <= i && i < reqlimit)) {
             /* Less arguments than required */
-            keyword = PyTuple_GET_ITEM(kwtuple, i - posonly);
+            keyword = PyTuple_GetItem(kwtuple, i - posonly);
             PyErr_Format(PyExc_TypeError,  "%.200s%s missing required "
                          "argument '%U' (pos %d)",
                          (parser->fname == NULL) ? "function" : parser->fname,
@@ -1959,7 +1959,7 @@ _PyArg_UnpackKeywords(PyObject *const *args, Py_ssize_t nargs,
         Py_ssize_t j;
         /* make sure there are no arguments given by name and position */
         for (i = posonly; i < nargs; i++) {
-            keyword = PyTuple_GET_ITEM(kwtuple, i - posonly);
+            keyword = PyTuple_GetItem(kwtuple, i - posonly);
             if (kwargs != NULL) {
                 current_arg = PyDict_GetItemWithError(kwargs, keyword);
                 if (!current_arg && PyErr_Occurred()) {
@@ -1989,9 +1989,9 @@ _PyArg_UnpackKeywords(PyObject *const *args, Py_ssize_t nargs,
                     break;
             }
             else {
-                if (j >= PyTuple_GET_SIZE(kwnames))
+                if (j >= PyTuple_Size(kwnames))
                     break;
-                keyword = PyTuple_GET_ITEM(kwnames, j);
+                keyword = PyTuple_GetItem(kwnames, j);
                 j++;
             }
 
@@ -2229,7 +2229,7 @@ PyArg_UnpackTuple(PyObject *args, const char *name, Py_ssize_t min, Py_ssize_t m
         return 0;
     }
     stack = _PyTuple_ITEMS(args);
-    nargs = PyTuple_GET_SIZE(args);
+    nargs = PyTuple_Size(args);
     va_start(vargs, max);
     retval = unpack_stack(stack, nargs, name, min, max, vargs);
     va_end(vargs);
@@ -2287,7 +2287,7 @@ _PyArg_NoPositional(const char *funcname, PyObject *args)
         PyErr_BadInternalCall();
         return 0;
     }
-    if (PyTuple_GET_SIZE(args) == 0)
+    if (PyTuple_Size(args) == 0)
         return 1;
 
     PyErr_Format(PyExc_TypeError, "%.200s() takes no positional arguments",
@@ -2304,7 +2304,7 @@ _PyArg_NoKwnames(const char *funcname, PyObject *kwnames)
 
     assert(PyTuple_CheckExact(kwnames));
 
-    if (PyTuple_GET_SIZE(kwnames) == 0) {
+    if (PyTuple_Size(kwnames) == 0) {
         return 1;
     }
 

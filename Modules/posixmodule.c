@@ -2517,7 +2517,7 @@ os_stat(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *kwn
     static const char * const _keywords[] = {"path", "dir_fd", "follow_symlinks", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "stat", 0};
     PyObject *argsbuf[3];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 1;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 1;
     path_t path = PATH_T_INITIALIZE("stat", "path", 0, 1);
     int dir_fd = DEFAULT_DIR_FD;
     int follow_symlinks = 1;
@@ -2576,7 +2576,7 @@ os_lstat(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *kw
     static const char * const _keywords[] = {"path", "dir_fd", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "lstat", 0};
     PyObject *argsbuf[2];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 1;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 1;
     path_t path = PATH_T_INITIALIZE("lstat", "path", 0, 0);
     int dir_fd = DEFAULT_DIR_FD;
 
@@ -2710,7 +2710,7 @@ os_listdir(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *
     static const char * const _keywords[] = {"path", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "listdir", 0};
     PyObject *argsbuf[1];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 0;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 0;
     path_t path = PATH_T_INITIALIZE("listdir", "path", 1, PATH_HAVE_FDOPENDIR);
 
     args = _PyArg_UnpackKeywords(args, nargs, NULL, kwnames, &_parser, 0, 1, 0, argsbuf);
@@ -2759,7 +2759,7 @@ os_mkdir(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *kw
     static const char * const _keywords[] = {"path", "mode", "dir_fd", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "mkdir", 0};
     PyObject *argsbuf[3];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 1;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 1;
     path_t path = PATH_T_INITIALIZE("mkdir", "path", 0, 0);
     int mode = 511;
     int dir_fd = DEFAULT_DIR_FD;
@@ -2826,7 +2826,7 @@ os_rename(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *k
     static const char * const _keywords[] = {"src", "dst", "src_dir_fd", "dst_dir_fd", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "rename", 0};
     PyObject *argsbuf[4];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 2;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 2;
     path_t src = PATH_T_INITIALIZE("rename", "src", 0, 0);
     path_t dst = PATH_T_INITIALIZE("rename", "dst", 0, 0);
     int src_dir_fd = DEFAULT_DIR_FD;
@@ -2894,7 +2894,7 @@ os_replace(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *
     static const char * const _keywords[] = {"src", "dst", "src_dir_fd", "dst_dir_fd", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "replace", 0};
     PyObject *argsbuf[4];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 2;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 2;
     path_t src = PATH_T_INITIALIZE("replace", "src", 0, 0);
     path_t dst = PATH_T_INITIALIZE("replace", "dst", 0, 0);
     int src_dir_fd = DEFAULT_DIR_FD;
@@ -2960,7 +2960,7 @@ os_rmdir(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *kw
     static const char * const _keywords[] = {"path", "dir_fd", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "rmdir", 0};
     PyObject *argsbuf[2];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 1;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 1;
     path_t path = PATH_T_INITIALIZE("rmdir", "path", 0, 0);
     int dir_fd = DEFAULT_DIR_FD;
 
@@ -3057,7 +3057,7 @@ os_unlink(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *k
     static const char * const _keywords[] = {"path", "dir_fd", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "unlink", 0};
     PyObject *argsbuf[2];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 1;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 1;
     path_t path = PATH_T_INITIALIZE("unlink", "path", 0, 0);
     int dir_fd = DEFAULT_DIR_FD;
 
@@ -3108,7 +3108,7 @@ os_remove(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *k
     static const char * const _keywords[] = {"path", "dir_fd", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "remove", 0};
     PyObject *argsbuf[2];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 1;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 1;
     path_t path = PATH_T_INITIALIZE("remove", "path", 0, 0);
     int dir_fd = DEFAULT_DIR_FD;
 
@@ -3194,7 +3194,7 @@ os_open(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *kwn
     static const char * const _keywords[] = {"path", "flags", "mode", "dir_fd", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "open", 0};
     PyObject *argsbuf[4];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 2;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 2;
     path_t path = PATH_T_INITIALIZE("open", "path", 0, 0);
     int flags;
     int mode = 511;

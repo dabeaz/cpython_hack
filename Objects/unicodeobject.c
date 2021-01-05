@@ -392,7 +392,7 @@ unicode_expandtabs(PyObject *self, PyObject *const *args, Py_ssize_t nargs, PyOb
     static const char * const _keywords[] = {"tabsize", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "expandtabs", 0};
     PyObject *argsbuf[1];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 0;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 0;
     int tabsize = 8;
 
     args = _PyArg_UnpackKeywords(args, nargs, NULL, kwnames, &_parser, 0, 1, 0, argsbuf);
@@ -1052,7 +1052,7 @@ unicode_split(PyObject *self, PyObject *const *args, Py_ssize_t nargs, PyObject 
     static const char * const _keywords[] = {"sep", "maxsplit", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "split", 0};
     PyObject *argsbuf[2];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 0;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 0;
     PyObject *sep = Py_None;
     Py_ssize_t maxsplit = -1;
 
@@ -1149,7 +1149,7 @@ unicode_rsplit(PyObject *self, PyObject *const *args, Py_ssize_t nargs, PyObject
     static const char * const _keywords[] = {"sep", "maxsplit", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "rsplit", 0};
     PyObject *argsbuf[2];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 0;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 0;
     PyObject *sep = Py_None;
     Py_ssize_t maxsplit = -1;
 
@@ -1207,7 +1207,7 @@ unicode_splitlines(PyObject *self, PyObject *const *args, Py_ssize_t nargs, PyOb
     static const char * const _keywords[] = {"keepends", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "splitlines", 0};
     PyObject *argsbuf[1];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 0;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 0;
     int keepends = 0;
 
     args = _PyArg_UnpackKeywords(args, nargs, NULL, kwnames, &_parser, 0, 1, 0, argsbuf);
@@ -5692,8 +5692,8 @@ unicode_startswith(PyObject *self,
     
     if (PyTuple_Check(subobj)) {
         Py_ssize_t i;
-        for (i = 0; i < PyTuple_GET_SIZE(subobj); i++) {
-            substring = PyTuple_GET_ITEM(subobj, i);
+        for (i = 0; i < PyTuple_Size(subobj); i++) {
+            substring = PyTuple_GetItem(subobj, i);
             if (!PyUnicode_Check(substring)) {
                 PyErr_Format(PyExc_TypeError,
                              "tuple for startswith must only contain str, "
@@ -5745,8 +5745,8 @@ unicode_endswith(PyObject *self,
         return NULL;
     if (PyTuple_Check(subobj)) {
         Py_ssize_t i;
-        for (i = 0; i < PyTuple_GET_SIZE(subobj); i++) {
-            substring = PyTuple_GET_ITEM(subobj, i);
+        for (i = 0; i < PyTuple_Size(subobj); i++) {
+            substring = PyTuple_GetItem(subobj, i);
             if (!PyUnicode_Check(substring)) {
                 PyErr_Format(PyExc_TypeError,
                              "tuple for endswith must only contain str, "

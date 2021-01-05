@@ -87,7 +87,7 @@ struct PyCodeObject {
 PyAPI_DATA(PyTypeObject) PyCode_Type;
 
 #define PyCode_Check(op) Py_IS_TYPE(op, &PyCode_Type)
-#define PyCode_GetNumFree(op) (PyTuple_GET_SIZE((op)->co_freevars))
+#define PyCode_GetNumFree(op) (PyTuple_Size((op)->co_freevars))
 
 /* Public interface */
 PyAPI_FUNC(PyCodeObject *) PyCode_New(

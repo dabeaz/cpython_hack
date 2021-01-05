@@ -1627,18 +1627,18 @@ abstract_issubclass(PyObject *derived, PyObject *cls)
                 return -1;
             return 0;
         }
-        n = PyTuple_GET_SIZE(bases);
+        n = PyTuple_Size(bases);
         if (n == 0) {
             Py_DECREF(bases);
             return 0;
         }
         /* Avoid recursivity in the single inheritance case */
         if (n == 1) {
-            derived = PyTuple_GET_ITEM(bases, 0);
+            derived = PyTuple_GetItem(bases, 0);
             continue;
         }
         for (i = 0; i < n; i++) {
-            r = abstract_issubclass(PyTuple_GET_ITEM(bases, i), cls);
+            r = abstract_issubclass(PyTuple_GetItem(bases, i), cls);
             if (r != 0)
                 break;
         }
@@ -1715,10 +1715,10 @@ object_recursive_isinstance(PyThreadState *tstate, PyObject *inst, PyObject *cls
     }
 
     if (PyTuple_Check(cls)) {
-        Py_ssize_t n = PyTuple_GET_SIZE(cls);
+        Py_ssize_t n = PyTuple_Size(cls);
         int r = 0;
         for (Py_ssize_t i = 0; i < n; ++i) {
-            PyObject *item = PyTuple_GET_ITEM(cls, i);
+            PyObject *item = PyTuple_GetItem(cls, i);
             r = object_recursive_isinstance(tstate, inst, item);
             if (r != 0) {
                 /* either found it, or got an error */
@@ -1791,10 +1791,10 @@ object_issubclass(PyThreadState *tstate, PyObject *derived, PyObject *cls)
     }
 
     if (PyTuple_Check(cls)) {
-        Py_ssize_t n = PyTuple_GET_SIZE(cls);
+        Py_ssize_t n = PyTuple_Size(cls);
         int r = 0;
         for (Py_ssize_t i = 0; i < n; ++i) {
-            PyObject *item = PyTuple_GET_ITEM(cls, i);
+            PyObject *item = PyTuple_GetItem(cls, i);
             r = object_issubclass(tstate, derived, item);
             if (r != 0)
                 /* either found it, or got an error */

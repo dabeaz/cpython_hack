@@ -88,11 +88,11 @@ BaseException_dealloc(PyBaseExceptionObject *self)
 static PyObject *
 BaseException_str(PyBaseExceptionObject *self)
 {
-    switch (PyTuple_GET_SIZE(self->args)) {
+    switch (PyTuple_Size(self->args)) {
     case 0:
         return PyUnicode_FromString("");
     case 1:
-        return PyObject_Str(PyTuple_GET_ITEM(self->args, 0));
+        return PyObject_Str(PyTuple_GetItem(self->args, 0));
     default:
         return PyObject_Str(self->args);
     }
@@ -102,9 +102,9 @@ static PyObject *
 BaseException_repr(PyBaseExceptionObject *self)
 {
     const char *name = _PyType_Name(Py_TYPE(self));
-    if (PyTuple_GET_SIZE(self->args) == 1)
+    if (PyTuple_Size(self->args) == 1)
         return PyUnicode_FromFormat("%s(%R)", name,
-                                    PyTuple_GET_ITEM(self->args, 0));
+                                    PyTuple_GetItem(self->args, 0));
     else
         return PyUnicode_FromFormat("%s%R", name, self->args);
 }
@@ -485,14 +485,14 @@ static PyMemberDef StopIteration_members[] = {
 static int
 StopIteration_init(PyStopIterationObject *self, PyObject *args, PyObject *kwds)
 {
-    Py_ssize_t size = PyTuple_GET_SIZE(args);
+    Py_ssize_t size = PyTuple_Size(args);
     PyObject *value;
 
     if (BaseException_init((PyBaseExceptionObject *)self, args, kwds) == -1)
         return -1;
     Py_CLEAR(self->value);
     if (size > 0)
-        value = PyTuple_GET_ITEM(args, 0);
+        value = PyTuple_GetItem(args, 0);
     else
         value = Py_None;
     Py_INCREF(value);
@@ -541,7 +541,7 @@ SimpleExtendsException(PyExc_BaseException, GeneratorExit,
 static int
 SystemExit_init(PySystemExitObject *self, PyObject *args, PyObject *kwds)
 {
-    Py_ssize_t size = PyTuple_GET_SIZE(args);
+    Py_ssize_t size = PyTuple_Size(args);
 
     if (BaseException_init((PyBaseExceptionObject *)self, args, kwds) == -1)
         return -1;
@@ -549,8 +549,8 @@ SystemExit_init(PySystemExitObject *self, PyObject *args, PyObject *kwds)
     if (size == 0)
         return 0;
     if (size == 1) {
-        Py_INCREF(PyTuple_GET_ITEM(args, 0));
-        Py_XSETREF(self->code, PyTuple_GET_ITEM(args, 0));
+        Py_INCREF(PyTuple_GetItem(args, 0));
+        Py_XSETREF(self->code, PyTuple_GetItem(args, 0));
     }
     else { /* size > 1 */
         Py_INCREF(args);
@@ -622,8 +622,8 @@ ImportError_init(PyImportErrorObject *self, PyObject *args, PyObject *kwds)
     Py_XINCREF(path);
     Py_XSETREF(self->path, path);
 
-    if (PyTuple_GET_SIZE(args) == 1) {
-        msg = PyTuple_GET_ITEM(args, 0);
+    if (PyTuple_Size(args) == 1) {
+        msg = PyTuple_GetItem(args, 0);
         Py_INCREF(msg);
     }
     Py_XSETREF(self->msg, msg);
@@ -771,7 +771,7 @@ oserror_parse_args(PyObject **p_args,
     PyObject *_winerror = NULL;
     PyObject **winerror = &_winerror;
 
-    nargs = PyTuple_GET_SIZE(args);
+    nargs = PyTuple_Size(args);
 
     if (nargs >= 2 && nargs <= 5) {
         if (!PyArg_UnpackTuple(args, "OSError", 2, 5,
@@ -790,7 +790,7 @@ oserror_init(PyOSErrorObject *self, PyObject **p_args,
              )
 {
     PyObject *args = *p_args;
-    Py_ssize_t nargs = PyTuple_GET_SIZE(args);
+    Py_ssize_t nargs = PyTuple_Size(args);
 
     /* self->filename will remain Py_None otherwise */
     if (filename && filename != Py_None) {
@@ -1000,17 +1000,17 @@ OSError_reduce(PyOSErrorObject *self, PyObject *Py_UNUSED(ignored))
 
     /* self->args is only the first two real arguments if there was a
      * file name given to OSError. */
-    if (PyTuple_GET_SIZE(args) == 2 && self->filename) {
+    if (PyTuple_Size(args) == 2 && self->filename) {
         Py_ssize_t size = self->filename2 ? 5 : 3;
         args = PyTuple_New(size);
         if (!args)
             return NULL;
 
-        tmp = PyTuple_GET_ITEM(self->args, 0);
+        tmp = PyTuple_GetItem(self->args, 0);
         Py_INCREF(tmp);
         PyTuple_SET_ITEM(args, 0, tmp);
 
-        tmp = PyTuple_GET_ITEM(self->args, 1);
+        tmp = PyTuple_GetItem(self->args, 1);
         Py_INCREF(tmp);
         PyTuple_SET_ITEM(args, 1, tmp);
 
@@ -1183,39 +1183,39 @@ static int
 SyntaxError_init(PySyntaxErrorObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *info = NULL;
-    Py_ssize_t lenargs = PyTuple_GET_SIZE(args);
+    Py_ssize_t lenargs = PyTuple_Size(args);
 
     if (BaseException_init((PyBaseExceptionObject *)self, args, kwds) == -1)
         return -1;
 
     if (lenargs >= 1) {
-        Py_INCREF(PyTuple_GET_ITEM(args, 0));
-        Py_XSETREF(self->msg, PyTuple_GET_ITEM(args, 0));
+        Py_INCREF(PyTuple_GetItem(args, 0));
+        Py_XSETREF(self->msg, PyTuple_GetItem(args, 0));
     }
     if (lenargs == 2) {
-        info = PyTuple_GET_ITEM(args, 1);
+        info = PyTuple_GetItem(args, 1);
         info = PySequence_Tuple(info);
         if (!info)
             return -1;
 
-        if (PyTuple_GET_SIZE(info) != 4) {
+        if (PyTuple_Size(info) != 4) {
             /* not a very good error message, but it's what Python 2.4 gives */
             PyErr_SetString(PyExc_IndexError, "tuple index out of range");
             Py_DECREF(info);
             return -1;
         }
 
-        Py_INCREF(PyTuple_GET_ITEM(info, 0));
-        Py_XSETREF(self->filename, PyTuple_GET_ITEM(info, 0));
+        Py_INCREF(PyTuple_GetItem(info, 0));
+        Py_XSETREF(self->filename, PyTuple_GetItem(info, 0));
 
-        Py_INCREF(PyTuple_GET_ITEM(info, 1));
-        Py_XSETREF(self->lineno, PyTuple_GET_ITEM(info, 1));
+        Py_INCREF(PyTuple_GetItem(info, 1));
+        Py_XSETREF(self->lineno, PyTuple_GetItem(info, 1));
 
-        Py_INCREF(PyTuple_GET_ITEM(info, 2));
-        Py_XSETREF(self->offset, PyTuple_GET_ITEM(info, 2));
+        Py_INCREF(PyTuple_GetItem(info, 2));
+        Py_XSETREF(self->offset, PyTuple_GetItem(info, 2));
 
-        Py_INCREF(PyTuple_GET_ITEM(info, 3));
-        Py_XSETREF(self->text, PyTuple_GET_ITEM(info, 3));
+        Py_INCREF(PyTuple_GetItem(info, 3));
+        Py_XSETREF(self->text, PyTuple_GetItem(info, 3));
 
         Py_DECREF(info);
 
@@ -1388,8 +1388,8 @@ KeyError_str(PyBaseExceptionObject *self)
        string, that string will be displayed in quotes.  Too bad.
        If args is anything else, use the default BaseException__str__().
     */
-    if (PyTuple_GET_SIZE(self->args) == 1) {
-        return PyObject_Repr(PyTuple_GET_ITEM(self->args, 0));
+    if (PyTuple_Size(self->args) == 1) {
+        return PyObject_Repr(PyTuple_GetItem(self->args, 0));
     }
     return BaseException_str(self);
 }
@@ -1811,10 +1811,10 @@ _PyErr_TrySetFromCause(const char *format, ...)
     /* Check the args are empty or contain a single string */
     PyErr_NormalizeException(&exc, &val, &tb);
     instance_args = ((PyBaseExceptionObject *)val)->args;
-    num_args = PyTuple_GET_SIZE(instance_args);
+    num_args = PyTuple_Size(instance_args);
     if (num_args > 1 ||
         (num_args == 1 &&
-         !PyUnicode_CheckExact(PyTuple_GET_ITEM(instance_args, 0)))) {
+         !PyUnicode_CheckExact(PyTuple_GetItem(instance_args, 0)))) {
         /* More than 1 arg, or the one arg we do have isn't a string
          */
         PyErr_Restore(exc, val, tb);

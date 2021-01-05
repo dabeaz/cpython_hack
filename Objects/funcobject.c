@@ -232,7 +232,7 @@ func_set_code(PyFunctionObject *op, PyObject *value, void *Py_UNUSED(ignored))
     }
     nfree = PyCode_GetNumFree((PyCodeObject *)value);
     nclosure = (op->func_closure == NULL ? 0 :
-            PyTuple_GET_SIZE(op->func_closure));
+            PyTuple_Size(op->func_closure));
     if (nclosure != nfree) {
         PyErr_Format(PyExc_ValueError,
                      "%U() requires a code object with %zd free vars,"
@@ -396,7 +396,7 @@ func_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     static _PyArg_Parser _parser = {NULL, _keywords, "function", 0};
     PyObject *argsbuf[5];
     PyObject * const *fastargs;
-    Py_ssize_t nargs = PyTuple_GET_SIZE(args);
+    Py_ssize_t nargs = PyTuple_Size(args);
     Py_ssize_t noptargs = nargs + (kwargs ? PyDict_GET_SIZE(kwargs) : 0) - 2;
     PyCodeObject *code;
     PyObject *globals;
@@ -488,7 +488,7 @@ func_new_impl(PyTypeObject *type, PyCodeObject *code, PyObject *globals,
                         "arg 4 (defaults) must be None or tuple");
         return NULL;
     }
-    nfree = PyTuple_GET_SIZE(code->co_freevars);
+    nfree = PyTuple_Size(code->co_freevars);
     if (!PyTuple_Check(closure)) {
         if (nfree && closure == Py_None) {
             PyErr_SetString(PyExc_TypeError,
@@ -503,7 +503,7 @@ func_new_impl(PyTypeObject *type, PyCodeObject *code, PyObject *globals,
     }
 
     /* check that the closure is well-formed */
-    nclosure = closure == Py_None ? 0 : PyTuple_GET_SIZE(closure);
+    nclosure = closure == Py_None ? 0 : PyTuple_Size(closure);
     if (nfree != nclosure)
         return PyErr_Format(PyExc_ValueError,
                             "%U requires closure of length %zd, not %zd",
@@ -511,7 +511,7 @@ func_new_impl(PyTypeObject *type, PyCodeObject *code, PyObject *globals,
     if (nclosure) {
         Py_ssize_t i;
         for (i = 0; i < nclosure; i++) {
-            PyObject *o = PyTuple_GET_ITEM(closure, i);
+            PyObject *o = PyTuple_GetItem(closure, i);
             if (!PyCell_Check(o)) {
                 return PyErr_Format(PyExc_TypeError,
                     "arg 5 (closure) expected cell, found %s",

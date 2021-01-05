@@ -43,7 +43,7 @@ code_replace(PyCodeObject *self, PyObject *const *args, Py_ssize_t nargs, PyObje
     static const char * const _keywords[] = {"co_argcount", "co_posonlyargcount", "co_kwonlyargcount", "co_nlocals", "co_stacksize", "co_flags", "co_firstlineno", "co_code", "co_consts", "co_names", "co_varnames", "co_freevars", "co_cellvars", "co_filename", "co_name", "co_lnotab", NULL};
     static _PyArg_Parser _parser = {NULL, _keywords, "replace", 0};
     PyObject *argsbuf[16];
-    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 0;
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_Size(kwnames) : 0) - 0;
     int co_argcount = self->co_argcount;
     int co_posonlyargcount = self->co_posonlyargcount;
     int co_kwonlyargcount = self->co_kwonlyargcount;
@@ -255,8 +255,8 @@ intern_strings(PyObject *tuple)
 {
     Py_ssize_t i;
 
-    for (i = PyTuple_GET_SIZE(tuple); --i >= 0; ) {
-        PyObject *v = PyTuple_GET_ITEM(tuple, i);
+    for (i = PyTuple_Size(tuple); --i >= 0; ) {
+        PyObject *v = PyTuple_GetItem(tuple, i);
         if (v == NULL || !PyUnicode_CheckExact(v)) {
             PyErr_SetString(PyExc_SystemError,
                             "non-string found in code slot");
@@ -271,8 +271,8 @@ intern_strings(PyObject *tuple)
 static int
 intern_string_constants(PyObject *tuple, int *modified)
 {
-    for (Py_ssize_t i = PyTuple_GET_SIZE(tuple); --i >= 0; ) {
-        PyObject *v = PyTuple_GET_ITEM(tuple, i);
+    for (Py_ssize_t i = PyTuple_Size(tuple); --i >= 0; ) {
+        PyObject *v = PyTuple_GetItem(tuple, i);
         if (PyUnicode_CheckExact(v)) {
             if (all_name_chars(v)) {
                 PyObject *w = v;
@@ -375,14 +375,14 @@ PyCode_NewWithPosOnlyArgs(int argcount, int posonlyargcount, int kwonlyargcount,
     }
 
     /* Check for any inner or outer closure references */
-    n_cellvars = PyTuple_GET_SIZE(cellvars);
-    if (!n_cellvars && !PyTuple_GET_SIZE(freevars)) {
+    n_cellvars = PyTuple_Size(cellvars);
+    if (!n_cellvars && !PyTuple_Size(freevars)) {
         flags |= CO_NOFREE;
     } else {
         flags &= ~CO_NOFREE;
     }
 
-    n_varnames = PyTuple_GET_SIZE(varnames);
+    n_varnames = PyTuple_Size(varnames);
     if (argcount <= n_varnames && kwonlyargcount <= n_varnames) {
         /* Never overflows. */
         total_args = (Py_ssize_t)argcount + (Py_ssize_t)kwonlyargcount +
@@ -407,10 +407,10 @@ PyCode_NewWithPosOnlyArgs(int argcount, int posonlyargcount, int kwonlyargcount,
         /* Find cells which are also arguments. */
         for (i = 0; i < n_cellvars; i++) {
             Py_ssize_t j;
-            PyObject *cell = PyTuple_GET_ITEM(cellvars, i);
+            PyObject *cell = PyTuple_GetItem(cellvars, i);
             cell2arg[i] = CO_CELL_NOT_AN_ARG;
             for (j = 0; j < total_args; j++) {
-                PyObject *arg = PyTuple_GET_ITEM(varnames, j);
+                PyObject *arg = PyTuple_GetItem(varnames, j);
                 int cmp = PyUnicode_Compare(cell, arg);
                 if (cmp == -1 && PyErr_Occurred()) {
                     PyMem_Free(cell2arg);
@@ -563,13 +563,13 @@ validate_and_copy_tuple(PyObject *tup)
     PyObject *item;
     Py_ssize_t i, len;
 
-    len = PyTuple_GET_SIZE(tup);
+    len = PyTuple_Size(tup);
     newtuple = PyTuple_New(len);
     if (newtuple == NULL)
         return NULL;
 
     for (i = 0; i < len; i++) {
-        item = PyTuple_GET_ITEM(tup, i);
+        item = PyTuple_GetItem(tup, i);
         if (PyUnicode_CheckExact(item)) {
             Py_INCREF(item);
         }
@@ -740,7 +740,7 @@ code_sizeof(PyCodeObject *co, PyObject *Py_UNUSED(args))
     _PyCodeObjectExtra *co_extra = (_PyCodeObjectExtra*) co->co_extra;
 
     if (co->co_cell2arg != NULL && co->co_cellvars != NULL) {
-        res += PyTuple_GET_SIZE(co->co_cellvars) * sizeof(Py_ssize_t);
+        res += PyTuple_Size(co->co_cellvars) * sizeof(Py_ssize_t);
     }
     if (co_extra != NULL) {
         res += sizeof(_PyCodeObjectExtra) +
@@ -863,7 +863,7 @@ _PyCode_ConstantKey(PyObject *op)
         Py_ssize_t i, len;
         PyObject *tuple;
 
-        len = PyTuple_GET_SIZE(op);
+        len = PyTuple_Size(op);
         tuple = PyTuple_New(len);
         if (tuple == NULL)
             return NULL;
@@ -871,7 +871,7 @@ _PyCode_ConstantKey(PyObject *op)
         for (i=0; i < len; i++) {
             PyObject *item, *item_key;
 
-            item = PyTuple_GET_ITEM(op, i);
+            item = PyTuple_GetItem(op, i);
             item_key = _PyCode_ConstantKey(item);
             if (item_key == NULL) {
                 Py_DECREF(tuple);
