@@ -21,7 +21,7 @@ this type and there is exactly one in existence.
 static PyObject *
 ellipsis_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-    if (PyTuple_Size(args) || (kwargs && PyDict_GET_SIZE(kwargs))) {
+    if (PyTuple_Size(args) || (kwargs && PyDict_Size(kwargs))) {
         PyErr_SetString(PyExc_TypeError, "EllipsisType takes no arguments");
         return NULL;
     }

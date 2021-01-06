@@ -3085,7 +3085,7 @@ PyUnicode_Join(PyObject *separator, PyObject *seq)
      */
 
     items = PySequence_Fast_ITEMS(fseq);
-    seqlen = PySequence_Fast_GET_SIZE(fseq);
+    seqlen = PySequence_Size(fseq);
     res = _PyUnicode_JoinArray(separator, items, seqlen);
     Py_DECREF(fseq);
     return res;

@@ -108,7 +108,7 @@ _PyObject_FastCallDictTstate(PyThreadState *tstate, PyObject *callable,
     }
 
     PyObject *res;
-    if (kwargs == NULL || PyDict_GET_SIZE(kwargs) == 0) {
+    if (kwargs == NULL || PyDict_Size(kwargs) == 0) {
         res = func(callable, args, nargsf, NULL);
     }
     else {
@@ -216,7 +216,7 @@ PyVectorcall_Call(PyObject *callable, PyObject *tuple, PyObject *kwargs)
     Py_ssize_t nargs = PyTuple_Size(tuple);
 
     /* Fast path for no keywords */
-    if (kwargs == NULL || PyDict_GET_SIZE(kwargs) == 0) {
+    if (kwargs == NULL || PyDict_Size(kwargs) == 0) {
         return func(callable, _PyTuple_ITEMS(tuple), nargs, NULL);
     }
 
@@ -842,7 +842,7 @@ _PyStack_UnpackDict(PyThreadState *tstate,
     assert(kwargs != NULL);
     assert(PyDict_Check(kwargs));
 
-    Py_ssize_t nkwargs = PyDict_GET_SIZE(kwargs);
+    Py_ssize_t nkwargs = PyDict_Size(kwargs);
     /* Check for overflow in the PyMem_Malloc() call below. The subtraction
      * in this check cannot overflow: both maxnargs and nkwargs are
      * non-negative signed integers, so their difference fits in the type. */

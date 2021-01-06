@@ -518,7 +518,7 @@ cfunction_call(PyObject *func, PyObject *args, PyObject *kwargs)
         result = (*(PyCFunctionWithKeywords)(void(*)(void))meth)(self, args, kwargs);
     }
     else {
-        if (kwargs != NULL && PyDict_GET_SIZE(kwargs) != 0) {
+        if (kwargs != NULL && PyDict_Size(kwargs) != 0) {
             _PyErr_Format(tstate, PyExc_TypeError,
                           "%.200s() takes no keyword arguments",
                           ((PyCFunctionObject*)func)->m_ml->ml_name);

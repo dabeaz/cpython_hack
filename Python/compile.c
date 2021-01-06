@@ -545,7 +545,7 @@ compiler_enter_scope(struct compiler *c, identifier name,
         PyObject *name;
         int res;
         assert(u->u_scope_type == COMPILER_SCOPE_CLASS);
-        assert(PyDict_GET_SIZE(u->u_cellvars) == 0);
+        assert(PyDict_Size(u->u_cellvars) == 0);
         name = _PyUnicode_FromId(&PyId___class__);
         if (!name) {
             compiler_unit_free(u);
@@ -559,7 +559,7 @@ compiler_enter_scope(struct compiler *c, identifier name,
     }
 
     u->u_freevars = dictbytype(u->u_ste->ste_symbols, FREE, DEF_FREE_CLASS,
-                               PyDict_GET_SIZE(u->u_cellvars));
+                               PyDict_Size(u->u_cellvars));
     if (!u->u_freevars) {
         compiler_unit_free(u);
         return 0;
@@ -1109,7 +1109,7 @@ compiler_add_o(PyObject *dict, PyObject *o)
         if (PyErr_Occurred()) {
             return -1;
         }
-        arg = PyDict_GET_SIZE(dict);
+        arg = PyDict_Size(dict);
         v = PyLong_FromSsize_t(arg);
         if (!v) {
             return -1;
@@ -1187,7 +1187,7 @@ merge_consts_recursive(struct compiler *c, PyObject *o)
         assert(PyTuple_CheckExact(key));
         assert(PyTuple_Size(key) == 2);
 
-        Py_ssize_t len = PySet_GET_SIZE(o);
+        Py_ssize_t len = PySet_Size(o);
         if (len == 0) {  // empty frozenset should not be re-created.
             return key;
         }
@@ -2138,7 +2138,7 @@ compiler_class(struct compiler *c, stmt_ty s)
         }
         else {
             /* No methods referenced __class__, so just return None */
-            assert(PyDict_GET_SIZE(c->u->u_cellvars) == 0);
+            assert(PyDict_Size(c->u->u_cellvars) == 0);
             ADDOP_LOAD_CONST(c, Py_None);
         }
         ADDOP_IN_SCOPE(c, RETURN_VALUE);
@@ -5104,7 +5104,7 @@ static PyObject *
 dict_keys_inorder(PyObject *dict, Py_ssize_t offset)
 {
     PyObject *tuple, *k, *v;
-    Py_ssize_t i, pos = 0, size = PyDict_GET_SIZE(dict);
+    Py_ssize_t i, pos = 0, size = PyDict_Size(dict);
 
     tuple = PyTuple_New(size);
     if (tuple == NULL)
@@ -5123,7 +5123,7 @@ static PyObject *
 consts_dict_keys_inorder(PyObject *dict)
 {
     PyObject *consts, *k, *v;
-    Py_ssize_t i, pos = 0, size = PyDict_GET_SIZE(dict);
+    Py_ssize_t i, pos = 0, size = PyDict_Size(dict);
 
     consts = PyList_New(size);   /* PyCode_Optimize() requires a list */
     if (consts == NULL)
@@ -5241,7 +5241,7 @@ makecode(struct compiler *c, struct assembler *a)
         goto error;
     }
 
-    nlocals = PyDict_GET_SIZE(c->u->u_varnames);
+    nlocals = PyDict_Size(c->u->u_varnames);
     assert(nlocals < INT_MAX);
     nlocals_int = Py_SAFE_DOWNCAST(nlocals, Py_ssize_t, int);
 

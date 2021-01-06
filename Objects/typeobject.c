@@ -1157,7 +1157,7 @@ type_call(PyTypeObject *type, PyObject *args, PyObject *kwds)
         assert(kwds == NULL || PyDict_Check(kwds));
         Py_ssize_t nargs = PyTuple_Size(args);
 
-        if (nargs == 1 && (kwds == NULL || !PyDict_GET_SIZE(kwds))) {
+        if (nargs == 1 && (kwds == NULL || !PyDict_Size(kwds))) {
             obj = (PyObject *) Py_TYPE(PyTuple_GetItem(args, 0));
             Py_INCREF(obj);
             return obj;
@@ -1574,7 +1574,7 @@ set_mro_error(PyObject **to_merge, Py_ssize_t to_merge_size, int *remain)
             }
         }
     }
-    n = PyDict_GET_SIZE(set);
+    n = PyDict_Size(set);
 
     off = PyOS_snprintf(buf, sizeof(buf), "Cannot create a \
 consistent method resolution\norder (MRO) for bases");
@@ -2193,7 +2193,7 @@ type_init(PyObject *cls, PyObject *args, PyObject *kwds)
     assert(kwds == NULL || PyDict_Check(kwds));
 
     if (kwds != NULL && PyTuple_Check(args) && PyTuple_Size(args) == 1 &&
-        PyDict_Check(kwds) && PyDict_GET_SIZE(kwds) != 0) {
+        PyDict_Check(kwds) && PyDict_Size(kwds) != 0) {
         PyErr_SetString(PyExc_TypeError,
                         "type.__init__() takes no keyword arguments");
         return -1;
@@ -3458,7 +3458,7 @@ static int
 excess_args(PyObject *args, PyObject *kwds)
 {
     return PyTuple_Size(args) ||
-        (kwds && PyDict_Check(kwds) && PyDict_GET_SIZE(kwds));
+        (kwds && PyDict_Check(kwds) && PyDict_Size(kwds));
 }
 
 static int
@@ -3862,7 +3862,7 @@ _PyObject_GetState(PyObject *obj, int required)
                We also return None if the dict is empty to make the behavior
                consistent regardless whether the dict was initialized or not.
                This make unit testing easier. */
-            if (dict != NULL && *dict != NULL && PyDict_GET_SIZE(*dict)) {
+            if (dict != NULL && *dict != NULL && PyDict_Size(*dict)) {
                 state = *dict;
             }
             else {
@@ -3949,7 +3949,7 @@ _PyObject_GetState(PyObject *obj, int required)
 
             /* If we found some slot attributes, pack them in a tuple along
                the original attribute dictionary. */
-            if (PyDict_GET_SIZE(slots) > 0) {
+            if (PyDict_Size(slots) > 0) {
                 PyObject *state2;
 
                 state2 = PyTuple_Pack(2, state, slots);
@@ -4141,7 +4141,7 @@ reduce_newobj(PyObject *obj)
         return NULL;
     }
     hasargs = (args != NULL);
-    if (kwargs == NULL || PyDict_GET_SIZE(kwargs) == 0) {
+    if (kwargs == NULL || PyDict_Size(kwargs) == 0) {
         _Py_IDENTIFIER(__newobj__);
         PyObject *cls;
         Py_ssize_t i, n;

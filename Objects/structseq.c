@@ -104,7 +104,7 @@ structseq_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     PyObject *argsbuf[2];
     PyObject * const *fastargs;
     Py_ssize_t nargs = PyTuple_Size(args);
-    Py_ssize_t noptargs = nargs + (kwargs ? PyDict_GET_SIZE(kwargs) : 0) - 1;
+    Py_ssize_t noptargs = nargs + (kwargs ? PyDict_Size(kwargs) : 0) - 1;
     PyObject *arg;
     PyObject *dict = NULL;
 
@@ -155,7 +155,7 @@ structseq_new_impl(PyTypeObject *type, PyObject *arg, PyObject *dict)
         return NULL;
     }
 
-    len = PySequence_Fast_GET_SIZE(arg);
+    len = PySequence_Size(arg);
     min_len = VISIBLE_SIZE_TP(type);
     max_len = REAL_SIZE_TP(type);
     n_unnamed_fields = UNNAMED_FIELDS_TP(type);
@@ -193,7 +193,7 @@ structseq_new_impl(PyTypeObject *type, PyObject *arg, PyObject *dict)
         return NULL;
     }
     for (i = 0; i < len; ++i) {
-        PyObject *v = PySequence_Fast_GET_ITEM(arg, i);
+        PyObject *v = PySequence_GetItem(arg, i);
         Py_INCREF(v);
         res->ob_item[i] = v;
     }

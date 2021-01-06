@@ -940,7 +940,7 @@ list_ass_slice(PyListObject *a, Py_ssize_t ilow, Py_ssize_t ihigh, PyObject *v)
         v_as_SF = PySequence_Fast(v, "can only assign an iterable");
         if(v_as_SF == NULL)
             goto Error;
-        n = PySequence_Fast_GET_SIZE(v_as_SF);
+        n = PySequence_Size(v_as_SF);
         vitem = PySequence_Fast_ITEMS(v_as_SF);
     }
     if (ilow < 0)
@@ -1129,7 +1129,7 @@ list_extend(PyListObject *self, PyObject *iterable)
         iterable = PySequence_Fast(iterable, "argument must be iterable");
         if (!iterable)
             return NULL;
-        n = PySequence_Fast_GET_SIZE(iterable);
+        n = PySequence_Size(iterable);
         if (n == 0) {
             /* short circuit when iterable is empty */
             Py_DECREF(iterable);
@@ -3201,12 +3201,12 @@ list_ass_subscript(PyListObject* self, PyObject* item, PyObject* value)
             if (!seq)
                 return -1;
 
-            if (PySequence_Fast_GET_SIZE(seq) != slicelength) {
+            if (PySequence_Size(seq) != slicelength) {
                 PyErr_Format(PyExc_ValueError,
                     "attempt to assign sequence of "
                     "size %zd to extended slice of "
                     "size %zd",
-                         PySequence_Fast_GET_SIZE(seq),
+                         PySequence_Size(seq),
                          slicelength);
                 Py_DECREF(seq);
                 return -1;

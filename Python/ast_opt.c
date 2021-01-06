@@ -105,7 +105,7 @@ check_complexity(PyObject *obj, Py_ssize_t limit)
         Py_ssize_t i = 0;
         PyObject *item;
         Py_hash_t hash;
-        limit -= PySet_GET_SIZE(obj);
+        limit -= PySet_Size(obj);
         while (limit >= 0 && _PySet_NextEntry(obj, &i, &item, &hash)) {
             limit = check_complexity(item, limit);
         }
@@ -133,7 +133,7 @@ safe_multiply(PyObject *v, PyObject *w)
     }
     else if (PyLong_Check(v) && (PyTuple_Check(w) || PyFrozenSet_Check(w))) {
         Py_ssize_t size = PyTuple_Check(w) ? PyTuple_Size(w) :
-                                             PySet_GET_SIZE(w);
+                                             PySet_Size(w);
         if (size) {
             long n = PyLong_AsLong(v);
             if (n < 0 || n > MAX_COLLECTION_SIZE / size) {

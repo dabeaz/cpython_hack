@@ -891,7 +891,7 @@ _PyCode_ConstantKey(PyObject *op)
         Py_ssize_t i, len;
         PyObject *tuple, *set;
 
-        len = PySet_GET_SIZE(op);
+        len = PySet_Size(op);
         tuple = PyTuple_New(len);
         if (tuple == NULL)
             return NULL;

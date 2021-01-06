@@ -1178,7 +1178,7 @@ vgetargskeywords(PyObject *args, PyObject *kwargs, const char *format,
     }
 
     nargs = PyTuple_Size(args);
-    nkwargs = (kwargs == NULL) ? 0 : PyDict_GET_SIZE(kwargs);
+    nkwargs = (kwargs == NULL) ? 0 : PyDict_Size(kwargs);
     if (nargs + nkwargs > len) {
         /* Adding "keyword" (when nargs == 0) prevents producing wrong error
            messages in some special cases (see bpo-31229). */
@@ -1605,7 +1605,7 @@ vgetargskeywordsfast_impl(PyObject *const *args, Py_ssize_t nargs,
     }
 
     if (kwargs != NULL) {
-        nkwargs = PyDict_GET_SIZE(kwargs);
+        nkwargs = PyDict_Size(kwargs);
     }
     else if (kwnames != NULL) {
         nkwargs = PyTuple_Size(kwnames);
@@ -1854,7 +1854,7 @@ _PyArg_UnpackKeywords(PyObject *const *args, Py_ssize_t nargs,
     maxargs = posonly + (int)PyTuple_Size(kwtuple);
 
     if (kwargs != NULL) {
-        nkwargs = PyDict_GET_SIZE(kwargs);
+        nkwargs = PyDict_Size(kwargs);
     }
     else if (kwnames != NULL) {
         nkwargs = PyTuple_Size(kwnames);
@@ -2269,7 +2269,7 @@ _PyArg_NoKeywords(const char *funcname, PyObject *kwargs)
         PyErr_BadInternalCall();
         return 0;
     }
-    if (PyDict_GET_SIZE(kwargs) == 0) {
+    if (PyDict_Size(kwargs) == 0) {
         return 1;
     }
 

@@ -490,7 +490,7 @@ wrapperdescr_raw_call(PyWrapperDescrObject *descr, PyObject *self,
         return (*wk)(self, args, descr->d_wrapped, kwds);
     }
 
-    if (kwds != NULL && (!PyDict_Check(kwds) || PyDict_GET_SIZE(kwds) != 0)) {
+    if (kwds != NULL && (!PyDict_Check(kwds) || PyDict_Size(kwds) != 0)) {
         PyErr_Format(PyExc_TypeError,
                      "wrapper %s() takes no keyword arguments",
                      descr->d_base->name);
@@ -1748,7 +1748,7 @@ property_init(PyObject *self, PyObject *args, PyObject *kwargs)
     PyObject *argsbuf[4];
     PyObject * const *fastargs;
     Py_ssize_t nargs = PyTuple_Size(args);
-    Py_ssize_t noptargs = nargs + (kwargs ? PyDict_GET_SIZE(kwargs) : 0) - 0;
+    Py_ssize_t noptargs = nargs + (kwargs ? PyDict_Size(kwargs) : 0) - 0;
     PyObject *fget = NULL;
     PyObject *fset = NULL;
     PyObject *fdel = NULL;

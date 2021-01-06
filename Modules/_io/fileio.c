@@ -979,7 +979,7 @@ _io_FileIO___init__(PyObject *self, PyObject *args, PyObject *kwargs)
     PyObject *argsbuf[4];
     PyObject * const *fastargs;
     Py_ssize_t nargs = PyTuple_Size(args);
-    Py_ssize_t noptargs = nargs + (kwargs ? PyDict_GET_SIZE(kwargs) : 0) - 1;
+    Py_ssize_t noptargs = nargs + (kwargs ? PyDict_Size(kwargs) : 0) - 1;
     PyObject *nameobj;
     const char *mode = "r";
     int closefd = 1;

@@ -117,6 +117,8 @@ converting the dict to the combined table.
 #include "dict-common.h"
 #include "stringlib/eq.h"    // unicode_eq()
 
+#define PyDict_GET_SIZE(mp)  (assert(PyDict_Check(mp)),((PyDictObject *)mp)->ma_used)
+
 
 /*[clinic input]
 class dict "PyDictObject *" "&PyDict_Type"
@@ -1567,7 +1569,7 @@ _PyDict_FromKeys(PyObject *cls, PyObject *iterable, PyObject *value)
             PyObject *key;
             Py_hash_t hash;
 
-            if (dictresize(mp, ESTIMATE_SIZE(PySet_GET_SIZE(iterable)))) {
+            if (dictresize(mp, ESTIMATE_SIZE(PySet_Size(iterable)))) {
                 Py_DECREF(d);
                 return NULL;
             }
@@ -2016,7 +2018,7 @@ PyDict_MergeFromSeq2(PyObject *d, PyObject *seq2, int override)
                     i);
             goto Fail;
         }
-        n = PySequence_Fast_GET_SIZE(fast);
+        n = PySequence_Size(fast);
         if (n != 2) {
             PyErr_Format(PyExc_ValueError,
                          "dictionary update sequence element #%zd "
@@ -2026,8 +2028,8 @@ PyDict_MergeFromSeq2(PyObject *d, PyObject *seq2, int override)
         }
 
         /* Update/merge with this (key, value) pair. */
-        key = PySequence_Fast_GET_ITEM(fast, 0);
-        value = PySequence_Fast_GET_ITEM(fast, 1);
+        key = PySequence_GetItem(fast, 0);
+        value = PySequence_GetItem(fast, 1);
         Py_INCREF(key);
         Py_INCREF(value);
         if (override) {

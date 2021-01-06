@@ -40,6 +40,7 @@ static PyObject _dummy_struct;
 
 #define dummy (&_dummy_struct)
 
+#define PySet_GET_SIZE(so) (assert(PyAnySet_Check(so)),(((PySetObject *)(so))->used))
 
 /* ======================================================================== */
 /* ======= Begin logic for probing the hash table ========================= */

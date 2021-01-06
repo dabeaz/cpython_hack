@@ -28,7 +28,7 @@ long_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     PyObject *argsbuf[2];
     PyObject * const *fastargs;
     Py_ssize_t nargs = PyTuple_Size(args);
-    Py_ssize_t noptargs = nargs + (kwargs ? PyDict_GET_SIZE(kwargs) : 0) - 0;
+    Py_ssize_t noptargs = nargs + (kwargs ? PyDict_Size(kwargs) : 0) - 0;
     PyObject *x = NULL;
     PyObject *obase = NULL;
 

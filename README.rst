@@ -126,7 +126,8 @@ No more than 15 minutes can be spent each day.  No removal of core functionality
 - Day 3 (1/3/2021).  Removed PyLong_AS_LONG, PyType_FastSubclass, PyType_Check, PyType_CheckExact macros.
 - Day 4 (1/4/2021).  Removed PyList_GET_SIZE and PyList_GET_ITEM.
 - Day 5 (1/5/2021).  Removed PyTuple_GET_SIZE and PyTuple_GET_ITEM.
-
+- Day 6 (1/6/2021).  Removed PySequence_Fast_GET_{SIZE,ITEM}. PySet_GET_SIZE. PyDict_GET_SIZE.
+  
 Copyright and License Information
 ---------------------------------
 
