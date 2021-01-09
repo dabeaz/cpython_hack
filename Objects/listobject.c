@@ -12,8 +12,9 @@
 #include <sys/types.h>          /* For size_t */
 #endif
 
-#define PyList_GET_SIZE(op)    Py_SIZE(_PyList_CAST(op))
-#define PyList_GET_ITEM(op, i) (_PyList_CAST(op)->ob_item[i])
+#define PyList_GET_SIZE(op)    Py_SIZE((PyListObject *)(op))
+#define PyList_GET_ITEM(op, i) ((PyListObject *)(op)->ob_item[i])
+#define _PyList_ITEMS(op)      (((PyListObject *)(op))->ob_item)
 
 /*[clinic input]
 class list "PyListObject *" "&PyList_Type"
@@ -1227,9 +1228,9 @@ list_extend(PyListObject *self, PyObject *iterable)
 }
 
 PyObject *
-_PyList_Extend(PyListObject *self, PyObject *iterable)
+PyList_Extend(PyObject *self, PyObject *iterable)
 {
-    return list_extend(self, iterable);
+  return list_extend((PyListObject *)self, iterable);
 }
 
 /*[clinic input]

@@ -39,7 +39,8 @@ PyAPI_FUNC(int) PyList_SetSlice(PyObject *, Py_ssize_t, Py_ssize_t, PyObject *);
 PyAPI_FUNC(int) PyList_Sort(PyObject *);
 PyAPI_FUNC(int) PyList_Reverse(PyObject *);
 PyAPI_FUNC(PyObject *) PyList_AsTuple(PyObject *);
-
+PyAPI_FUNC(PyObject *) PyList_Extend(PyObject *, PyObject *);
+  
 typedef struct {
     PyObject_VAR_HEAD
     /* Vector of pointers to list elements.  list[0] is ob_item[0], etc. */
@@ -58,16 +59,11 @@ typedef struct {
      */
     Py_ssize_t allocated;
 } PyListObject;
-
-PyAPI_FUNC(PyObject *) _PyList_Extend(PyListObject *, PyObject *);
-
+  
 /* Macro, trading safety for speed */
-
-/* Cast argument to PyTupleObject* type. */
-#define _PyList_CAST(op) (assert(PyList_Check(op)), (PyListObject *)(op))
-#define PyList_SET_ITEM(op, i, v) (_PyList_CAST(op)->ob_item[i] = (v))
-#define _PyList_ITEMS(op)      (_PyList_CAST(op)->ob_item)
-
+  
+#define PyList_SET_ITEM(op, i, v) (((PyListObject *)(op))->ob_item[i] = (v))
+  
 #ifdef __cplusplus
 }
 #endif

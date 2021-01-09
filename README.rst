@@ -127,7 +127,10 @@ No more than 15 minutes can be spent each day.  No removal of core functionality
 - Day 4 (1/4/2021).  Removed PyList_GET_SIZE and PyList_GET_ITEM.
 - Day 5 (1/5/2021).  Removed PyTuple_GET_SIZE and PyTuple_GET_ITEM.
 - Day 6 (1/6/2021).  Removed PySequence_Fast_GET_{SIZE,ITEM}. PySet_GET_SIZE. PyDict_GET_SIZE.
-  
+- Day 7 (1/7/2021).  No progress.
+- Day 8 (1/8/2021).  No progress.
+- Day 9 (1/9/2021).  Some list API cleanup.
+
 Copyright and License Information
 ---------------------------------
 

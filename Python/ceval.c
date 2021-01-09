@@ -145,7 +145,7 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
 
 /* Tuple access macros */
 
-#define GETITEM(v, i) PyTuple_GetItem((PyTupleObject *)(v), (i))
+#define GETITEM(v, i) PyTuple_GetItem((v), (i))
 
 /* Code access macros */
 
@@ -1105,7 +1105,7 @@ main_loop:
         case LIST_EXTEND: {
             PyObject *iterable = POP();
             PyObject *list = PEEK(oparg);
-            PyObject *none_val = _PyList_Extend((PyListObject *)list, iterable);
+            PyObject *none_val = PyList_Extend(list, iterable);
             if (none_val == NULL) {
                 if (_PyErr_ExceptionMatches(tstate, PyExc_TypeError) &&
                    (Py_TYPE(iterable)->tp_iter == NULL && !PySequence_Check(iterable)))
