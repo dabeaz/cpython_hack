@@ -108,7 +108,7 @@ do_ignore(const char **p_format, va_list *p_va, char endchar, Py_ssize_t n, int 
         PyErr_Restore(exception, value, tb);
         if (w != NULL) {
             if (v != NULL) {
-                PyTuple_SET_ITEM(v, i, w);
+                PyTuple_InitItem(v, i, w);
             }
             else {
                 Py_DECREF(w);
@@ -267,7 +267,7 @@ do_mktuple(const char **p_format, va_list *p_va, char endchar, Py_ssize_t n, int
             Py_DECREF(v);
             return NULL;
         }
-        PyTuple_SET_ITEM(v, i, w);
+        PyTuple_InitItem(v, i, w);
     }
     if (**p_format != endchar) {
         Py_DECREF(v);

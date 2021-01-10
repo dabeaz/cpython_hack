@@ -536,28 +536,6 @@ PyImport_AddModule(const char *name)
 }
 
 
-/* Remove name from sys.modules, if it's there. */
-static void
-remove_module(PyThreadState *tstate, PyObject *name)
-{
-    PyObject *type, *value, *traceback;
-    _PyErr_Fetch(tstate, &type, &value, &traceback);
-
-    PyObject *modules = tstate->interp->modules;
-    if (!PyMapping_HasKey(modules, name)) {
-        goto out;
-    }
-    if (PyMapping_DelItem(modules, name) < 0) {
-        _PyErr_SetString(tstate, PyExc_RuntimeError,
-                         "deleting key in sys.modules failed");
-        _PyErr_ChainExceptions(type, value, traceback);
-        return;
-    }
-
-out:
-    _PyErr_Restore(tstate, type, value, traceback);
-}
-
 /* Helper to test for built-in module */
 
 static int

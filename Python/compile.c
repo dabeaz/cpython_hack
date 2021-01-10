@@ -305,7 +305,6 @@ PyAST_CompileObject(mod_ty mod, PyObject *filename, PyCompilerFlags *flags,
     struct compiler c;
     PyCodeObject *co = NULL;
     PyCompilerFlags local_flags = _PyCompilerFlags_INIT;
-    int merged;
 
     if (!__doc__) {
         __doc__ = PyUnicode_InternFromString("__doc__");
@@ -1173,7 +1172,7 @@ merge_consts_recursive(struct compiler *c, PyObject *o)
             }
             if (v != item) {
                 Py_INCREF(v);
-                PyTuple_SET_ITEM(o, i, v);
+                PyTuple_InitItem(o, i, v);
                 Py_DECREF(item);
             }
 
@@ -1215,7 +1214,7 @@ merge_consts_recursive(struct compiler *c, PyObject *o)
             else {
                 u = k;
             }
-            PyTuple_SET_ITEM(tuple, i, u);  // Steals reference of u.
+            PyTuple_InitItem(tuple, i, u);  // Steals reference of u.
             i++;
         }
 
@@ -1229,7 +1228,7 @@ merge_consts_recursive(struct compiler *c, PyObject *o)
         }
         assert(PyTuple_GetItem(key, 1) == o);
         Py_DECREF(o);
-        PyTuple_SET_ITEM(key, 1, new);
+        PyTuple_InitItem(key, 1, new);
     }
 
     return key;
@@ -2972,7 +2971,7 @@ compiler_from_import(struct compiler *c, stmt_ty s)
     for (i = 0; i < n; i++) {
         alias_ty alias = (alias_ty)asdl_seq_GET(s->v.ImportFrom.names, i);
         Py_INCREF(alias->name);
-        PyTuple_SET_ITEM(names, i, alias->name);
+        PyTuple_InitItem(names, i, alias->name);
     }
     
     ADDOP_LOAD_CONST_NEW(c, names);
@@ -3361,7 +3360,7 @@ starunpack_helper(struct compiler *c, asdl_seq *elts, int pushed,
         for (i = 0; i < n; i++) {
             val = ((expr_ty)asdl_seq_GET(elts, i))->v.Constant.value;
             Py_INCREF(val);
-            PyTuple_SET_ITEM(folded, i, val);
+            PyTuple_InitItem(folded, i, val);
         }
         if (tuple) {
             ADDOP_LOAD_CONST_NEW(c, folded);
@@ -3522,7 +3521,7 @@ compiler_subdict(struct compiler *c, expr_ty e, Py_ssize_t begin, Py_ssize_t end
         for (i = begin; i < end; i++) {
             key = ((expr_ty)asdl_seq_GET(e->v.Dict.keys, i))->v.Constant.value;
             Py_INCREF(key);
-            PyTuple_SET_ITEM(keys, i - begin, key);
+            PyTuple_InitItem(keys, i - begin, key);
         }
         ADDOP_LOAD_CONST_NEW(c, keys);
         ADDOP_I(c, BUILD_CONST_KEY_MAP, n);
@@ -3902,7 +3901,7 @@ compiler_subkwargs(struct compiler *c, asdl_seq *keywords, Py_ssize_t begin, Py_
         for (i = begin; i < end; i++) {
             key = ((keyword_ty) asdl_seq_GET(keywords, i))->arg;
             Py_INCREF(key);
-            PyTuple_SET_ITEM(keys, i - begin, key);
+            PyTuple_InitItem(keys, i - begin, key);
         }
         ADDOP_LOAD_CONST_NEW(c, keys);
         ADDOP_I(c, BUILD_CONST_KEY_MAP, n);
@@ -3964,7 +3963,7 @@ compiler_call_helper(struct compiler *c,
         for (i = 0; i < nkwelts; i++) {
             keyword_ty kw = asdl_seq_GET(keywords, i);
             Py_INCREF(kw->arg);
-            PyTuple_SET_ITEM(names, i, kw->arg);
+            PyTuple_InitItem(names, i, kw->arg);
         }
         ADDOP_LOAD_CONST_NEW(c, names);
         ADDOP_I(c, CALL_FUNCTION_KW, n + nelts + nkwelts);
@@ -5114,7 +5113,7 @@ dict_keys_inorder(PyObject *dict, Py_ssize_t offset)
         Py_INCREF(k);
         assert((i - offset) < size);
         assert((i - offset) >= 0);
-        PyTuple_SET_ITEM(tuple, i - offset, k);
+        PyTuple_InitItem(tuple, i - offset, k);
     }
     return tuple;
 }

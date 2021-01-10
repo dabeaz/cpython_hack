@@ -2004,7 +2004,7 @@ map_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
             Py_DECREF(iters);
             return NULL;
         }
-        PyTuple_SET_ITEM(iters, i-1, it);
+        PyTuple_InitItem(iters, i-1, it);
     }
 
     /* create mapobject structure */
@@ -2081,11 +2081,11 @@ map_reduce(mapobject *lz, PyObject *Py_UNUSED(ignored))
     if (args == NULL)
         return NULL;
     Py_INCREF(lz->func);
-    PyTuple_SET_ITEM(args, 0, lz->func);
+    PyTuple_InitItem(args, 0, lz->func);
     for (i = 0; i<numargs; i++){
         PyObject *it = PyTuple_GetItem(lz->iters, i);
         Py_INCREF(it);
-        PyTuple_SET_ITEM(args, i+1, it);
+        PyTuple_InitItem(args, i+1, it);
     }
 
     return Py_BuildValue("ON", Py_TYPE(lz), args);
@@ -3259,7 +3259,7 @@ zip_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
             Py_DECREF(ittuple);
             return NULL;
         }
-        PyTuple_SET_ITEM(ittuple, i, it);
+        PyTuple_InitItem(ittuple, i, it);
     }
 
     /* create a result holder */
@@ -3270,7 +3270,7 @@ zip_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     }
     for (i=0 ; i < tuplesize ; i++) {
         Py_INCREF(Py_None);
-        PyTuple_SET_ITEM(result, i, Py_None);
+        PyTuple_InitItem(result, i, Py_None);
     }
 
     /* create zipobject structure */
@@ -3317,7 +3317,7 @@ zip_next(zipobject *lz)
                 return NULL;
             }
             olditem = PyTuple_GetItem(result, i);
-            PyTuple_SET_ITEM(result, i, item);
+            PyTuple_InitItem(result, i, item);
             Py_DECREF(olditem);
         }
     } else {
@@ -3331,7 +3331,7 @@ zip_next(zipobject *lz)
                 Py_DECREF(result);
                 return NULL;
             }
-            PyTuple_SET_ITEM(result, i, item);
+            PyTuple_InitItem(result, i, item);
         }
     }
     return result;

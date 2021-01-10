@@ -941,7 +941,7 @@ make_type(const char *type, PyObject* base, const char* const* fields, int num_f
             Py_DECREF(fnames);
             return NULL;
         }
-        PyTuple_SET_ITEM(fnames, i, field);
+        PyTuple_InitItem(fnames, i, field);
     }
     result = PyObject_CallFunction((PyObject*)&PyType_Type, "s(O){OOOOOs}",
                     type, base,
@@ -966,7 +966,7 @@ add_attributes(PyObject *type, const char * const *attrs, int num_fields)
             Py_DECREF(l);
             return 0;
         }
-        PyTuple_SET_ITEM(l, i, s);
+        PyTuple_InitItem(l, i, s);
     }
     result = PyObject_SetAttr(type, astmodulestate_global->_attributes, l) >= 0;
     Py_DECREF(l);

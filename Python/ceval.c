@@ -1073,7 +1073,7 @@ main_loop:
                 goto error;
             while (--oparg >= 0) {
                 PyObject *item = POP();
-                PyTuple_SET_ITEM(tup, oparg, item);
+                PyTuple_InitItem(tup, oparg, item);
             }
             PUSH(tup);
             continue;

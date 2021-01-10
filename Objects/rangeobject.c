@@ -510,29 +510,29 @@ range_hash(rangeobject *r)
     if (!t)
         return -1;
     Py_INCREF(r->length);
-    PyTuple_SET_ITEM(t, 0, r->length);
+    PyTuple_InitItem(t, 0, r->length);
     cmp_result = PyObject_Not(r->length);
     if (cmp_result == -1)
         goto end;
     if (cmp_result == 1) {
         Py_INCREF(Py_None);
         Py_INCREF(Py_None);
-        PyTuple_SET_ITEM(t, 1, Py_None);
-        PyTuple_SET_ITEM(t, 2, Py_None);
+        PyTuple_InitItem(t, 1, Py_None);
+        PyTuple_InitItem(t, 2, Py_None);
     }
     else {
         Py_INCREF(r->start);
-        PyTuple_SET_ITEM(t, 1, r->start);
+        PyTuple_InitItem(t, 1, r->start);
         cmp_result = PyObject_RichCompareBool(r->length, _PyLong_One, Py_EQ);
         if (cmp_result == -1)
             goto end;
         if (cmp_result == 1) {
             Py_INCREF(Py_None);
-            PyTuple_SET_ITEM(t, 2, Py_None);
+            PyTuple_InitItem(t, 2, Py_None);
         }
         else {
             Py_INCREF(r->step);
-            PyTuple_SET_ITEM(t, 2, r->step);
+            PyTuple_InitItem(t, 2, r->step);
         }
     }
     result = PyObject_Hash(t);

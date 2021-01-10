@@ -884,7 +884,7 @@ _PyStack_UnpackDict(PyThreadState *tstate,
         keys_are_strings &= Py_TYPE(key)->tp_flags;
         Py_INCREF(key);
         Py_INCREF(value);
-        PyTuple_SET_ITEM(kwnames, i, key);
+        PyTuple_InitItem(kwnames, i, key);
         kwstack[i] = value;
         i++;
     }

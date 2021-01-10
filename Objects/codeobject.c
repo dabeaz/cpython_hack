@@ -278,7 +278,7 @@ intern_string_constants(PyObject *tuple, int *modified)
                 PyObject *w = v;
                 PyUnicode_InternInPlace(&v);
                 if (w != v) {
-                    PyTuple_SET_ITEM(tuple, i, v);
+                    PyTuple_InitItem(tuple, i, v);
                     if (modified) {
                         *modified = 1;
                     }
@@ -308,7 +308,7 @@ intern_string_constants(PyObject *tuple, int *modified)
                     return -1;
                 }
 
-                PyTuple_SET_ITEM(tuple, i, v);
+                PyTuple_InitItem(tuple, i, v);
                 Py_DECREF(w);
                 if (modified) {
                     *modified = 1;
@@ -589,7 +589,7 @@ validate_and_copy_tuple(PyObject *tup)
                 return NULL;
             }
         }
-        PyTuple_SET_ITEM(newtuple, i, item);
+        PyTuple_InitItem(newtuple, i, item);
     }
 
     return newtuple;
@@ -878,7 +878,7 @@ _PyCode_ConstantKey(PyObject *op)
                 return NULL;
             }
 
-            PyTuple_SET_ITEM(tuple, i, item_key);
+            PyTuple_InitItem(tuple, i, item_key);
         }
 
         key = PyTuple_Pack(2, tuple, op);
@@ -907,7 +907,7 @@ _PyCode_ConstantKey(PyObject *op)
             }
 
             assert(i < len);
-            PyTuple_SET_ITEM(tuple, i, item_key);
+            PyTuple_InitItem(tuple, i, item_key);
             i++;
         }
         set = PyFrozenSet_New(tuple);

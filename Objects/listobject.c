@@ -726,7 +726,7 @@ list_contains(PyListObject *a, PyObject *el)
     int cmp;
 
     for (i = 0, cmp = 0 ; cmp == 0 && i < Py_SIZE(a); ++i) {
-        item = PyList_GET_ITEM(a, i);
+      item = (PyObject *) PyList_GET_ITEM(a, i);
         Py_INCREF(item);
         cmp = PyObject_RichCompareBool(item, el, Py_EQ);
         Py_DECREF(item);
@@ -3154,7 +3154,7 @@ list_ass_subscript(PyListObject* self, PyObject* item, PyObject* value)
                  cur += step, i++) {
                 Py_ssize_t lim = step - 1;
 
-                garbage[i] = PyList_GET_ITEM(self, cur);
+                garbage[i] = (PyObject *) PyList_GET_ITEM(self, cur);
 
                 if (cur + step >= (size_t)Py_SIZE(self)) {
                     lim = Py_SIZE(self) - cur - 1;
@@ -3402,7 +3402,7 @@ listiter_next(listiterobject *it)
     assert(PyList_Check(seq));
 
     if (it->it_index < PyList_GET_SIZE(seq)) {
-        item = PyList_GET_ITEM(seq, it->it_index);
+      item = (PyObject *) PyList_GET_ITEM(seq, it->it_index);
         ++it->it_index;
         Py_INCREF(item);
         return item;
@@ -3546,7 +3546,7 @@ listreviter_next(listreviterobject *it)
 
     index = it->it_index;
     if (index>=0 && index < PyList_GET_SIZE(seq)) {
-        item = PyList_GET_ITEM(seq, index);
+      item = (PyObject *) PyList_GET_ITEM(seq, index);
         it->it_index--;
         Py_INCREF(item);
         return item;

@@ -1890,9 +1890,9 @@ dict_items(PyDictObject *mp)
             key = ep[i].me_key;
             item = PyList_GetItem(v, j);
             Py_INCREF(key);
-            PyTuple_SET_ITEM(item, 0, key);
+            PyTuple_InitItem(item, 0, key);
             Py_INCREF(value);
-            PyTuple_SET_ITEM(item, 1, value);
+            PyTuple_InitItem(item, 1, value);
             j++;
         }
     }
@@ -2602,8 +2602,8 @@ dict_popitem_impl(PyDictObject *self)
     assert(dictkeys_get_index(self->ma_keys, j) == i);
     dictkeys_set_index(self->ma_keys, j, DKIX_DUMMY);
 
-    PyTuple_SET_ITEM(res, 0, ep->me_key);
-    PyTuple_SET_ITEM(res, 1, ep->me_value);
+    PyTuple_InitItem(res, 0, ep->me_key);
+    PyTuple_InitItem(res, 1, ep->me_value);
     ep->me_key = NULL;
     ep->me_value = NULL;
     /* We can't dk_usable++ since there is DKIX_DUMMY in indices */
@@ -3253,8 +3253,8 @@ dictiter_iternextitem(dictiterobject *di)
     if (Py_REFCNT(result) == 1) {
         PyObject *oldkey = PyTuple_GetItem(result, 0);
         PyObject *oldvalue = PyTuple_GetItem(result, 1);
-        PyTuple_SET_ITEM(result, 0, key);  /* steals reference */
-        PyTuple_SET_ITEM(result, 1, value);  /* steals reference */
+        PyTuple_InitItem(result, 0, key);  /* steals reference */
+        PyTuple_InitItem(result, 1, value);  /* steals reference */
         Py_INCREF(result);
         Py_DECREF(oldkey);
         Py_DECREF(oldvalue);
@@ -3263,8 +3263,8 @@ dictiter_iternextitem(dictiterobject *di)
         result = PyTuple_New(2);
         if (result == NULL)
             return NULL;
-        PyTuple_SET_ITEM(result, 0, key);  /* steals reference */
-        PyTuple_SET_ITEM(result, 1, value);  /* steals reference */
+        PyTuple_InitItem(result, 0, key);  /* steals reference */
+        PyTuple_InitItem(result, 1, value);  /* steals reference */
     }
     return result;
 
@@ -3361,8 +3361,8 @@ dictreviter_iternext(dictiterobject *di)
         if (Py_REFCNT(result) == 1) {
             PyObject *oldkey = PyTuple_GetItem(result, 0);
             PyObject *oldvalue = PyTuple_GetItem(result, 1);
-            PyTuple_SET_ITEM(result, 0, key);  /* steals reference */
-            PyTuple_SET_ITEM(result, 1, value);  /* steals reference */
+            PyTuple_InitItem(result, 0, key);  /* steals reference */
+            PyTuple_InitItem(result, 1, value);  /* steals reference */
             Py_INCREF(result);
             Py_DECREF(oldkey);
             Py_DECREF(oldvalue);
@@ -3372,8 +3372,8 @@ dictreviter_iternext(dictiterobject *di)
             if (result == NULL) {
                 return NULL;
             }
-            PyTuple_SET_ITEM(result, 0, key); /* steals reference */
-            PyTuple_SET_ITEM(result, 1, value); /* steals reference */
+            PyTuple_InitItem(result, 0, key); /* steals reference */
+            PyTuple_InitItem(result, 1, value); /* steals reference */
         }
         return result;
     }

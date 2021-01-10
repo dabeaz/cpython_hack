@@ -272,7 +272,7 @@ structseq_repr(PyStructSequence *obj)
             goto error;
         }
 
-        PyObject *value = PyStructSequence_GET_ITEM(obj, i);
+        PyObject *value = PyStructSequence_GET_ITEM((PyObject *)obj, i);
         assert(value != NULL);
         PyObject *repr = PyObject_Repr(value);
         if (repr == NULL) {

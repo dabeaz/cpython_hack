@@ -217,9 +217,11 @@ PyTuple_SetItem(PyObject *op, Py_ssize_t i, PyObject *newitem)
     return 0;
 }
 
-void
-_PyTuple_MaybeUntrack(PyObject *op)
+int
+PyTuple_InitItem(PyObject *op, Py_ssize_t i, PyObject *newitem)
 {
+  ((PyTupleObject *) op)->ob_item[i] = newitem;
+  return 0;
 }
 
 PyObject *
@@ -745,7 +747,7 @@ tuple_subtype_new(PyTypeObject *type, PyObject *iterable)
     for (i = 0; i < n; i++) {
         item = PyTuple_GET_ITEM(tmp, i);
         Py_INCREF(item);
-        PyTuple_SET_ITEM(newobj, i, item);
+        PyTuple_InitItem(newobj, i, item);
     }
     Py_DECREF(tmp);
     return newobj;

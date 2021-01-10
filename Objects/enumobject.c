@@ -196,8 +196,8 @@ enum_next_long(enumobject *en, PyObject* next_item)
         Py_INCREF(result);
         old_index = PyTuple_GetItem(result, 0);
         old_item = PyTuple_GetItem(result, 1);
-        PyTuple_SET_ITEM(result, 0, next_index);
-        PyTuple_SET_ITEM(result, 1, next_item);
+        PyTuple_InitItem(result, 0, next_index);
+        PyTuple_InitItem(result, 1, next_item);
         Py_DECREF(old_index);
         Py_DECREF(old_item);
         return result;
@@ -208,8 +208,8 @@ enum_next_long(enumobject *en, PyObject* next_item)
         Py_DECREF(next_item);
         return NULL;
     }
-    PyTuple_SET_ITEM(result, 0, next_index);
-    PyTuple_SET_ITEM(result, 1, next_item);
+    PyTuple_InitItem(result, 0, next_index);
+    PyTuple_InitItem(result, 1, next_item);
     return result;
 }
 
@@ -241,8 +241,8 @@ enum_next(enumobject *en)
         Py_INCREF(result);
         old_index = PyTuple_GetItem(result, 0);
         old_item = PyTuple_GetItem(result, 1);
-        PyTuple_SET_ITEM(result, 0, next_index);
-        PyTuple_SET_ITEM(result, 1, next_item);
+        PyTuple_InitItem(result, 0, next_index);
+        PyTuple_InitItem(result, 1, next_item);
         Py_DECREF(old_index);
         Py_DECREF(old_item);
         return result;
@@ -253,8 +253,8 @@ enum_next(enumobject *en)
         Py_DECREF(next_item);
         return NULL;
     }
-    PyTuple_SET_ITEM(result, 0, next_index);
-    PyTuple_SET_ITEM(result, 1, next_item);
+    PyTuple_InitItem(result, 0, next_index);
+    PyTuple_InitItem(result, 1, next_item);
     return result;
 }
 

@@ -31,6 +31,7 @@ PyAPI_FUNC(PyObject *) PyTuple_New(Py_ssize_t size);
 PyAPI_FUNC(Py_ssize_t) PyTuple_Size(PyObject *);
 PyAPI_FUNC(PyObject *) PyTuple_GetItem(PyObject *, Py_ssize_t);
 PyAPI_FUNC(int) PyTuple_SetItem(PyObject *, Py_ssize_t, PyObject *);
+PyAPI_FUNC(int) PyTuple_InitItem(PyObject *, Py_ssize_t, PyObject *);  
 PyAPI_FUNC(PyObject *) PyTuple_GetSlice(PyObject *, Py_ssize_t, Py_ssize_t);
 PyAPI_FUNC(PyObject *) PyTuple_Pack(Py_ssize_t, ...);
 
@@ -43,7 +44,6 @@ typedef struct {
 } PyTupleObject;
 
 PyAPI_FUNC(int) _PyTuple_Resize(PyObject **, Py_ssize_t);
-PyAPI_FUNC(void) _PyTuple_MaybeUntrack(PyObject *);
 
 /* Macros trading safety for speed */
 
@@ -51,9 +51,9 @@ PyAPI_FUNC(void) _PyTuple_MaybeUntrack(PyObject *);
 #define _PyTuple_CAST(op) (assert(PyTuple_Check(op)), (PyTupleObject *)(op))
   
 /* Macro, *only* to be used to fill in brand new tuples */
+  #if 0
 #define PyTuple_SET_ITEM(op, i, v) (_PyTuple_CAST(op)->ob_item[i] = v)
-
-PyAPI_FUNC(void) _PyTuple_DebugMallocStats(FILE *out);
+#endif
 
 #ifdef __cplusplus
 }

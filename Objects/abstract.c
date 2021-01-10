@@ -1202,7 +1202,7 @@ PySequence_Tuple(PyObject *v)
                 goto Fail;
             }
         }
-        PyTuple_SET_ITEM(result, j, item);
+        PyTuple_InitItem(result, j, item);
     }
 
     /* Cut tuple back if guess was too large. */

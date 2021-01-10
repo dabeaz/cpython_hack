@@ -982,8 +982,8 @@ PyObject_ClearWeakRefs(PyObject *object)
 
                 if (Py_REFCNT((PyObject *)current) > 0) {
                     Py_INCREF(current);
-                    PyTuple_SET_ITEM(tuple, i * 2, (PyObject *) current);
-                    PyTuple_SET_ITEM(tuple, i * 2 + 1, current->wr_callback);
+                    PyTuple_InitItem(tuple, i * 2, (PyObject *) current);
+                    PyTuple_InitItem(tuple, i * 2 + 1, current->wr_callback);
                 }
                 else {
                     Py_DECREF(current->wr_callback);

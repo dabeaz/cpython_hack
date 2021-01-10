@@ -4156,8 +4156,8 @@ long_divmod(PyObject *a, PyObject *b)
     }
     z = PyTuple_New(2);
     if (z != NULL) {
-        PyTuple_SET_ITEM(z, 0, (PyObject *) div);
-        PyTuple_SET_ITEM(z, 1, (PyObject *) mod);
+        PyTuple_InitItem(z, 0, (PyObject *) div);
+        PyTuple_InitItem(z, 1, (PyObject *) mod);
     }
     else {
         Py_DECREF(div);
@@ -5279,9 +5279,9 @@ _PyLong_DivmodNear(PyObject *a, PyObject *b)
     if (result == NULL)
         goto error;
 
-    /* PyTuple_SET_ITEM steals references */
-    PyTuple_SET_ITEM(result, 0, (PyObject *)quo);
-    PyTuple_SET_ITEM(result, 1, (PyObject *)rem);
+    /* PyTuple_InitItem steals references */
+    PyTuple_InitItem(result, 0, (PyObject *)quo);
+    PyTuple_InitItem(result, 1, (PyObject *)rem);
     return result;
 
   error:

@@ -26,9 +26,9 @@ STRINGLIB(partition)(PyObject* str_obj,
 
     if (pos < 0) {
 #if STRINGLIB_MUTABLE
-        PyTuple_SET_ITEM(out, 0, STRINGLIB_NEW(str, str_len));
-        PyTuple_SET_ITEM(out, 1, STRINGLIB_NEW(NULL, 0));
-        PyTuple_SET_ITEM(out, 2, STRINGLIB_NEW(NULL, 0));
+        PyTuple_InitItem(out, 0, STRINGLIB_NEW(str, str_len));
+        PyTuple_InitItem(out, 1, STRINGLIB_NEW(NULL, 0));
+        PyTuple_InitItem(out, 2, STRINGLIB_NEW(NULL, 0));
 
         if (PyErr_Occurred()) {
             Py_DECREF(out);
@@ -36,20 +36,20 @@ STRINGLIB(partition)(PyObject* str_obj,
         }
 #else
         Py_INCREF(str_obj);
-        PyTuple_SET_ITEM(out, 0, (PyObject*) str_obj);
+        PyTuple_InitItem(out, 0, (PyObject*) str_obj);
         Py_INCREF(STRINGLIB_EMPTY);
-        PyTuple_SET_ITEM(out, 1, (PyObject*) STRINGLIB_EMPTY);
+        PyTuple_InitItem(out, 1, (PyObject*) STRINGLIB_EMPTY);
         Py_INCREF(STRINGLIB_EMPTY);
-        PyTuple_SET_ITEM(out, 2, (PyObject*) STRINGLIB_EMPTY);
+        PyTuple_InitItem(out, 2, (PyObject*) STRINGLIB_EMPTY);
 #endif
         return out;
     }
 
-    PyTuple_SET_ITEM(out, 0, STRINGLIB_NEW(str, pos));
+    PyTuple_InitItem(out, 0, STRINGLIB_NEW(str, pos));
     Py_INCREF(sep_obj);
-    PyTuple_SET_ITEM(out, 1, sep_obj);
+    PyTuple_InitItem(out, 1, sep_obj);
     pos += sep_len;
-    PyTuple_SET_ITEM(out, 2, STRINGLIB_NEW(str + pos, str_len - pos));
+    PyTuple_InitItem(out, 2, STRINGLIB_NEW(str + pos, str_len - pos));
 
     if (PyErr_Occurred()) {
         Py_DECREF(out);
@@ -81,9 +81,9 @@ STRINGLIB(rpartition)(PyObject* str_obj,
 
     if (pos < 0) {
 #if STRINGLIB_MUTABLE
-        PyTuple_SET_ITEM(out, 0, STRINGLIB_NEW(NULL, 0));
-        PyTuple_SET_ITEM(out, 1, STRINGLIB_NEW(NULL, 0));
-        PyTuple_SET_ITEM(out, 2, STRINGLIB_NEW(str, str_len));
+        PyTuple_InitItem(out, 0, STRINGLIB_NEW(NULL, 0));
+        PyTuple_InitItem(out, 1, STRINGLIB_NEW(NULL, 0));
+        PyTuple_InitItem(out, 2, STRINGLIB_NEW(str, str_len));
 
         if (PyErr_Occurred()) {
             Py_DECREF(out);
@@ -91,20 +91,20 @@ STRINGLIB(rpartition)(PyObject* str_obj,
         }
 #else
         Py_INCREF(STRINGLIB_EMPTY);
-        PyTuple_SET_ITEM(out, 0, (PyObject*) STRINGLIB_EMPTY);
+        PyTuple_InitItem(out, 0, (PyObject*) STRINGLIB_EMPTY);
         Py_INCREF(STRINGLIB_EMPTY);
-        PyTuple_SET_ITEM(out, 1, (PyObject*) STRINGLIB_EMPTY);
+        PyTuple_InitItem(out, 1, (PyObject*) STRINGLIB_EMPTY);
         Py_INCREF(str_obj);
-        PyTuple_SET_ITEM(out, 2, (PyObject*) str_obj);
+        PyTuple_InitItem(out, 2, (PyObject*) str_obj);
 #endif
         return out;
     }
 
-    PyTuple_SET_ITEM(out, 0, STRINGLIB_NEW(str, pos));
+    PyTuple_InitItem(out, 0, STRINGLIB_NEW(str, pos));
     Py_INCREF(sep_obj);
-    PyTuple_SET_ITEM(out, 1, sep_obj);
+    PyTuple_InitItem(out, 1, sep_obj);
     pos += sep_len;
-    PyTuple_SET_ITEM(out, 2, STRINGLIB_NEW(str + pos, str_len - pos));
+    PyTuple_InitItem(out, 2, STRINGLIB_NEW(str + pos, str_len - pos));
 
     if (PyErr_Occurred()) {
         Py_DECREF(out);

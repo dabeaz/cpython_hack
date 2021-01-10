@@ -1008,14 +1008,14 @@ OSError_reduce(PyOSErrorObject *self, PyObject *Py_UNUSED(ignored))
 
         tmp = PyTuple_GetItem(self->args, 0);
         Py_INCREF(tmp);
-        PyTuple_SET_ITEM(args, 0, tmp);
+        PyTuple_InitItem(args, 0, tmp);
 
         tmp = PyTuple_GetItem(self->args, 1);
         Py_INCREF(tmp);
-        PyTuple_SET_ITEM(args, 1, tmp);
+        PyTuple_InitItem(args, 1, tmp);
 
         Py_INCREF(self->filename);
-        PyTuple_SET_ITEM(args, 2, self->filename);
+        PyTuple_InitItem(args, 2, self->filename);
 
         if (self->filename2) {
             /*
@@ -1024,11 +1024,11 @@ OSError_reduce(PyOSErrorObject *self, PyObject *Py_UNUSED(ignored))
              * winerror as well.
              */
             Py_INCREF(Py_None);
-            PyTuple_SET_ITEM(args, 3, Py_None);
+            PyTuple_InitItem(args, 3, Py_None);
 
             /* filename2 */
             Py_INCREF(self->filename2);
-            PyTuple_SET_ITEM(args, 4, self->filename2);
+            PyTuple_InitItem(args, 4, self->filename2);
         }
     } else
         Py_INCREF(args);

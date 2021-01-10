@@ -1714,11 +1714,11 @@ mro_implementation(PyTypeObject *type)
             return NULL;
         }
         Py_INCREF(type);
-        PyTuple_SET_ITEM(result, 0, (PyObject *) type);
+        PyTuple_InitItem(result, 0, (PyObject *) type);
         for (i = 0; i < k; i++) {
             PyObject *cls = PyTuple_GetItem(base->tp_mro, i);
             Py_INCREF(cls);
-            PyTuple_SET_ITEM(result, i + 1, cls);
+            PyTuple_InitItem(result, i + 1, cls);
         }
         return result;
     }
@@ -4162,11 +4162,11 @@ reduce_newobj(PyObject *obj)
         }
         cls = (PyObject *) Py_TYPE(obj);
         Py_INCREF(cls);
-        PyTuple_SET_ITEM(newargs, 0, cls);
+        PyTuple_InitItem(newargs, 0, cls);
         for (i = 0; i < n; i++) {
             PyObject *v = PyTuple_GetItem(args, i);
             Py_INCREF(v);
-            PyTuple_SET_ITEM(newargs, i+1, v);
+            PyTuple_InitItem(newargs, i+1, v);
         }
         Py_XDECREF(args);
     }

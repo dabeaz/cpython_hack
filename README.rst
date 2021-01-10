@@ -130,7 +130,8 @@ No more than 15 minutes can be spent each day.  No removal of core functionality
 - Day 7 (1/7/2021).  No progress.
 - Day 8 (1/8/2021).  No progress.
 - Day 9 (1/9/2021).  Some list API cleanup.
-
+- Day 10 (1/10/2021). PyTuple_SET_ITEM -> PyTuple_InitItem
+  
 Copyright and License Information
 ---------------------------------
 
