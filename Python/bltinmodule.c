@@ -905,7 +905,7 @@ update_bases(PyObject *bases, PyObject *const *args, Py_ssize_t nargs)
             }
             for (j = 0; j < i; j++) {
                 base = args[j];
-                PyList_SET_ITEM(new_bases, j, base);
+                PyList_InitItem(new_bases, j, base);
                 Py_INCREF(base);
             }
         }

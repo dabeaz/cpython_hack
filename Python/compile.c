@@ -1856,7 +1856,7 @@ compiler_visit_kwonlydefaults(struct compiler *c, asdl_seq *kwonlyargs,
                     Py_DECREF(mangled);
                     return 0;
                 }
-                PyList_SET_ITEM(keys, 0, mangled);
+                PyList_InitItem(keys, 0, mangled);
             }
             else {
                 int res = PyList_Append(keys, mangled);
@@ -5138,7 +5138,7 @@ consts_dict_keys_inorder(PyObject *dict)
         Py_INCREF(k);
         assert(i < size);
         assert(i >= 0);
-        PyList_SET_ITEM(consts, i, k);
+        PyList_InitItem(consts, i, k);
     }
     return consts;
 }

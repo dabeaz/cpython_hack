@@ -340,7 +340,7 @@ _PyStringList_AsList(const PyStringList *list)
 	Py_DECREF(pylist);
 	return NULL;
       }
-      PyList_SET_ITEM(pylist, i, item);
+      PyList_InitItem(pylist, i, item);
     }
     return pylist;
 }

@@ -988,7 +988,7 @@ static PyObject* ast2obj_list(asdl_seq *seq, PyObject* (*func)(void*))
             Py_DECREF(result);
             return NULL;
         }
-        PyList_SET_ITEM(result, i, value);
+        PyList_InitItem(result, i, value);
     }
     return result;
 }
@@ -3606,7 +3606,7 @@ ast2obj_expr(void* _o)
             value = PyList_New(n);
             if (!value) goto failed;
             for(i = 0; i < n; i++)
-                PyList_SET_ITEM(value, i, ast2obj_cmpop((cmpop_ty)asdl_seq_GET(o->v.Compare.ops, i)));
+                PyList_InitItem(value, i, ast2obj_cmpop((cmpop_ty)asdl_seq_GET(o->v.Compare.ops, i)));
         }
         if (!value) goto failed;
         if (PyObject_SetAttr(result, astmodulestate_global->ops, value) == -1)

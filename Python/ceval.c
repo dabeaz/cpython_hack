@@ -1085,7 +1085,7 @@ main_loop:
                 goto error;
             while (--oparg >= 0) {
                 PyObject *item = POP();
-                PyList_SET_ITEM(list, oparg, item);
+                PyList_InitItem(list, oparg, item);
             }
             PUSH(list);
             continue;
@@ -2091,7 +2091,7 @@ missing_arguments(PyThreadState *tstate, PyCodeObject *co,
                 Py_DECREF(missing_names);
                 return;
             }
-            PyList_SET_ITEM(missing_names, j++, name);
+            PyList_InitItem(missing_names, j++, name);
         }
     }
     assert(j == missing);

@@ -1799,7 +1799,7 @@ dict_keys(PyDictObject *mp)
         if (*value_ptr != NULL) {
             PyObject *key = ep[i].me_key;
             Py_INCREF(key);
-            PyList_SET_ITEM(v, j, key);
+            PyList_InitItem(v, j, key);
             j++;
         }
         value_ptr = (PyObject **)(((char *)value_ptr) + offset);
@@ -1837,7 +1837,7 @@ dict_values(PyDictObject *mp)
         value_ptr = (PyObject **)(((char *)value_ptr) + offset);
         if (value != NULL) {
             Py_INCREF(value);
-            PyList_SET_ITEM(v, j, value);
+            PyList_InitItem(v, j, value);
             j++;
         }
     }
@@ -1870,7 +1870,7 @@ dict_items(PyDictObject *mp)
             Py_DECREF(v);
             return NULL;
         }
-        PyList_SET_ITEM(v, i, item);
+        PyList_InitItem(v, i, item);
     }
     if (n != mp->ma_used) {
         /* Durnit.  The allocations caused the dict to resize.

@@ -3357,7 +3357,7 @@ split(PyObject *self,
         if (out == NULL)
             return NULL;
         Py_INCREF(self);
-        PyList_SET_ITEM(out, 0, self);
+        PyList_InitItem(out, 0, self);
         return out;
     }
     buf1 = PyUnicode_DATA(self);
@@ -3394,7 +3394,7 @@ rsplit(PyObject *self,
         if (out == NULL)
             return NULL;
         Py_INCREF(self);
-        PyList_SET_ITEM(out, 0, self);
+        PyList_InitItem(out, 0, self);
         return out;
     }
     buf1 = PyUnicode_DATA(self);

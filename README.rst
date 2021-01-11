@@ -131,7 +131,13 @@ No more than 15 minutes can be spent each day.  No removal of core functionality
 - Day 8 (1/8/2021).  No progress.
 - Day 9 (1/9/2021).  Some list API cleanup.
 - Day 10 (1/10/2021). PyTuple_SET_ITEM -> PyTuple_InitItem
-  
+
+What is this new line of modifications you ask?  At this point, it's
+about restoring data abstraction layers.  No direct access to
+data. Removal of macros and performance hacks.
+
+- Day 11 (1/11/2021). PyList_SET_ITEM -> PyList_InitItem
+
 Copyright and License Information
 ---------------------------------
 

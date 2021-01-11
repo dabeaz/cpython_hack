@@ -1756,7 +1756,7 @@ mro_implementation(PyTypeObject *type)
     }
 
     Py_INCREF(type);
-    PyList_SET_ITEM(result, 0, (PyObject *)type);
+    PyList_InitItem(result, 0, (PyObject *)type);
     if (pmerge(result, to_merge, n + 1) < 0) {
         Py_CLEAR(result);
     }

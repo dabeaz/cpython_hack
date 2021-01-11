@@ -30,6 +30,7 @@ PyAPI_FUNC(Py_ssize_t) PyList_Size(PyObject *);
 
 PyAPI_FUNC(PyObject *) PyList_GetItem(PyObject *, Py_ssize_t);
 PyAPI_FUNC(int) PyList_SetItem(PyObject *, Py_ssize_t, PyObject *);
+PyAPI_FUNC(int) PyList_InitItem(PyObject *, Py_ssize_t, PyObject *);  
 PyAPI_FUNC(int) PyList_Insert(PyObject *, Py_ssize_t, PyObject *);
 PyAPI_FUNC(int) PyList_Append(PyObject *, PyObject *);
 
@@ -40,7 +41,7 @@ PyAPI_FUNC(int) PyList_Sort(PyObject *);
 PyAPI_FUNC(int) PyList_Reverse(PyObject *);
 PyAPI_FUNC(PyObject *) PyList_AsTuple(PyObject *);
 PyAPI_FUNC(PyObject *) PyList_Extend(PyObject *, PyObject *);
-  
+
 typedef struct {
     PyObject_VAR_HEAD
     /* Vector of pointers to list elements.  list[0] is ob_item[0], etc. */
@@ -59,10 +60,6 @@ typedef struct {
      */
     Py_ssize_t allocated;
 } PyListObject;
-  
-/* Macro, trading safety for speed */
-  
-#define PyList_SET_ITEM(op, i, v) (((PyListObject *)(op))->ob_item[i] = (v))
   
 #ifdef __cplusplus
 }

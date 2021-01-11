@@ -197,7 +197,7 @@ do_mklist(const char **p_format, va_list *p_va, char endchar, Py_ssize_t n, int 
             Py_DECREF(v);
             return NULL;
         }
-        PyList_SET_ITEM(v, i, w);
+        PyList_InitItem(v, i, w);
     }
     if (**p_format != endchar) {
         Py_DECREF(v);

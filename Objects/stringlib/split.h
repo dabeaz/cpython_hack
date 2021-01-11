@@ -35,7 +35,7 @@
     if (sub == NULL)                            \
         goto onError;                           \
     if (count < MAX_PREALLOC) {                 \
-        PyList_SET_ITEM(list, count, sub);      \
+        PyList_InitItem(list, count, sub);      \
     } else {                                    \
         if (PyList_Append(list, sub)) {         \
             Py_DECREF(sub);                     \
@@ -74,7 +74,7 @@ STRINGLIB(split_whitespace)(PyObject* str_obj,
         if (j == 0 && i == str_len && STRINGLIB_CHECK_EXACT(str_obj)) {
             /* No whitespace in str_obj, so just use it as list[0] */
             Py_INCREF(str_obj);
-            PyList_SET_ITEM(list, 0, (PyObject *)str_obj);
+            PyList_InitItem(list, 0, (PyObject *)str_obj);
             count++;
             break;
         }
@@ -126,7 +126,7 @@ STRINGLIB(split_char)(PyObject* str_obj,
     if (count == 0 && STRINGLIB_CHECK_EXACT(str_obj)) {
         /* ch not in str_obj, so just use str_obj as list[0] */
         Py_INCREF(str_obj);
-        PyList_SET_ITEM(list, 0, (PyObject *)str_obj);
+        PyList_InitItem(list, 0, (PyObject *)str_obj);
         count++;
     } else
 #endif
@@ -174,7 +174,7 @@ STRINGLIB(split)(PyObject* str_obj,
     if (count == 0 && STRINGLIB_CHECK_EXACT(str_obj)) {
         /* No match in str_obj, so just use it as list[0] */
         Py_INCREF(str_obj);
-        PyList_SET_ITEM(list, 0, (PyObject *)str_obj);
+        PyList_InitItem(list, 0, (PyObject *)str_obj);
         count++;
     } else
 #endif
@@ -213,7 +213,7 @@ STRINGLIB(rsplit_whitespace)(PyObject* str_obj,
         if (j == str_len - 1 && i < 0 && STRINGLIB_CHECK_EXACT(str_obj)) {
             /* No whitespace in str_obj, so just use it as list[0] */
             Py_INCREF(str_obj);
-            PyList_SET_ITEM(list, 0, (PyObject *)str_obj);
+            PyList_InitItem(list, 0, (PyObject *)str_obj);
             count++;
             break;
         }
@@ -266,7 +266,7 @@ STRINGLIB(rsplit_char)(PyObject* str_obj,
     if (count == 0 && STRINGLIB_CHECK_EXACT(str_obj)) {
         /* ch not in str_obj, so just use str_obj as list[0] */
         Py_INCREF(str_obj);
-        PyList_SET_ITEM(list, 0, (PyObject *)str_obj);
+        PyList_InitItem(list, 0, (PyObject *)str_obj);
         count++;
     } else
 #endif
@@ -315,7 +315,7 @@ STRINGLIB(rsplit)(PyObject* str_obj,
     if (count == 0 && STRINGLIB_CHECK_EXACT(str_obj)) {
         /* No match in str_obj, so just use it as list[0] */
         Py_INCREF(str_obj);
-        PyList_SET_ITEM(list, 0, (PyObject *)str_obj);
+        PyList_InitItem(list, 0, (PyObject *)str_obj);
         count++;
     } else
 #endif
@@ -339,7 +339,7 @@ STRINGLIB(splitlines)(PyObject* str_obj,
 {
     /* This does not use the preallocated list because splitlines is
        usually run with hundreds of newlines.  The overhead of
-       switching between PyList_SET_ITEM and append causes about a
+       switching between PyList_InitItem and append causes about a
        2-3% slowdown for that common case.  A smarter implementation
        could move the if check out, so the SET_ITEMs are done first
        and the appends only done when the prealloc buffer is full.

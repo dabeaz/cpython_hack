@@ -866,7 +866,7 @@ on_completion_display_matches_hook(char **matches,
         s = decode(matches[i+1]);
         if (s == NULL)
             goto error;
-        PyList_SET_ITEM(m, i, s);
+        PyList_InitItem(m, i, s);
     }
     sub = decode(matches[0]);
     r = PyObject_CallFunction(readlinestate_global->completion_display_matches_hook,

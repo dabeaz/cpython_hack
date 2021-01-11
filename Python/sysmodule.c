@@ -1105,7 +1105,7 @@ makepathobject(const char *path, char delim)
             Py_DECREF(v);
             return NULL;
         }
-        PyList_SET_ITEM(v, i, w);
+        PyList_InitItem(v, i, w);
         if (*p == '\0')
             break;
         path = p+1;
@@ -1140,7 +1140,7 @@ make_sys_argv(int argc, char * const * argv)
             Py_DECREF(list);
             return NULL;
         }
-        PyList_SET_ITEM(list, i, v);
+        PyList_InitItem(list, i, v);
     }
     return list;
 }

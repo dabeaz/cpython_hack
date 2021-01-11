@@ -15,6 +15,7 @@
 #define PyList_GET_SIZE(op)    Py_SIZE((PyListObject *)(op))
 #define PyList_GET_ITEM(op, i) ((PyListObject *)(op)->ob_item[i])
 #define _PyList_ITEMS(op)      (((PyListObject *)(op))->ob_item)
+#define PyList_SET_ITEM(op, i, v) (((PyListObject *)(op))->ob_item[i] = (v))
 
 /*[clinic input]
 class list "PyListObject *" "&PyList_Type"
@@ -571,6 +572,12 @@ PyList_SetItem(PyObject *op, Py_ssize_t i,
     p = ((PyListObject *)op) -> ob_item + i;
     Py_XSETREF(*p, newitem);
     return 0;
+}
+
+int
+PyList_InitItem(PyObject *op, Py_ssize_t i, PyObject *newitem) {
+  ((PyListObject *) op)->ob_item[i] = newitem;
+  return 0;
 }
 
 static int
