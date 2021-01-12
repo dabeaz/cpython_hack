@@ -1,3 +1,4 @@
+
 /* Abstract Object Interface (many thanks to Jim Fulton) */
 
 #ifndef Py_ABSTRACTOBJECT_H
@@ -563,10 +564,11 @@ PyAPI_FUNC(PyObject *) PySequence_Fast(PyObject *o, const char* m);
   
 /* Return a pointer to the underlying item array for
    an object returned by PySequence_Fast */
-#define PySequence_Fast_ITEMS(sf) \
+
+#define _PySequence_Fast_ITEMS(sf) \
     (PyList_Check(sf) ? ((PyListObject *)(sf))->ob_item \
                       : ((PyTupleObject *)(sf))->ob_item)
-
+  
 /* Return the number of occurrences on value on 'o', that is, return
    the number of keys for which o[key] == value.
 

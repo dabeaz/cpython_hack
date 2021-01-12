@@ -137,7 +137,8 @@ about restoring data abstraction layers.  No direct access to
 data. Removal of macros and performance hacks.
 
 - Day 11 (1/11/2021). PyList_SET_ITEM -> PyList_InitItem
-
+- Day 12 (1/12/2021). Some work on removing PySequence_Fast_ITEMS.
+  
 Copyright and License Information
 ---------------------------------
 

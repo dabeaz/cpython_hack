@@ -949,7 +949,7 @@ list_ass_slice(PyListObject *a, Py_ssize_t ilow, Py_ssize_t ihigh, PyObject *v)
         if(v_as_SF == NULL)
             goto Error;
         n = PySequence_Size(v_as_SF);
-        vitem = PySequence_Fast_ITEMS(v_as_SF);
+        // vitem = PySequence_Fast_ITEMS(v_as_SF);
     }
     if (ilow < 0)
         ilow = 0;
@@ -1003,7 +1003,7 @@ list_ass_slice(PyListObject *a, Py_ssize_t ilow, Py_ssize_t ihigh, PyObject *v)
             (k - ihigh)*sizeof(PyObject *));
     }
     for (k = 0; k < n; k++, ilow++) {
-        PyObject *w = vitem[k];
+        PyObject *w = PySequence_GetItem(v_as_SF, k); // vitem[k];
         Py_XINCREF(w);
         item[ilow] = w;
     }
@@ -1157,10 +1157,10 @@ list_extend(PyListObject *self, PyObject *iterable)
          * before calling PySequence_Fast_ITEMS.
          */
         /* populate the end of self with iterable's items */
-        src = PySequence_Fast_ITEMS(iterable);
+        // src = PySequence_Fast_ITEMS(iterable);
         dest = self->ob_item + m;
         for (i = 0; i < n; i++) {
-            PyObject *o = src[i];
+	  PyObject *o = PySequence_GetItem(iterable, i); // src[i];
             Py_INCREF(o);
             dest[i] = o;
         }
@@ -3234,11 +3234,11 @@ list_ass_subscript(PyListObject* self, PyObject* item, PyObject* value)
             }
 
             selfitems = self->ob_item;
-            seqitems = PySequence_Fast_ITEMS(seq);
+	    //            seqitems = PySequence_Fast_ITEMS(seq);
             for (cur = start, i = 0; i < slicelength;
                  cur += (size_t)step, i++) {
-                garbage[i] = selfitems[cur];
-                ins = seqitems[i];
+	      garbage[i] = selfitems[cur];
+	      ins = PySequence_GetItem(seq, i); // seqitems[i];
                 Py_INCREF(ins);
                 selfitems[cur] = ins;
             }

@@ -3084,7 +3084,7 @@ PyUnicode_Join(PyObject *separator, PyObject *seq)
      * so we are sure that fseq won't be mutated.
      */
 
-    items = PySequence_Fast_ITEMS(fseq);
+    items = _PySequence_Fast_ITEMS(fseq);
     seqlen = PySequence_Size(fseq);
     res = _PyUnicode_JoinArray(separator, items, seqlen);
     Py_DECREF(fseq);
