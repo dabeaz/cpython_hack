@@ -32,7 +32,7 @@ long_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     PyObject *x = NULL;
     PyObject *obase = NULL;
 
-    fastargs = _PyArg_UnpackKeywords(_PyTuple_CAST(args)->ob_item, nargs, kwargs, NULL, &_parser, 0, 2, 0, argsbuf);
+    fastargs = _PyArg_UnpackKeywords(PyTuple_Items(args), nargs, kwargs, NULL, &_parser, 0, 2, 0, argsbuf);
     if (!fastargs) {
         goto exit;
     }

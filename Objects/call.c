@@ -217,14 +217,14 @@ PyVectorcall_Call(PyObject *callable, PyObject *tuple, PyObject *kwargs)
 
     /* Fast path for no keywords */
     if (kwargs == NULL || PyDict_Size(kwargs) == 0) {
-        return func(callable, _PyTuple_ITEMS(tuple), nargs, NULL);
+        return func(callable, PyTuple_Items(tuple), nargs, NULL);
     }
 
     /* Convert arguments & call */
     PyObject *const *args;
     PyObject *kwnames;
     args = _PyStack_UnpackDict(tstate,
-                               _PyTuple_ITEMS(tuple), nargs,
+                               PyTuple_Items(tuple), nargs,
                                kwargs, &kwnames);
     if (args == NULL) {
         return NULL;
@@ -342,7 +342,7 @@ _PyFunction_Vectorcall(PyObject *func, PyObject* const* stack,
                  && co->co_argcount == PyTuple_Size(argdefs)) {
             /* function called with no arguments, but all parameters have
                a default value: use default values as arguments .*/
-            stack = _PyTuple_ITEMS(argdefs);
+            stack = PyTuple_Items(argdefs);
             return function_code_fastcall(tstate, co,
                                           stack, PyTuple_Size(argdefs),
                                           globals);
@@ -357,7 +357,7 @@ _PyFunction_Vectorcall(PyObject *func, PyObject* const* stack,
     PyObject **d;
     Py_ssize_t nd;
     if (argdefs != NULL) {
-        d = _PyTuple_ITEMS(argdefs);
+        d = PyTuple_Items(argdefs);
         nd = PyTuple_Size(argdefs);
         assert(nd <= INT_MAX);
     }
@@ -368,7 +368,7 @@ _PyFunction_Vectorcall(PyObject *func, PyObject* const* stack,
     return _PyEval_EvalCode(tstate,
                 (PyObject*)co, globals, (PyObject *)NULL,
                 stack, nargs,
-                nkwargs ? _PyTuple_ITEMS(kwnames) : NULL,
+                nkwargs ? PyTuple_Items(kwnames) : NULL,
                 stack + nargs,
                 nkwargs, 1,
                 d, (int)nd, kwdefs,
@@ -418,7 +418,7 @@ _PyObject_Call_Prepend(PyThreadState *tstate, PyObject *callable,
     /* use borrowed references */
     stack[0] = obj;
     memcpy(&stack[1],
-           _PyTuple_ITEMS(args),
+           PyTuple_Items(args),
            argcount * sizeof(PyObject *));
 
     PyObject *result = _PyObject_FastCallDictTstate(tstate, callable,
@@ -470,7 +470,7 @@ _PyObject_CallFunctionVa(PyThreadState *tstate, PyObject *callable,
              func(*(arg1, arg2, arg3)): func(arg1, arg2, arg3) */
         PyObject *args = stack[0];
         result = _PyObject_VectorcallTstate(tstate, callable,
-                                            _PyTuple_ITEMS(args),
+                                            PyTuple_Items(args),
                                             PyTuple_Size(args),
                                             NULL);
     }

@@ -54,7 +54,7 @@ tb_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     int tb_lasti;
     int tb_lineno;
 
-    fastargs = _PyArg_UnpackKeywords(_PyTuple_CAST(args)->ob_item, nargs, kwargs, NULL, &_parser, 4, 4, 0, argsbuf);
+    fastargs = _PyArg_UnpackKeywords(PyTuple_Items(args), nargs, kwargs, NULL, &_parser, 4, 4, 0, argsbuf);
     if (!fastargs) {
         goto exit;
     }

@@ -377,7 +377,7 @@ vgetargs1(PyObject *args, const char *format, va_list *p_va, int flags)
             return 0;
         }
 
-        stack = _PyTuple_ITEMS(args);
+        stack = PyTuple_Items(args);
         nargs = PyTuple_Size(args);
     }
     else {
@@ -1803,7 +1803,7 @@ vgetargskeywordsfast(PyObject *args, PyObject *keywords,
         return 0;
     }
 
-    stack = _PyTuple_ITEMS(args);
+    stack = PyTuple_Items(args);
     nargs = PyTuple_Size(args);
     return vgetargskeywordsfast_impl(stack, nargs, keywords, NULL,
                                      parser, p_va, flags);
@@ -2228,7 +2228,7 @@ PyArg_UnpackTuple(PyObject *args, const char *name, Py_ssize_t min, Py_ssize_t m
             "PyArg_UnpackTuple() argument list is not a tuple");
         return 0;
     }
-    stack = _PyTuple_ITEMS(args);
+    stack = PyTuple_Items(args);
     nargs = PyTuple_Size(args);
     va_start(vargs, max);
     retval = unpack_stack(stack, nargs, name, min, max, vargs);

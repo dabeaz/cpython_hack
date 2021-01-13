@@ -138,7 +138,8 @@ data. Removal of macros and performance hacks.
 
 - Day 11 (1/11/2021). PyList_SET_ITEM -> PyList_InitItem
 - Day 12 (1/12/2021). Some work on removing PySequence_Fast_ITEMS.
-  
+- Day 13 (1/13/2021). Added PyList_Items(), PyTuple_Items().
+
 Copyright and License Information
 ---------------------------------
 

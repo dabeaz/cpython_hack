@@ -566,8 +566,7 @@ PyAPI_FUNC(PyObject *) PySequence_Fast(PyObject *o, const char* m);
    an object returned by PySequence_Fast */
 
 #define _PySequence_Fast_ITEMS(sf) \
-    (PyList_Check(sf) ? ((PyListObject *)(sf))->ob_item \
-                      : ((PyTupleObject *)(sf))->ob_item)
+  (PyList_Check(sf) ? PyList_Items(sf) : PyTuple_Items(sf))
   
 /* Return the number of occurrences on value on 'o', that is, return
    the number of keys for which o[key] == value.

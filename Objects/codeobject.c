@@ -262,7 +262,7 @@ intern_strings(PyObject *tuple)
                             "non-string found in code slot");
             return -1;
         }
-        PyUnicode_InternInPlace(&_PyTuple_ITEMS(tuple)[i]);
+        PyUnicode_InternInPlace(&PyTuple_Items(tuple)[i]);
     }
     return 0;
 }

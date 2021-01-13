@@ -108,7 +108,7 @@ structseq_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     PyObject *arg;
     PyObject *dict = NULL;
 
-    fastargs = _PyArg_UnpackKeywords(_PyTuple_CAST(args)->ob_item, nargs, kwargs, NULL, &_parser, 1, 2, 0, argsbuf);
+    fastargs = _PyArg_UnpackKeywords(PyTuple_Items(args), nargs, kwargs, NULL, &_parser, 1, 2, 0, argsbuf);
     if (!fastargs) {
         goto exit;
     }

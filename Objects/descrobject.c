@@ -473,7 +473,7 @@ classmethoddescr_call(PyMethodDescrObject *descr, PyObject *args,
     if (bound == NULL) {
         return NULL;
     }
-    PyObject *res = PyObject_VectorcallDict(bound, _PyTuple_ITEMS(args)+1,
+    PyObject *res = PyObject_VectorcallDict(bound, PyTuple_Items(args)+1,
                                            argc-1, kwds);
     Py_DECREF(bound);
     return res;
@@ -1687,7 +1687,7 @@ mappingproxy_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     Py_ssize_t nargs = PyTuple_Size(args);
     PyObject *mapping;
 
-    fastargs = _PyArg_UnpackKeywords(_PyTuple_CAST(args)->ob_item, nargs, kwargs, NULL, &_parser, 1, 1, 0, argsbuf);
+    fastargs = _PyArg_UnpackKeywords(PyTuple_Items(args), nargs, kwargs, NULL, &_parser, 1, 1, 0, argsbuf);
     if (!fastargs) {
         goto exit;
     }
@@ -1754,7 +1754,7 @@ property_init(PyObject *self, PyObject *args, PyObject *kwargs)
     PyObject *fdel = NULL;
     PyObject *doc = NULL;
 
-    fastargs = _PyArg_UnpackKeywords(_PyTuple_CAST(args)->ob_item, nargs, kwargs, NULL, &_parser, 0, 4, 0, argsbuf);
+    fastargs = _PyArg_UnpackKeywords(PyTuple_Items(args), nargs, kwargs, NULL, &_parser, 0, 4, 0, argsbuf);
     if (!fastargs) {
         goto exit;
     }

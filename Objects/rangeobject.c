@@ -138,7 +138,7 @@ range_new(PyTypeObject *type, PyObject *args, PyObject *kw)
     if (!_PyArg_NoKeywords("range", kw))
         return NULL;
 
-    return range_from_array(type, _PyTuple_ITEMS(args), PyTuple_Size(args));
+    return range_from_array(type, PyTuple_Items(args), PyTuple_Size(args));
 }
 
 

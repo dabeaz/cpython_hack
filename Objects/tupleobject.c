@@ -6,6 +6,7 @@
 #include "pycore_accu.h"
 #include "pycore_object.h"
 
+#define _PyTuple_CAST(op) (assert(PyTuple_Check(op)), (PyTupleObject *)(op))
 #define PyTuple_GET_SIZE(op)    Py_SIZE(_PyTuple_CAST(op))
 #define PyTuple_GET_ITEM(op, i) (_PyTuple_CAST(op)->ob_item[i])
 
@@ -195,6 +196,11 @@ PyTuple_GetItem(PyObject *op, Py_ssize_t i)
         return NULL;
     }
     return ((PyTupleObject *)op) -> ob_item[i];
+}
+
+PyObject **
+PyTuple_Items(PyObject *op) {
+  return ((PyTupleObject *) op)->ob_item;
 }
 
 int
