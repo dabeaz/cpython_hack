@@ -7,7 +7,7 @@
 #include "pycore_code.h"
 #include "pycore_interp.h"        // PyInterpreterState.co_extra_freefuncs
 #include "pycore_pystate.h"       // _PyInterpreterState_GET()
-#include "pycore_tupleobject.h"
+
 /*[clinic input]
 preserve
 [clinic start generated code]*/

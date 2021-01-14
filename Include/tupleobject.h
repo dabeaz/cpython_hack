@@ -35,7 +35,7 @@ PyAPI_FUNC(int) PyTuple_InitItem(PyObject *, Py_ssize_t, PyObject *);
 PyAPI_FUNC(PyObject *) PyTuple_GetSlice(PyObject *, Py_ssize_t, Py_ssize_t);
 PyAPI_FUNC(PyObject *) PyTuple_Pack(Py_ssize_t, ...);
 PyAPI_FUNC(PyObject **) PyTuple_Items(PyObject *);
-  
+
 typedef struct {
     PyObject_VAR_HEAD
     /* ob_item contains space for 'ob_size' elements.
@@ -43,9 +43,10 @@ typedef struct {
        the tuple is not yet visible outside the function that builds it. */
     PyObject *ob_item[1];
 } PyTupleObject;
-
-PyAPI_FUNC(int) _PyTuple_Resize(PyObject **, Py_ssize_t);
-
+  
+PyAPI_FUNC(int) PyTuple_Resize(PyObject **, Py_ssize_t);
+PyAPI_FUNC(PyObject *) PyTuple_FromArray(PyObject *const *, Py_ssize_t);
+  
 #ifdef __cplusplus
 }
 #endif

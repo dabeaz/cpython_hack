@@ -4,9 +4,7 @@
 #include "pycore_object.h"
 #include "pycore_pyerrors.h"
 #include "pycore_pystate.h"      // PyThreadState_Get()
-#include "pycore_tupleobject.h"
 #include "frameobject.h"
-
 
 static PyObject *const *
 _PyStack_UnpackDict(PyThreadState *tstate,
@@ -156,7 +154,7 @@ _PyObject_MakeTpCall(PyThreadState *tstate, PyObject *callable,
         return NULL;
     }
 
-    PyObject *argstuple = _PyTuple_FromArray(args, nargs);
+    PyObject *argstuple = PyTuple_FromArray(args, nargs);
     if (argstuple == NULL) {
         return NULL;
     }

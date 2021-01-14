@@ -7,7 +7,6 @@
 #include "pycore_object.h"
 #include "pycore_pyerrors.h"
 #include "pycore_pystate.h"      // PyThreadState_Get()
-#include "pycore_tupleobject.h"
 
 _Py_IDENTIFIER(__builtins__);
 _Py_IDENTIFIER(__dict__);
@@ -953,7 +952,7 @@ builtin___build_class__(PyObject *self, PyObject *const *args, Py_ssize_t nargs,
                         "__build_class__: name is not a string");
         return NULL;
     }
-    orig_bases = _PyTuple_FromArray(args + 2, nargs - 2);
+    orig_bases = PyTuple_FromArray(args + 2, nargs - 2);
     if (orig_bases == NULL)
         return NULL;
 

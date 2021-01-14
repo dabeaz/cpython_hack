@@ -3,7 +3,6 @@
 #include "Python.h"
 #include "pycore_abstract.h"   // _PyIndex_Check()
 #include "pycore_object.h"
-#include "pycore_tupleobject.h"
 #include "pycore_accu.h"
 
 #ifdef STDC_HEADERS
@@ -2774,7 +2773,7 @@ PyList_AsTuple(PyObject *v)
         PyErr_BadInternalCall();
         return NULL;
     }
-    return _PyTuple_FromArray(((PyListObject *)v)->ob_item, Py_SIZE(v));
+    return PyTuple_FromArray(((PyListObject *)v)->ob_item, Py_SIZE(v));
 }
 
 /*[clinic input]

@@ -432,7 +432,7 @@ tupleitem(PyTupleObject *a, Py_ssize_t i)
 }
 
 PyObject *
-_PyTuple_FromArray(PyObject *const *src, Py_ssize_t n)
+PyTuple_FromArray(PyObject *const *src, Py_ssize_t n)
 {
     if (n == 0) {
         return PyTuple_New(0);
@@ -465,7 +465,7 @@ tupleslice(PyTupleObject *a, Py_ssize_t ilow,
         Py_INCREF(a);
         return (PyObject *)a;
     }
-    return _PyTuple_FromArray(a->ob_item + ilow, ihigh - ilow);
+    return PyTuple_FromArray(a->ob_item + ilow, ihigh - ilow);
 }
 
 PyObject *
@@ -903,7 +903,7 @@ PyTypeObject PyTuple_Type = {
    known to some other part of the code. */
 
 int
-_PyTuple_Resize(PyObject **pv, Py_ssize_t newsize)
+PyTuple_Resize(PyObject **pv, Py_ssize_t newsize)
 {
     PyTupleObject *v;
     PyTupleObject *sv;

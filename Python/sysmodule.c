@@ -24,7 +24,6 @@ Data members:
 #include "pycore_pyerrors.h"
 #include "pycore_pylifecycle.h"
 #include "pycore_pystate.h"       // PyThreadState_Get()
-#include "pycore_tupleobject.h"
 
 #include "osdefs.h"               // DELIM
 #include <locale.h>

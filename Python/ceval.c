@@ -19,7 +19,6 @@
 #include "pycore_pylifecycle.h"
 #include "pycore_pystate.h"       // _PyInterpreterState_GET()
 #include "pycore_sysmodule.h"
-#include "pycore_tupleobject.h"
 
 #include "code.h"
 #include "dictobject.h"
@@ -2298,7 +2297,7 @@ _PyEval_EvalCode(PyThreadState *tstate,
 
     /* Pack other positional arguments into the *args argument */
     if (co->co_flags & CO_VARARGS) {
-        PyObject *u = _PyTuple_FromArray(args + n, argcount - n);
+        PyObject *u = PyTuple_FromArray(args + n, argcount - n);
         if (u == NULL) {
             goto fail;
         }

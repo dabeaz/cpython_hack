@@ -2,7 +2,6 @@
 
 #include "Python.h"
 #include "pycore_abstract.h"   // _PyIndex_Check()
-#include "pycore_tupleobject.h"
 #include "structmember.h"         // PyMemberDef
 
 /* Support objects whose length is > PY_SSIZE_T_MAX.

@@ -8,7 +8,6 @@
 */
 
 #include "Python.h"
-#include "pycore_tupleobject.h"
 #include "pycore_object.h"
 #include "structmember.h"         // PyMemberDef
 
@@ -308,7 +307,7 @@ structseq_reduce(PyStructSequence* self, PyObject *Py_UNUSED(ignored))
     n_fields = REAL_SIZE(self);
     n_visible_fields = VISIBLE_SIZE(self);
     n_unnamed_fields = UNNAMED_FIELDS(self);
-    tup = _PyTuple_FromArray(self->ob_item, n_visible_fields);
+    tup = PyTuple_FromArray(self->ob_item, n_visible_fields);
     if (!tup)
         goto error;
 

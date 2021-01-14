@@ -4,7 +4,6 @@
 #include "pycore_ceval.h"        // _Py_EnterRecursiveCall()
 #include "pycore_object.h"
 #include "pycore_pystate.h"      // PyThreadState_Get()
-#include "pycore_tupleobject.h"
 #include "structmember.h"         // PyMemberDef
 
 _Py_IDENTIFIER(getattr);
@@ -290,7 +289,7 @@ method_vectorcall_VARARGS(
     if (method_check_args(func, args, nargs, kwnames)) {
         return NULL;
     }
-    PyObject *argstuple = _PyTuple_FromArray(args+1, nargs-1);
+    PyObject *argstuple = PyTuple_FromArray(args+1, nargs-1);
     if (argstuple == NULL) {
         return NULL;
     }
@@ -313,7 +312,7 @@ method_vectorcall_VARARGS_KEYWORDS(
     if (method_check_args(func, args, nargs, NULL)) {
         return NULL;
     }
-    PyObject *argstuple = _PyTuple_FromArray(args+1, nargs-1);
+    PyObject *argstuple = PyTuple_FromArray(args+1, nargs-1);
     if (argstuple == NULL) {
         return NULL;
     }
