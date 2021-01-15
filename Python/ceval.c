@@ -2321,7 +2321,7 @@ _PyEval_EvalCode(PyThreadState *tstate,
 
         /* Speed hack: do raw pointer compares. As names are
            normally interned this should almost always hit. */
-        co_varnames = ((PyTupleObject *)(co->co_varnames))->ob_item;
+        co_varnames = PyTuple_Items(co->co_varnames); 
         for (j = co->co_posonlyargcount; j < total_args; j++) {
             PyObject *varname = co_varnames[j];
             if (varname == keyword) {

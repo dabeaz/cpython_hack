@@ -140,7 +140,8 @@ data. Removal of macros and performance hacks.
 - Day 12 (1/12/2021). Some work on removing PySequence_Fast_ITEMS.
 - Day 13 (1/13/2021). Added PyList_Items(), PyTuple_Items().
 - Day 14 (1/14/2021). Remove Include/internal/pycore_tupleobject.h.
-  
+- Day 15 (1/15/2021). Removed PyTuple_Resize(). Encapsulated PyTupleObject. 
+
 Copyright and License Information
 ---------------------------------
 

@@ -2410,24 +2410,23 @@ unsafe_float_compare(PyObject *v, PyObject *w, MergeState *ms)
 static int
 unsafe_tuple_compare(PyObject *v, PyObject *w, MergeState *ms)
 {
-    PyTupleObject *vt, *wt;
+    PyObject **vi, **wi;
     Py_ssize_t i, vlen, wlen;
     int k;
 
     /* Modified from Objects/tupleobject.c:tuplerichcompare, assuming: */
     assert(Py_IS_TYPE(v, &PyTuple_Type));
     assert(Py_IS_TYPE(w, &PyTuple_Type));
-    assert(Py_SIZE(v) > 0);
-    assert(Py_SIZE(w) > 0);
+    assert(PyTuple_Size(v) > 0);
+    assert(PyTuple_Size(w) > 0);
+    vi = PyTuple_Items(v);
+    wi = PyTuple_Items(w);
 
-    vt = (PyTupleObject *)v;
-    wt = (PyTupleObject *)w;
-
-    vlen = Py_SIZE(vt);
-    wlen = Py_SIZE(wt);
+    vlen = PyTuple_Size(v);
+    wlen = PyTuple_Size(w);
 
     for (i = 0; i < vlen && i < wlen; i++) {
-        k = PyObject_RichCompareBool(vt->ob_item[i], wt->ob_item[i], Py_EQ);
+      k = PyObject_RichCompareBool(vi[i], wi[i], Py_EQ);
         if (k < 0)
             return -1;
         if (!k)
@@ -2438,9 +2437,9 @@ unsafe_tuple_compare(PyObject *v, PyObject *w, MergeState *ms)
         return vlen < wlen;
 
     if (i == 0)
-        return ms->tuple_elem_compare(vt->ob_item[i], wt->ob_item[i], ms);
+        return ms->tuple_elem_compare(vi[i], wi[i], ms);
     else
-        return PyObject_RichCompareBool(vt->ob_item[i], wt->ob_item[i], Py_LT);
+        return PyObject_RichCompareBool(vi[i], wi[i], Py_LT);
 }
 
 /* An adaptive, stable, natural mergesort.  See listsort.txt.

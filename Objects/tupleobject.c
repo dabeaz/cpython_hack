@@ -6,6 +6,14 @@
 #include "pycore_accu.h"
 #include "pycore_object.h"
 
+typedef struct {
+    PyObject_VAR_HEAD
+    /* ob_item contains space for 'ob_size' elements.
+       Items must normally not be NULL, except during construction when
+       the tuple is not yet visible outside the function that builds it. */
+    PyObject *ob_item[1];
+} PyTupleObject;
+
 #define _PyTuple_CAST(op) (assert(PyTuple_Check(op)), (PyTupleObject *)(op))
 #define PyTuple_GET_SIZE(op)    Py_SIZE(_PyTuple_CAST(op))
 #define PyTuple_GET_ITEM(op, i) (_PyTuple_CAST(op)->ob_item[i])
@@ -894,57 +902,6 @@ PyTypeObject PyTuple_Type = {
     PyMem_Free,
     .tp_vectorcall = tuple_vectorcall,
 };
-
-/* The following function breaks the notion that tuples are immutable:
-   it changes the size of a tuple.  We get away with this only if there
-   is only one module referencing the object.  You can also think of it
-   as creating a new tuple object and destroying the old one, only more
-   efficiently.  In any case, don't use this if the tuple may already be
-   known to some other part of the code. */
-
-int
-PyTuple_Resize(PyObject **pv, Py_ssize_t newsize)
-{
-    PyTupleObject *v;
-    PyTupleObject *sv;
-    Py_ssize_t i;
-    Py_ssize_t oldsize;
-
-    v = (PyTupleObject *) *pv;
-    if (v == NULL || !Py_IS_TYPE(v, &PyTuple_Type) ||
-        (Py_SIZE(v) != 0 && Py_REFCNT(v) != 1)) {
-        *pv = 0;
-        Py_XDECREF(v);
-        PyErr_BadInternalCall();
-        return -1;
-    }
-    oldsize = Py_SIZE(v);
-    if (oldsize == newsize)
-        return 0;
-
-    if (oldsize == 0) {
-        /* Empty tuples are often shared, so we should never
-           resize them in-place even if we do own the only
-           (current) reference */
-        Py_DECREF(v);
-        *pv = PyTuple_New(newsize);
-        return *pv == NULL ? -1 : 0;
-    }
-
-    /* DECREF items deleted by shrinkage */
-    for (i = newsize; i < oldsize; i++) {
-        Py_CLEAR(v->ob_item[i]);
-    }
-    sv = PyObject_NewVar(PyTupleObject, &PyTuple_Type, newsize);
-    memmove(sv, v, _PyObject_VAR_SIZE(&PyTuple_Type, newsize));
-    _Py_NewReference((PyObject *) sv);
-    /* Zero out items added by growing */
-    if (newsize > oldsize)
-        memset(&sv->ob_item[oldsize], 0,
-               sizeof(*sv->ob_item) * (newsize - oldsize));
-    *pv = (PyObject *) sv;
-    return 0;
-}
 
 void
 _PyTuple_Fini(PyThreadState *tstate)

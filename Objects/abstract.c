@@ -1154,6 +1154,7 @@ PySequence_Tuple(PyObject *v)
     PyObject *it;  /* iter(v) */
     Py_ssize_t n;             /* guess for result tuple size */
     PyObject *result = NULL;
+    PyObject **arr = NULL;
     Py_ssize_t j;
 
     if (v == NULL) {
@@ -1168,10 +1169,10 @@ PySequence_Tuple(PyObject *v)
     n = PyObject_LengthHint(v, 10);
     if (n == -1)
         goto Fail;
-    result = PyTuple_New(n);
-    if (result == NULL)
-        goto Fail;
-
+    arr = (PyObject **) malloc(sizeof(PyObject *)*n);
+    if (arr == NULL)
+      goto Fail;
+    
     /* Fill the tuple. */
     for (j = 0; ; ++j) {
         PyObject *item = PyIter_Next(it);
@@ -1197,25 +1198,29 @@ PySequence_Tuple(PyObject *v)
                 goto Fail;
             }
             n = (Py_ssize_t)newn;
-            if (PyTuple_Resize(&result, n) != 0) {
-                Py_DECREF(item);
-                goto Fail;
-            }
+	    {
+	      PyObject **newarr = (PyObject **) realloc(arr, n*sizeof(PyObject *));
+	      if (newarr == NULL) {
+		Py_DECREF(item);
+		goto Fail;
+	      }
+	      arr = newarr;
+	    }
         }
-        PyTuple_InitItem(result, j, item);
+	arr[j] = item;
     }
 
-    /* Cut tuple back if guess was too large. */
-    if (j < n &&
-        PyTuple_Resize(&result, j) != 0)
-        goto Fail;
-
+    result = PyTuple_FromArray(arr, j);
     Py_DECREF(it);
+    free(arr);
     return result;
 
 Fail:
     Py_XDECREF(result);
     Py_DECREF(it);
+    if (arr != NULL) {
+      free(arr);
+    }
     return NULL;
 }
 

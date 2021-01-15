@@ -32,8 +32,18 @@ PyAPI_FUNC(PyTypeObject*) PyStructSequence_NewType(PyStructSequence_Desc *desc);
 PyAPI_FUNC(PyObject *) PyStructSequence_New(PyTypeObject* type);
 
 #ifndef Py_LIMITED_API
+#if 0
 typedef PyTupleObject PyStructSequence;
+#endif
   
+typedef struct {
+    PyObject_VAR_HEAD
+    /* ob_item contains space for 'ob_size' elements.
+       Items must normally not be NULL, except during construction when
+       the tuple is not yet visible outside the function that builds it. */
+    PyObject *ob_item[1];
+} PyStructSequence;
+
 /* Macro, *only* to be used to fill in brand new objects */
 #define PyStructSequence_SET_ITEM(op, i, v) PyTuple_InitItem(op, i, v)
 
