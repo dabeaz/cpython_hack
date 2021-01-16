@@ -10,6 +10,14 @@
 #include "Python.h"
 #include "pycore_object.h"
 #include "structmember.h"         // PyMemberDef
+  
+typedef struct {
+    PyObject_VAR_HEAD
+    /* ob_item contains space for 'ob_size' elements.
+       Items must normally not be NULL, except during construction when
+       the tuple is not yet visible outside the function that builds it. */
+    PyObject *ob_item[1];
+} PyStructSequence;
 
 static const char visible_length_key[] = "n_sequence_fields";
 static const char real_length_key[] = "n_fields";
@@ -54,17 +62,22 @@ PyStructSequence_New(PyTypeObject *type)
 }
 
 void
-PyStructSequence_SetItem(PyObject* op, Py_ssize_t i, PyObject* v)
+PyStructSequence_InitItem(PyObject* op, Py_ssize_t i, PyObject* v)
 {
-    PyStructSequence_SET_ITEM(op, i, v);
+  PyTuple_InitItem(op, i, v);
 }
 
 PyObject*
 PyStructSequence_GetItem(PyObject* op, Py_ssize_t i)
 {
-    return PyStructSequence_GET_ITEM(op, i);
+  return PyTuple_GetItem(op, i);
 }
 
+PyObject **
+PyStructSequence_Items(PyObject* op)
+{
+  return PyTuple_Items(op);
+}
 
 static void
 structseq_dealloc(PyStructSequence *obj)
@@ -271,7 +284,7 @@ structseq_repr(PyStructSequence *obj)
             goto error;
         }
 
-        PyObject *value = PyStructSequence_GET_ITEM((PyObject *)obj, i);
+        PyObject *value = PyStructSequence_GetItem((PyObject *)obj, i);
         assert(value != NULL);
         PyObject *repr = PyObject_Repr(value);
         if (repr == NULL) {
@@ -400,7 +413,7 @@ initialize_members(PyStructSequence_Desc *desc, PyMemberDef* members,
 }
 
 int
-PyStructSequence_InitType2(PyTypeObject *type, PyStructSequence_Desc *desc)
+PyStructSequence_InitType(PyTypeObject *type, PyStructSequence_Desc *desc)
 {
     PyMemberDef *members;
     Py_ssize_t n_members, n_unnamed_members;
@@ -446,12 +459,6 @@ PyStructSequence_InitType2(PyTypeObject *type, PyStructSequence_Desc *desc)
     }
 
     return 0;
-}
-
-void
-PyStructSequence_InitType(PyTypeObject *type, PyStructSequence_Desc *desc)
-{
-    (void)PyStructSequence_InitType2(type, desc);
 }
 
 PyTypeObject *

@@ -1066,23 +1066,25 @@ static newfunc structseq_new;
 static PyObject *
 statresult_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
-    PyStructSequence *result;
-    int i;
+  PyObject *result;
+  PyObject **items;
+  int i;
 
-    result = (PyStructSequence*)structseq_new(type, args, kwds);
+  result = structseq_new(type, args, kwds);
     if (!result)
         return NULL;
     /* If we have been initialized from a tuple,
        st_?time might be set to None. Initialize it
        from the int slots.  */
+    items = PyStructSequence_Items(result);
     for (i = 7; i <= 9; i++) {
-        if (result->ob_item[i+3] == Py_None) {
-            Py_DECREF(Py_None);
-            Py_INCREF(result->ob_item[i]);
-            result->ob_item[i+3] = result->ob_item[i];
+      if (items[i+3] == Py_None) {
+	Py_DECREF(Py_None);
+	Py_INCREF(items[i]);
+	items[i+3] = items[i];
         }
     }
-    return (PyObject*)result;
+    return result;
 }
 
 static int
@@ -1126,9 +1128,9 @@ fill_time(PyObject *module, PyObject *v, int index, time_t sec, unsigned long ns
         goto exit;
     }
 
-    PyStructSequence_SET_ITEM(v, index, s);
-    PyStructSequence_SET_ITEM(v, index+3, float_s);
-    PyStructSequence_SET_ITEM(v, index+6, ns_total);
+    PyStructSequence_InitItem(v, index, s);
+    PyStructSequence_InitItem(v, index+3, float_s);
+    PyStructSequence_InitItem(v, index+6, ns_total);
     s = NULL;
     float_s = NULL;
     ns_total = NULL;
@@ -1151,15 +1153,15 @@ _pystat_fromstructstat(PyObject *module, STRUCT_STAT *st)
     if (v == NULL)
         return NULL;
 
-    PyStructSequence_SET_ITEM(v, 0, PyLong_FromLong((long)st->st_mode));
+    PyStructSequence_InitItem(v, 0, PyLong_FromLong((long)st->st_mode));
     Py_BUILD_ASSERT(sizeof(unsigned long long) >= sizeof(st->st_ino));
-    PyStructSequence_SET_ITEM(v, 1, PyLong_FromUnsignedLongLong(st->st_ino));
-    PyStructSequence_SET_ITEM(v, 2, _PyLong_FromDev(st->st_dev));
-    PyStructSequence_SET_ITEM(v, 3, PyLong_FromLong((long)st->st_nlink));
-    PyStructSequence_SET_ITEM(v, 4, _PyLong_FromUid(st->st_uid));
-    PyStructSequence_SET_ITEM(v, 5, _PyLong_FromGid(st->st_gid));
+    PyStructSequence_InitItem(v, 1, PyLong_FromUnsignedLongLong(st->st_ino));
+    PyStructSequence_InitItem(v, 2, _PyLong_FromDev(st->st_dev));
+    PyStructSequence_InitItem(v, 3, PyLong_FromLong((long)st->st_nlink));
+    PyStructSequence_InitItem(v, 4, _PyLong_FromUid(st->st_uid));
+    PyStructSequence_InitItem(v, 5, _PyLong_FromGid(st->st_gid));
     Py_BUILD_ASSERT(sizeof(long long) >= sizeof(st->st_size));
-    PyStructSequence_SET_ITEM(v, 6, PyLong_FromLongLong(st->st_size));
+    PyStructSequence_InitItem(v, 6, PyLong_FromLongLong(st->st_size));
 
 #if defined(HAVE_STAT_TV_NSEC)
     ansec = st->st_atim.tv_nsec;
@@ -1181,19 +1183,19 @@ _pystat_fromstructstat(PyObject *module, STRUCT_STAT *st)
     fill_time(module, v, 9, st->st_ctime, cnsec);
 
 #ifdef HAVE_STRUCT_STAT_ST_BLKSIZE
-    PyStructSequence_SET_ITEM(v, ST_BLKSIZE_IDX,
+    PyStructSequence_InitItem(v, ST_BLKSIZE_IDX,
                               PyLong_FromLong((long)st->st_blksize));
 #endif
 #ifdef HAVE_STRUCT_STAT_ST_BLOCKS
-    PyStructSequence_SET_ITEM(v, ST_BLOCKS_IDX,
+    PyStructSequence_InitItem(v, ST_BLOCKS_IDX,
                               PyLong_FromLong((long)st->st_blocks));
 #endif
 #ifdef HAVE_STRUCT_STAT_ST_RDEV
-    PyStructSequence_SET_ITEM(v, ST_RDEV_IDX,
+    PyStructSequence_InitItem(v, ST_RDEV_IDX,
                               PyLong_FromLong((long)st->st_rdev));
 #endif
 #ifdef HAVE_STRUCT_STAT_ST_GEN
-    PyStructSequence_SET_ITEM(v, ST_GEN_IDX,
+    PyStructSequence_InitItem(v, ST_GEN_IDX,
                               PyLong_FromLong((long)st->st_gen));
 #endif
 #ifdef HAVE_STRUCT_STAT_ST_BIRTHTIME
@@ -1207,24 +1209,24 @@ _pystat_fromstructstat(PyObject *module, STRUCT_STAT *st)
       bnsec = 0;
 #endif
       val = PyFloat_FromDouble(bsec + 1e-9*bnsec);
-      PyStructSequence_SET_ITEM(v, ST_BIRTHTIME_IDX,
+      PyStructSequence_InitItem(v, ST_BIRTHTIME_IDX,
                                 val);
     }
 #endif
 #ifdef HAVE_STRUCT_STAT_ST_FLAGS
-    PyStructSequence_SET_ITEM(v, ST_FLAGS_IDX,
+    PyStructSequence_InitItem(v, ST_FLAGS_IDX,
                               PyLong_FromLong((long)st->st_flags));
 #endif
 #ifdef HAVE_STRUCT_STAT_ST_FILE_ATTRIBUTES
-    PyStructSequence_SET_ITEM(v, ST_FILE_ATTRIBUTES_IDX,
+    PyStructSequence_InitItem(v, ST_FILE_ATTRIBUTES_IDX,
                               PyLong_FromUnsignedLong(st->st_file_attributes));
 #endif
 #ifdef HAVE_STRUCT_STAT_ST_FSTYPE
-   PyStructSequence_SET_ITEM(v, ST_FSTYPE_IDX,
+   PyStructSequence_InitItem(v, ST_FSTYPE_IDX,
                               PyUnicode_FromString(st->st_fstype));
 #endif
 #ifdef HAVE_STRUCT_STAT_ST_REPARSE_TAG
-    PyStructSequence_SET_ITEM(v, ST_REPARSE_TAG_IDX,
+    PyStructSequence_InitItem(v, ST_REPARSE_TAG_IDX,
                               PyLong_FromUnsignedLong(st->st_reparse_tag));
 #endif
 

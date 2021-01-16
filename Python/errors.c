@@ -953,7 +953,7 @@ PyStatus
 _PyErr_Init(void)
 {
     if (UnraisableHookArgsType.tp_name == NULL) {
-        if (PyStructSequence_InitType2(&UnraisableHookArgsType,
+        if (PyStructSequence_InitType(&UnraisableHookArgsType,
                                        &UnraisableHookArgs_desc) < 0) {
             return _PyStatus_ERR("failed to initialize UnraisableHookArgs type");
         }
@@ -979,7 +979,7 @@ make_unraisable_hook_args(PyThreadState *tstate, PyObject *exc_type,
                 exc_type = Py_None; \
             } \
             Py_INCREF(exc_type); \
-            PyStructSequence_SET_ITEM(args, pos++, exc_type); \
+            PyStructSequence_InitItem(args, pos++, exc_type); \
         } while (0)
 
 
@@ -1158,11 +1158,11 @@ _PyErr_WriteUnraisableDefaultHook(PyObject *args)
     }
 
     /* Borrowed references */
-    PyObject *exc_type = PyStructSequence_GET_ITEM(args, 0);
-    PyObject *exc_value = PyStructSequence_GET_ITEM(args, 1);
-    PyObject *exc_tb = PyStructSequence_GET_ITEM(args, 2);
-    PyObject *err_msg = PyStructSequence_GET_ITEM(args, 3);
-    PyObject *obj = PyStructSequence_GET_ITEM(args, 4);
+    PyObject *exc_type = PyStructSequence_GetItem(args, 0);
+    PyObject *exc_value = PyStructSequence_GetItem(args, 1);
+    PyObject *exc_tb = PyStructSequence_GetItem(args, 2);
+    PyObject *err_msg = PyStructSequence_GetItem(args, 3);
+    PyObject *obj = PyStructSequence_GetItem(args, 4);
 
     if (write_unraisable_exc(tstate, exc_type, exc_value, exc_tb, err_msg, obj) < 0) {
         return NULL;
