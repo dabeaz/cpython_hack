@@ -1574,7 +1574,7 @@ _PyDict_FromKeys(PyObject *cls, PyObject *iterable, PyObject *value)
                 return NULL;
             }
 
-            while (_PySet_NextEntry(iterable, &pos, &key, &hash)) {
+            while (PySet_NextEntry(iterable, &pos, &key, &hash)) {
                 if (insertdict(mp, key, hash, value)) {
                     Py_DECREF(d);
                     return NULL;
@@ -3777,7 +3777,7 @@ dictviews_or(PyObject* self, PyObject *other)
         return NULL;
     }
 
-    if (_PySet_Update(result, other) < 0) {
+    if (PySet_Update(result, other) < 0) {
         Py_DECREF(result);
         return NULL;
     }
@@ -3854,7 +3854,7 @@ dictitems_xor(PyObject *self, PyObject *other)
     if (remaining_pairs == NULL) {
         goto error;
     }
-    if (_PySet_Update(result_set, remaining_pairs) < 0) {
+    if (PySet_Update(result_set, remaining_pairs) < 0) {
         Py_DECREF(remaining_pairs);
         goto error;
     }

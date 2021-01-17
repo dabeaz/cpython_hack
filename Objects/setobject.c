@@ -35,6 +35,64 @@
 #include "pycore_object.h"        // _PyObject_GC_UNTRACK()
 #include <stddef.h>               // offsetof()
 
+
+/* There are three kinds of entries in the table:
+
+1. Unused:  key == NULL and hash == 0
+2. Dummy:   key == dummy and hash == -1
+3. Active:  key != NULL and key != dummy and hash != -1
+
+The hash field of Unused slots is always zero.
+
+The hash field of Dummy slots are set to -1
+meaning that dummy entries can be detected by
+either entry->key==dummy or by entry->hash==-1.
+*/
+
+#define PySet_MINSIZE 8
+
+typedef struct {
+    PyObject *key;
+    Py_hash_t hash;             /* Cached hash code of the key */
+} setentry;
+
+/* The SetObject data structure is shared by set and frozenset objects.
+
+Invariant for sets:
+ - hash is -1
+
+Invariants for frozensets:
+ - data is immutable.
+ - hash is the hash of the frozenset or -1 if not computed yet.
+
+*/
+
+typedef struct {
+    PyObject_HEAD
+
+    Py_ssize_t fill;            /* Number active and dummy entries*/
+    Py_ssize_t used;            /* Number active entries */
+
+    /* The table contains mask + 1 slots, and that's a power of 2.
+     * We store the mask instead of the size because the mask is more
+     * frequently needed.
+     */
+    Py_ssize_t mask;
+
+    /* The table points to a fixed-size smalltable for small tables
+     * or to additional malloc'ed memory for bigger tables.
+     * The table pointer is never NULL which saves us from repeated
+     * runtime null-tests.
+     */
+    setentry *table;
+    Py_hash_t hash;             /* Only used by frozenset objects */
+    Py_ssize_t finger;          /* Search finger for pop() */
+
+    setentry smalltable[PySet_MINSIZE];
+    PyObject *weakreflist;      /* List of weak references */
+} PySetObject;
+
+
 /* Object used as dummy key to fill deleted entries */
 static PyObject _dummy_struct;
 
@@ -2129,7 +2187,7 @@ _PySet_Fini(void)
 }
 
 int
-_PySet_NextEntry(PyObject *set, Py_ssize_t *pos, PyObject **key, Py_hash_t *hash)
+PySet_NextEntry(PyObject *set, Py_ssize_t *pos, PyObject **key, Py_hash_t *hash)
 {
     setentry *entry;
 
@@ -2155,7 +2213,7 @@ PySet_Pop(PyObject *set)
 }
 
 int
-_PySet_Update(PyObject *set, PyObject *iterable)
+PySet_Update(PyObject *set, PyObject *iterable)
 {
     if (!PySet_Check(set)) {
         PyErr_BadInternalCall();
@@ -2163,49 +2221,3 @@ _PySet_Update(PyObject *set, PyObject *iterable)
     }
     return set_update_internal((PySetObject *)set, iterable);
 }
-
-/* Exported for the gdb plugin's benefit. */
-PyObject *_PySet_Dummy = dummy;
-
-/***** Dummy Struct  *************************************************/
-
-static PyObject *
-dummy_repr(PyObject *op)
-{
-    return PyUnicode_FromString("<dummy key>");
-}
-
-static void _Py_NO_RETURN
-dummy_dealloc(PyObject* ignore)
-{
-    Py_FatalError("deallocating <dummy key>");
-}
-
-static PyTypeObject _PySetDummy_Type = {
-    PyVarObject_HEAD_INIT(&PyType_Type, 0)
-    "<dummy key> type",
-    0,
-    0,
-    dummy_dealloc,      /*tp_dealloc*/ /*never called*/
-    0,                  /*tp_vectorcall_offset*/
-    0,                  /*tp_getattr*/
-    0,                  /*tp_setattr*/
-    0,                  /*tp_as_async*/
-    dummy_repr,         /*tp_repr*/
-    0,                  /*tp_as_number*/
-    0,                  /*tp_as_sequence*/
-    0,                  /*tp_as_mapping*/
-    0,                  /*tp_hash */
-    0,                  /*tp_call */
-    0,                  /*tp_str */
-    0,                  /*tp_getattro */
-    0,                  /*tp_setattro */
-    0,                  /*tp_as_buffer */
-    Py_TPFLAGS_DEFAULT, /*tp_flags */
-};
-
-static PyObject _dummy_struct = {
-  _PyObject_EXTRA_INIT
-  2, &_PySetDummy_Type
-};
-

@@ -1125,7 +1125,7 @@ main_loop:
         case SET_UPDATE: {
             PyObject *iterable = POP();
             PyObject *set = PEEK(oparg);
-            int err = _PySet_Update(set, iterable);
+            int err = PySet_Update(set, iterable);
             Py_DECREF(iterable);
             if (err < 0) {
                 goto error;

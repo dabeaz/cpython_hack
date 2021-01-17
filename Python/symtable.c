@@ -755,11 +755,11 @@ analyze_block(PySTEntryObject *ste, PyObject *bound, PyObject *free,
        this one.
      */
     if (ste->ste_type == ClassBlock) {
-      if (_PySet_Update(newglobal, global) < 0)
+      if (PySet_Update(newglobal, global) < 0)
 	goto error;
         /* Pass down previously bound symbols */
         if (bound) {
-	  if (_PySet_Update(newbound, bound) < 0)
+	  if (PySet_Update(newbound, bound) < 0)
 	    goto error;
         }
     }
@@ -775,16 +775,16 @@ analyze_block(PySTEntryObject *ste, PyObject *bound, PyObject *free,
     if (ste->ste_type != ClassBlock) {
         /* Add function locals to bound set */
         if (ste->ste_type == FunctionBlock) {
-	  if (_PySet_Update(newbound, local) < 0)
+	  if (PySet_Update(newbound, local) < 0)
 	    goto error;
         }
         /* Pass down previously bound symbols */
         if (bound) {
-	  if (_PySet_Update(newbound, bound) < 0)
+	  if (PySet_Update(newbound, bound) < 0)
 	    goto error;
         }
         /* Pass down known globals */
-	if (_PySet_Update(newglobal, global) < 0)
+	if (PySet_Update(newglobal, global) < 0)
 	  goto error;
     }
     else {
@@ -817,7 +817,7 @@ analyze_block(PySTEntryObject *ste, PyObject *bound, PyObject *free,
             ste->ste_child_free = 1;
     }
 
-    if (_PySet_Update(newfree, allfree) < 0)
+    if (PySet_Update(newfree, allfree) < 0)
       goto error;
 
     /* Check if any local variables must be converted to cell variables */
@@ -830,7 +830,7 @@ analyze_block(PySTEntryObject *ste, PyObject *bound, PyObject *free,
                         ste->ste_type == ClassBlock))
         goto error;
 
-    if (_PySet_Update(free, newfree) < 0)
+    if (PySet_Update(free, newfree) < 0)
       goto error;
     success = 1;
  error:
@@ -870,7 +870,7 @@ analyze_child_block(PySTEntryObject *entry, PyObject *bound, PyObject *free,
 
     if (!analyze_block(entry, temp_bound, temp_free, temp_global))
         goto error;
-    if (_PySet_Update(child_free, temp_free) < 0)
+    if (PySet_Update(child_free, temp_free) < 0)
       goto error;
     Py_DECREF(temp_bound);
     Py_DECREF(temp_free);

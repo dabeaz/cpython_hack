@@ -897,7 +897,7 @@ _PyCode_ConstantKey(PyObject *op)
             return NULL;
 
         i = 0;
-        while (_PySet_NextEntry(op, &pos, &item, &hash)) {
+        while (PySet_NextEntry(op, &pos, &item, &hash)) {
             PyObject *item_key;
 
             item_key = _PyCode_ConstantKey(item);

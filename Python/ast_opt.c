@@ -106,7 +106,7 @@ check_complexity(PyObject *obj, Py_ssize_t limit)
         PyObject *item;
         Py_hash_t hash;
         limit -= PySet_Size(obj);
-        while (limit >= 0 && _PySet_NextEntry(obj, &i, &item, &hash)) {
+        while (limit >= 0 && PySet_NextEntry(obj, &i, &item, &hash)) {
             limit = check_complexity(item, limit);
         }
     }

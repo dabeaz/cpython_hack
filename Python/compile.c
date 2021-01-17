@@ -1198,7 +1198,7 @@ merge_consts_recursive(struct compiler *c, PyObject *o)
         Py_ssize_t i = 0, pos = 0;
         PyObject *item;
         Py_hash_t hash;
-        while (_PySet_NextEntry(o, &pos, &item, &hash)) {
+        while (PySet_NextEntry(o, &pos, &item, &hash)) {
             PyObject *k = merge_consts_recursive(c, item);
             if (k == NULL) {
                 Py_DECREF(tuple);
