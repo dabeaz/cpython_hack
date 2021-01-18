@@ -36,6 +36,14 @@ typedef struct {
 #define _PyList_ITEMS(op)      (((PyListObject *)(op))->ob_item)
 #define PyList_SET_ITEM(op, i, v) (((PyListObject *)(op))->ob_item[i] = (v))
 
+int PyList_Check(PyObject *op) {
+  return PyType_HasFeature(Py_TYPE(op), Py_TPFLAGS_LIST_SUBCLASS);
+}
+
+int PyList_CheckExact(PyObject *op) {
+  return Py_IS_TYPE(op, &PyList_Type);
+}
+
 /*[clinic input]
 class list "PyListObject *" "&PyList_Type"
 [clinic start generated code]*/

@@ -143,7 +143,8 @@ data. Removal of macros and performance hacks.
 - Day 15 (1/15/2021). Removed PyTuple_Resize(). Encapsulated PyTupleObject. 
 - Day 16 (1/16/2021). Better encapsulation of PyStructSequence.
 - Day 17 (1/17/2021). Better encapsulation of PySet.
-  
+- Day 18 (1/18/2021). More tuple/list encapsulation. Removed PyTuple_SetItem.
+
 Copyright and License Information
 ---------------------------------
 

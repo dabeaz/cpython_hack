@@ -18,6 +18,14 @@ typedef struct {
 #define PyTuple_GET_SIZE(op)    Py_SIZE(_PyTuple_CAST(op))
 #define PyTuple_GET_ITEM(op, i) (_PyTuple_CAST(op)->ob_item[i])
 
+int PyTuple_Check(PyObject *op) {
+  return PyType_HasFeature(Py_TYPE(op), Py_TPFLAGS_TUPLE_SUBCLASS);
+}
+
+int PyTuple_CheckExact(PyObject *op) {
+  return Py_IS_TYPE(op, &PyTuple_Type);
+}
+
 /*[clinic input]
 class tuple "PyTupleObject *" "&PyTuple_Type"
 [clinic start generated code]*/
@@ -209,26 +217,6 @@ PyTuple_GetItem(PyObject *op, Py_ssize_t i)
 PyObject **
 PyTuple_Items(PyObject *op) {
   return ((PyTupleObject *) op)->ob_item;
-}
-
-int
-PyTuple_SetItem(PyObject *op, Py_ssize_t i, PyObject *newitem)
-{
-    PyObject **p;
-    if (!PyTuple_Check(op) || Py_REFCNT(op) != 1) {
-        Py_XDECREF(newitem);
-        PyErr_BadInternalCall();
-        return -1;
-    }
-    if (i < 0 || i >= Py_SIZE(op)) {
-        Py_XDECREF(newitem);
-        PyErr_SetString(PyExc_IndexError,
-                        "tuple assignment index out of range");
-        return -1;
-    }
-    p = ((PyTupleObject *)op) -> ob_item + i;
-    Py_XSETREF(*p, newitem);
-    return 0;
 }
 
 int
@@ -469,7 +457,7 @@ tupleslice(PyTupleObject *a, Py_ssize_t ilow,
         ihigh = Py_SIZE(a);
     if (ihigh < ilow)
         ihigh = ilow;
-    if (ilow == 0 && ihigh == Py_SIZE(a) && PyTuple_CheckExact(a)) {
+    if (ilow == 0 && ihigh == Py_SIZE(a) && PyTuple_CheckExact((PyObject *)a)) {
         Py_INCREF(a);
         return (PyObject *)a;
     }
@@ -505,7 +493,7 @@ tupleconcat(PyTupleObject *a, PyObject *bb)
     }
     PyTupleObject *b = (PyTupleObject *)bb;
 
-    if (Py_SIZE(b) == 0 && PyTuple_CheckExact(a)) {
+    if (Py_SIZE(b) == 0 && PyTuple_CheckExact((PyObject *) a)) {
         Py_INCREF(a);
         return (PyObject *)a;
     }
@@ -544,7 +532,7 @@ tuplerepeat(PyTupleObject *a, Py_ssize_t n)
     PyTupleObject *np;
     PyObject **p, **items;
     if (Py_SIZE(a) == 0 || n == 1) {
-        if (PyTuple_CheckExact(a)) {
+      if (PyTuple_CheckExact((PyObject *) a)) {
             /* Since tuples are immutable, we can return a shared
                copy in this case */
             Py_INCREF(a);
@@ -806,7 +794,7 @@ tuplesubscript(PyTupleObject* self, PyObject* item)
         }
         else if (start == 0 && step == 1 &&
                  slicelength == PyTuple_GET_SIZE(self) &&
-                 PyTuple_CheckExact(self)) {
+                 PyTuple_CheckExact((PyObject *)self)) {
             Py_INCREF(self);
             return (PyObject *)self;
         }
