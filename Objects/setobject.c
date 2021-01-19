@@ -98,6 +98,30 @@ static PyObject _dummy_struct;
 
 #define dummy (&_dummy_struct)
 
+int PyFrozenSet_CheckExact(PyObject *ob) {
+  return Py_IS_TYPE(ob, &PyFrozenSet_Type);
+}
+
+int PyAnySet_CheckExact(PyObject *ob) {
+  return (Py_IS_TYPE(ob, &PySet_Type) || Py_IS_TYPE(ob, &PyFrozenSet_Type));
+}
+
+int PyAnySet_Check(PyObject *ob) {
+  return (Py_IS_TYPE(ob, &PySet_Type) || Py_IS_TYPE(ob, &PyFrozenSet_Type) ||
+	  PyType_IsSubtype(Py_TYPE(ob), &PySet_Type) ||
+	  PyType_IsSubtype(Py_TYPE(ob), &PyFrozenSet_Type));
+}
+
+int PySet_Check(PyObject *ob) {
+  return (Py_IS_TYPE(ob, &PySet_Type) ||
+	  PyType_IsSubtype(Py_TYPE(ob), &PySet_Type));
+}
+
+int PyFrozenSet_Check(PyObject *ob) {
+  return (Py_IS_TYPE(ob, &PyFrozenSet_Type) ||
+	  PyType_IsSubtype(Py_TYPE(ob), &PyFrozenSet_Type));
+}
+
 #define PySet_GET_SIZE(so) (assert(PyAnySet_Check(so)),(((PySetObject *)(so))->used))
 
 /* ======================================================================== */
@@ -1114,7 +1138,7 @@ set_copy(PySetObject *so, PyObject *Py_UNUSED(ignored))
 static PyObject *
 frozenset_copy(PySetObject *so, PyObject *Py_UNUSED(ignored))
 {
-    if (PyFrozenSet_CheckExact(so)) {
+  if (PyFrozenSet_CheckExact((PyObject *)so)) {
         Py_INCREF(so);
         return (PyObject *)so;
     }
@@ -1165,7 +1189,7 @@ set_or(PySetObject *so, PyObject *other)
 {
     PySetObject *result;
 
-    if (!PyAnySet_Check(so) || !PyAnySet_Check(other))
+    if (!PyAnySet_Check((PyObject *)so) || !PyAnySet_Check(other))
         Py_RETURN_NOTIMPLEMENTED;
 
     result = (PySetObject *)set_copy(so, NULL);
@@ -1302,7 +1326,7 @@ PyDoc_STRVAR(intersection_update_doc,
 static PyObject *
 set_and(PySetObject *so, PyObject *other)
 {
-    if (!PyAnySet_Check(so) || !PyAnySet_Check(other))
+  if (!PyAnySet_Check((PyObject *) so) || !PyAnySet_Check(other))
         Py_RETURN_NOTIMPLEMENTED;
     return set_intersection(so, other);
 }
@@ -1530,7 +1554,7 @@ PyDoc_STRVAR(difference_doc,
 static PyObject *
 set_sub(PySetObject *so, PyObject *other)
 {
-    if (!PyAnySet_Check(so) || !PyAnySet_Check(other))
+  if (!PyAnySet_Check((PyObject *) so) || !PyAnySet_Check(other))
         Py_RETURN_NOTIMPLEMENTED;
     return set_difference(so, other);
 }
@@ -1605,7 +1629,7 @@ PyDoc_STRVAR(symmetric_difference_doc,
 static PyObject *
 set_xor(PySetObject *so, PyObject *other)
 {
-    if (!PyAnySet_Check(so) || !PyAnySet_Check(other))
+  if (!PyAnySet_Check((PyObject *) so) || !PyAnySet_Check(other))
         Py_RETURN_NOTIMPLEMENTED;
     return set_symmetric_difference(so, other);
 }
