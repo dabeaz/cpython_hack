@@ -145,7 +145,8 @@ data. Removal of macros and performance hacks.
 - Day 17 (1/17/2021). Better encapsulation of PySet.
 - Day 18 (1/18/2021). More tuple/list encapsulation. Removed PyTuple_SetItem.
 - Day 19 (1/19/2021). Moved set type checking into functions.
-  
+- Day 20 (1/20/2021). Float cleanup.
+
 Copyright and License Information
 ---------------------------------
 
