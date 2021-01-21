@@ -9,6 +9,31 @@
 #include "structmember.h"         // PyMemberDef
 #include "opcode.h"
 
+typedef struct {
+    PyObject_HEAD
+    /* Note: gi_frame can be NULL if the generator is "finished" */
+    PyFrameObject *gi_frame;
+    /* True if generator is being executed. */
+    char gi_running;
+    /* The code object backing the generator */
+    PyObject *gi_code;
+    /* List of weak reference. */
+    PyObject *gi_weakreflist;
+    /* Name of the generator. */
+    PyObject *gi_name;
+    /* Qualified name of the generator. */
+    PyObject *gi_qualname;
+    _PyErr_StackItem gi_exc_state;
+} PyGenObject;
+
+int PyGen_Check(PyObject *op) {
+  return PyObject_TypeCheck(op, &PyGen_Type);
+}
+
+int PyGen_CheckExact(PyObject *op) {
+  return Py_IS_TYPE(op, &PyGen_Type);
+}
+
 static PyObject *gen_close(PyGenObject *, PyObject *);
 
 void
@@ -157,9 +182,9 @@ gen_send_ex(PyGenObject *gen, PyObject *arg, int exc, int closing)
 }
 
 PyObject *
-_PyGen_Send(PyGenObject *gen, PyObject *arg)
+_PyGen_Send(PyObject *gen, PyObject *arg)
 {
-    return gen_send_ex(gen, arg, 0, 0);
+  return gen_send_ex((PyGenObject *) gen, arg, 0, 0);
 }
 
 PyDoc_STRVAR(close_doc,

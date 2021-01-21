@@ -676,7 +676,7 @@ main_loop:
             PyObject *receiver = TOP();
             int err;
             if (PyGen_CheckExact(receiver)) { // || PyCoro_CheckExact(receiver)) {
-                retval = _PyGen_Send((PyGenObject *)receiver, v);
+                retval = _PyGen_Send(receiver, v);
             } else {
                 _Py_IDENTIFIER(send);
                 if (v == Py_None)
@@ -980,9 +980,9 @@ main_loop:
 
         case DELETE_DEREF: {
             PyObject *cell = freevars[oparg];
-            PyObject *oldobj = PyCell_GET(cell);
+            PyObject *oldobj = PyCell_Get(cell);
             if (oldobj != NULL) {
-                PyCell_SET(cell, NULL);
+                PyCell_Set(cell, NULL);
                 Py_DECREF(oldobj);
                 continue;
             }
@@ -1016,7 +1016,7 @@ main_loop:
             }
             if (!value) {
                 PyObject *cell = freevars[oparg];
-                value = PyCell_GET(cell);
+                value = PyCell_Get(cell);
                 if (value == NULL) {
                     format_exc_unbound(tstate, co, oparg);
                     goto error;
@@ -1029,7 +1029,7 @@ main_loop:
 
         case LOAD_DEREF: {
             PyObject *cell = freevars[oparg];
-            PyObject *value = PyCell_GET(cell);
+            PyObject *value = PyCell_Get(cell);
             if (value == NULL) {
                 format_exc_unbound(tstate, co, oparg);
                 goto error;
@@ -1042,8 +1042,8 @@ main_loop:
         case STORE_DEREF: {
             PyObject *v = POP();
             PyObject *cell = freevars[oparg];
-            PyObject *oldobj = PyCell_GET(cell);
-            PyCell_SET(cell, v);
+            PyObject *oldobj = PyCell_Get(cell);
+            PyCell_Set(cell, v);
             Py_XDECREF(oldobj);
             continue;
         }

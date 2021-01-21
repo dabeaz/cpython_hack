@@ -3,6 +3,18 @@
 #include "Python.h"
 #include "pycore_object.h"
 
+typedef struct {
+    PyObject_HEAD
+    PyObject *ob_ref;       /* Content of the cell or NULL when empty */
+} PyCellObject;
+
+int PyCell_Check(PyObject *op) {
+  return Py_IS_TYPE(op, &PyCell_Type);
+}
+
+#define PyCell_GET(op) (((PyCellObject *)(op))->ob_ref)
+#define PyCell_SET(op, v) (((PyCellObject *)(op))->ob_ref = v)
+
 PyObject *
 PyCell_New(PyObject *obj)
 {

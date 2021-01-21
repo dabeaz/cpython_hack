@@ -7388,7 +7388,7 @@ super_init_without_args(PyFrameObject *f, PyCodeObject *co,
             if (co->co_cell2arg[i] == 0) {
                 PyObject *cell = f->f_localsplus[co->co_nlocals + i];
                 assert(PyCell_Check(cell));
-                obj = PyCell_GET(cell);
+                obj = PyCell_Get(cell);
                 break;
             }
         }
@@ -7420,7 +7420,7 @@ super_init_without_args(PyFrameObject *f, PyCodeObject *co,
                   "super(): bad __class__ cell");
                 return -1;
             }
-            type = (PyTypeObject *) PyCell_GET(cell);
+            type = (PyTypeObject *) PyCell_Get(cell);
             if (type == NULL) {
                 PyErr_SetString(PyExc_RuntimeError,
                   "super(): empty __class__ cell");

@@ -915,7 +915,7 @@ map_to_dict(PyObject *map, Py_ssize_t nmap, PyObject *dict, PyObject **values,
         assert(PyUnicode_Check(key));
         if (deref && value != NULL) {
             assert(PyCell_Check(value));
-            value = PyCell_GET(value);
+            value = PyCell_Get(value);
         }
         if (value == NULL) {
             if (PyObject_DelItem(dict, key) != 0) {
@@ -974,7 +974,7 @@ dict_to_map(PyObject *map, Py_ssize_t nmap, PyObject *dict, PyObject **values,
         }
         if (deref) {
             assert(PyCell_Check(values[j]));
-            if (PyCell_GET(values[j]) != value) {
+            if (PyCell_Get(values[j]) != value) {
                 if (PyCell_Set(values[j], value) < 0)
                     PyErr_Clear();
             }
