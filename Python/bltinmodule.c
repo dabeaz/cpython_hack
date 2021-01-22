@@ -8,6 +8,7 @@
 #include "pycore_pyerrors.h"
 #include "pycore_pystate.h"      // PyThreadState_Get()
 
+
 _Py_IDENTIFIER(__builtins__);
 _Py_IDENTIFIER(__dict__);
 _Py_IDENTIFIER(__prepare__);
@@ -3468,6 +3469,9 @@ static struct PyModuleDef builtinsmodule = {
     NULL
 };
 
+
+PyAPI_DATA(PyTypeObject) PyEnum_Type;
+PyAPI_DATA(PyTypeObject) PyReversed_Type;
 
 PyObject *
 _PyBuiltin_Init(PyThreadState *tstate)

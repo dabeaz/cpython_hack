@@ -147,6 +147,7 @@ data. Removal of macros and performance hacks.
 - Day 19 (1/19/2021). Moved set type checking into functions.
 - Day 20 (1/20/2021). Float cleanup.
 - Day 21 (1/21/2021). Generator/Cell cleanup.
+- Day 22 (1/22/2021). Various minor cleanup of iterators, enum, slice.
   
 Copyright and License Information
 ---------------------------------

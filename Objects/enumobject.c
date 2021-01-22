@@ -2,6 +2,8 @@
 
 #include "Python.h"
 
+PyAPI_DATA(PyTypeObject) PyReversed_Type;
+
 /*[clinic input]
 preserve
 [clinic start generated code]*/

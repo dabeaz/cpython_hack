@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 #include "pystate.h"   /* _PyErr_StackItem */
-  
+
 PyAPI_DATA(PyTypeObject) PyGen_Type;
 PyAPI_FUNC(int) PyGen_Check(PyObject *);
 PyAPI_FUNC(int) PyGen_CheckExact(PyObject *);

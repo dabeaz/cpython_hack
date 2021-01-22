@@ -3,6 +3,17 @@
 #include "Python.h"
 #include "pycore_object.h"
 
+PyAPI_DATA(PyTypeObject) PySeqIter_Type;
+PyAPI_DATA(PyTypeObject) PyCallIter_Type;
+
+int PySeqIter_Check(PyObject *op) {
+  return Py_IS_TYPE(op, &PySeqIter_Type);
+}
+
+int PyCallIter_Check(PyObject *op) {
+  return Py_IS_TYPE(op, &PyCallIter_Type);
+}
+
 typedef struct {
     PyObject_HEAD
     Py_ssize_t it_index;

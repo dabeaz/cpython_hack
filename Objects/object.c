@@ -1417,6 +1417,13 @@ PyObject _Py_NotImplementedStruct = {
     1, &_PyNotImplemented_Type
 };
 
+PyAPI_DATA(PyTypeObject) PyCell_Type;
+PyAPI_DATA(PyTypeObject) PySeqIter_Type;
+PyAPI_DATA(PyTypeObject) PyCallIter_Type;
+PyAPI_DATA(PyTypeObject) PyEnum_Type;
+PyAPI_DATA(PyTypeObject) PyReversed_Type;
+PyAPI_DATA(PyTypeObject) PyGen_Type;
+
 PyStatus
 _PyTypes_Init(void)
 {

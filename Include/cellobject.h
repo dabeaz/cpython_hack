@@ -5,8 +5,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-  
-PyAPI_DATA(PyTypeObject) PyCell_Type;
+
 PyAPI_FUNC(int) PyCell_Check(PyObject *);
 PyAPI_FUNC(PyObject *) PyCell_New(PyObject *);
 PyAPI_FUNC(PyObject *) PyCell_Get(PyObject *);

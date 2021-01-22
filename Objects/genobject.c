@@ -9,6 +9,8 @@
 #include "structmember.h"         // PyMemberDef
 #include "opcode.h"
 
+PyAPI_DATA(PyTypeObject) PyGen_Type;
+
 typedef struct {
     PyObject_HEAD
     /* Note: gi_frame can be NULL if the generator is "finished" */
