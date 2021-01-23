@@ -114,10 +114,32 @@ converting the dict to the combined table.
 #include "pycore_object.h"   // _PyObject_GC_TRACK()
 #include "pycore_pyerrors.h" // _PyErr_Fetch()
 #include "pycore_pystate.h"  // PyThreadState_Get()
-#include "dict-common.h"
-#include "stringlib/eq.h"    // unicode_eq()
+
+typedef struct _dictkeysobject PyDictKeysObject;
+
+/* The ma_values pointer is NULL for a combined table
+ * or points to an array of PyObject* for a split table
+ */
+typedef struct {
+    PyObject_HEAD
+
+    /* Number of items in the dictionary */
+    Py_ssize_t ma_used;
+    PyDictKeysObject *ma_keys;
+  
+} PyDictObject;
+
+/* _PyDictView */
+
+typedef struct {
+    PyObject_HEAD
+    PyDictObject *dv_dict;
+} _PyDictViewObject;
 
 #define PyDict_GET_SIZE(mp)  (assert(PyDict_Check(mp)),((PyDictObject *)mp)->ma_used)
+
+#include "dict-common.h"
+#include "stringlib/eq.h"    // unicode_eq()
 
 
 /*[clinic input]
@@ -720,7 +742,7 @@ clone_combined_dict(PyDictObject *orig)
     assert(orig->ma_values == NULL);
     assert(orig->ma_keys->dk_refcnt == 1);
 
-    Py_ssize_t keys_size = _PyDict_KeysSize(orig->ma_keys);
+    Py_ssize_t keys_size = _PyDict_KeysSize((PyObject *) orig->ma_keys);
     PyDictKeysObject *keys = PyMem_Malloc(keys_size);
     if (keys == NULL) {
         PyErr_NoMemory();
@@ -2623,10 +2645,11 @@ dict_tp_clear(PyObject *op)
 static PyObject *dictiter_new(PyDictObject *, PyTypeObject *);
 
 Py_ssize_t
-_PyDict_SizeOf(PyDictObject *mp)
+_PyDict_SizeOf(PyObject *op)
 {
     Py_ssize_t size, usable, res;
-
+    PyDictObject *mp = (PyDictObject *) op;
+    
     size = DK_SIZE(mp->ma_keys);
     usable = USABLE_FRACTION(size);
 
@@ -2641,17 +2664,18 @@ _PyDict_SizeOf(PyDictObject *mp)
 }
 
 Py_ssize_t
-_PyDict_KeysSize(PyDictKeysObject *keys)
+_PyDict_KeysSize(PyObject *op)
 {
-    return (sizeof(PyDictKeysObject)
-            + DK_IXSIZE(keys) * DK_SIZE(keys)
-            + USABLE_FRACTION(DK_SIZE(keys)) * sizeof(PyDictKeyEntry));
+  PyDictKeysObject *keys = (PyDictKeysObject *) op;
+  return (sizeof(PyDictKeysObject)
+	  + DK_IXSIZE(keys) * DK_SIZE(keys)
+	  + USABLE_FRACTION(DK_SIZE(keys)) * sizeof(PyDictKeyEntry));
 }
 
 static PyObject *
 dict_sizeof(PyDictObject *mp, PyObject *Py_UNUSED(ignored))
 {
-    return PyLong_FromSsize_t(_PyDict_SizeOf(mp));
+  return PyLong_FromSsize_t(_PyDict_SizeOf((PyObject *) mp));
 }
 
 static PyObject *
@@ -4257,7 +4281,7 @@ _PyObjectDict_SetItem(PyTypeObject *tp, PyObject **dictptr,
 }
 
 void
-_PyDictKeys_DecRef(PyDictKeysObject *keys)
+_PyDictKeys_DecRef(PyObject *keys)
 {
-    dictkeys_decref(keys);
+  dictkeys_decref((PyDictKeysObject*) keys);
 }

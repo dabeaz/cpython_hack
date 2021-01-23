@@ -80,21 +80,7 @@ PyAPI_DATA(PyTypeObject) PyDictIterItem_Type;
 PyAPI_DATA(PyTypeObject) PyDictRevIterKey_Type;
 PyAPI_DATA(PyTypeObject) PyDictRevIterItem_Type;
 PyAPI_DATA(PyTypeObject) PyDictRevIterValue_Type;
-
-typedef struct _dictkeysobject PyDictKeysObject;
-
-/* The ma_values pointer is NULL for a combined table
- * or points to an array of PyObject* for a split table
- */
-typedef struct {
-    PyObject_HEAD
-
-    /* Number of items in the dictionary */
-    Py_ssize_t ma_used;
-    PyDictKeysObject *ma_keys;
   
-} PyDictObject;
-
 PyAPI_FUNC(PyObject *) _PyDict_GetItem_KnownHash(PyObject *mp, PyObject *key,
                                        Py_hash_t hash);
 PyAPI_FUNC(PyObject *) _PyDict_GetItemIdWithError(PyObject *dp,
@@ -108,7 +94,7 @@ PyAPI_FUNC(int) _PyDict_DelItem_KnownHash(PyObject *mp, PyObject *key,
                                           Py_hash_t hash);
 PyAPI_FUNC(int) _PyDict_DelItemIf(PyObject *mp, PyObject *key,
                                   int (*predicate)(PyObject *value));
-PyDictKeysObject *_PyDict_NewKeysForClass(void);
+PyObject *_PyDict_NewKeysForClass(void);
 PyAPI_FUNC(PyObject *) PyObject_GenericGetDict(PyObject *, void *);
 PyAPI_FUNC(int) _PyDict_Next(
     PyObject *mp, Py_ssize_t *pos, PyObject **key, PyObject **value, Py_hash_t *hash);
@@ -117,8 +103,8 @@ PyAPI_FUNC(int) _PyDict_Contains(PyObject *mp, PyObject *key, Py_hash_t hash);
 PyAPI_FUNC(PyObject *) _PyDict_NewPresized(Py_ssize_t minused);
 PyAPI_FUNC(void) _PyDict_MaybeUntrack(PyObject *mp);
 PyAPI_FUNC(int) _PyDict_HasOnlyStringKeys(PyObject *mp);
-Py_ssize_t _PyDict_KeysSize(PyDictKeysObject *keys);
-PyAPI_FUNC(Py_ssize_t) _PyDict_SizeOf(PyDictObject *);
+Py_ssize_t _PyDict_KeysSize(PyObject *keys);
+PyAPI_FUNC(Py_ssize_t) _PyDict_SizeOf(PyObject *);
 PyAPI_FUNC(PyObject *) _PyDict_Pop(PyObject *, PyObject *, PyObject *);
 PyObject *_PyDict_Pop_KnownHash(PyObject *, PyObject *, Py_hash_t, PyObject *);
 PyObject *_PyDict_FromKeys(PyObject *, PyObject *, PyObject *);
@@ -136,15 +122,7 @@ PyAPI_FUNC(int) _PyDict_DelItemId(PyObject *mp, struct _Py_Identifier *key);
 PyAPI_FUNC(void) _PyDict_DebugMallocStats(FILE *out);
 
 int _PyObjectDict_SetItem(PyTypeObject *tp, PyObject **dictptr, PyObject *name, PyObject *value);
-PyObject *_PyDict_LoadGlobal(PyDictObject *, PyDictObject *, PyObject *);
-
-/* _PyDictView */
-
-typedef struct {
-    PyObject_HEAD
-    PyDictObject *dv_dict;
-} _PyDictViewObject;
-
+  
 PyAPI_FUNC(PyObject *) _PyDictView_New(PyObject *, PyTypeObject *);
 PyAPI_FUNC(PyObject *) _PyDictView_Intersect(PyObject* self, PyObject *other);
   

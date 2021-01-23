@@ -3109,7 +3109,7 @@ type_setattro(PyTypeObject *type, PyObject *name, PyObject *value)
 }
 
 extern void
-_PyDictKeys_DecRef(PyDictKeysObject *keys);
+_PyDictKeys_DecRef(PyObject *keys);
 
 static void
 type_dealloc(PyTypeObject *type)

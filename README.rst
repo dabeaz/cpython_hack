@@ -148,7 +148,8 @@ data. Removal of macros and performance hacks.
 - Day 20 (1/20/2021). Float cleanup.
 - Day 21 (1/21/2021). Generator/Cell cleanup.
 - Day 22 (1/22/2021). Various minor cleanup of iterators, enum, slice.
-  
+- Day 23 (1/23/2021). Started some dict cleanup.
+
 Copyright and License Information
 ---------------------------------
 
