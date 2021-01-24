@@ -14,10 +14,8 @@ extern "C" {
 
 PyAPI_DATA(PyTypeObject) PyDict_Type;
 
-#define PyDict_Check(op) \
-                 PyType_HasFeature(Py_TYPE(op), Py_TPFLAGS_DICT_SUBCLASS)
-#define PyDict_CheckExact(op) Py_IS_TYPE(op, &PyDict_Type)
-
+PyAPI_FUNC(int) PyDict_Check(PyObject *);
+PyAPI_FUNC(int) PyDict_CheckExact(PyObject *);
 PyAPI_FUNC(PyObject *) PyDict_New(void);
 PyAPI_FUNC(PyObject *) PyDict_GetItem(PyObject *mp, PyObject *key);
 PyAPI_FUNC(PyObject *) PyDict_GetItemWithError(PyObject *mp, PyObject *key);
@@ -64,13 +62,11 @@ PyAPI_DATA(PyTypeObject) PyDictKeys_Type;
 PyAPI_DATA(PyTypeObject) PyDictValues_Type;
 PyAPI_DATA(PyTypeObject) PyDictItems_Type;
 
-#define PyDictKeys_Check(op) PyObject_TypeCheck(op, &PyDictKeys_Type)
-#define PyDictValues_Check(op) PyObject_TypeCheck(op, &PyDictValues_Type)
-#define PyDictItems_Check(op) PyObject_TypeCheck(op, &PyDictItems_Type)
-/* This excludes Values, since they are not sets. */
-# define PyDictViewSet_Check(op) \
-    (PyDictKeys_Check(op) || PyDictItems_Check(op))
-
+PyAPI_FUNC(int) PyDictKeys_Check(PyObject *);
+PyAPI_FUNC(int) PyDictValues_Check(PyObject *);
+PyAPI_FUNC(int) PyDictItems_Check(PyObject *);
+PyAPI_FUNC(int) PyDictViewSet_Check(PyObject *);  
+  
 /* Dictionary (key, value, items) iterators */
 
 PyAPI_DATA(PyTypeObject) PyDictIterKey_Type;
@@ -80,9 +76,10 @@ PyAPI_DATA(PyTypeObject) PyDictIterItem_Type;
 PyAPI_DATA(PyTypeObject) PyDictRevIterKey_Type;
 PyAPI_DATA(PyTypeObject) PyDictRevIterItem_Type;
 PyAPI_DATA(PyTypeObject) PyDictRevIterValue_Type;
-  
+
 PyAPI_FUNC(PyObject *) _PyDict_GetItem_KnownHash(PyObject *mp, PyObject *key,
                                        Py_hash_t hash);
+  
 PyAPI_FUNC(PyObject *) _PyDict_GetItemIdWithError(PyObject *dp,
                                                   struct _Py_Identifier *key);
 PyAPI_FUNC(PyObject *) _PyDict_GetItemStringWithError(PyObject *, const char *);
@@ -109,17 +106,10 @@ PyAPI_FUNC(PyObject *) _PyDict_Pop(PyObject *, PyObject *, PyObject *);
 PyObject *_PyDict_Pop_KnownHash(PyObject *, PyObject *, Py_hash_t, PyObject *);
 PyObject *_PyDict_FromKeys(PyObject *, PyObject *, PyObject *);
 
-/* Like PyDict_Merge, but override can be 0, 1 or 2.  If override is 0,
-   the first occurrence of a key wins, if override is 1, the last occurrence
-   of a key wins, if override is 2, a KeyError with conflicting key as
-   argument is raised.
-*/
-PyAPI_FUNC(int) _PyDict_MergeEx(PyObject *mp, PyObject *other, int override);
 PyAPI_FUNC(PyObject *) _PyDict_GetItemId(PyObject *dp, struct _Py_Identifier *key);
 PyAPI_FUNC(int) _PyDict_SetItemId(PyObject *dp, struct _Py_Identifier *key, PyObject *item);
 
 PyAPI_FUNC(int) _PyDict_DelItemId(PyObject *mp, struct _Py_Identifier *key);
-PyAPI_FUNC(void) _PyDict_DebugMallocStats(FILE *out);
 
 int _PyObjectDict_SetItem(PyTypeObject *tp, PyObject **dictptr, PyObject *name, PyObject *value);
   

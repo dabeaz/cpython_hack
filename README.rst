@@ -149,7 +149,8 @@ data. Removal of macros and performance hacks.
 - Day 21 (1/21/2021). Generator/Cell cleanup.
 - Day 22 (1/22/2021). Various minor cleanup of iterators, enum, slice.
 - Day 23 (1/23/2021). Started some dict cleanup.
-
+- Day 24 (1/24/2021). More dict cleanup.  Removed _PyDict_MergeEx.
+  
 Copyright and License Information
 ---------------------------------
 

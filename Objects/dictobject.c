@@ -115,6 +115,30 @@ converting the dict to the combined table.
 #include "pycore_pyerrors.h" // _PyErr_Fetch()
 #include "pycore_pystate.h"  // PyThreadState_Get()
 
+int PyDict_Check(PyObject *op) {
+  return PyType_HasFeature(Py_TYPE(op), Py_TPFLAGS_DICT_SUBCLASS);
+}
+
+int PyDict_CheckExact(PyObject *op) {
+  return Py_IS_TYPE(op, &PyDict_Type);
+}
+
+int PyDictKeys_Check(PyObject *op) {
+  return PyObject_TypeCheck(op, &PyDictKeys_Type);
+}
+
+int PyDictValues_Check(PyObject *op) {
+  return PyObject_TypeCheck(op, &PyDictValues_Type);
+}
+
+int PyDictItems_Check(PyObject *op) {
+  return PyObject_TypeCheck(op, &PyDictItems_Type);
+}
+
+int PyDictViewSet_Check(PyObject *op) {
+  return (PyDictKeys_Check(op) || PyDictItems_Check(op));
+}
+
 typedef struct _dictkeysobject PyDictKeysObject;
 
 /* The ma_values pointer is NULL for a combined table
@@ -2238,14 +2262,7 @@ PyDict_Update(PyObject *a, PyObject *b)
 int
 PyDict_Merge(PyObject *a, PyObject *b, int override)
 {
-    /* XXX Deprecate override not in (0, 1). */
-    return dict_merge(a, b, override != 0);
-}
-
-int
-_PyDict_MergeEx(PyObject *a, PyObject *b, int override)
-{
-    return dict_merge(a, b, override);
+   return dict_merge(a, b, override);
 }
 
 static PyObject *

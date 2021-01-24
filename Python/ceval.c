@@ -1231,7 +1231,7 @@ main_loop:
             PyObject *update = POP();
             PyObject *dict = PEEK(oparg);
 
-            if (_PyDict_MergeEx(dict, update, 2) < 0) {
+            if (PyDict_Merge(dict, update, 2) < 0) {
                 format_kwargs_error(tstate, PEEK(2 + oparg), update);
                 Py_DECREF(update);
                 goto error;
@@ -1741,7 +1741,7 @@ main_loop:
                     PyObject *d = PyDict_New();
                     if (d == NULL)
                         goto error;
-                    if (_PyDict_MergeEx(d, kwargs, 2) < 0) {
+                    if (PyDict_Merge(d, kwargs, 2) < 0) {
                         Py_DECREF(d);
                         format_kwargs_error(tstate, SECOND(), kwargs);
                         Py_DECREF(kwargs);
