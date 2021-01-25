@@ -76,34 +76,28 @@ PyAPI_DATA(PyTypeObject) PyDictIterItem_Type;
 PyAPI_DATA(PyTypeObject) PyDictRevIterKey_Type;
 PyAPI_DATA(PyTypeObject) PyDictRevIterItem_Type;
 PyAPI_DATA(PyTypeObject) PyDictRevIterValue_Type;
-
-PyAPI_FUNC(PyObject *) _PyDict_GetItem_KnownHash(PyObject *mp, PyObject *key,
-                                       Py_hash_t hash);
   
 PyAPI_FUNC(PyObject *) _PyDict_GetItemIdWithError(PyObject *dp,
                                                   struct _Py_Identifier *key);
+
 PyAPI_FUNC(PyObject *) _PyDict_GetItemStringWithError(PyObject *, const char *);
+  
 PyAPI_FUNC(PyObject *) PyDict_SetDefault(
     PyObject *mp, PyObject *key, PyObject *defaultobj);
-PyAPI_FUNC(int) _PyDict_SetItem_KnownHash(PyObject *mp, PyObject *key,
-                                          PyObject *item, Py_hash_t hash);
-PyAPI_FUNC(int) _PyDict_DelItem_KnownHash(PyObject *mp, PyObject *key,
-                                          Py_hash_t hash);
+  
 PyAPI_FUNC(int) _PyDict_DelItemIf(PyObject *mp, PyObject *key,
                                   int (*predicate)(PyObject *value));
 PyObject *_PyDict_NewKeysForClass(void);
 PyAPI_FUNC(PyObject *) PyObject_GenericGetDict(PyObject *, void *);
-PyAPI_FUNC(int) _PyDict_Next(
-    PyObject *mp, Py_ssize_t *pos, PyObject **key, PyObject **value, Py_hash_t *hash);
   
-PyAPI_FUNC(int) _PyDict_Contains(PyObject *mp, PyObject *key, Py_hash_t hash);
 PyAPI_FUNC(PyObject *) _PyDict_NewPresized(Py_ssize_t minused);
 PyAPI_FUNC(void) _PyDict_MaybeUntrack(PyObject *mp);
 PyAPI_FUNC(int) _PyDict_HasOnlyStringKeys(PyObject *mp);
 Py_ssize_t _PyDict_KeysSize(PyObject *keys);
+  
 PyAPI_FUNC(Py_ssize_t) _PyDict_SizeOf(PyObject *);
+  
 PyAPI_FUNC(PyObject *) _PyDict_Pop(PyObject *, PyObject *, PyObject *);
-PyObject *_PyDict_Pop_KnownHash(PyObject *, PyObject *, Py_hash_t, PyObject *);
 PyObject *_PyDict_FromKeys(PyObject *, PyObject *, PyObject *);
 
 PyAPI_FUNC(PyObject *) _PyDict_GetItemId(PyObject *dp, struct _Py_Identifier *key);

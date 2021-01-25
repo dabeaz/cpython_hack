@@ -1202,7 +1202,7 @@ PyDict_GetItem(PyObject *op, PyObject *key)
    This returns NULL *with* an exception set if an exception occurred.
    It returns NULL *without* an exception set if the key wasn't present.
 */
-PyObject *
+static PyObject *
 _PyDict_GetItem_KnownHash(PyObject *op, PyObject *key, Py_hash_t hash)
 {
     Py_ssize_t ix;
@@ -1302,28 +1302,6 @@ PyDict_SetItem(PyObject *op, PyObject *key, PyObject *value)
     return insertdict(mp, key, hash, value);
 }
 
-int
-_PyDict_SetItem_KnownHash(PyObject *op, PyObject *key, PyObject *value,
-                         Py_hash_t hash)
-{
-    PyDictObject *mp;
-
-    if (!PyDict_Check(op)) {
-        PyErr_BadInternalCall();
-        return -1;
-    }
-    assert(key);
-    assert(value);
-    assert(hash != -1);
-    mp = (PyDictObject *)op;
-
-    if (mp->ma_keys == Py_EMPTY_KEYS) {
-        return insert_to_emptydict(mp, key, hash, value);
-    }
-    /* insertdict() handles any resizing that might be necessary */
-    return insertdict(mp, key, hash, value);
-}
-
 static int
 delitem_common(PyDictObject *mp, Py_hash_t hash, Py_ssize_t ix,
                PyObject *old_value)
@@ -1347,19 +1325,8 @@ delitem_common(PyDictObject *mp, Py_hash_t hash, Py_ssize_t ix,
     return 0;
 }
 
-int
-PyDict_DelItem(PyObject *op, PyObject *key)
-{
-    Py_hash_t hash;
-    assert(key);
-    hash = PyObject_Hash(key);
-    if (hash == -1)
-      return -1;
 
-    return _PyDict_DelItem_KnownHash(op, key, hash);
-}
-
-int
+static int
 _PyDict_DelItem_KnownHash(PyObject *op, PyObject *key, Py_hash_t hash)
 {
     Py_ssize_t ix;
@@ -1381,6 +1348,18 @@ _PyDict_DelItem_KnownHash(PyObject *op, PyObject *key, Py_hash_t hash)
         return -1;
     }
     return delitem_common(mp, hash, ix, old_value);
+}
+
+int
+PyDict_DelItem(PyObject *op, PyObject *key)
+{
+    Py_hash_t hash;
+    assert(key);
+    hash = PyObject_Hash(key);
+    if (hash == -1)
+      return -1;
+
+    return _PyDict_DelItem_KnownHash(op, key, hash);
 }
 
 /* This function promises that the predicate -> deletion sequence is atomic
@@ -1511,7 +1490,7 @@ PyDict_Next(PyObject *op, Py_ssize_t *ppos, PyObject **pkey, PyObject **pvalue)
 }
 
 /* Internal version of dict.pop(). */
-PyObject *
+static PyObject *
 _PyDict_Pop_KnownHash(PyObject *dict, PyObject *key, Py_hash_t hash, PyObject *deflt)
 {
     Py_ssize_t ix, hashpos;
@@ -1782,7 +1761,7 @@ dict_subscript(PyDictObject *mp, PyObject *key)
     if (ix == DKIX_ERROR)
         return NULL;
     if (ix == DKIX_EMPTY || value == NULL) {
-        if (!PyDict_CheckExact(mp)) {
+      if (!PyDict_CheckExact((PyObject *) mp)) {
             /* Look up __missing__ method if we're a subclass. */
             PyObject *missing, *res;
             _Py_IDENTIFIER(__missing__);
@@ -2288,7 +2267,7 @@ PyDict_Copy(PyObject *o)
         return PyDict_New();
     }
     
-    if (PyDict_CheckExact(mp) && // mp->ma_values == NULL &&
+    if (PyDict_CheckExact((PyObject *) mp) && // mp->ma_values == NULL &&
             (mp->ma_used >= (mp->ma_keys->dk_nentries * 2) / 3))
     {
         /* Use fast-copy if:
@@ -2780,20 +2759,6 @@ PyDict_Contains(PyObject *op, PyObject *key)
     hash = PyObject_Hash(key);
     if (hash == -1)
       return -1;
-
-    ix = (mp->ma_keys->dk_lookup)(mp, key, hash, &value);
-    if (ix == DKIX_ERROR)
-        return -1;
-    return (ix != DKIX_EMPTY && value != NULL);
-}
-
-/* Internal version of PyDict_Contains used when the hash value is already known */
-int
-_PyDict_Contains(PyObject *op, PyObject *key, Py_hash_t hash)
-{
-    PyDictObject *mp = (PyDictObject *)op;
-    PyObject *value;
-    Py_ssize_t ix;
 
     ix = (mp->ma_keys->dk_lookup)(mp, key, hash, &value);
     if (ix == DKIX_ERROR)
