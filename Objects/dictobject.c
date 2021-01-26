@@ -911,12 +911,6 @@ top:
     }
     Py_UNREACHABLE();
 }
-#define MAINTAIN_TRACKING(mp, key, value)
-
-void
-_PyDict_MaybeUntrack(PyObject *op)
-{
-}
 
 /* Internal function to find slot for an item from its hash
    when it is known that the key is not present in the dict.
@@ -961,8 +955,6 @@ insertdict(PyDictObject *mp, PyObject *key, Py_hash_t hash, PyObject *value)
     if (ix == DKIX_ERROR)
         goto Fail;
 
-    MAINTAIN_TRACKING(mp, key, value);
-    
     if (ix == DKIX_EMPTY) {
         /* Insert into new slot. */
         assert(old_value == NULL);
@@ -1016,7 +1008,6 @@ insert_to_emptydict(PyDictObject *mp, PyObject *key, Py_hash_t hash,
     mp->ma_keys = newkeys;
     Py_INCREF(key);
     Py_INCREF(value);
-    MAINTAIN_TRACKING(mp, key, value);
 
     size_t hashpos = (size_t)hash & (PyDict_MINSIZE-1);
     PyDictKeyEntry *ep = DK_ENTRIES(mp->ma_keys);
@@ -1362,50 +1353,6 @@ PyDict_DelItem(PyObject *op, PyObject *key)
     return _PyDict_DelItem_KnownHash(op, key, hash);
 }
 
-/* This function promises that the predicate -> deletion sequence is atomic
- * (i.e. protected by the GIL), assuming the predicate itself doesn't
- * release the GIL.
- */
-int
-_PyDict_DelItemIf(PyObject *op, PyObject *key,
-                  int (*predicate)(PyObject *value))
-{
-    Py_ssize_t hashpos, ix;
-    PyDictObject *mp;
-    Py_hash_t hash;
-    PyObject *old_value;
-    int res;
-
-    if (!PyDict_Check(op)) {
-        PyErr_BadInternalCall();
-        return -1;
-    }
-    assert(key);
-    hash = PyObject_Hash(key);
-    if (hash == -1)
-        return -1;
-    mp = (PyDictObject *)op;
-    ix = (mp->ma_keys->dk_lookup)(mp, key, hash, &old_value);
-    if (ix == DKIX_ERROR)
-        return -1;
-    if (ix == DKIX_EMPTY || old_value == NULL) {
-        _PyErr_SetKeyError(key);
-        return -1;
-    }
-    res = predicate(old_value);
-    if (res == -1)
-        return -1;
-
-    hashpos = lookdict_index(mp->ma_keys, hash, ix);
-    assert(hashpos >= 0);
-
-    if (res > 0)
-        return delitem_common(mp, hashpos, ix, old_value);
-    else
-        return 0;
-}
-
-
 void
 PyDict_Clear(PyObject *op)
 {
@@ -1536,7 +1483,7 @@ _PyDict_Pop_KnownHash(PyObject *dict, PyObject *key, Py_hash_t hash, PyObject *d
 }
 
 PyObject *
-_PyDict_Pop(PyObject *dict, PyObject *key, PyObject *deflt)
+PyDict_Pop(PyObject *dict, PyObject *key, PyObject *deflt)
 {
     Py_hash_t hash;
 
@@ -1556,7 +1503,7 @@ _PyDict_Pop(PyObject *dict, PyObject *key, PyObject *deflt)
 
 /* Internal version of dict.from_keys().  It is subclass-friendly. */
 PyObject *
-_PyDict_FromKeys(PyObject *cls, PyObject *iterable, PyObject *value)
+PyDict_FromKeys(PyObject *cls, PyObject *iterable, PyObject *value)
 {
     PyObject *it;       /* iter(iterable) */
     PyObject *key;
@@ -1939,7 +1886,7 @@ static PyObject *
 dict_fromkeys_impl(PyTypeObject *type, PyObject *iterable, PyObject *value)
 /*[clinic end generated code: output=8fb98e4b10384999 input=382ba4855d0f74c3]*/
 {
-    return _PyDict_FromKeys((PyObject *)type, iterable, value);
+    return PyDict_FromKeys((PyObject *)type, iterable, value);
 }
 
 /* Single-arg dict update; used by dict_update_common and operators. */
@@ -2508,7 +2455,6 @@ PyDict_SetDefault(PyObject *d, PyObject *key, PyObject *defaultobj)
         dictkeys_set_index(mp->ma_keys, hashpos, mp->ma_keys->dk_nentries);
         Py_INCREF(key);
         Py_INCREF(value);
-        MAINTAIN_TRACKING(mp, key, value);
         ep->me_key = key;
         ep->me_hash = hash;
 	ep->me_value = value;
@@ -2568,7 +2514,7 @@ static PyObject *
 dict_pop_impl(PyDictObject *self, PyObject *key, PyObject *default_value)
 /*[clinic end generated code: output=3abb47b89f24c21c input=eeebec7812190348]*/
 {
-    return _PyDict_Pop((PyObject*)self, key, default_value);
+    return PyDict_Pop((PyObject*)self, key, default_value);
 }
 
 /*[clinic input]

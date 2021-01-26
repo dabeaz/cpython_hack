@@ -31,6 +31,10 @@ PyAPI_FUNC(Py_ssize_t) PyDict_Size(PyObject *mp);
 PyAPI_FUNC(PyObject *) PyDict_Copy(PyObject *mp);
 PyAPI_FUNC(int) PyDict_Contains(PyObject *mp, PyObject *key);
 
+PyAPI_FUNC(PyObject *) PyDict_Pop(PyObject *, PyObject *, PyObject *);
+PyAPI_FUNC(PyObject *) PyDict_FromKeys(PyObject *, PyObject *, PyObject *);
+PyAPI_FUNC(PyObject *) PyDict_SetDefault(PyObject *mp, PyObject *key, PyObject *defaultobj);
+
 /* PyDict_Update(mp, other) is equivalent to PyDict_Merge(mp, other, 1). */
 PyAPI_FUNC(int) PyDict_Update(PyObject *mp, PyObject *other);
 
@@ -82,23 +86,15 @@ PyAPI_FUNC(PyObject *) _PyDict_GetItemIdWithError(PyObject *dp,
 
 PyAPI_FUNC(PyObject *) _PyDict_GetItemStringWithError(PyObject *, const char *);
   
-PyAPI_FUNC(PyObject *) PyDict_SetDefault(
-    PyObject *mp, PyObject *key, PyObject *defaultobj);
-  
-PyAPI_FUNC(int) _PyDict_DelItemIf(PyObject *mp, PyObject *key,
-                                  int (*predicate)(PyObject *value));
 PyObject *_PyDict_NewKeysForClass(void);
 PyAPI_FUNC(PyObject *) PyObject_GenericGetDict(PyObject *, void *);
-  
+
 PyAPI_FUNC(PyObject *) _PyDict_NewPresized(Py_ssize_t minused);
-PyAPI_FUNC(void) _PyDict_MaybeUntrack(PyObject *mp);
-PyAPI_FUNC(int) _PyDict_HasOnlyStringKeys(PyObject *mp);
-Py_ssize_t _PyDict_KeysSize(PyObject *keys);
+  
+  Py_ssize_t _PyDict_KeysSize(PyObject *keys);
   
 PyAPI_FUNC(Py_ssize_t) _PyDict_SizeOf(PyObject *);
   
-PyAPI_FUNC(PyObject *) _PyDict_Pop(PyObject *, PyObject *, PyObject *);
-PyObject *_PyDict_FromKeys(PyObject *, PyObject *, PyObject *);
 
 PyAPI_FUNC(PyObject *) _PyDict_GetItemId(PyObject *dp, struct _Py_Identifier *key);
 PyAPI_FUNC(int) _PyDict_SetItemId(PyObject *dp, struct _Py_Identifier *key, PyObject *item);
@@ -106,9 +102,6 @@ PyAPI_FUNC(int) _PyDict_SetItemId(PyObject *dp, struct _Py_Identifier *key, PyOb
 PyAPI_FUNC(int) _PyDict_DelItemId(PyObject *mp, struct _Py_Identifier *key);
 
 int _PyObjectDict_SetItem(PyTypeObject *tp, PyObject **dictptr, PyObject *name, PyObject *value);
-  
-PyAPI_FUNC(PyObject *) _PyDictView_New(PyObject *, PyTypeObject *);
-PyAPI_FUNC(PyObject *) _PyDictView_Intersect(PyObject* self, PyObject *other);
   
 
 #ifdef __cplusplus
