@@ -152,7 +152,8 @@ data. Removal of macros and performance hacks.
 - Day 24 (1/24/2021). More dict cleanup.  Removed _PyDict_MergeEx.
 - Day 25 (1/25/2021). Removed PyDict_*{KnownHash} functions.
 - Day 26 (1/26/2021). More dict cleanup.
-  
+- Day 27 (1/27/2021). Classobject/capsule cleanup.
+
 Copyright and License Information
 ---------------------------------
 

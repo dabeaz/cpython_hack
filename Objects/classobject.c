@@ -6,6 +6,35 @@
 #include "pycore_pystate.h"       // PyThreadState_Get()
 #include "structmember.h"         // PyMemberDef
 
+typedef struct {
+    PyObject_HEAD
+    PyObject *im_func;   /* The callable object implementing the method */
+    PyObject *im_self;   /* The instance it is bound to */
+    PyObject *im_weakreflist; /* List of weak references */
+    vectorcallfunc vectorcall;
+} PyMethodObject;
+
+#define PyMethod_GET_FUNCTION(meth) \
+        (((PyMethodObject *)meth) -> im_func)
+#define PyMethod_GET_SELF(meth) \
+        (((PyMethodObject *)meth) -> im_self)
+
+typedef struct {
+    PyObject_HEAD
+    PyObject *func;
+} PyInstanceMethodObject;
+
+#define PyInstanceMethod_GET_FUNCTION(meth) \
+        (((PyInstanceMethodObject *)meth) -> func)
+
+int PyMethod_Check(PyObject *op) {
+  return Py_IS_TYPE(op, &PyMethod_Type);
+}
+
+int PyInstanceMethod_Check(PyObject *op) {
+  return Py_IS_TYPE(op, &PyInstanceMethod_Type);
+}
+
 #define TP_DESCR_GET(t) ((t)->tp_descr_get)
 
 _Py_IDENTIFIER(__name__);

@@ -7,7 +7,6 @@ typedef struct {
     PyObject_HEAD
     void *pointer;
     const char *name;
-    void *context;
     PyCapsule_Destructor destructor;
 } PyCapsule;
 
@@ -57,7 +56,6 @@ PyCapsule_New(void *pointer, const char *name, PyCapsule_Destructor destructor)
 
     capsule->pointer = pointer;
     capsule->name = name;
-    capsule->context = NULL;
     capsule->destructor = destructor;
 
     return (PyObject *)capsule;
@@ -116,142 +114,6 @@ PyCapsule_GetDestructor(PyObject *o)
     }
     return capsule->destructor;
 }
-
-
-void *
-PyCapsule_GetContext(PyObject *o)
-{
-    PyCapsule *capsule = (PyCapsule *)o;
-
-    if (!is_legal_capsule(capsule, "PyCapsule_GetContext")) {
-        return NULL;
-    }
-    return capsule->context;
-}
-
-
-int
-PyCapsule_SetPointer(PyObject *o, void *pointer)
-{
-    PyCapsule *capsule = (PyCapsule *)o;
-
-    if (!pointer) {
-        PyErr_SetString(PyExc_ValueError, "PyCapsule_SetPointer called with null pointer");
-        return -1;
-    }
-
-    if (!is_legal_capsule(capsule, "PyCapsule_SetPointer")) {
-        return -1;
-    }
-
-    capsule->pointer = pointer;
-    return 0;
-}
-
-
-int
-PyCapsule_SetName(PyObject *o, const char *name)
-{
-    PyCapsule *capsule = (PyCapsule *)o;
-
-    if (!is_legal_capsule(capsule, "PyCapsule_SetName")) {
-        return -1;
-    }
-
-    capsule->name = name;
-    return 0;
-}
-
-
-int
-PyCapsule_SetDestructor(PyObject *o, PyCapsule_Destructor destructor)
-{
-    PyCapsule *capsule = (PyCapsule *)o;
-
-    if (!is_legal_capsule(capsule, "PyCapsule_SetDestructor")) {
-        return -1;
-    }
-
-    capsule->destructor = destructor;
-    return 0;
-}
-
-
-int
-PyCapsule_SetContext(PyObject *o, void *context)
-{
-    PyCapsule *capsule = (PyCapsule *)o;
-
-    if (!is_legal_capsule(capsule, "PyCapsule_SetContext")) {
-        return -1;
-    }
-
-    capsule->context = context;
-    return 0;
-}
-
-
-void *
-PyCapsule_Import(const char *name, int no_block)
-{
-    PyObject *object = NULL;
-    void *return_value = NULL;
-    char *trace;
-    size_t name_length = (strlen(name) + 1) * sizeof(char);
-    char *name_dup = (char *)PyMem_Malloc(name_length);
-
-    if (!name_dup) {
-        return PyErr_NoMemory();
-    }
-
-    memcpy(name_dup, name, name_length);
-
-    trace = name_dup;
-    while (trace) {
-        char *dot = strchr(trace, '.');
-        if (dot) {
-            *dot++ = '\0';
-        }
-
-        if (object == NULL) {
-            if (no_block) {
-                object = PyImport_ImportModuleNoBlock(trace);
-            } else {
-                object = PyImport_ImportModule(trace);
-                if (!object) {
-                    PyErr_Format(PyExc_ImportError, "PyCapsule_Import could not import module \"%s\"", trace);
-                }
-            }
-        } else {
-            PyObject *object2 = PyObject_GetAttrString(object, trace);
-            Py_DECREF(object);
-            object = object2;
-        }
-        if (!object) {
-            goto EXIT;
-        }
-
-        trace = dot;
-    }
-
-    /* compare attribute name to module.name by hand */
-    if (PyCapsule_IsValid(object, name)) {
-        PyCapsule *capsule = (PyCapsule *)object;
-        return_value = capsule->pointer;
-    } else {
-        PyErr_Format(PyExc_AttributeError,
-            "PyCapsule_Import \"%s\" is not valid",
-            name);
-    }
-
-EXIT:
-    Py_XDECREF(object);
-    if (name_dup) {
-        PyMem_Free(name_dup);
-    }
-    return return_value;
-}
-
 
 static void
 capsule_dealloc(PyObject *o)

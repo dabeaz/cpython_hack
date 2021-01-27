@@ -2833,7 +2833,7 @@ const char *
 PyEval_GetFuncName(PyObject *func)
 {
     if (PyMethod_Check(func))
-        return PyEval_GetFuncName(PyMethod_GET_FUNCTION(func));
+        return PyEval_GetFuncName(PyMethod_Function(func));
     else if (PyFunction_Check(func))
         return PyUnicode_AsChar(((PyFunctionObject*)func)->func_name);
     else if (PyCFunction_Check(func))
