@@ -6804,7 +6804,7 @@ update_one_slot(PyTypeObject *type, slotdef *p)
             }
         }
         else if (Py_IS_TYPE(descr, &PyCFunction_Type) &&
-                 PyCFunction_GET_FUNCTION(descr) ==
+                 PyCFunction_GetFunction(descr) ==
                  (PyCFunction)(void(*)(void))tp_new_wrapper &&
                  ptr == (void**)&type->tp_new)
         {

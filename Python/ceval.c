@@ -2837,7 +2837,10 @@ PyEval_GetFuncName(PyObject *func)
     else if (PyFunction_Check(func))
         return PyUnicode_AsChar(((PyFunctionObject*)func)->func_name);
     else if (PyCFunction_Check(func))
+      return PyCFunction_GetName(func);
+    #if 0
         return ((PyCFunctionObject*)func)->m_ml->ml_name;
+	#endif
     else
         return Py_TYPE(func)->tp_name;
 }

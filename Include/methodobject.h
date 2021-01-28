@@ -13,8 +13,9 @@ extern "C" {
 
 PyAPI_DATA(PyTypeObject) PyCFunction_Type;
 
-#define PyCFunction_CheckExact(op) Py_IS_TYPE(op, &PyCFunction_Type)
-#define PyCFunction_Check(op) PyObject_TypeCheck(op, &PyCFunction_Type)
+  
+PyAPI_FUNC(int) PyCFunction_CheckExact(PyObject *op);
+PyAPI_FUNC(int) PyCFunction_Check(PyObject *op);
 
 typedef PyObject *(*PyCFunction)(PyObject *, PyObject *);
 typedef PyObject *(*_PyCFunctionFast) (PyObject *, PyObject *const *, Py_ssize_t);
@@ -29,6 +30,7 @@ typedef PyObject *(*PyCMethod)(PyObject *, PyTypeObject *, PyObject *const *,
 PyAPI_FUNC(PyCFunction) PyCFunction_GetFunction(PyObject *);
 PyAPI_FUNC(PyObject *) PyCFunction_GetSelf(PyObject *);
 PyAPI_FUNC(int) PyCFunction_GetFlags(PyObject *);
+PyAPI_FUNC(const char *) PyCFunction_GetName(PyObject *func);
 
 struct PyMethodDef {
     const char  *ml_name;   /* The name of the built-in function/method */
@@ -75,13 +77,6 @@ PyAPI_FUNC(PyObject *) PyCMethod_New(PyMethodDef *, PyObject *,
 #define METH_FASTCALL  0x0080
 #endif
 
-/* This bit is preserved for Stackless Python */
-#ifdef STACKLESS
-#define METH_STACKLESS 0x0100
-#else
-#define METH_STACKLESS 0x0000
-#endif
-
 /* METH_METHOD means the function stores an
  * additional reference to the class that defines it;
  * both self and class are passed to it.
@@ -92,39 +87,12 @@ PyAPI_FUNC(PyObject *) PyCMethod_New(PyMethodDef *, PyObject *,
 #if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03090000
 #define METH_METHOD 0x0200
 #endif
-
+  
 PyAPI_DATA(PyTypeObject) PyCMethod_Type;
 
 #define PyCMethod_CheckExact(op) Py_IS_TYPE(op, &PyCMethod_Type)
 #define PyCMethod_Check(op) PyObject_TypeCheck(op, &PyCMethod_Type)
-
-/* Macros for direct access to these values. Type checks are *not*
-   done, so use with care. */
-#define PyCFunction_GET_FUNCTION(func) \
-        (((PyCFunctionObject *)func) -> m_ml -> ml_meth)
-#define PyCFunction_GET_SELF(func) \
-        (((PyCFunctionObject *)func) -> m_ml -> ml_flags & METH_STATIC ? \
-         NULL : ((PyCFunctionObject *)func) -> m_self)
-#define PyCFunction_GET_FLAGS(func) \
-        (((PyCFunctionObject *)func) -> m_ml -> ml_flags)
-#define PyCFunction_GET_CLASS(func) \
-    (((PyCFunctionObject *)func) -> m_ml -> ml_flags & METH_METHOD ? \
-         ((PyCMethodObject *)func) -> mm_class : NULL)
-
-typedef struct {
-    PyObject_HEAD
-    PyMethodDef *m_ml; /* Description of the C function to call */
-    PyObject    *m_self; /* Passed as 'self' arg to the C func, can be NULL */
-    PyObject    *m_module; /* The __module__ attribute, can be anything */
-    PyObject    *m_weakreflist; /* List of weak references */
-    vectorcallfunc vectorcall;
-} PyCFunctionObject;
-
-typedef struct {
-    PyCFunctionObject func;
-    PyTypeObject *mm_class; /* Class that defines this method */
-} PyCMethodObject;
-
+  
 #ifdef __cplusplus
 }
 #endif

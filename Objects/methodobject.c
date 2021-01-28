@@ -8,6 +8,39 @@
 #include "pycore_pystate.h"       // PyThreadState_Get()
 #include "structmember.h"         // PyMemberDef
 
+typedef struct {
+    PyObject_HEAD
+    PyMethodDef *m_ml; /* Description of the C function to call */
+    PyObject    *m_self; /* Passed as 'self' arg to the C func, can be NULL */
+    PyObject    *m_module; /* The __module__ attribute, can be anything */
+    PyObject    *m_weakreflist; /* List of weak references */
+    vectorcallfunc vectorcall;
+} PyCFunctionObject;
+
+typedef struct {
+    PyCFunctionObject func;
+    PyTypeObject *mm_class; /* Class that defines this method */
+} PyCMethodObject;
+
+#define PyCFunction_GET_FUNCTION(func) \
+        (((PyCFunctionObject *)func) -> m_ml -> ml_meth)
+#define PyCFunction_GET_SELF(func) \
+        (((PyCFunctionObject *)func) -> m_ml -> ml_flags & METH_STATIC ? \
+         NULL : ((PyCFunctionObject *)func) -> m_self)
+#define PyCFunction_GET_FLAGS(func) \
+        (((PyCFunctionObject *)func) -> m_ml -> ml_flags)
+#define PyCFunction_GET_CLASS(func) \
+    (((PyCFunctionObject *)func) -> m_ml -> ml_flags & METH_METHOD ? \
+         ((PyCMethodObject *)func) -> mm_class : NULL)
+
+int PyCFunction_CheckExact(PyObject *op) {
+  return Py_IS_TYPE(op, &PyCFunction_Type);
+}
+
+int PyCFunction_Check(PyObject *op){
+  return PyObject_TypeCheck(op, &PyCFunction_Type);
+}
+
 /* undefine macro trampoline to PyCFunction_NewEx */
 #undef PyCFunction_New
 /* undefine macro trampoline to PyCMethod_New */
@@ -142,6 +175,12 @@ PyCFunction_GetFlags(PyObject *op)
         return -1;
     }
     return PyCFunction_GET_FLAGS(op);
+}
+
+const char *
+PyCFunction_GetName(PyObject *func)
+{
+  return ((PyCFunctionObject*)func)->m_ml->ml_name;
 }
 
 PyTypeObject *
