@@ -11,10 +11,8 @@ typedef struct _longobject PyLongObject; /* Revealed in longintrepr.h */
 
 PyAPI_DATA(PyTypeObject) PyLong_Type;
 
-#define PyLong_Check(op) \
-        PyType_HasFeature(Py_TYPE(op), Py_TPFLAGS_LONG_SUBCLASS)
-#define PyLong_CheckExact(op) Py_IS_TYPE(op, &PyLong_Type)
-
+PyAPI_FUNC(int) PyLong_Check(PyObject *);
+PyAPI_FUNC(int) PyLong_CheckExact(PyObject *);  
 PyAPI_FUNC(PyObject *) PyLong_FromLong(long);
 PyAPI_FUNC(PyObject *) PyLong_FromUnsignedLong(unsigned long);
 PyAPI_FUNC(PyObject *) PyLong_FromSize_t(size_t);
@@ -60,14 +58,6 @@ PyAPI_FUNC(PyObject *) PyLong_GetInfo(void);
 #else
 #  error "void* different in size from int, long and long long"
 #endif /* SIZEOF_VOID_P */
-
-#ifndef Py_LIMITED_API
-PyAPI_FUNC(int) _PyLong_UnsignedShort_Converter(PyObject *, void *);
-PyAPI_FUNC(int) _PyLong_UnsignedInt_Converter(PyObject *, void *);
-PyAPI_FUNC(int) _PyLong_UnsignedLong_Converter(PyObject *, void *);
-PyAPI_FUNC(int) _PyLong_UnsignedLongLong_Converter(PyObject *, void *);
-PyAPI_FUNC(int) _PyLong_Size_t_Converter(PyObject *, void *);
-#endif
 
 /* Used by Python/mystrtoul.c, _PyBytes_FromHex(),
    _PyBytes_DecodeEscape(), etc. */
@@ -194,16 +184,12 @@ PyAPI_FUNC(unsigned long) PyOS_strtoul(const char *, char **, int);
 PyAPI_FUNC(long) PyOS_strtol(const char *, char **, int);
 
 #ifndef Py_LIMITED_API
-/* For use by the gcd function in mathmodule.c */
-PyAPI_FUNC(PyObject *) _PyLong_GCD(PyObject *, PyObject *);
-#endif /* !Py_LIMITED_API */
-
-#ifndef Py_LIMITED_API
 PyAPI_DATA(PyObject *) _PyLong_Zero;
 PyAPI_DATA(PyObject *) _PyLong_One;
 
 PyAPI_FUNC(PyObject *) _PyLong_Rshift(PyObject *, size_t);
 PyAPI_FUNC(PyObject *) _PyLong_Lshift(PyObject *, size_t);
+  
 #endif
 
 #ifdef __cplusplus

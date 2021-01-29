@@ -154,7 +154,8 @@ data. Removal of macros and performance hacks.
 - Day 26 (1/26/2021). More dict cleanup.
 - Day 27 (1/27/2021). Classobject/capsule cleanup.
 - Day 28 (1/28/2021). Methodobject cleanup.
-  
+- Day 29 (1/29/2021). pymem and long cleanup.
+
 Copyright and License Information
 ---------------------------------
 

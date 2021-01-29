@@ -39,16 +39,6 @@ PyAPI_FUNC(void *) PyMem_Calloc(size_t nelem, size_t elsize);
 #define PyMem_New(type, n) \
   ( ((size_t)(n) > PY_SSIZE_T_MAX / sizeof(type)) ? NULL :      \
         ( (type *) PyMem_Malloc((n) * sizeof(type)) ) )
-
-/*
- * The value of (p) is always clobbered by this macro regardless of success.
- * The caller MUST check if (p) is NULL afterwards and deal with the memory
- * error if so.  This means the original value of (p) MUST be saved for the
- * caller's memory error handler to not lose track of it.
- */
-#define PyMem_Resize(p, type, n) \
-  ( (p) = ((size_t)(n) > PY_SSIZE_T_MAX / sizeof(type)) ? NULL :        \
-        (type *) PyMem_Realloc((p), (n) * sizeof(type)) )
   
 /* strdup() using PyMem_Malloc() */
 PyAPI_FUNC(char *) _PyMem_Strdup(const char *str);

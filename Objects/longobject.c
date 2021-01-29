@@ -12,6 +12,15 @@
 #include <ctype.h>
 #include <stddef.h>
 
+
+int PyLong_Check(PyObject *op) {
+  return PyType_HasFeature(Py_TYPE(op), Py_TPFLAGS_LONG_SUBCLASS);
+}
+
+int PyLong_CheckExact(PyObject *op) {
+  return Py_IS_TYPE(op, &PyLong_Type);
+}
+
 /*[clinic input]
 preserve
 [clinic start generated code]*/
@@ -1612,105 +1621,9 @@ PyLong_AsLongLongAndOverflow(PyObject *vv, int *overflow)
     return res;
 }
 
-int
-_PyLong_UnsignedShort_Converter(PyObject *obj, void *ptr)
-{
-    unsigned long uval;
-
-    if (PyLong_Check(obj) && _PyLong_Sign(obj) < 0) {
-        PyErr_SetString(PyExc_ValueError, "value must be positive");
-        return 0;
-    }
-    uval = PyLong_AsUnsignedLong(obj);
-    if (uval == (unsigned long)-1 && PyErr_Occurred())
-        return 0;
-    if (uval > USHRT_MAX) {
-        PyErr_SetString(PyExc_OverflowError,
-                        "Python int too large for C unsigned short");
-        return 0;
-    }
-
-    *(unsigned short *)ptr = Py_SAFE_DOWNCAST(uval, unsigned long, unsigned short);
-    return 1;
-}
-
-int
-_PyLong_UnsignedInt_Converter(PyObject *obj, void *ptr)
-{
-    unsigned long uval;
-
-    if (PyLong_Check(obj) && _PyLong_Sign(obj) < 0) {
-        PyErr_SetString(PyExc_ValueError, "value must be positive");
-        return 0;
-    }
-    uval = PyLong_AsUnsignedLong(obj);
-    if (uval == (unsigned long)-1 && PyErr_Occurred())
-        return 0;
-    if (uval > UINT_MAX) {
-        PyErr_SetString(PyExc_OverflowError,
-                        "Python int too large for C unsigned int");
-        return 0;
-    }
-
-    *(unsigned int *)ptr = Py_SAFE_DOWNCAST(uval, unsigned long, unsigned int);
-    return 1;
-}
-
-int
-_PyLong_UnsignedLong_Converter(PyObject *obj, void *ptr)
-{
-    unsigned long uval;
-
-    if (PyLong_Check(obj) && _PyLong_Sign(obj) < 0) {
-        PyErr_SetString(PyExc_ValueError, "value must be positive");
-        return 0;
-    }
-    uval = PyLong_AsUnsignedLong(obj);
-    if (uval == (unsigned long)-1 && PyErr_Occurred())
-        return 0;
-
-    *(unsigned long *)ptr = uval;
-    return 1;
-}
-
-int
-_PyLong_UnsignedLongLong_Converter(PyObject *obj, void *ptr)
-{
-    unsigned long long uval;
-
-    if (PyLong_Check(obj) && _PyLong_Sign(obj) < 0) {
-        PyErr_SetString(PyExc_ValueError, "value must be positive");
-        return 0;
-    }
-    uval = PyLong_AsUnsignedLongLong(obj);
-    if (uval == (unsigned long long)-1 && PyErr_Occurred())
-        return 0;
-
-    *(unsigned long long *)ptr = uval;
-    return 1;
-}
-
-int
-_PyLong_Size_t_Converter(PyObject *obj, void *ptr)
-{
-    size_t uval;
-
-    if (PyLong_Check(obj) && _PyLong_Sign(obj) < 0) {
-        PyErr_SetString(PyExc_ValueError, "value must be positive");
-        return 0;
-    }
-    uval = PyLong_AsSize_t(obj);
-    if (uval == (size_t)-1 && PyErr_Occurred())
-        return 0;
-
-    *(size_t *)ptr = uval;
-    return 1;
-}
-
-
 #define CHECK_BINOP(v,w)                                \
     do {                                                \
-        if (!PyLong_Check(v) || !PyLong_Check(w))       \
+      if (!PyLong_Check((PyObject *) v) || !PyLong_Check((PyObject *) w)) \
             Py_RETURN_NOTIMPLEMENTED;                   \
     } while(0)
 
@@ -1862,7 +1775,7 @@ long_to_decimal_string_internal(PyObject *aa,
     int d;
 
     a = (PyLongObject *)aa;
-    if (a == NULL || !PyLong_Check(a)) {
+    if (a == NULL || !PyLong_Check((PyObject *)a)) {
         PyErr_BadInternalCall();
         return -1;
     }
@@ -2027,7 +1940,7 @@ long_format_binary(PyObject *aa, int base, int alternate,
     int bits;
 
     assert(base == 2 || base == 8 || base == 16);
-    if (a == NULL || !PyLong_Check(a)) {
+    if (a == NULL || !PyLong_Check((PyObject *) a)) {
         PyErr_BadInternalCall();
         return -1;
     }
@@ -4859,215 +4772,6 @@ long_long(PyObject *v)
     else
         v = _PyLong_Copy((PyLongObject *)v);
     return v;
-}
-
-PyObject *
-_PyLong_GCD(PyObject *aarg, PyObject *barg)
-{
-    PyLongObject *a, *b, *c = NULL, *d = NULL, *r;
-    stwodigits x, y, q, s, t, c_carry, d_carry;
-    stwodigits A, B, C, D, T;
-    int nbits, k;
-    Py_ssize_t size_a, size_b, alloc_a, alloc_b;
-    digit *a_digit, *b_digit, *c_digit, *d_digit, *a_end, *b_end;
-
-    a = (PyLongObject *)aarg;
-    b = (PyLongObject *)barg;
-    size_a = Py_SIZE(a);
-    size_b = Py_SIZE(b);
-    if (-2 <= size_a && size_a <= 2 && -2 <= size_b && size_b <= 2) {
-        Py_INCREF(a);
-        Py_INCREF(b);
-        goto simple;
-    }
-
-    /* Initial reduction: make sure that 0 <= b <= a. */
-    a = (PyLongObject *)long_abs(a);
-    if (a == NULL)
-        return NULL;
-    b = (PyLongObject *)long_abs(b);
-    if (b == NULL) {
-        Py_DECREF(a);
-        return NULL;
-    }
-    if (long_compare(a, b) < 0) {
-        r = a;
-        a = b;
-        b = r;
-    }
-    /* We now own references to a and b */
-
-    alloc_a = Py_SIZE(a);
-    alloc_b = Py_SIZE(b);
-    /* reduce until a fits into 2 digits */
-    while ((size_a = Py_SIZE(a)) > 2) {
-        nbits = _Py_bit_length(a->ob_digit[size_a-1]);
-        /* extract top 2*PyLong_SHIFT bits of a into x, along with
-           corresponding bits of b into y */
-        size_b = Py_SIZE(b);
-        assert(size_b <= size_a);
-        if (size_b == 0) {
-            if (size_a < alloc_a) {
-                r = (PyLongObject *)_PyLong_Copy(a);
-                Py_DECREF(a);
-            }
-            else
-                r = a;
-            Py_DECREF(b);
-            Py_XDECREF(c);
-            Py_XDECREF(d);
-            return (PyObject *)r;
-        }
-        x = (((twodigits)a->ob_digit[size_a-1] << (2*PyLong_SHIFT-nbits)) |
-             ((twodigits)a->ob_digit[size_a-2] << (PyLong_SHIFT-nbits)) |
-             (a->ob_digit[size_a-3] >> nbits));
-
-        y = ((size_b >= size_a - 2 ? b->ob_digit[size_a-3] >> nbits : 0) |
-             (size_b >= size_a - 1 ? (twodigits)b->ob_digit[size_a-2] << (PyLong_SHIFT-nbits) : 0) |
-             (size_b >= size_a ? (twodigits)b->ob_digit[size_a-1] << (2*PyLong_SHIFT-nbits) : 0));
-
-        /* inner loop of Lehmer's algorithm; A, B, C, D never grow
-           larger than PyLong_MASK during the algorithm. */
-        A = 1; B = 0; C = 0; D = 1;
-        for (k=0;; k++) {
-            if (y-C == 0)
-                break;
-            q = (x+(A-1))/(y-C);
-            s = B+q*D;
-            t = x-q*y;
-            if (s > t)
-                break;
-            x = y; y = t;
-            t = A+q*C; A = D; B = C; C = s; D = t;
-        }
-
-        if (k == 0) {
-            /* no progress; do a Euclidean step */
-            if (l_divmod(a, b, NULL, &r) < 0)
-                goto error;
-            Py_DECREF(a);
-            a = b;
-            b = r;
-            alloc_a = alloc_b;
-            alloc_b = Py_SIZE(b);
-            continue;
-        }
-
-        /*
-          a, b = A*b-B*a, D*a-C*b if k is odd
-          a, b = A*a-B*b, D*b-C*a if k is even
-        */
-        if (k&1) {
-            T = -A; A = -B; B = T;
-            T = -C; C = -D; D = T;
-        }
-        if (c != NULL) {
-            Py_SET_SIZE(c, size_a);
-        }
-        else if (Py_REFCNT(a) == 1) {
-            Py_INCREF(a);
-            c = a;
-        }
-        else {
-            alloc_a = size_a;
-            c = _PyLong_New(size_a);
-            if (c == NULL)
-                goto error;
-        }
-
-        if (d != NULL) {
-            Py_SET_SIZE(d, size_a);
-        }
-        else if (Py_REFCNT(b) == 1 && size_a <= alloc_b) {
-            Py_INCREF(b);
-            d = b;
-            Py_SET_SIZE(d, size_a);
-        }
-        else {
-            alloc_b = size_a;
-            d = _PyLong_New(size_a);
-            if (d == NULL)
-                goto error;
-        }
-        a_end = a->ob_digit + size_a;
-        b_end = b->ob_digit + size_b;
-
-        /* compute new a and new b in parallel */
-        a_digit = a->ob_digit;
-        b_digit = b->ob_digit;
-        c_digit = c->ob_digit;
-        d_digit = d->ob_digit;
-        c_carry = 0;
-        d_carry = 0;
-        while (b_digit < b_end) {
-            c_carry += (A * *a_digit) - (B * *b_digit);
-            d_carry += (D * *b_digit++) - (C * *a_digit++);
-            *c_digit++ = (digit)(c_carry & PyLong_MASK);
-            *d_digit++ = (digit)(d_carry & PyLong_MASK);
-            c_carry >>= PyLong_SHIFT;
-            d_carry >>= PyLong_SHIFT;
-        }
-        while (a_digit < a_end) {
-            c_carry += A * *a_digit;
-            d_carry -= C * *a_digit++;
-            *c_digit++ = (digit)(c_carry & PyLong_MASK);
-            *d_digit++ = (digit)(d_carry & PyLong_MASK);
-            c_carry >>= PyLong_SHIFT;
-            d_carry >>= PyLong_SHIFT;
-        }
-        assert(c_carry == 0);
-        assert(d_carry == 0);
-
-        Py_INCREF(c);
-        Py_INCREF(d);
-        Py_DECREF(a);
-        Py_DECREF(b);
-        a = long_normalize(c);
-        b = long_normalize(d);
-    }
-    Py_XDECREF(c);
-    Py_XDECREF(d);
-
-simple:
-    assert(Py_REFCNT(a) > 0);
-    assert(Py_REFCNT(b) > 0);
-/* Issue #24999: use two shifts instead of ">> 2*PyLong_SHIFT" to avoid
-   undefined behaviour when LONG_MAX type is smaller than 60 bits */
-#if LONG_MAX >> PyLong_SHIFT >> PyLong_SHIFT
-    /* a fits into a long, so b must too */
-    x = PyLong_AsLong((PyObject *)a);
-    y = PyLong_AsLong((PyObject *)b);
-#elif LLONG_MAX >> PyLong_SHIFT >> PyLong_SHIFT
-    x = PyLong_AsLongLong((PyObject *)a);
-    y = PyLong_AsLongLong((PyObject *)b);
-#else
-# error "_PyLong_GCD"
-#endif
-    x = Py_ABS(x);
-    y = Py_ABS(y);
-    Py_DECREF(a);
-    Py_DECREF(b);
-
-    /* usual Euclidean algorithm for longs */
-    while (y != 0) {
-        t = y;
-        y = x % y;
-        x = t;
-    }
-#if LONG_MAX >> PyLong_SHIFT >> PyLong_SHIFT
-    return PyLong_FromLong(x);
-#elif LLONG_MAX >> PyLong_SHIFT >> PyLong_SHIFT
-    return PyLong_FromLongLong(x);
-#else
-# error "_PyLong_GCD"
-#endif
-
-error:
-    Py_DECREF(a);
-    Py_DECREF(b);
-    Py_XDECREF(c);
-    Py_XDECREF(d);
-    return NULL;
 }
 
 static PyObject *
