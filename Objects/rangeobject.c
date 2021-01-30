@@ -19,6 +19,11 @@ typedef struct {
     PyObject *length;
 } rangeobject;
 
+  
+int PyRange_Check(PyObject *op) {
+  return Py_IS_TYPE(op, &PyRange_Type);
+}
+
 _Py_IDENTIFIER(iter);
 
 /* Helper function for validating step.  Always returns a new reference or
@@ -326,15 +331,14 @@ range_item(rangeobject *r, Py_ssize_t i)
 }
 
 static PyObject *
-compute_slice(rangeobject *r, PyObject *_slice)
+compute_slice(rangeobject *r, PyObject *slice)
 {
-    PySliceObject *slice = (PySliceObject *) _slice;
     rangeobject *result;
     PyObject *start = NULL, *stop = NULL, *step = NULL;
     PyObject *substart = NULL, *substop = NULL, *substep = NULL;
     int error;
 
-    error = _PySlice_GetLongIndices(slice, r->length, &start, &stop, &step);
+    error = PySlice_GetLongIndices(slice, r->length, &start, &stop, &step);
     if (error == -1)
         return NULL;
 

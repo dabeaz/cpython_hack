@@ -18,6 +18,15 @@ this type and there is exactly one in existence.
 #include "pycore_object.h"        // _PyObject_GC_TRACK()
 #include "structmember.h"         // PyMemberDef
 
+typedef struct {
+    PyObject_HEAD
+    PyObject *start, *stop, *step;      /* not NULL */
+} PySliceObject;
+
+int PySlice_Check(PyObject *op) {
+  return Py_IS_TYPE(op, &PySlice_Type);
+}
+
 static PyObject *
 ellipsis_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
@@ -127,7 +136,7 @@ PySlice_New(PyObject *start, PyObject *stop, PyObject *step)
 }
 
 PyObject *
-_PySlice_FromIndices(Py_ssize_t istart, Py_ssize_t istop)
+PySlice_FromIndices(Py_ssize_t istart, Py_ssize_t istop)
 {
     PyObject *start, *end, *slice;
     start = PyLong_FromSsize_t(istart);
@@ -336,10 +345,11 @@ evaluate_slice_index(PyObject *v)
    nonnegative instance of PyLong. */
 
 int
-_PySlice_GetLongIndices(PySliceObject *self, PyObject *length,
+PySlice_GetLongIndices(PyObject *_self, PyObject *length,
                         PyObject **start_ptr, PyObject **stop_ptr,
                         PyObject **step_ptr)
 {
+  PySliceObject *self = (PySliceObject *) _self;
     PyObject *start=NULL, *stop=NULL, *step=NULL;
     PyObject *upper=NULL, *lower=NULL;
     int step_is_negative, cmp_result;
@@ -497,7 +507,7 @@ slice_indices(PySliceObject* self, PyObject* len)
         return NULL;
     }
 
-    error = _PySlice_GetLongIndices(self, length, &start, &stop, &step);
+    error = PySlice_GetLongIndices((PyObject *) self, length, &start, &stop, &step);
     Py_DECREF(length);
     if (error == -1)
         return NULL;
