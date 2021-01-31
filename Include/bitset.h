@@ -10,12 +10,14 @@ extern "C" {
 #define BYTE            char
 typedef BYTE *bitset;
 
+  #if 0
 #define testbit(ss, ibit) (((ss)[BIT2BYTE(ibit)] & BIT2MASK(ibit)) != 0)
 
 #define BITSPERBYTE     (8*sizeof(BYTE))
 #define BIT2BYTE(ibit)  ((ibit) / BITSPERBYTE)
 #define BIT2SHIFT(ibit) ((ibit) % BITSPERBYTE)
 #define BIT2MASK(ibit)  (1 << BIT2SHIFT(ibit))
+#endif
   
 #ifdef __cplusplus
 }

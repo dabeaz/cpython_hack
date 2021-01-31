@@ -273,7 +273,7 @@ _PyIO_get_locale_module(_PyIO_State *state)
     PyObject *mod;
     if (state->locale_module != NULL) {
         assert(PyWeakref_CheckRef(state->locale_module));
-        mod = PyWeakref_GET_OBJECT(state->locale_module);
+        mod = PyWeakref_GetObject(state->locale_module);
         if (mod != Py_None) {
             Py_INCREF(mod);
             return mod;

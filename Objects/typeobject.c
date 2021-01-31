@@ -528,7 +528,7 @@ PyType_Modified(PyTypeObject *type)
         i = 0;
         while (PyDict_Next(raw, &i, NULL, &ref)) {
             assert(PyWeakref_CheckRef(ref));
-            ref = PyWeakref_GET_OBJECT(ref);
+            ref = PyWeakref_GetObject(ref);
             if (ref != Py_None) {
                 PyType_Modified((PyTypeObject *)ref);
             }
@@ -3164,7 +3164,7 @@ type___subclasses___impl(PyTypeObject *self)
     i = 0;
     while (PyDict_Next(raw, &i, NULL, &ref)) {
         assert(PyWeakref_CheckRef(ref));
-        ref = PyWeakref_GET_OBJECT(ref);
+        ref = PyWeakref_GetObject(ref);
         if (ref != Py_None) {
             if (PyList_Append(list, ref) < 0) {
                 Py_DECREF(list);
@@ -7059,7 +7059,7 @@ recurse_down_subclasses(PyTypeObject *type, PyObject *name,
     i = 0;
     while (PyDict_Next(subclasses, &i, NULL, &ref)) {
         assert(PyWeakref_CheckRef(ref));
-        subclass = (PyTypeObject *)PyWeakref_GET_OBJECT(ref);
+        subclass = (PyTypeObject *)PyWeakref_GetObject(ref);
         assert(subclass != NULL);
         if ((PyObject *)subclass == Py_None)
             continue;

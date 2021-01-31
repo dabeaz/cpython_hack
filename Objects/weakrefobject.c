@@ -2,14 +2,71 @@
 #include "pycore_object.h"        // _PyObject_GET_WEAKREFS_LISTPTR()
 #include "structmember.h"         // PyMemberDef
 
+struct _PyWeakReference {
+    PyObject_HEAD
+
+    /* The object to which this is a weak reference, or Py_None if none.
+     * Note that this is a stealth reference:  wr_object's refcount is
+     * not incremented to reflect this pointer.
+     */
+    PyObject *wr_object;
+
+    /* A callable to invoke when wr_object dies, or NULL if none. */
+    PyObject *wr_callback;
+
+    /* A cache for wr_object's hash code.  As usual for hashes, this is -1
+     * if the hash code isn't known yet.
+     */
+    Py_hash_t hash;
+
+    /* If wr_object is weakly referenced, wr_object has a doubly-linked NULL-
+     * terminated list of weak references to it.  These are the list pointers.
+     * If wr_object goes away, wr_object is set to Py_None, and these pointers
+     * have no meaning then.
+     */
+    PyWeakReference *wr_prev;
+    PyWeakReference *wr_next;
+};
+
+  
+int PyWeakref_CheckRef(PyObject *op) {
+  return PyObject_TypeCheck(op, &_PyWeakref_RefType);
+}
+
+int PyWeakref_CheckRefExact(PyObject *op) {
+  return  Py_IS_TYPE(op, &_PyWeakref_RefType);
+}
+
+int PyWeakref_CheckProxy(PyObject *op) {
+  return  (Py_IS_TYPE(op, &_PyWeakref_ProxyType) ||
+	   Py_IS_TYPE(op, &_PyWeakref_CallableProxyType));
+}
+
+int PyWeakref_Check(PyObject *op) {
+  return (PyWeakref_CheckRef(op) || PyWeakref_CheckProxy(op));
+}
+  
+/* Explanation for the Py_REFCNT() check: when a weakref's target is part
+   of a long chain of deallocations which triggers the trashcan mechanism,
+   clearing the weakrefs can be delayed long after the target's refcount
+   has dropped to zero.  In the meantime, code accessing the weakref will
+   be able to "see" the target object even though it is supposed to be
+   unreachable.  See issue #16602. */
+
+#define PyWeakref_GET_OBJECT(ref)                           \
+    (Py_REFCNT(((PyWeakReference *)(ref))->wr_object) > 0   \
+     ? ((PyWeakReference *)(ref))->wr_object                \
+     : Py_None)
+
 
 #define GET_WEAKREFS_LISTPTR(o) \
         ((PyWeakReference **) _PyObject_GET_WEAKREFS_LISTPTR(o))
 
 
 Py_ssize_t
-_PyWeakref_GetWeakrefCount(PyWeakReference *head)
+_PyWeakref_GetWeakrefCount(PyObject *_head)
 {
+  PyWeakReference *head = (PyWeakReference *) _head;
     Py_ssize_t count = 0;
 
     while (head != NULL) {
@@ -87,8 +144,9 @@ clear_weakref(PyWeakReference *self)
  * a sane state again.
  */
 void
-_PyWeakref_ClearRef(PyWeakReference *self)
+_PyWeakref_ClearRef(PyObject *_self)
 {
+  PyWeakReference *self = (PyWeakReference *) _self;
     PyObject *callback;
 
     assert(self != NULL);
@@ -191,8 +249,8 @@ static PyObject *
 weakref_richcompare(PyWeakReference* self, PyWeakReference* other, int op)
 {
     if ((op != Py_EQ && op != Py_NE) ||
-        !PyWeakref_Check(self) ||
-        !PyWeakref_Check(other)) {
+        !PyWeakref_Check((PyObject *)self) ||
+        !PyWeakref_Check((PyObject *)other)) {
         Py_RETURN_NOTIMPLEMENTED;
     }
     if (PyWeakref_GET_OBJECT(self) == Py_None
@@ -231,13 +289,13 @@ get_basic_refs(PyWeakReference *head,
         /* We need to be careful that the "basic refs" aren't
            subclasses of the main types.  That complicates this a
            little. */
-        if (PyWeakref_CheckRefExact(head)) {
+      if (PyWeakref_CheckRefExact((PyObject *) head)) {
             *refp = head;
             head = head->wr_next;
         }
         if (head != NULL
             && head->wr_callback == NULL
-            && PyWeakref_CheckProxy(head)) {
+            && PyWeakref_CheckProxy((PyObject *) head)) {
             *proxyp = head;
             /* head = head->wr_next; */
         }
@@ -951,7 +1009,7 @@ PyObject_ClearWeakRefs(PyObject *object)
     }
     if (*list != NULL) {
         PyWeakReference *current = *list;
-        Py_ssize_t count = _PyWeakref_GetWeakrefCount(current);
+        Py_ssize_t count = _PyWeakref_GetWeakrefCount((PyObject *) current);
         PyObject *err_type, *err_value, *err_tb;
 
         PyErr_Fetch(&err_type, &err_value, &err_tb);
