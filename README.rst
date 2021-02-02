@@ -157,7 +157,8 @@ data. Removal of macros and performance hacks.
 - Day 29 (1/29/2021). pymem and long cleanup.
 - Day 30 (1/30/2021). slice cleanup.
 - Day 31 (1/31/2021). weakref cleanup.
-
+- Day 32 (2/1/2021). Removed bitset.h
+  
 Copyright and License Information
 ---------------------------------
 

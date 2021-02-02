@@ -7,8 +7,13 @@
 extern "C" {
 #endif
 
-#include "bitset.h" /* Sigh... */
+#define BYTE            char
+typedef BYTE *bitset;
 
+  #if 0
+#include "bitset.h" /* Sigh... */
+#endif
+  
 /* A label of an arc */
 
 typedef struct {
