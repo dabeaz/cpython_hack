@@ -799,7 +799,7 @@ import_find_and_load(PyThreadState *tstate, PyObject *abs_name)
 	    }
 	    dict = PyModule_GetDict(mod);
 	    PyDict_SetItemString(dict, "__file__", PyUnicode_FromString(name));
-	    v = PyRun_String(PyUnicode_AsChar(src), Py_file_input, dict, dict);
+	    v = PyRun_StringFlags(PyUnicode_AsChar(src), Py_file_input, dict, dict, NULL);
 	    if (v == NULL) {
 	      return NULL;
 	    }

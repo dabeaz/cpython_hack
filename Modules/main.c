@@ -392,7 +392,7 @@ pymain_repl(PyConfig *config, PyCompilerFlags *cf, int *exitcode)
         return;
     }
 
-    int res = PyRun_AnyFileFlags(stdin, "<stdin>", cf);
+    int res = PyRun_AnyFileExFlags(stdin, "<stdin>", 0, cf);
     *exitcode = (res != 0);
 }
 

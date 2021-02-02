@@ -1840,7 +1840,7 @@ builtin_exec_impl(PyObject *module, PyObject *source, PyObject *globals,
             v = PyRun_StringFlags(str, Py_file_input, globals,
                                   locals, &cf);
         else
-            v = PyRun_String(str, Py_file_input, globals, locals);
+	  v = PyRun_StringFlags(str, Py_file_input, globals, locals, NULL);
         Py_XDECREF(source_copy);
     }
     if (v == NULL)
