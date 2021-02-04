@@ -77,7 +77,7 @@ PyRun_InteractiveLoopFlags(FILE *fp, const char *filename_str, PyCompilerFlags *
     PyCompilerFlags local_flags = _PyCompilerFlags_INIT;
     int nomem_count = 0;
 
-    filename = PyUnicode_FromString(filename_str);
+    filename = PyString_FromString(filename_str);
     
     if (filename == NULL) {
         PyErr_Print();
@@ -89,12 +89,12 @@ PyRun_InteractiveLoopFlags(FILE *fp, const char *filename_str, PyCompilerFlags *
     }
     v = _PySys_GetObjectId(&PyId_ps1);
     if (v == NULL) {
-        _PySys_SetObjectId(&PyId_ps1, v = PyUnicode_FromString(">>> "));
+        _PySys_SetObjectId(&PyId_ps1, v = PyString_FromString(">>> "));
         Py_XDECREF(v);
     }
     v = _PySys_GetObjectId(&PyId_ps2);
     if (v == NULL) {
-        _PySys_SetObjectId(&PyId_ps2, v = PyUnicode_FromString("... "));
+        _PySys_SetObjectId(&PyId_ps2, v = PyString_FromString("... "));
         Py_XDECREF(v);
     }
     err = 0;
@@ -224,7 +224,7 @@ PyRun_InteractiveOneFlags(FILE *fp, const char *filename_str, PyCompilerFlags *f
     PyObject *filename;
     int res;
 
-    filename = PyUnicode_FromString(filename_str);
+    filename = PyString_FromString(filename_str);
     
     if (filename == NULL) {
         PyErr_Print();
@@ -251,7 +251,7 @@ PyRun_SimpleFileExFlags(FILE *fp, const char *filename, int closeit,
     d = PyModule_GetDict(m);
     if (PyDict_GetItemString(d, "__file__") == NULL) {
         PyObject *f;
-	f = PyUnicode_FromString(filename);
+	f = PyString_FromString(filename);
 	
         if (f == NULL)
             goto done;
@@ -901,7 +901,7 @@ PyRun_FileExFlags(FILE *fp, const char *filename_str, int start, PyObject *globa
     mod_ty mod;
     PyObject *filename;
 
-    filename = PyUnicode_FromString(filename_str);
+    filename = PyString_FromString(filename_str);
     
     if (filename == NULL)
         goto exit;
@@ -1020,7 +1020,7 @@ Py_CompileStringExFlags(const char *str, const char *filename_str, int start,
                         PyCompilerFlags *flags, int optimize)
 {
     PyObject *filename, *co;
-    filename = PyUnicode_FromString(filename_str);
+    filename = PyString_FromString(filename_str);
     
     if (filename == NULL)
         return NULL;
@@ -1092,7 +1092,7 @@ Py_SymtableString(const char *str, const char *filename_str, int start)
     PyObject *filename;
     struct symtable *st;
 
-    filename = PyUnicode_FromString(filename_str);
+    filename = PyString_FromString(filename_str);
     
     if (filename == NULL)
         return NULL;

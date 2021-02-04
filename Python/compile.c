@@ -353,7 +353,7 @@ PyAST_CompileEx(mod_ty mod, const char *filename_str, PyCompilerFlags *flags,
 {
     PyObject *filename;
     PyCodeObject *co;
-    filename = PyUnicode_FromString(filename_str);
+    filename = PyString_FromString(filename_str);
     
     if (filename == NULL)
         return NULL;
@@ -2956,7 +2956,7 @@ compiler_from_import(struct compiler *c, stmt_ty s)
     static PyObject *empty_string;
 
     if (!empty_string) {
-        empty_string = PyUnicode_FromString("");
+        empty_string = PyString_FromString("");
         if (!empty_string)
             return 0;
     }
@@ -4866,10 +4866,10 @@ assemble_init(struct assembler *a, int nblocks, int firstlineno)
 {
     memset(a, 0, sizeof(struct assembler));
     a->a_lineno = firstlineno;
-    a->a_bytecode = PyUnicode_FromStringAndSize(NULL, DEFAULT_CODE_SIZE);
+    a->a_bytecode = PyString_FromStringAndSize(NULL, DEFAULT_CODE_SIZE);
     if (!a->a_bytecode)
         return 0;
-    a->a_lnotab = PyUnicode_FromStringAndSize(NULL, DEFAULT_LNOTAB_SIZE);
+    a->a_lnotab = PyString_FromStringAndSize(NULL, DEFAULT_LNOTAB_SIZE);
     if (!a->a_lnotab)
         return 0;
     if ((size_t)nblocks > SIZE_MAX / sizeof(basicblock *)) {

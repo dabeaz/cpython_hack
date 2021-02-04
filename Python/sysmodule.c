@@ -427,7 +427,7 @@ sys_displayhook(PyObject *module, PyObject *o)
       return NULL;
     }
     if (newline == NULL) {
-        newline = PyUnicode_FromString("\n");
+        newline = PyString_FromString("\n");
         if (newline == NULL)
             return NULL;
     }
@@ -752,7 +752,7 @@ list_builtin_module_names(void)
     if (list == NULL)
         return NULL;
     for (i = 0; PyImport_Inittab[i].name != NULL; i++) {
-        PyObject *name = PyUnicode_FromString(
+        PyObject *name = PyString_FromString(
             PyImport_Inittab[i].name);
         if (name == NULL)
             break;
@@ -906,17 +906,17 @@ _PySys_InitCore(PyThreadState *tstate, PyObject *sysdict)
     SET_SYS_FROM_STRING("api_version",
                         PyLong_FromLong(PYTHON_API_VERSION));
     SET_SYS_FROM_STRING("platform",
-                        PyUnicode_FromString(Py_GetPlatform()));
+                        PyString_FromString(Py_GetPlatform()));
     SET_SYS_FROM_STRING("maxsize",
                         PyLong_FromSsize_t(PY_SSIZE_T_MAX));
     SET_SYS_FROM_STRING("builtin_module_names",
                         list_builtin_module_names());
 #if PY_BIG_ENDIAN
     SET_SYS_FROM_STRING("byteorder",
-                        PyUnicode_FromString("big"));
+                        PyString_FromString("big"));
 #else
     SET_SYS_FROM_STRING("byteorder",
-                        PyUnicode_FromString("little"));
+                        PyString_FromString("little"));
 #endif
     if (_PyErr_Occurred(tstate)) {
         goto err_occurred;
@@ -960,7 +960,7 @@ _PySys_InitMain(PyThreadState *tstate)
 
 #define SET_SYS_FROM_CHAR(KEY, VALUE) \
     do { \
-      PyObject *str = PyUnicode_FromString(VALUE);\
+      PyObject *str = PyString_FromString(VALUE);\
         if (str == NULL) { \
             return -1; \
         } \
@@ -1099,7 +1099,7 @@ makepathobject(const char *path, char delim)
         p = strchr(path, delim);
         if (p == NULL)
             p = path + strlen(path); /* End of string */
-        w = PyUnicode_FromStringAndSize(path, (Py_ssize_t)(p - path));
+        w = PyString_FromStringAndSize(path, (Py_ssize_t)(p - path));
         if (w == NULL) {
             Py_DECREF(v);
             return NULL;
@@ -1134,7 +1134,7 @@ make_sys_argv(int argc, char * const * argv)
     }
 
     for (Py_ssize_t i = 0; i < argc; i++) {
-      PyObject *v = PyUnicode_FromString(argv[i]);
+      PyObject *v = PyString_FromString(argv[i]);
         if (v == NULL) {
             Py_DECREF(list);
             return NULL;
@@ -1220,7 +1220,7 @@ sys_pyfile_write(const char *text, PyObject *file)
     if (file == NULL)
         return -1;
 
-    unicode = PyUnicode_FromString(text);
+    unicode = PyString_FromString(text);
     if (unicode == NULL)
         return -1;
 

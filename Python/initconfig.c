@@ -140,7 +140,7 @@ _Py_GetGlobalVariablesAsDict(void)
     SET_ITEM(#VAR, PyLong_FromLong(VAR))
 #define FROM_STRING(STR) \
     ((STR != NULL) ? \
-        PyUnicode_FromString(STR) \
+        PyString_FromString(STR) \
         : (Py_INCREF(Py_None), Py_None))
 #define SET_ITEM_STR(VAR) \
     SET_ITEM(#VAR, FROM_STRING(VAR))
@@ -335,7 +335,7 @@ _PyStringList_AsList(const PyStringList *list)
     }
 
     for (Py_ssize_t i = 0; i < list->length; i++) {
-      PyObject *item = PyUnicode_FromString(list->items[i]);
+      PyObject *item = PyString_FromString(list->items[i]);
       if (item == NULL) {
 	Py_DECREF(pylist);
 	return NULL;
@@ -714,7 +714,7 @@ config_as_dict(const PyConfig *config)
 
 #define FROM_CHAR(STR) \
     ((STR != NULL) ? \
-        PyUnicode_FromString(STR) \
+        PyString_FromString(STR) \
         : (Py_INCREF(Py_None), Py_None))
     
 #define SET_ITEM_WSTR(ATTR) \

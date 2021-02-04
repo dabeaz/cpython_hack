@@ -569,7 +569,7 @@ PyList_GetItem(PyObject *op, Py_ssize_t i)
     }
     if (!valid_index(i, Py_SIZE(op))) {
         if (indexerr == NULL) {
-            indexerr = PyUnicode_FromString(
+            indexerr = PyString_FromString(
                 "list index out of range");
             if (indexerr == NULL)
                 return NULL;
@@ -703,12 +703,12 @@ list_repr(PyListObject *v)
     _PyUnicodeWriter writer;
 
     if (Py_SIZE(v) == 0) {
-        return PyUnicode_FromString("[]");
+        return PyString_FromString("[]");
     }
 
     i = Py_ReprEnter((PyObject*)v);
     if (i != 0) {
-        return i > 0 ? PyUnicode_FromString("[...]") : NULL;
+        return i > 0 ? PyString_FromString("[...]") : NULL;
     }
 
     _PyUnicodeWriter_Init(&writer);
@@ -778,7 +778,7 @@ list_item(PyListObject *a, Py_ssize_t i)
 {
     if (!valid_index(i, Py_SIZE(a))) {
         if (indexerr == NULL) {
-            indexerr = PyUnicode_FromString(
+            indexerr = PyString_FromString(
                 "list index out of range");
             if (indexerr == NULL)
                 return NULL;

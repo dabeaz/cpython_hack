@@ -1026,7 +1026,7 @@ format_float_internal(PyObject *value,
 
     /* Since there is no unicode version of PyOS_double_to_string,
        just use the 8 bit version and then convert to unicode. */
-    unicode_tmp = PyUnicode_FromStringAndSize(buf, n_digits);
+    unicode_tmp = PyString_FromStringAndSize(buf, n_digits);
     PyMem_Free(buf);
     if (unicode_tmp == NULL)
         goto done;

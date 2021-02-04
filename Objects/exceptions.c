@@ -90,7 +90,7 @@ BaseException_str(PyBaseExceptionObject *self)
 {
     switch (PyTuple_Size(self->args)) {
     case 0:
-        return PyUnicode_FromString("");
+        return PyString_FromString("");
     case 1:
         return PyObject_Str(PyTuple_GetItem(self->args, 0));
     default:
@@ -1920,7 +1920,7 @@ _set_legacy_print_statement_msg(PySyntaxErrorObject *self, Py_ssize_t start)
         return -1;
     }
 
-    PyObject *strip_sep_obj = PyUnicode_FromString(" \t\r\n");
+    PyObject *strip_sep_obj = PyString_FromString(" \t\r\n");
     if (strip_sep_obj == NULL) {
         Py_DECREF(data);
         return -1;
@@ -2003,7 +2003,7 @@ _check_for_legacy_statements(PySyntaxErrorObject *self, Py_ssize_t start)
         return -1;
     }
     if (match) {
-        PyObject *msg = PyUnicode_FromString("Missing parentheses in call "
+        PyObject *msg = PyString_FromString("Missing parentheses in call "
                                              "to 'exec'");
         if (msg == NULL) {
             return -1;

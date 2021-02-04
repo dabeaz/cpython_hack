@@ -328,7 +328,7 @@ PySymtable_Build(mod_ty mod, const char *filename_str)
 {
     PyObject *filename;
     struct symtable *st;
-    filename = PyUnicode_FromString(filename_str);
+    filename = PyString_FromString(filename_str);
     
     if (filename == NULL)
         return NULL;

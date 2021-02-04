@@ -1501,7 +1501,7 @@ parser_init(struct _PyArg_Parser *parser)
     }
     keywords = parser->keywords + parser->pos;
     for (i = 0; i < nkw; i++) {
-        PyObject *str = PyUnicode_FromString(keywords[i]);
+        PyObject *str = PyString_FromString(keywords[i]);
         if (str == NULL) {
             Py_DECREF(kwtuple);
             return 0;

@@ -197,7 +197,7 @@ void
 _PyErr_SetString(PyThreadState *tstate, PyObject *exception,
                  const char *string)
 {
-    PyObject *value = PyUnicode_FromString(string);
+    PyObject *value = PyString_FromString(string);
     _PyErr_SetObject(tstate, exception, value);
     Py_XDECREF(value);
 }
@@ -653,11 +653,11 @@ PyErr_SetFromErrnoWithFilenameObjects(PyObject *exc, PyObject *filenameObject, P
     
     if (i != 0) {
         const char *s = strerror(i);
-	message = PyUnicode_FromString(s);
+	message = PyString_FromString(s);
     }
     else {
         /* Sometimes errno didn't get set */
-        message = PyUnicode_FromString("Error");
+        message = PyString_FromString("Error");
     }
 
     if (message == NULL)
@@ -690,7 +690,7 @@ PyErr_SetFromErrnoWithFilenameObjects(PyObject *exc, PyObject *filenameObject, P
 PyObject *
 PyErr_SetFromErrnoWithFilename(PyObject *exc, const char *filename)
 {
-    PyObject *name = filename ? PyUnicode_FromString(filename) : NULL;
+    PyObject *name = filename ? PyString_FromString(filename) : NULL;
     PyObject *result = PyErr_SetFromErrnoWithFilenameObjects(exc, name, NULL);
     Py_XDECREF(name);
     return result;
@@ -863,7 +863,7 @@ PyErr_NewException(const char *name, PyObject *base, PyObject *dict)
         if (_PyErr_Occurred(tstate)) {
             goto failure;
         }
-        modulename = PyUnicode_FromStringAndSize(name,
+        modulename = PyString_FromStringAndSize(name,
                                              (Py_ssize_t)(dot-name));
         if (modulename == NULL)
             goto failure;
@@ -909,7 +909,7 @@ PyErr_NewExceptionWithDoc(const char *name, const char *doc,
     }
 
     if (doc != NULL) {
-        docobj = PyUnicode_FromString(doc);
+        docobj = PyString_FromString(doc);
         if (docobj == NULL)
             goto failure;
         result = PyDict_SetItemString(dict, "__doc__", docobj);
@@ -1256,7 +1256,7 @@ _PyErr_WriteUnraisableMsg(const char *err_msg_str, PyObject *obj)
 
 error:
     /* err_msg_str and obj have been updated and we have a new exception */
-    Py_XSETREF(err_msg, PyUnicode_FromString(err_msg_str ?
+    Py_XSETREF(err_msg, PyString_FromString(err_msg_str ?
         err_msg_str : "Exception ignored in sys.unraisablehook"));
     Py_XDECREF(exc_type);
     Py_XDECREF(exc_value);
@@ -1377,7 +1377,7 @@ PyErr_SyntaxLocationEx(const char *filename, int lineno, int col_offset)
     PyThreadState *tstate = PyThreadState_Get();
     PyObject *fileobj;
     if (filename != NULL) {
-	fileobj = PyUnicode_FromString(filename);
+	fileobj = PyString_FromString(filename);
         if (fileobj == NULL) {
             _PyErr_Clear(tstate);
         }
@@ -1420,7 +1420,7 @@ err_programtext(PyThreadState *tstate, FILE *fp, int lineno)
     fclose(fp);
     if (i == lineno) {
         PyObject *res;
-        res = PyUnicode_FromString(linebuf);
+        res = PyString_FromString(linebuf);
         if (res == NULL)
             _PyErr_Clear(tstate);
         return res;

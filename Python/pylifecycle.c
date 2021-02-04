@@ -939,7 +939,7 @@ create_stdio(const PyConfig *config, PyObject* io,
     if (raw == NULL)
         goto error;
     
-    text = PyUnicode_FromString(name);
+    text = PyString_FromString(name);
     if (text == NULL || _PyObject_SetAttrId(raw, &PyId_name, text) < 0)
         goto error;
     res = _PyObject_CallMethodIdNoArgs(raw, &PyId_isatty);

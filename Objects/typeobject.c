@@ -429,7 +429,7 @@ _PyType_GetDocFromInternalDoc(const char *name, const char *internal_doc)
         Py_RETURN_NONE;
     }
 
-    return PyUnicode_FromString(doc);
+    return PyString_FromString(doc);
 }
 
 PyObject *
@@ -451,7 +451,7 @@ _PyType_GetTextSignatureFromInternalDoc(const char *name, const char *internal_d
     assert((end - start) >= 2); /* should be "()" at least */
     assert(end[-1] == ')');
     assert(end[0] == '\n');
-    return PyUnicode_FromStringAndSize(start, end - start);
+    return PyString_FromStringAndSize(start, end - start);
 }
 
 unsigned int
@@ -699,7 +699,7 @@ type_name(PyTypeObject *type, void *context)
         return et->ht_name;
     }
     else {
-        return PyUnicode_FromString(_PyType_Name(type));
+        return PyString_FromString(_PyType_Name(type));
     }
 }
 
@@ -712,7 +712,7 @@ type_qualname(PyTypeObject *type, void *context)
         return et->ht_qualname;
     }
     else {
-        return PyUnicode_FromString(_PyType_Name(type));
+        return PyString_FromString(_PyType_Name(type));
     }
 }
 
@@ -785,7 +785,7 @@ type_module(PyTypeObject *type, void *context)
     else {
         const char *s = strrchr(type->tp_name, '.');
         if (s != NULL) {
-            mod = PyUnicode_FromStringAndSize(
+            mod = PyString_FromStringAndSize(
                 type->tp_name, (Py_ssize_t)(s - type->tp_name));
             if (mod != NULL)
                 PyUnicode_InternInPlace(&mod);
@@ -2619,7 +2619,7 @@ PyType_FromModuleAndSpec(PyObject *module, PyType_Spec *spec, PyObject *bases)
     type = &res->ht_type;
     /* The flags must be initialized early, before the GC traverses us */
     type->tp_flags = spec->flags | Py_TPFLAGS_HEAPTYPE;
-    res->ht_name = PyUnicode_FromString(s);
+    res->ht_name = PyString_FromString(s);
     if (!res->ht_name)
         goto fail;
     res->ht_qualname = res->ht_name;
@@ -2742,7 +2742,7 @@ PyType_FromModuleAndSpec(PyObject *module, PyType_Spec *spec, PyObject *bases)
         s = strrchr(spec->name, '.');
         if (s != NULL) {
             int err;
-            modname = PyUnicode_FromStringAndSize(
+            modname = PyString_FromStringAndSize(
                     spec->name, (Py_ssize_t)(s - spec->name));
             if (modname == NULL) {
                 goto fail;
@@ -4539,7 +4539,7 @@ add_methods(PyTypeObject *type, PyMethodDef *meth)
             name = PyDescr_NAME(descr);
         }
         else {
-            name = PyUnicode_FromString(meth->ml_name);
+            name = PyString_FromString(meth->ml_name);
             if (name == NULL) {
                 Py_DECREF(descr);
                 return -1;
@@ -4984,7 +4984,7 @@ PyType_Ready(PyTypeObject *type)
         if (type->tp_doc != NULL) {
             const char *old_doc = _PyType_DocWithoutSignature(type->tp_name,
                 type->tp_doc);
-            PyObject *doc = PyUnicode_FromString(old_doc);
+            PyObject *doc = PyString_FromString(old_doc);
             if (doc == NULL)
                 goto error;
             if (_PyDict_SetItemId(type->tp_dict, &PyId___doc__, doc) < 0) {
@@ -6875,7 +6875,7 @@ _PyTypes_InitSlotDefs(void)
             return _PyStatus_NO_MEMORY();
         }
 #else
-        p->name_strobj = PyUnicode_FromString(p->name);
+        p->name_strobj = PyString_FromString(p->name);
         if (!p->name_strobj) {
             return _PyStatus_NO_MEMORY();
         }

@@ -630,7 +630,7 @@ _io_FileIO_readall_impl(fileio *self)
         bytes_read += n;
         pos += n;
     }
-    result = PyUnicode_FromStringAndSize(buffer, bytes_read);
+    result = PyString_FromStringAndSize(buffer, bytes_read);
     PyMem_Free(buffer);
     return result;
 }
@@ -676,7 +676,7 @@ _io_FileIO_read_impl(fileio *self, Py_ssize_t size)
 	PyMem_Free(ptr);
         return NULL;
     }
-    bytes = PyUnicode_FromStringAndSize(ptr, n);
+    bytes = PyString_FromStringAndSize(ptr, n);
     PyMem_Free(ptr);
     return bytes;
 }
@@ -1357,7 +1357,7 @@ get_closefd(fileio *self, void *closure)
 static PyObject *
 get_mode(fileio *self, void *closure)
 {
-    return PyUnicode_FromString(mode_string(self));
+    return PyString_FromString(mode_string(self));
 }
 
 static PyGetSetDef fileio_getsetlist[] = {

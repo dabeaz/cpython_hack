@@ -8,7 +8,7 @@
 PyObject *
 _PyPegen_new_identifier(Parser *p, char *n)
 {
-  PyObject *id = PyUnicode_FromStringAndSize(n, strlen(n));
+  PyObject *id = PyString_FromStringAndSize(n, strlen(n));
     if (!id) {
         goto error;
     }
@@ -35,7 +35,7 @@ byte_offset_to_character_offset(PyObject *line, int col_offset)
     if (!str) {
         return 0;
     }
-    PyObject *text = PyUnicode_FromStringAndSize(str, col_offset);
+    PyObject *text = PyString_FromStringAndSize(str, col_offset);
     if (!text) {
         return 0;
     }
@@ -287,7 +287,7 @@ _PyPegen_raise_error_known_location(Parser *p, PyObject *errtype,
         if (size && p->tok->buf[size-1] == '\n') {
             size--;
         }
-        error_line = PyUnicode_FromStringAndSize(p->tok->buf, size);
+        error_line = PyString_FromStringAndSize(p->tok->buf, size);
         if (!error_line) {
             goto error;
         }
@@ -425,7 +425,7 @@ _PyPegen_fill_token(Parser *p)
 
     Token *t = p->tokens[p->fill];
     t->type = (type == NAME) ? _get_keyword_or_name_type(p, start, (int)(end - start)) : type;
-    t->bytes = PyUnicode_FromStringAndSize(start, end - start);
+    t->bytes = PyString_FromStringAndSize(start, end - start);
     if (t->bytes == NULL) {
         return -1;
     }
@@ -1095,7 +1095,7 @@ _PyPegen_join_names_with_dot(Parser *p, expr_ty first_name, expr_ty second_name)
     }
     Py_ssize_t len = strlen(first_str) + strlen(second_str) + 1;  // +1 for the dot
 
-    PyObject *str = PyUnicode_FromStringAndSize(NULL, len);
+    PyObject *str = PyString_FromStringAndSize(NULL, len);
     if (!str) {
         return NULL;
     }
@@ -1112,7 +1112,7 @@ _PyPegen_join_names_with_dot(Parser *p, expr_ty first_name, expr_ty second_name)
     s += strlen(second_str);
     *s = '\0';
 
-    PyObject *uni = PyUnicode_FromStringAndSize(PyUnicode_AsChar(str), PyUnicode_GET_SIZE(str));
+    PyObject *uni = PyString_FromStringAndSize(PyUnicode_AsChar(str), PyUnicode_GET_SIZE(str));
     Py_DECREF(str);
     if (!uni) {
         return NULL;

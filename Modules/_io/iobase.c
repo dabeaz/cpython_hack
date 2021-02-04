@@ -571,7 +571,7 @@ _io__IOBase_readline_impl(PyObject *self, Py_ssize_t limit)
         if (buffer[bufsize-1] == '\n')
             break;
     }
-    result = PyUnicode_FromStringAndSize(buffer, bufsize);
+    result = PyString_FromStringAndSize(buffer, bufsize);
     PyMem_Free(buffer);
     return result;
   fail:

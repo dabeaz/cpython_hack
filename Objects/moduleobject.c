@@ -102,7 +102,7 @@ PyObject *
 PyModule_New(const char *name)
 {
     PyObject *nameobj, *module;
-    nameobj = PyUnicode_FromString(name);
+    nameobj = PyString_FromString(name);
     if (nameobj == NULL)
         return NULL;
     module = PyModule_NewObject(nameobj);
@@ -403,7 +403,7 @@ PyModule_SetDocString(PyObject *m, const char *doc)
 {
     PyObject *v;
 
-    v = PyUnicode_FromString(doc);
+    v = PyString_FromString(doc);
     if (v == NULL || _PyObject_SetAttrId(m, &PyId___doc__, v) != 0) {
         Py_XDECREF(v);
         return -1;
@@ -661,7 +661,7 @@ module_repr(PyModuleObject *m)
   int size = PyUnicode_GET_SIZE(m->md_name);
   temp = PyMem_Malloc(size + 50);
   sprintf(temp, "<module '%s'>", PyUnicode_AsChar(m->md_name));
-  r = PyUnicode_FromString(temp);
+  r = PyString_FromString(temp);
   PyMem_Free(temp);
   return r;
 }

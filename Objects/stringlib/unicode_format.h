@@ -1039,7 +1039,7 @@ formatteriter_next(formatteriterobject *it)
             Py_INCREF(conversion_str);
         }
         else
-	  conversion_str = PyUnicode_FromStringAndSize((char *) &conversion, 1);
+	  conversion_str = PyString_FromStringAndSize((char *) &conversion, 1);
 
         if (conversion_str == NULL)
             goto done;

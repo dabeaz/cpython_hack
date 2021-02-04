@@ -2811,7 +2811,7 @@ builtin_input_impl(PyObject *module, PyObject *prompt)
                 len--;   /* strip trailing '\n' */
                 if (len != 0 && s[len-1] == '\r')
                     len--;   /* strip trailing '\r' */
-		result = PyUnicode_FromStringAndSize(s, len);
+		result = PyString_FromStringAndSize(s, len);
             }
         }
         Py_DECREF(stdin_encoding);

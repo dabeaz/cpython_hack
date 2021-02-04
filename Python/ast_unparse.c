@@ -922,7 +922,7 @@ maybe_init_static_strings(void)
         return -1;
     }
     if (!_str_inf &&
-        !(_str_inf = PyUnicode_FromString("inf"))) {
+        !(_str_inf = PyString_FromString("inf"))) {
         return -1;
     }
     if (!_str_replace_inf &&

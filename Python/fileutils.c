@@ -40,7 +40,7 @@ _Py_device_encoding(int fd)
     {
         char *codeset = nl_langinfo(CODESET);
         if (codeset != NULL && codeset[0] != 0)
-            return PyUnicode_FromString(codeset);
+            return PyString_FromString(codeset);
     }
 #endif
     Py_RETURN_NONE;

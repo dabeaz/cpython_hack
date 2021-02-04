@@ -526,7 +526,7 @@ PyImport_AddModuleObject(PyObject *name)
 PyObject *
 PyImport_AddModule(const char *name)
 {
-    PyObject *nameobj = PyUnicode_FromString(name);
+    PyObject *nameobj = PyString_FromString(name);
     if (nameobj == NULL) {
         return NULL;
     }
@@ -636,7 +636,7 @@ PyImport_ImportModule(const char *name)
     PyObject *pname;
     PyObject *result;
 
-    pname = PyUnicode_FromString(name);
+    pname = PyString_FromString(name);
     if (pname == NULL)
         return NULL;
     result = PyImport_Import(pname);
@@ -798,7 +798,7 @@ import_find_and_load(PyThreadState *tstate, PyObject *abs_name)
 	      return NULL;
 	    }
 	    dict = PyModule_GetDict(mod);
-	    PyDict_SetItemString(dict, "__file__", PyUnicode_FromString(name));
+	    PyDict_SetItemString(dict, "__file__", PyString_FromString(name));
 	    v = PyRun_StringFlags(PyUnicode_AsChar(src), Py_file_input, dict, dict, NULL);
 	    if (v == NULL) {
 	      return NULL;
@@ -964,7 +964,7 @@ PyImport_ImportModuleLevel(const char *name, PyObject *globals, PyObject *locals
                            PyObject *fromlist, int level)
 {
     PyObject *nameobj, *mod;
-    nameobj = PyUnicode_FromString(name);
+    nameobj = PyString_FromString(name);
     if (nameobj == NULL)
         return NULL;
     mod = PyImport_ImportModuleLevelObject(nameobj, globals, locals,
@@ -980,7 +980,7 @@ PyImport_ImportModuleLevel(const char *name, PyObject *globals, PyObject *locals
    done using whatever import hooks are installed in the current
    environment.
    A dummy list ["__doc__"] is passed as the 4th argument so that
-   e.g. PyImport_Import(PyUnicode_FromString("win32com.client.gencache"))
+   e.g. PyImport_Import(PyString_FromString("win32com.client.gencache"))
    will return <module "gencache"> instead of <module "win32com">. */
 
 PyObject *

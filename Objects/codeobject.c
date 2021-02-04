@@ -489,7 +489,7 @@ PyCode_NewEmpty(const char *filename, const char *funcname, int firstlineno)
     PyObject *funcname_ob = NULL;
     PyCodeObject *result = NULL;
     if (emptystring == NULL) {
-        emptystring = PyUnicode_FromString("");
+        emptystring = PyString_FromString("");
         if (emptystring == NULL)
             goto failed;
     }
@@ -498,10 +498,10 @@ PyCode_NewEmpty(const char *filename, const char *funcname, int firstlineno)
         if (nulltuple == NULL)
             goto failed;
     }
-    funcname_ob = PyUnicode_FromString(funcname);
+    funcname_ob = PyString_FromString(funcname);
     if (funcname_ob == NULL)
         goto failed;
-    filename_ob = PyUnicode_FromString(filename);
+    filename_ob = PyString_FromString(filename);
     
     if (filename_ob == NULL)
         goto failed;

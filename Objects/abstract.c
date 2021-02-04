@@ -252,7 +252,7 @@ PyObject_DelItemString(PyObject *o, const char *key)
         null_error();
         return -1;
     }
-    okey = PyUnicode_FromString(key);
+    okey = PyString_FromString(key);
     if (okey == NULL)
         return -1;
     ret = PyObject_DelItem(o, okey);
@@ -1449,7 +1449,7 @@ PyMapping_GetItemString(PyObject *o, const char *key)
         return null_error();
     }
 
-    okey = PyUnicode_FromString(key);
+    okey = PyString_FromString(key);
     if (okey == NULL)
         return NULL;
     r = PyObject_GetItem(o, okey);
@@ -1468,7 +1468,7 @@ PyMapping_SetItemString(PyObject *o, const char *key, PyObject *value)
         return -1;
     }
 
-    okey = PyUnicode_FromString(key);
+    okey = PyString_FromString(key);
     if (okey == NULL)
         return -1;
     r = PyObject_SetItem(o, okey, value);

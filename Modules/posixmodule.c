@@ -876,12 +876,12 @@ convertenviron(void)
         const char *p = strchr(*e, '=');
         if (p == NULL)
             continue;
-        k = PyUnicode_FromStringAndSize(*e, (int)(p-*e));
+        k = PyString_FromStringAndSize(*e, (int)(p-*e));
         if (k == NULL) {
             Py_DECREF(d);
             return NULL;
         }
-        v = PyUnicode_FromStringAndSize(p+1, strlen(p+1));
+        v = PyString_FromStringAndSize(p+1, strlen(p+1));
         if (v == NULL) {
             Py_DECREF(k);
             Py_DECREF(d);
@@ -1223,7 +1223,7 @@ _pystat_fromstructstat(PyObject *module, STRUCT_STAT *st)
 #endif
 #ifdef HAVE_STRUCT_STAT_ST_FSTYPE
    PyStructSequence_InitItem(v, ST_FSTYPE_IDX,
-                              PyUnicode_FromString(st->st_fstype));
+                              PyString_FromString(st->st_fstype));
 #endif
 #ifdef HAVE_STRUCT_STAT_ST_REPARSE_TAG
     PyStructSequence_InitItem(v, ST_REPARSE_TAG_IDX,
@@ -1693,7 +1693,7 @@ posix_getcwd(int use_bytes)
     }
 
     PyObject *obj;
-    obj = PyUnicode_FromString(buf);
+    obj = PyString_FromString(buf);
     PyMem_Free(buf);
 
     return obj;
@@ -1805,7 +1805,7 @@ _posix_listdir(path_t *path, PyObject *list)
             (NAMLEN(ep) == 1 ||
              (ep->d_name[1] == '.' && NAMLEN(ep) == 2)))
             continue;
-	v = PyUnicode_FromStringAndSize(ep->d_name, NAMLEN(ep));
+	v = PyString_FromStringAndSize(ep->d_name, NAMLEN(ep));
         if (v == NULL) {
             Py_CLEAR(list);
             break;
@@ -2309,7 +2309,7 @@ os_read_impl(PyObject *module, int fd, Py_ssize_t length)
 
     length = Py_MIN(length, _PY_READ_MAX);
 
-    buffer = PyUnicode_FromStringAndSize((char *)NULL, length);
+    buffer = PyString_FromStringAndSize((char *)NULL, length);
     if (buffer == NULL)
         return NULL;
 
@@ -2449,7 +2449,7 @@ os_strerror_impl(PyObject *module, int code)
                         "strerror() argument out of range");
         return NULL;
     }
-    return PyUnicode_FromString(message);
+    return PyString_FromString(message);
 }
 
 

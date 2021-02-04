@@ -499,7 +499,7 @@ PyInit__io(void)
         goto fail;
 
     if (!_PyIO_empty_str &&
-        !(_PyIO_empty_str = PyUnicode_FromStringAndSize(NULL, 0)))
+        !(_PyIO_empty_str = PyString_FromStringAndSize(NULL, 0)))
         goto fail;
     state->initialized = 1;
 

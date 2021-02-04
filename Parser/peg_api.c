@@ -7,7 +7,7 @@ mod_ty
 PyPegen_ASTFromString(const char *str, const char *filename, int mode,
                       PyCompilerFlags *flags)
 {
-    PyObject *filename_ob = PyUnicode_FromString(filename);
+    PyObject *filename_ob = PyString_FromString(filename);
     if (filename_ob == NULL) {
         return NULL;
     }
@@ -28,7 +28,7 @@ PyPegen_ASTFromStringObject(const char *str, PyObject* filename, int mode,
 mod_ty
 PyPegen_ASTFromFilename(const char *filename, int mode, PyCompilerFlags *flags)
 {
-    PyObject *filename_ob = PyUnicode_FromString(filename);
+    PyObject *filename_ob = PyString_FromString(filename);
     if (filename_ob == NULL) {
         return NULL;
     }

@@ -136,7 +136,7 @@ PyFile_WriteString(const char *s, PyObject *f)
         return -1;
     }
     else if (!PyErr_Occurred()) {
-        PyObject *v = PyUnicode_FromString(s);
+        PyObject *v = PyString_FromString(s);
         int err;
         if (v == NULL)
             return -1;
@@ -426,7 +426,7 @@ get_closed(PyStdPrinter_Object *self, void *closure)
 static PyObject *
 get_mode(PyStdPrinter_Object *self, void *closure)
 {
-    return PyUnicode_FromString("w");
+    return PyString_FromString("w");
 }
 
 static PyObject *
@@ -507,7 +507,7 @@ PyFile_OpenCodeObject(PyObject *path)
 PyObject *
 PyFile_OpenCode(const char *utf8path)
 {
-    PyObject *pathobj = PyUnicode_FromString(utf8path);
+    PyObject *pathobj = PyString_FromString(utf8path);
     PyObject *f;
     if (!pathobj) {
         return NULL;

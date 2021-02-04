@@ -30,7 +30,7 @@ decode_unicode_with_escapes(Parser *parser, const char *s, size_t len, Token *t)
 {
   PyObject *result;
   PyObject *temp = decode_bytes_with_escapes(parser, s, len, t);
-  result = PyUnicode_FromStringAndSize(PyUnicode_AsChar(temp), PyUnicode_GET_SIZE(temp));
+  result = PyString_FromStringAndSize(PyUnicode_AsChar(temp), PyUnicode_GET_SIZE(temp));
   Py_XDECREF(temp);
   return result;
 }
@@ -158,7 +158,7 @@ _PyPegen_parsestr(Parser *p, int *bytesmode, int *rawmode, PyObject **result,
       }
     }
     if (*rawmode) {
-      *result = PyUnicode_FromStringAndSize(s, len);
+      *result = PyString_FromStringAndSize(s, len);
     }
     else {
       *result = decode_unicode_with_escapes(p, s, len, t);
@@ -166,7 +166,7 @@ _PyPegen_parsestr(Parser *p, int *bytesmode, int *rawmode, PyObject **result,
   }
   else {
     if (*rawmode) {
-      *result = PyUnicode_FromStringAndSize(s, len);
+      *result = PyString_FromStringAndSize(s, len);
     }
     else {
       *result = decode_unicode_with_escapes(p, s, len, t);
@@ -611,7 +611,7 @@ fstring_find_literal(Parser *p, const char **str, const char *end, int raw,
 done:
     if (literal_start != s) {
         if (raw)
-	  *literal = PyUnicode_FromStringAndSize(literal_start,
+	  *literal = PyString_FromStringAndSize(literal_start,
 					       s - literal_start);
         else
             *literal = decode_unicode_with_escapes(p, literal_start,
@@ -847,7 +847,7 @@ fstring_find_expr(Parser *p, const char **str, const char *end, int raw, int rec
         }
 
         /* Set *expr_text to the text of the expression. */
-        *expr_text = PyUnicode_FromStringAndSize(expr_start, *str-expr_start);
+        *expr_text = PyString_FromStringAndSize(expr_start, *str-expr_start);
         if (!*expr_text) {
             goto error;
         }
@@ -1266,7 +1266,7 @@ _PyPegen_FstringParser_Finish(Parser *p, FstringParser *state, Token* first_toke
         assert(!state->expr_list.size);
         if (!state->last_str) {
             /* Create a zero length string. */
-            state->last_str = PyUnicode_FromStringAndSize(NULL, 0);
+            state->last_str = PyString_FromStringAndSize(NULL, 0);
             if (!state->last_str)
                 goto error;
         }

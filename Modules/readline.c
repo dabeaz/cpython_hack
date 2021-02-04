@@ -115,7 +115,7 @@ encode(PyObject *b)
 static PyObject *
 decode(const char *s)
 {
-  return PyUnicode_FromString(s);
+  return PyString_FromString(s);
 }
 
 

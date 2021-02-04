@@ -1921,11 +1921,11 @@ unicode_char(Py_UCS4 ch)
 }
 
 PyObject *
-PyUnicode_FromStringAndSize(const char *u, Py_ssize_t size)
+PyString_FromStringAndSize(const char *u, Py_ssize_t size)
 {
     if (size < 0) {
         PyErr_SetString(PyExc_SystemError,
-                        "Negative size passed to PyUnicode_FromStringAndSize");
+                        "Negative size passed to PyString_FromStringAndSize");
         return NULL;
     }
     if (u != NULL)
@@ -1935,7 +1935,7 @@ PyUnicode_FromStringAndSize(const char *u, Py_ssize_t size)
 }
 
 PyObject *
-PyUnicode_FromString(const char *u)
+PyString_FromString(const char *u)
 {
     size_t size = strlen(u);
     if (size > PY_SSIZE_T_MAX) {
@@ -1953,7 +1953,7 @@ _PyUnicode_FromId(_Py_Identifier *id)
     }
 
     PyObject *obj;
-    obj = PyUnicode_FromStringAndSize(id->string,
+    obj = PyString_FromStringAndSize(id->string,
 				      strlen(id->string));
     if (!obj) {
         return NULL;
@@ -2075,7 +2075,7 @@ unicode_fromformat_write_cstr(_PyUnicodeWriter *writer, const char *str,
             length++;
         }
     }
-    unicode = PyUnicode_FromStringAndSize(str, length);
+    unicode = PyString_FromStringAndSize(str, length);
     if (unicode == NULL)
         return -1;
 
@@ -2511,25 +2511,25 @@ PyUnicode_GetLength(PyObject *unicode)
     return PyUnicode_GET_LENGTH(unicode);
 }
 
-Py_UCS4
+Py_UCS1
 PyUnicode_ReadChar(PyObject *unicode, Py_ssize_t index)
 {
     const void *data;
 
     if (!PyUnicode_Check(unicode)) {
         PyErr_BadArgument();
-        return (Py_UCS4)-1;
+        return (Py_UCS1)-1;
     }
     if (index < 0 || index >= PyUnicode_GET_LENGTH(unicode)) {
         PyErr_SetString(PyExc_IndexError, "string index out of range");
-        return (Py_UCS4)-1;
+        return (Py_UCS1)-1;
     }
     data = PyUnicode_DATA(unicode);
     return PyUnicode_READ(data, index);
 }
 
 int
-PyUnicode_WriteChar(PyObject *unicode, Py_ssize_t index, Py_UCS4 ch)
+PyUnicode_WriteChar(PyObject *unicode, Py_ssize_t index, Py_UCS1 ch)
 {
   if (!PyUnicode_Check(unicode)) {
         PyErr_BadArgument();
@@ -4907,7 +4907,7 @@ PyUnicode_Substring(PyObject *self, Py_ssize_t start, Py_ssize_t end)
     length = end - start;
       {
         data = PyUnicode_1BYTE_DATA(self);
-        return PyUnicode_FromStringAndSize((char *) (data + start), length);
+        return PyString_FromStringAndSize((char *) (data + start), length);
     }
 }
 
@@ -5921,7 +5921,7 @@ _PyUnicodeWriter_WriteASCIIString(_PyUnicodeWriter *writer,
     if (writer->buffer == NULL && !writer->overallocate) {
         PyObject *str;
 
-        str = PyUnicode_FromStringAndSize(ascii, len);
+        str = PyString_FromStringAndSize(ascii, len);
         if (str == NULL)
             return -1;
 
@@ -6280,7 +6280,7 @@ formatfloat(PyObject *v, struct unicode_format_arg_t *arg,
         }
     }
     else
-        *p_output = PyUnicode_FromStringAndSize(p, len);
+        *p_output = PyString_FromStringAndSize(p, len);
     PyMem_Free(p);
     return 0;
 }
@@ -6386,7 +6386,7 @@ _PyUnicode_FormatLong(PyObject *val, int alt, int prec, int type)
 
     /* Fill with leading zeroes to meet minimum width. */
     if (prec > numdigits) {
-        PyObject *r1 = PyUnicode_FromStringAndSize(NULL,
+        PyObject *r1 = PyString_FromStringAndSize(NULL,
                                 numnondigits + prec);
         char *b1;
         if (!r1) {
@@ -6418,7 +6418,7 @@ _PyUnicode_FormatLong(PyObject *val, int alt, int prec, int type)
     if (!PyUnicode_Check(result)
         || buf != PyUnicode_DATA(result)) {
         PyObject *unicode;
-        unicode = PyUnicode_FromStringAndSize(buf, len);
+        unicode = PyString_FromStringAndSize(buf, len);
         Py_DECREF(result);
         result = unicode;
     }
@@ -7350,7 +7350,7 @@ PyUnicode_InternImmortal(PyObject **p)
 PyObject *
 PyUnicode_InternFromString(const char *cp)
 {
-    PyObject *s = PyUnicode_FromString(cp);
+    PyObject *s = PyString_FromString(cp);
     if (s == NULL)
         return NULL;
     PyUnicode_InternInPlace(&s);

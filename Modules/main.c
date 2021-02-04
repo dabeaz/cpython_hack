@@ -118,7 +118,7 @@ pymain_get_importer(const char*filename, PyObject **importer_p, int *exitcode)
 {
     PyObject *sys_path0 = NULL, *importer;
 
-    sys_path0 = PyUnicode_FromString(filename);
+    sys_path0 = PyString_FromString(filename);
     if (sys_path0 == NULL) {
         goto error;
     }
@@ -256,7 +256,7 @@ pymain_run_module(const char *modname, int set_argv0)
         Py_DECREF(runpy);
         return pymain_exit_err_print();
     }
-    module = PyUnicode_FromString(modname);
+    module = PyString_FromString(modname);
     if (module == NULL) {
         fprintf(stderr, "Could not convert module name to unicode\n");
         Py_DECREF(runpy);

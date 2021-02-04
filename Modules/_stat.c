@@ -388,7 +388,7 @@ stat_filemode(PyObject *self, PyObject *omode)
 
     buf[0] = filetype(mode);
     fileperm(mode, &buf[1]);
-    return PyUnicode_FromStringAndSize(buf, 10);
+    return PyString_FromStringAndSize(buf, 10);
 }
 
 

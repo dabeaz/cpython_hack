@@ -613,7 +613,7 @@ float_repr(PyFloatObject *v)
                                 NULL);
     if (!buf)
         return PyErr_NoMemory();
-    result = PyUnicode_FromStringAndSize(buf, strlen(buf));
+    result = PyString_FromStringAndSize(buf, strlen(buf));
     PyMem_Free(buf);
     return result;
 }
@@ -1412,9 +1412,9 @@ float_hex_impl(PyObject *self)
 
     if (x == 0.0) {
         if (copysign(1.0, x) == -1.0)
-            return PyUnicode_FromString("-0x0.0p+0");
+            return PyString_FromString("-0x0.0p+0");
         else
-            return PyUnicode_FromString("0x0.0p+0");
+            return PyString_FromString("0x0.0p+0");
     }
 
     m = frexp(fabs(x), &e);
@@ -1904,11 +1904,11 @@ float___getformat___impl(PyTypeObject *type, const char *typestr)
 
     switch (r) {
     case unknown_format:
-        return PyUnicode_FromString("unknown");
+        return PyString_FromString("unknown");
     case ieee_little_endian_format:
-        return PyUnicode_FromString("IEEE, little-endian");
+        return PyString_FromString("IEEE, little-endian");
     case ieee_big_endian_format:
-        return PyUnicode_FromString("IEEE, big-endian");
+        return PyString_FromString("IEEE, big-endian");
     default:
         PyErr_SetString(PyExc_RuntimeError,
                         "insane float_format or double_format");

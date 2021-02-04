@@ -421,7 +421,7 @@ syntaxerror(struct tok_state *tok, const char *format, ...)
         goto error;
     }
 
-    errtext = PyUnicode_FromStringAndSize(tok->line_start, tok->cur - tok->line_start);
+    errtext = PyString_FromStringAndSize(tok->line_start, tok->cur - tok->line_start);
     if (!errtext) {
         goto error;
     }
@@ -429,7 +429,7 @@ syntaxerror(struct tok_state *tok, const char *format, ...)
     Py_ssize_t line_len = strcspn(tok->line_start, "\n");
     if (line_len != tok->cur - tok->line_start) {
         Py_DECREF(errtext);
-        errtext = PyUnicode_FromStringAndSize(tok->line_start, line_len);
+        errtext = PyString_FromStringAndSize(tok->line_start, line_len);
     }
     if (!errtext) {
         goto error;

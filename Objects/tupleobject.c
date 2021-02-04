@@ -279,7 +279,7 @@ tuplerepr(PyTupleObject *v)
 
     n = Py_SIZE(v);
     if (n == 0)
-        return PyUnicode_FromString("()");
+        return PyString_FromString("()");
 
     /* While not mutable, it is still possible to end up with a cycle in a
        tuple through an object that stores itself within a tuple (and thus
@@ -287,7 +287,7 @@ tuplerepr(PyTupleObject *v)
        possible within a type. */
     i = Py_ReprEnter((PyObject *)v);
     if (i != 0) {
-        return i > 0 ? PyUnicode_FromString("(...)") : NULL;
+        return i > 0 ? PyString_FromString("(...)") : NULL;
     }
 
     _PyUnicodeWriter_Init(&writer);

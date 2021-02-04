@@ -623,7 +623,7 @@ _PyPathConfig_ComputeSysPath0(const PyStringList *argv, PyObject **path0_p)
     }
 #endif /* All others */
 
-    PyObject *path0_obj = PyUnicode_FromString(path0);
+    PyObject *path0_obj = PyString_FromString(path0);
     if (path0_obj == NULL) {
         return -1;
     }

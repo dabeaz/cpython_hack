@@ -2566,7 +2566,7 @@ digit beyond the first.
     }
     Py_XDECREF(z);
     slen = strlen(orig_str) < 200 ? strlen(orig_str) : 200;
-    strobj = PyUnicode_FromStringAndSize(orig_str, slen);
+    strobj = PyString_FromStringAndSize(orig_str, slen);
     if (strobj == NULL) {
         return NULL;
     }
@@ -5285,7 +5285,7 @@ int_to_bytes_impl(PyObject *self, Py_ssize_t length, PyObject *byteorder,
         return NULL;
     }
 
-    bytes = PyUnicode_FromStringAndSize(NULL, length);
+    bytes = PyString_FromStringAndSize(NULL, length);
     if (bytes == NULL)
         return NULL;
 

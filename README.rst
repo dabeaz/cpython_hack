@@ -159,6 +159,8 @@ data. Removal of macros and performance hacks.
 - Day 31 (1/31/2021). weakref cleanup.
 - Day 32 (2/1/2021). Removed bitset.h
 - Day 33 (2/2/2021). Macro cleanup in pythonrun.h
+- Day 34 (2/3/2021). Nothing.
+- Day 35 (2/4/2021). Started some string cleanup.
   
 Copyright and License Information
 ---------------------------------

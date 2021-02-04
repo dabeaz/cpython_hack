@@ -232,7 +232,7 @@ structseq_repr(PyStructSequence *obj)
     _PyUnicodeWriter writer;
 
     /* Write "typename(" */
-    PyObject *type_name = PyUnicode_FromStringAndSize(typ->tp_name,
+    PyObject *type_name = PyString_FromStringAndSize(typ->tp_name,
 						      strlen(typ->tp_name));
     if (type_name == NULL) {
         return NULL;
@@ -270,7 +270,7 @@ structseq_repr(PyStructSequence *obj)
             goto error;
         }
 
-        PyObject *name = PyUnicode_FromStringAndSize(name_utf8, strlen(name_utf8));
+        PyObject *name = PyString_FromStringAndSize(name_utf8, strlen(name_utf8));
         if (name == NULL) {
             goto error;
         }

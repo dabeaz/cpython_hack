@@ -619,7 +619,7 @@ member_get_doc(PyMemberDescrObject *descr, void *closure)
     if (descr->d_member->doc == NULL) {
         Py_RETURN_NONE;
     }
-    return PyUnicode_FromString(descr->d_member->doc);
+    return PyString_FromString(descr->d_member->doc);
 }
 
 static PyGetSetDef member_getset[] = {
@@ -634,7 +634,7 @@ getset_get_doc(PyGetSetDescrObject *descr, void *closure)
     if (descr->d_getset->doc == NULL) {
         Py_RETURN_NONE;
     }
-    return PyUnicode_FromString(descr->d_getset->doc);
+    return PyString_FromString(descr->d_getset->doc);
 }
 
 static PyGetSetDef getset_getset[] = {
@@ -1290,7 +1290,7 @@ wrapper_name(wrapperobject *wp, void *Py_UNUSED(ignored))
 {
     const char *s = wp->descr->d_base->name;
 
-    return PyUnicode_FromString(s);
+    return PyString_FromString(s);
 }
 
 static PyObject *

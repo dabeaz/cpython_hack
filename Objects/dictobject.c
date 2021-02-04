@@ -1255,7 +1255,7 @@ PyObject *
 _PyDict_GetItemStringWithError(PyObject *v, const char *key)
 {
     PyObject *kv, *rv;
-    kv = PyUnicode_FromString(key);
+    kv = PyString_FromString(key);
     if (kv == NULL) {
         return NULL;
     }
@@ -1615,12 +1615,12 @@ dict_repr(PyDictObject *mp)
 
     i = Py_ReprEnter((PyObject *)mp);
     if (i != 0) {
-        return i > 0 ? PyUnicode_FromString("{...}") : NULL;
+        return i > 0 ? PyString_FromString("{...}") : NULL;
     }
 
     if (mp->ma_used == 0) {
         Py_ReprLeave((PyObject *)mp);
-        return PyUnicode_FromString("{}");
+        return PyString_FromString("{}");
     }
 
     _PyUnicodeWriter_Init(&writer);
@@ -2866,7 +2866,7 @@ PyObject *
 PyDict_GetItemString(PyObject *v, const char *key)
 {
     PyObject *kv, *rv;
-    kv = PyUnicode_FromString(key);
+    kv = PyString_FromString(key);
     if (kv == NULL) {
         PyErr_Clear();
         return NULL;
@@ -2891,7 +2891,7 @@ PyDict_SetItemString(PyObject *v, const char *key, PyObject *item)
 {
     PyObject *kv;
     int err;
-    kv = PyUnicode_FromString(key);
+    kv = PyString_FromString(key);
     if (kv == NULL)
         return -1;
     err = PyDict_SetItem(v, kv, item);
@@ -2913,7 +2913,7 @@ PyDict_DelItemString(PyObject *v, const char *key)
 {
     PyObject *kv;
     int err;
-    kv = PyUnicode_FromString(key);
+    kv = PyString_FromString(key);
     if (kv == NULL)
         return -1;
     err = PyDict_DelItem(v, kv);
@@ -3552,7 +3552,7 @@ dictview_repr(_PyDictViewObject *dv)
 
     rc = Py_ReprEnter((PyObject *)dv);
     if (rc != 0) {
-        return rc > 0 ? PyUnicode_FromString("...") : NULL;
+        return rc > 0 ? PyString_FromString("...") : NULL;
     }
     seq = PySequence_List((PyObject *)dv);
     if (seq == NULL) {

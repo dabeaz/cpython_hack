@@ -66,6 +66,7 @@ Copyright (c) Corporation for National Research Initiatives.
 
 /* Py_UCS4 and Py_UCS2 are typedefs for the respective
    unicode representations. */
+
 typedef uint32_t Py_UCS4;
 typedef uint16_t Py_UCS2;
 typedef uint8_t Py_UCS1;
@@ -83,27 +84,11 @@ PyAPI_DATA(PyTypeObject) PyUnicodeIter_Type;
 #define PyUnicode_CheckExact(op) Py_IS_TYPE(op, &PyUnicode_Type)
 
 /* --- Constants ---------------------------------------------------------- */
-
-/* This Unicode character will be used as replacement character during
-   decoding if the errors argument is set to "replace". Note: the
-   Unicode character U+FFFD is the official REPLACEMENT CHARACTER in
-   Unicode 3.0. */
-
-#define Py_UNICODE_REPLACEMENT_CHARACTER ((Py_UCS4) 0xFFFD)
-
+  
 /* === Public API ========================================================= */
 
-/* Similar to PyUnicode_FromUnicode(), but u points to UTF-8 encoded bytes */
-PyAPI_FUNC(PyObject*) PyUnicode_FromStringAndSize(
-    const char *u,             /* UTF-8 encoded string */
-    Py_ssize_t size            /* size of buffer */
-    );
-
-/* Similar to PyUnicode_FromUnicode(), but u points to null-terminated
-   UTF-8 encoded bytes.  The size is determined with strlen(). */
-PyAPI_FUNC(PyObject*) PyUnicode_FromString(
-    const char *u              /* UTF-8 encoded string */
-    );
+PyAPI_FUNC(PyObject*) PyString_FromStringAndSize(const char *, Py_ssize_t);
+PyAPI_FUNC(PyObject*) PyString_FromString(const char *);
 
 #if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03030000
 PyAPI_FUNC(PyObject*) PyUnicode_Substring(
@@ -126,7 +111,7 @@ PyAPI_FUNC(Py_ssize_t) PyUnicode_GetLength(
 #if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03030000
 /* Read a character from the string. */
 
-PyAPI_FUNC(Py_UCS4) PyUnicode_ReadChar(
+PyAPI_FUNC(Py_UCS1) PyUnicode_ReadChar(
     PyObject *unicode,
     Py_ssize_t index
     );
@@ -139,7 +124,7 @@ PyAPI_FUNC(Py_UCS4) PyUnicode_ReadChar(
 PyAPI_FUNC(int) PyUnicode_WriteChar(
     PyObject *unicode,
     Py_ssize_t index,
-    Py_UCS4 character
+    Py_UCS1 character
     );
 #endif
 
