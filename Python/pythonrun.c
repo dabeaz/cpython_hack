@@ -733,7 +733,7 @@ print_exception(PyObject *f, PyObject *value)
             PyFile_WriteString(": <exception str() failed>", f);
         }
         else if (!PyUnicode_Check(s) ||
-            PyUnicode_GetLength(s) != 0)
+            PyObject_Length(s) != 0)
             err = PyFile_WriteString(": ", f);
         if (err == 0)
           err = PyFile_WriteObject(s, f, Py_PRINT_RAW);

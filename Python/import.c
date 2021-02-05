@@ -909,7 +909,7 @@ PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
 
 	
             if (level == 0) {
-                PyObject *front = PyUnicode_Substring(name, 0, dot);
+                PyObject *front = PyString_Substring(name, 0, dot);
                 if (front == NULL) {
                     goto error;
                 }
@@ -921,7 +921,7 @@ PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
             else {
                 Py_ssize_t cut_off = len - dot;
                 Py_ssize_t abs_name_len = PyUnicode_GET_LENGTH(abs_name);
-                PyObject *to_return = PyUnicode_Substring(abs_name, 0,
+                PyObject *to_return = PyString_Substring(abs_name, 0,
                                                         abs_name_len - cut_off);
                 if (to_return == NULL) {
                     goto error;

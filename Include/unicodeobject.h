@@ -89,102 +89,14 @@ PyAPI_DATA(PyTypeObject) PyUnicodeIter_Type;
 
 PyAPI_FUNC(PyObject*) PyString_FromStringAndSize(const char *, Py_ssize_t);
 PyAPI_FUNC(PyObject*) PyString_FromString(const char *);
-
-#if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03030000
-PyAPI_FUNC(PyObject*) PyUnicode_Substring(
-    PyObject *str,
-    Py_ssize_t start,
-    Py_ssize_t end);
-#endif
-
-#if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03030000
-/* Get the length of the Unicode object. */
-
-PyAPI_FUNC(Py_ssize_t) PyUnicode_GetLength(
-    PyObject *unicode
-);
-#endif
-
-/* Get the number of Py_UNICODE units in the
-   string representation. */
+PyAPI_FUNC(PyObject*) PyString_Substring(PyObject *str, Py_ssize_t start, Py_ssize_t end);
+PyAPI_FUNC(int) PyString_Resize(PyObject **str, Py_ssize_t length);
   
-#if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03030000
-/* Read a character from the string. */
-
-PyAPI_FUNC(Py_UCS1) PyUnicode_ReadChar(
-    PyObject *unicode,
-    Py_ssize_t index
-    );
-
-/* Write a character to the string. The string must have been created through
-   PyUnicode_New, must not be shared, and must not have been hashed yet.
-
-   Return 0 on success, -1 on error. */
-
-PyAPI_FUNC(int) PyUnicode_WriteChar(
-    PyObject *unicode,
-    Py_ssize_t index,
-    Py_UCS1 character
-    );
-#endif
-
-/* Resize a Unicode object. The length is the number of characters, except
-   if the kind of the string is PyUnicode_WCHAR_KIND: in this case, the length
-   is the number of Py_UNICODE characters.
-
-   *unicode is modified to point to the new (resized) object and 0
-   returned on success.
-
-   Try to resize the string in place (which is usually faster than allocating
-   a new string and copy characters), or create a new string.
-
-   Error handling is implemented as follows: an exception is set, -1
-   is returned and *unicode left untouched.
-
-   WARNING: The function doesn't check string content, the result may not be a
-            string in canonical representation. */
-
-PyAPI_FUNC(int) PyUnicode_Resize(
-    PyObject **unicode,         /* Pointer to the Unicode object */
-    Py_ssize_t length           /* New length */
-    );
-
-/* Decode obj to a Unicode object.
-
-   bytes, bytearray and other bytes-like objects are decoded according to the
-   given encoding and error handler. The encoding and error handler can be
-   NULL to have the interface use UTF-8 and "strict".
-
-   All other objects (including Unicode objects) raise an exception.
-
-   The API returns NULL in case of an error. The caller is responsible
-   for decref'ing the returned objects.
-
-*/
-
-PyAPI_FUNC(PyObject*) PyUnicode_FromEncodedObject(
-    PyObject *obj,              /* Object */
-    const char *encoding,       /* encoding */
-    const char *errors          /* error handling */
-    );
-
-/* Copy an instance of a Unicode subtype to a new true Unicode object if
-   necessary. If obj is already a true Unicode object (not a subtype), return
-   the reference with *incremented* refcount.
-
-   The API returns NULL in case of an error. The caller is responsible
-   for decref'ing the returned objects.
-
-*/
-
-PyAPI_FUNC(PyObject*) PyUnicode_FromObject(
-    PyObject *obj      /* Object */
-    );
-
-PyAPI_FUNC(PyObject *) PyUnicode_FromFormatV(
+PyAPI_FUNC(PyObject *) PyString_FromFormatV(
     const char *format,   /* ASCII-encoded string  */
     va_list vargs
     );
+  
 PyAPI_FUNC(PyObject *) PyUnicode_FromFormat(
     const char *format,   /* ASCII-encoded string  */
     ...

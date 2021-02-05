@@ -1311,7 +1311,7 @@ sys_format(_Py_Identifier *key, FILE *fp, const char *format, va_list va)
 
     _PyErr_Fetch(tstate, &error_type, &error_value, &error_traceback);
     file = sys_get_object_id(tstate, key);
-    message = PyUnicode_FromFormatV(format, va);
+    message = PyString_FromFormatV(format, va);
     if (message != NULL) {
         if (sys_pyfile_write_unicode(message, file) != 0) {
             _PyErr_Clear(tstate);

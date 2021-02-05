@@ -415,7 +415,7 @@ syntaxerror(struct tok_state *tok, const char *format, ...)
 #else
     va_start(vargs);
 #endif
-    errmsg = PyUnicode_FromFormatV(format, vargs);
+    errmsg = PyString_FromFormatV(format, vargs);
     va_end(vargs);
     if (!errmsg) {
         goto error;

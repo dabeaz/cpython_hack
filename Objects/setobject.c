@@ -596,7 +596,7 @@ set_repr(PySetObject *so)
     Py_DECREF(keys);
     if (listrepr == NULL)
         goto done;
-    tmp = PyUnicode_Substring(listrepr, 1, PyUnicode_GET_LENGTH(listrepr)-1);
+    tmp = PyString_Substring(listrepr, 1, PyUnicode_GET_LENGTH(listrepr)-1);
     Py_DECREF(listrepr);
     if (tmp == NULL)
         goto done;

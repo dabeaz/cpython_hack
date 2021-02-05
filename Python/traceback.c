@@ -451,7 +451,7 @@ _Py_DisplaySourceLine(PyObject *f, PyObject *filename, int lineno, int indent)
     }
     if (i) {
         PyObject *truncated;
-        truncated = PyUnicode_Substring(lineobj, i, PyUnicode_GET_LENGTH(lineobj));
+        truncated = PyString_Substring(lineobj, i, PyUnicode_GET_LENGTH(lineobj));
         if (truncated) {
             Py_DECREF(lineobj);
             lineobj = truncated;

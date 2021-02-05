@@ -1271,7 +1271,7 @@ my_basename(PyObject *name)
         }
     }
     if (offset != 0) {
-        return PyUnicode_Substring(name, offset, size);
+        return PyString_Substring(name, offset, size);
     }
     else {
         Py_INCREF(name);
@@ -1854,7 +1854,7 @@ _PyErr_TrySetFromCause(const char *format, ...)
 #else
     va_start(vargs);
 #endif
-    msg_prefix = PyUnicode_FromFormatV(format, vargs);
+    msg_prefix = PyString_FromFormatV(format, vargs);
     va_end(vargs);
     if (msg_prefix == NULL) {
         Py_DECREF(exc);
@@ -1915,7 +1915,7 @@ _set_legacy_print_statement_msg(PySyntaxErrorObject *self, Py_ssize_t start)
       end_pos = text_len;
     }
 
-    PyObject *data = PyUnicode_Substring(self->text, start_pos, end_pos);
+    PyObject *data = PyString_Substring(self->text, start_pos, end_pos);
     if (data == NULL) {
         return -1;
     }

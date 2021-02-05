@@ -790,11 +790,11 @@ _PyErr_FormatV(PyThreadState *tstate, PyObject *exception,
 {
     PyObject* string;
 
-    /* Issue #23571: PyUnicode_FromFormatV() must not be called with an
+    /* Issue #23571: PyString_FromFormatV() must not be called with an
        exception set, it calls arbitrary Python code like PyObject_Repr() */
     _PyErr_Clear(tstate);
 
-    string = PyUnicode_FromFormatV(format, vargs);
+    string = PyString_FromFormatV(format, vargs);
 
     _PyErr_SetObject(tstate, exception, string);
     Py_XDECREF(string);

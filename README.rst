@@ -161,7 +161,8 @@ data. Removal of macros and performance hacks.
 - Day 33 (2/2/2021). Macro cleanup in pythonrun.h
 - Day 34 (2/3/2021). Nothing.
 - Day 35 (2/4/2021). Started some string cleanup.
-  
+- Day 36 (2/5/2021). Continued string cleanup.
+
 Copyright and License Information
 ---------------------------------
 

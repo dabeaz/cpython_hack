@@ -273,7 +273,7 @@ _PyPegen_raise_error_known_location(Parser *p, PyObject *errtype,
     PyObject *tmp = NULL;
     p->error_indicator = 1;
 
-    errstr = PyUnicode_FromFormatV(errmsg, va);
+    errstr = PyString_FromFormatV(errmsg, va);
     if (!errstr) {
         goto error;
     }

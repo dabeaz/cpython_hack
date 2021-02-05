@@ -2884,7 +2884,7 @@ compiler_import_as(struct compiler *c, identifier name, identifier asname)
             dot = PyUnicode_FindChar(name, '.', pos, len, 1);
             if (dot == -2)
                 return 0;
-            attr = PyUnicode_Substring(name, pos, (dot != -1) ? dot : len);
+            attr = PyString_Substring(name, pos, (dot != -1) ? dot : len);
             if (!attr)
                 return 0;
             ADDOP_N(c, IMPORT_FROM, attr, names);
@@ -2933,7 +2933,7 @@ compiler_import(struct compiler *c, stmt_ty s)
             Py_ssize_t dot = PyUnicode_FindChar(
                 alias->name, '.', 0, PyUnicode_GET_LENGTH(alias->name), 1);
             if (dot != -1) {
-                tmp = PyUnicode_Substring(alias->name, 0, dot);
+                tmp = PyString_Substring(alias->name, 0, dot);
                 if (tmp == NULL)
                     return 0;
             }
@@ -4669,7 +4669,7 @@ compiler_warn(struct compiler *c, const char *format, ...)
 {
     va_list vargs;
     va_start(vargs, format);
-    PyObject *msg = PyUnicode_FromFormatV(format, vargs);
+    PyObject *msg = PyString_FromFormatV(format, vargs);
     va_end(vargs);
     if (msg == NULL) {
         return 0;
@@ -4937,7 +4937,7 @@ assemble_lnotab(struct assembler *a, struct instr *i)
                 PyErr_NoMemory();
                 return 0;
             }
-            if (PyUnicode_Resize(&a->a_lnotab, len) < 0)
+            if (PyString_Resize(&a->a_lnotab, len) < 0)
                 return 0;
         }
         lnotab = (unsigned char *)
@@ -4975,7 +4975,7 @@ assemble_lnotab(struct assembler *a, struct instr *i)
                 PyErr_NoMemory();
                 return 0;
             }
-            if (PyUnicode_Resize(&a->a_lnotab, len) < 0)
+            if (PyString_Resize(&a->a_lnotab, len) < 0)
                 return 0;
         }
         lnotab = (unsigned char *)
@@ -4993,7 +4993,7 @@ assemble_lnotab(struct assembler *a, struct instr *i)
 
     len = PyUnicode_GET_SIZE(a->a_lnotab);
     if (a->a_lnotab_off + 2 >= len) {
-        if (PyUnicode_Resize(&a->a_lnotab, len * 2) < 0)
+        if (PyString_Resize(&a->a_lnotab, len * 2) < 0)
             return 0;
     }
     lnotab = (unsigned char *)
@@ -5032,7 +5032,7 @@ assemble_emit(struct assembler *a, struct instr *i)
     if (a->a_offset + size >= len / (int)sizeof(_Py_CODEUNIT)) {
         if (len > PY_SSIZE_T_MAX / 2)
             return 0;
-        if (PyUnicode_Resize(&a->a_bytecode, len * 2) < 0)
+        if (PyString_Resize(&a->a_bytecode, len * 2) < 0)
             return 0;
     }
     code = (_Py_CODEUNIT *)PyUnicode_AsChar(a->a_bytecode) + a->a_offset;
@@ -5327,9 +5327,9 @@ assemble(struct compiler *c, int addNone)
                 goto error;
     }
 
-    if (PyUnicode_Resize(&a.a_lnotab, a.a_lnotab_off) < 0)
+    if (PyString_Resize(&a.a_lnotab, a.a_lnotab_off) < 0)
         goto error;
-    if (PyUnicode_Resize(&a.a_bytecode, a.a_offset * sizeof(_Py_CODEUNIT)) < 0)
+    if (PyString_Resize(&a.a_bytecode, a.a_offset * sizeof(_Py_CODEUNIT)) < 0)
         goto error;
 
     co = makecode(c, &a);

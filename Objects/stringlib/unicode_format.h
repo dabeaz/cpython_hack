@@ -62,7 +62,7 @@ SubString_new_object(SubString *str)
 {
     if (str->str == NULL)
         Py_RETURN_NONE;
-    return PyUnicode_Substring(str->str, str->start, str->end);
+    return PyString_Substring(str->str, str->start, str->end);
 }
 
 /* return a new string.  if str->str is NULL, return a new empty string */
@@ -523,7 +523,7 @@ render_field(PyObject *fieldobj, SubString *format_spec, _PyUnicodeWriter *write
         /* We need to create an object out of the pointers we have, because
            __format__ takes a string/unicode object for format_spec. */
         if (format_spec->str)
-            format_spec_object = PyUnicode_Substring(format_spec->str,
+            format_spec_object = PyString_Substring(format_spec->str,
                                                      format_spec->start,
                                                      format_spec->end);
         else

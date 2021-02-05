@@ -1854,7 +1854,7 @@ unicode_resize(PyObject **p_unicode, Py_ssize_t length)
 }
 
 int
-PyUnicode_Resize(PyObject **p_unicode, Py_ssize_t length)
+PyString_Resize(PyObject **p_unicode, Py_ssize_t length)
 {
     PyObject *unicode;
     if (p_unicode == NULL) {
@@ -2383,7 +2383,7 @@ unicode_fromformat_arg(_PyUnicodeWriter *writer,
 }
 
 PyObject *
-PyUnicode_FromFormatV(const char *format, va_list vargs)
+PyString_FromFormatV(const char *format, va_list vargs)
 {
     va_list vargs2;
     const char *f;
@@ -2411,7 +2411,7 @@ PyUnicode_FromFormatV(const char *format, va_list vargs)
             {
                 if ((unsigned char)*p > 127) {
                     PyErr_Format(PyExc_ValueError,
-                        "PyUnicode_FromFormatV() expects an ASCII-encoded format "
+                        "PyString_FromFormatV() expects an ASCII-encoded format "
                         "string, got a non-ASCII byte: 0x%02x",
                         (unsigned char)*p);
                     goto fail;
@@ -2450,7 +2450,7 @@ PyUnicode_FromFormat(const char *format, ...)
 #else
     va_start(vargs);
 #endif
-    ret = PyUnicode_FromFormatV(format, vargs);
+    ret = PyString_FromFormatV(format, vargs);
     va_end(vargs);
     return ret;
 }
@@ -4882,11 +4882,11 @@ _PyUnicode_XStrip(PyObject *self, int striptype, PyObject *sepobj)
         j++;
     }
 
-    return PyUnicode_Substring(self, i, j);
+    return PyString_Substring(self, i, j);
 }
 
 PyObject*
-PyUnicode_Substring(PyObject *self, Py_ssize_t start, Py_ssize_t end)
+PyString_Substring(PyObject *self, Py_ssize_t start, Py_ssize_t end)
 {
     const unsigned char *data;
     Py_ssize_t length;
@@ -4944,7 +4944,7 @@ do_strip(PyObject *self, int striptype)
         }
     }
 
-    return PyUnicode_Substring(self, i, j);
+    return PyString_Substring(self, i, j);
 }
 
 
@@ -5126,7 +5126,7 @@ unicode_removeprefix_impl(PyObject *self, PyObject *prefix)
         return NULL;
     }
     if (match) {
-        return PyUnicode_Substring(self, PyUnicode_GET_LENGTH(prefix),
+        return PyString_Substring(self, PyUnicode_GET_LENGTH(prefix),
                                    PyUnicode_GET_LENGTH(self));
     }
     return unicode_result_unchanged(self);
@@ -5154,7 +5154,7 @@ unicode_removesuffix_impl(PyObject *self, PyObject *suffix)
         return NULL;
     }
     if (match) {
-        return PyUnicode_Substring(self, 0, PyUnicode_GET_LENGTH(self)
+        return PyString_Substring(self, 0, PyUnicode_GET_LENGTH(self)
                                             - PyUnicode_GET_LENGTH(suffix));
     }
     return unicode_result_unchanged(self);
@@ -6171,7 +6171,7 @@ unicode_subscript(PyObject* self, PyObject* item)
                    slicelength == PyUnicode_GET_LENGTH(self)) {
             return unicode_result_unchanged(self);
         } else if (step == 1) {
-            return PyUnicode_Substring(self,
+            return PyString_Substring(self,
                                        start, start + slicelength);
         }
         /* General case */
@@ -6423,7 +6423,7 @@ _PyUnicode_FormatLong(PyObject *val, int alt, int prec, int type)
         result = unicode;
     }
     else if (len != PyUnicode_GET_LENGTH(result)) {
-        if (PyUnicode_Resize(&result, len) < 0)
+        if (PyString_Resize(&result, len) < 0)
             Py_CLEAR(result);
     }
     return result;
@@ -6621,7 +6621,7 @@ unicode_format_arg_parse(struct unicode_formatter_t *ctx,
                             "incomplete format key");
             return -1;
         }
-        key = PyUnicode_Substring(ctx->fmtstr,
+        key = PyString_Substring(ctx->fmtstr,
                                   keystart, keystart + keylen);
         if (key == NULL)
             return -1;
@@ -7652,7 +7652,7 @@ PyObject *_PyBytes_DecodeEscape(const char *s,
             s--;
         }
     }
-    PyUnicode_Resize(&temp, (p - PyUnicode_AsChar(temp)));
+    PyString_Resize(&temp, (p - PyUnicode_AsChar(temp)));
     return temp;
 
   failed:

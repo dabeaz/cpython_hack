@@ -2320,7 +2320,7 @@ os_read_impl(PyObject *module, int fd, Py_ssize_t length)
     }
 
     if (n != length) 
-        PyUnicode_Resize(&buffer, n);
+        PyString_Resize(&buffer, n);
 
     return buffer;
 }

@@ -1633,7 +1633,7 @@ symtable_visit_alias(struct symtable *st, alias_ty a)
     Py_ssize_t dot = PyUnicode_FindChar(name, '.', 0,
                                         PyUnicode_GET_LENGTH(name), 1);
     if (dot != -1) {
-        store_name = PyUnicode_Substring(name, 0, dot);
+        store_name = PyString_Substring(name, 0, dot);
         if (!store_name)
             return 0;
     }
