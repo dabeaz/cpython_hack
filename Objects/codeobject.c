@@ -817,11 +817,11 @@ code_repr(PyCodeObject *co)
     else
         lineno = -1;
     if (co->co_filename && PyUnicode_Check(co->co_filename)) {
-        return PyUnicode_FromFormat(
+        return PyString_FromFormat(
             "<code object %U at %p, file \"%U\", line %d>",
             co->co_name, co, co->co_filename, lineno);
     } else {
-        return PyUnicode_FromFormat(
+        return PyString_FromFormat(
             "<code object %U at %p, file ???, line %d>",
             co->co_name, co, lineno);
     }

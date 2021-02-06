@@ -113,7 +113,7 @@ ste_new(struct symtable *st, identifier name, _Py_block_ty block,
 static PyObject *
 ste_repr(PySTEntryObject *ste)
 {
-    return PyUnicode_FromFormat("<symtable entry %U(%ld), line %d>",
+    return PyString_FromFormat("<symtable entry %U(%ld), line %d>",
                                 ste->ste_name,
                                 PyLong_AsLong(ste->ste_id), ste->ste_lineno);
 }
@@ -1544,7 +1544,7 @@ symtable_visit_expr(struct symtable *st, expr_ty e)
 static int
 symtable_implicit_arg(struct symtable *st, int pos)
 {
-    PyObject *id = PyUnicode_FromFormat(".%d", pos);
+    PyObject *id = PyString_FromFormat(".%d", pos);
     if (id == NULL)
         return 0;
     if (!symtable_add_def(st, id, DEF_PARAM)) {

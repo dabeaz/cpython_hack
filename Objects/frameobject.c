@@ -673,7 +673,7 @@ frame_repr(PyFrameObject *f)
 {
     int lineno = PyFrame_GetLineNumber(f);
     PyCodeObject *code = f->f_code;
-    return PyUnicode_FromFormat(
+    return PyString_FromFormat(
         "<frame at %p, file %R, line %d, code %S>",
         f, code->co_filename, lineno, code->co_name);
 }

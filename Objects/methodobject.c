@@ -272,7 +272,7 @@ meth_get__qualname__(PyCFunctionObject *m, void *closure)
         return NULL;
     }
 
-    res = PyUnicode_FromFormat("%S.%s", type_qualname, m->m_ml->ml_name);
+    res = PyString_FromFormat("%S.%s", type_qualname, m->m_ml->ml_name);
     Py_DECREF(type_qualname);
     return res;
 }
@@ -309,9 +309,9 @@ static PyObject *
 meth_repr(PyCFunctionObject *m)
 {
     if (m->m_self == NULL || PyModule_Check(m->m_self))
-        return PyUnicode_FromFormat("<built-in function %s>",
+        return PyString_FromFormat("<built-in function %s>",
                                    m->m_ml->ml_name);
-    return PyUnicode_FromFormat("<built-in method %s of %s object at %p>",
+    return PyString_FromFormat("<built-in method %s of %s object at %p>",
                                m->m_ml->ml_name,
                                Py_TYPE(m->m_self)->tp_name,
                                m->m_self);

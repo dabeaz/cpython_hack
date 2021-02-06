@@ -352,7 +352,7 @@ do_mkvalue(const char **p_format, va_list *p_va, int flags)
         case 'C':
         {
             int i = va_arg(*p_va, int);
-            return PyUnicode_FromOrdinal(i);
+            return PyString_FromOrdinal(i);
         }
 
         case 's':

@@ -1135,9 +1135,9 @@ type_repr(PyTypeObject *type)
     }
 
     if (mod != NULL && !_PyUnicode_EqualToASCIIId(mod, &PyId_builtins))
-        rtn = PyUnicode_FromFormat("<class '%U.%U'>", mod, name);
+        rtn = PyString_FromFormat("<class '%U.%U'>", mod, name);
     else
-        rtn = PyUnicode_FromFormat("<class '%s'>", type->tp_name);
+        rtn = PyString_FromFormat("<class '%s'>", type->tp_name);
 
     Py_XDECREF(mod);
     Py_DECREF(name);
@@ -3525,9 +3525,9 @@ object_repr(PyObject *self)
         return NULL;
     }
     if (mod != NULL && !_PyUnicode_EqualToASCIIId(mod, &PyId_builtins))
-        rtn = PyUnicode_FromFormat("<%U.%U object at %p>", mod, name, self);
+        rtn = PyString_FromFormat("<%U.%U object at %p>", mod, name, self);
     else
-        rtn = PyUnicode_FromFormat("<%s object at %p>",
+        rtn = PyString_FromFormat("<%s object at %p>",
                                   type->tp_name, self);
     Py_XDECREF(mod);
     Py_DECREF(name);
@@ -6037,7 +6037,7 @@ slot_tp_repr(PyObject *self)
         return res;
     }
     PyErr_Clear();
-    return PyUnicode_FromFormat("<%s object at %p>",
+    return PyString_FromFormat("<%s object at %p>",
                                Py_TYPE(self)->tp_name, self);
 }
 
@@ -7192,12 +7192,12 @@ super_repr(PyObject *self)
     superobject *su = (superobject *)self;
 
     if (su->obj_type)
-        return PyUnicode_FromFormat(
+        return PyString_FromFormat(
             "<super: <class '%s'>, <%s object>>",
             su->type ? su->type->tp_name : "NULL",
             su->obj_type->tp_name);
     else
-        return PyUnicode_FromFormat(
+        return PyString_FromFormat(
             "<super: <class '%s'>, NULL>",
             su->type ? su->type->tp_name : "NULL");
 }

@@ -668,7 +668,7 @@ static const char no_grouping[1] = {CHAR_MAX};
 static int
 get_locale_info(enum LocaleType type, LocaleInfo *locale_info)
 {
-  locale_info->decimal_point = PyUnicode_FromOrdinal('.');
+  locale_info->decimal_point = PyString_FromOrdinal('.');
   locale_info->thousands_sep = PyUnicode_New(0);
   if (!locale_info->decimal_point || !locale_info->thousands_sep)
     return -1;
@@ -819,7 +819,7 @@ format_long_internal(PyObject *value, const InternalFormatSpec *format,
                             "%c arg not in range(0x110000)");
             goto done;
         }
-        tmp = PyUnicode_FromOrdinal(x);
+        tmp = PyString_FromOrdinal(x);
         inumeric_chars = 0;
         n_digits = 1;
 

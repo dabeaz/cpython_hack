@@ -489,7 +489,7 @@ tb_displayline(PyObject *f, PyObject *filename, int lineno, PyObject *name)
 
     if (filename == NULL || name == NULL)
         return -1;
-    line = PyUnicode_FromFormat("  File \"%U\", line %d, in %U\n",
+    line = PyString_FromFormat("  File \"%U\", line %d, in %U\n",
                                 filename, lineno, name);
     if (line == NULL)
         return -1;
@@ -509,7 +509,7 @@ static int
 tb_print_line_repeated(PyObject *f, long cnt)
 {
     cnt -= TB_RECURSIVE_CUTOFF;
-    PyObject *line = PyUnicode_FromFormat(
+    PyObject *line = PyString_FromFormat(
         (cnt > 1)
           ? "  [Previous line repeated %ld more times]\n"
           : "  [Previous line repeated %ld more time]\n",

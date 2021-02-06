@@ -1217,7 +1217,7 @@ _PyErr_WriteUnraisableMsg(const char *err_msg_str, PyObject *obj)
     }
 
     if (err_msg_str != NULL) {
-        err_msg = PyUnicode_FromFormat("Exception ignored %s", err_msg_str);
+        err_msg = PyString_FromFormat("Exception ignored %s", err_msg_str);
         if (err_msg == NULL) {
             PyErr_Clear();
         }

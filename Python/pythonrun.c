@@ -667,7 +667,7 @@ print_exception(PyObject *f, PyObject *value)
             Py_DECREF(value);
             value = message;
 
-            line = PyUnicode_FromFormat("  File \"%S\", line %zd\n",
+            line = PyString_FromFormat("  File \"%S\", line %zd\n",
                                           filename, lineno);
             Py_DECREF(filename);
             if (line != NULL) {

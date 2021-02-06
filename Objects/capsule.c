@@ -141,7 +141,7 @@ capsule_repr(PyObject *o)
         name = "NULL";
     }
 
-    return PyUnicode_FromFormat("<capsule object %s%s%s at %p>",
+    return PyString_FromFormat("<capsule object %s%s%s at %p>",
         quote, name, quote, capsule);
 }
 

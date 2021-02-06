@@ -2013,12 +2013,12 @@ format_missing(PyThreadState *tstate, const char *kind,
         Py_INCREF(name_str);
         break;
     case 2:
-        name_str = PyUnicode_FromFormat("%U and %U",
+        name_str = PyString_FromFormat("%U and %U",
                                         PyList_GetItem(names, len - 2),
                                         PyList_GetItem(names, len - 1));
         break;
     default:
-        tail = PyUnicode_FromFormat(", %U, and %U",
+        tail = PyString_FromFormat(", %U, and %U",
                                     PyList_GetItem(names, len - 2),
                                     PyList_GetItem(names, len - 1));
         if (tail == NULL)
@@ -2042,7 +2042,7 @@ format_missing(PyThreadState *tstate, const char *kind,
             Py_DECREF(tail);
             return;
         }
-        name_str = PyUnicode_Concat(tmp, tail);
+        name_str = PyString_Concat(tmp, tail);
         Py_DECREF(tmp);
         Py_DECREF(tail);
         break;
@@ -2119,17 +2119,17 @@ too_many_positional(PyThreadState *tstate, PyCodeObject *co,
     if (defcount) {
         Py_ssize_t atleast = co_argcount - defcount;
         plural = 1;
-        sig = PyUnicode_FromFormat("from %zd to %zd", atleast, co_argcount);
+        sig = PyString_FromFormat("from %zd to %zd", atleast, co_argcount);
     }
     else {
         plural = (co_argcount != 1);
-        sig = PyUnicode_FromFormat("%zd", co_argcount);
+        sig = PyString_FromFormat("%zd", co_argcount);
     }
     if (sig == NULL)
         return;
     if (kwonly_given) {
         const char *format = " positional argument%s (and %zd keyword-only argument%s)";
-        kwonly_sig = PyUnicode_FromFormat(format,
+        kwonly_sig = PyString_FromFormat(format,
                                           given != 1 ? "s" : "",
                                           kwonly_given,
                                           kwonly_given != 1 ? "s" : "");
@@ -2982,7 +2982,7 @@ import_from(PyThreadState *tstate, PyObject *v, PyObject *name)
         Py_CLEAR(pkgname);
         goto error;
     }
-    fullmodname = PyUnicode_FromFormat("%U.%U", pkgname, name);
+    fullmodname = PyString_FromFormat("%U.%U", pkgname, name);
     if (fullmodname == NULL) {
         Py_DECREF(pkgname);
         return NULL;
@@ -3008,7 +3008,7 @@ import_from(PyThreadState *tstate, PyObject *v, PyObject *name)
 
     if (pkgpath == NULL || !PyUnicode_Check(pkgpath)) {
         _PyErr_Clear(tstate);
-        errmsg = PyUnicode_FromFormat(
+        errmsg = PyString_FromFormat(
             "cannot import name %R from %R (unknown location)",
             name, pkgname_or_unknown
         );

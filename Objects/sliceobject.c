@@ -313,7 +313,7 @@ slice_dealloc(PySliceObject *r)
 static PyObject *
 slice_repr(PySliceObject *r)
 {
-    return PyUnicode_FromFormat("slice(%R, %R, %R)", r->start, r->stop, r->step);
+    return PyString_FromFormat("slice(%R, %R, %R)", r->start, r->stop, r->step);
 }
 
 static PyMemberDef slice_members[] = {

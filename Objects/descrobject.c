@@ -38,7 +38,7 @@ descr_repr(PyDescrObject *descr, const char *format)
     if (descr->d_name != NULL && PyUnicode_Check(descr->d_name))
         name = descr->d_name;
 
-    return PyUnicode_FromFormat(format, name, "?", descr->d_type->tp_name);
+    return PyString_FromFormat(format, name, "?", descr->d_type->tp_name);
 }
 
 static PyObject *
@@ -574,7 +574,7 @@ calculate_qualname(PyDescrObject *descr)
         return NULL;
     }
 
-    res = PyUnicode_FromFormat("%S.%S", type_qualname, descr->d_name);
+    res = PyString_FromFormat("%S.%S", type_qualname, descr->d_name);
     Py_DECREF(type_qualname);
     return res;
 }
@@ -1126,7 +1126,7 @@ mappingproxy_str(mappingproxyobject *pp)
 static PyObject *
 mappingproxy_repr(mappingproxyobject *pp)
 {
-    return PyUnicode_FromFormat("mappingproxy(%R)", pp->mapping);
+    return PyString_FromFormat("mappingproxy(%R)", pp->mapping);
 }
 
 static PyObject *
@@ -1253,7 +1253,7 @@ wrapper_hash(wrapperobject *wp)
 static PyObject *
 wrapper_repr(wrapperobject *wp)
 {
-    return PyUnicode_FromFormat("<method-wrapper '%s' of %s object at %p>",
+    return PyString_FromFormat("<method-wrapper '%s' of %s object at %p>",
                                wp->descr->d_base->name,
                                Py_TYPE(wp->self)->tp_name,
                                wp->self);

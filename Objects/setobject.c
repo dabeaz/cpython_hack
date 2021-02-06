@@ -578,13 +578,13 @@ set_repr(PySetObject *so)
     if (status != 0) {
         if (status < 0)
             return NULL;
-        return PyUnicode_FromFormat("%s(...)", Py_TYPE(so)->tp_name);
+        return PyString_FromFormat("%s(...)", Py_TYPE(so)->tp_name);
     }
 
     /* shortcut for the empty set */
     if (!so->used) {
         Py_ReprLeave((PyObject*)so);
-        return PyUnicode_FromFormat("%s()", Py_TYPE(so)->tp_name);
+        return PyString_FromFormat("%s()", Py_TYPE(so)->tp_name);
     }
 
     keys = PySequence_List((PyObject *)so);
@@ -603,11 +603,11 @@ set_repr(PySetObject *so)
     listrepr = tmp;
 
     if (!Py_IS_TYPE(so, &PySet_Type))
-        result = PyUnicode_FromFormat("%s({%U})",
+        result = PyString_FromFormat("%s({%U})",
                                       Py_TYPE(so)->tp_name,
                                       listrepr);
     else
-        result = PyUnicode_FromFormat("{%U}", listrepr);
+        result = PyString_FromFormat("{%U}", listrepr);
     Py_DECREF(listrepr);
 done:
     Py_ReprLeave((PyObject*)so);

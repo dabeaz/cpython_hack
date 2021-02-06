@@ -213,7 +213,7 @@ weakref_repr(PyWeakReference *self)
     PyObject* obj = PyWeakref_GET_OBJECT(self);
 
     if (obj == Py_None) {
-        return PyUnicode_FromFormat("<weakref at %p; dead>", self);
+        return PyString_FromFormat("<weakref at %p; dead>", self);
     }
 
     Py_INCREF(obj);
@@ -222,14 +222,14 @@ weakref_repr(PyWeakReference *self)
         return NULL;
     }
     if (name == NULL || !PyUnicode_Check(name)) {
-        repr = PyUnicode_FromFormat(
+        repr = PyString_FromFormat(
             "<weakref at %p; to '%s' at %p>",
             self,
             Py_TYPE(PyWeakref_GET_OBJECT(self))->tp_name,
             obj);
     }
     else {
-        repr = PyUnicode_FromFormat(
+        repr = PyString_FromFormat(
             "<weakref at %p; to '%s' at %p (%U)>",
             self,
             Py_TYPE(PyWeakref_GET_OBJECT(self))->tp_name,
@@ -545,7 +545,7 @@ WRAP_TERNARY(proxy_call, PyObject_Call)
 static PyObject *
 proxy_repr(PyWeakReference *proxy)
 {
-    return PyUnicode_FromFormat(
+    return PyString_FromFormat(
         "<weakproxy at %p to %s at %p>",
         proxy,
         Py_TYPE(PyWeakref_GET_OBJECT(proxy))->tp_name,

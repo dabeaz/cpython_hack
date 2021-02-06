@@ -677,7 +677,7 @@ compiler_set_qualname(struct compiler *c)
                 dot_locals_str = _PyUnicode_FromId(&dot_locals);
                 if (dot_locals_str == NULL)
                     return 0;
-                base = PyUnicode_Concat(parent->u_qualname, dot_locals_str);
+                base = PyString_Concat(parent->u_qualname, dot_locals_str);
                 if (base == NULL)
                     return 0;
             }
@@ -694,7 +694,7 @@ compiler_set_qualname(struct compiler *c)
             Py_DECREF(base);
             return 0;
         }
-        name = PyUnicode_Concat(base, dot_str);
+        name = PyString_Concat(base, dot_str);
         Py_DECREF(base);
         if (name == NULL)
             return 0;
@@ -3797,7 +3797,7 @@ validate_keywords(struct compiler *c, asdl_seq *keywords)
         for (Py_ssize_t j = i + 1; j < nkeywords; j++) {
             keyword_ty other = ((keyword_ty)asdl_seq_GET(keywords, j));
             if (other->arg && !PyUnicode_Compare(key->arg, other->arg)) {
-                PyObject *msg = PyUnicode_FromFormat("keyword argument repeated: %U", key->arg);
+                PyObject *msg = PyString_FromFormat("keyword argument repeated: %U", key->arg);
                 if (msg == NULL) {
                     return -1;
                 }

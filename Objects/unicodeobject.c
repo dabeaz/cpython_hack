@@ -2440,7 +2440,7 @@ PyString_FromFormatV(const char *format, va_list vargs)
 }
 
 PyObject *
-PyUnicode_FromFormat(const char *format, ...)
+PyString_FromFormat(const char *format, ...)
 {
     PyObject* ret;
     va_list vargs;
@@ -2456,7 +2456,7 @@ PyUnicode_FromFormat(const char *format, ...)
 }
 
 PyObject *
-PyUnicode_FromOrdinal(int ordinal)
+PyString_FromOrdinal(int ordinal)
 {
     if (ordinal < 0 || ordinal > 0xff) {
         PyErr_SetString(PyExc_ValueError,
@@ -3122,7 +3122,7 @@ _PyUnicode_JoinArray(PyObject *separator, PyObject *const *items, Py_ssize_t seq
         /* Set up sep and seplen */
         if (separator == NULL) {
             /* fall back to a blank space separator */
-            sep = PyUnicode_FromOrdinal(' ');
+            sep = PyString_FromOrdinal(' ');
             if (!sep)
                 goto onError;
             seplen = 1;
@@ -3957,7 +3957,7 @@ PyUnicode_Contains(PyObject *str, PyObject *substr)
 /* Concat to string or Unicode object giving a new Unicode object. */
 
 PyObject *
-PyUnicode_Concat(PyObject *left, PyObject *right)
+PyString_Concat(PyObject *left, PyObject *right)
 {
     PyObject *result;
     Py_ssize_t left_len, right_len, new_len;
@@ -6132,7 +6132,7 @@ static PyNumberMethods unicode_as_number = {
 
 static PySequenceMethods unicode_as_sequence = {
     (lenfunc) unicode_length,       /* sq_length */
-    PyUnicode_Concat,           /* sq_concat */
+    PyString_Concat,           /* sq_concat */
     (ssizeargfunc) unicode_repeat,  /* sq_repeat */
     (ssizeargfunc) unicode_getitem,     /* sq_item */
     0,                  /* sq_slice */
@@ -6855,7 +6855,7 @@ unicode_format_arg_format(struct unicode_formatter_t *ctx,
                 return -1;
             return 1;
         }
-        *p_str = PyUnicode_FromOrdinal(ch);
+        *p_str = PyString_FromOrdinal(ch);
         break;
     }
 
@@ -7386,7 +7386,7 @@ unicodeiter_next(unicodeiterobject *it)
     if (it->it_index < PyUnicode_GET_LENGTH(seq)) {
         const void *data = PyUnicode_DATA(seq);
         Py_UCS4 chr = PyUnicode_READ(data, it->it_index);
-        item = PyUnicode_FromOrdinal(chr);
+        item = PyString_FromOrdinal(chr);
         if (item != NULL)
             ++it->it_index;
         return item;
@@ -7402,7 +7402,7 @@ unicodeiter_len(unicodeiterobject *it, PyObject *Py_UNUSED(ignored))
 {
     Py_ssize_t len = 0;
     if (it->it_seq)
-        len = PyUnicode_GET_LENGTH(it->it_seq) - it->it_index;
+      len = PyUnicode_GET_LENGTH(it->it_seq) - it->it_index;
     return PyLong_FromSsize_t(len);
 }
 

@@ -117,9 +117,9 @@ static PyObject *
 cell_repr(PyCellObject *op)
 {
     if (op->ob_ref == NULL)
-        return PyUnicode_FromFormat("<cell at %p: empty>", op);
+        return PyString_FromFormat("<cell at %p: empty>", op);
 
-    return PyUnicode_FromFormat("<cell at %p: %.80s object at %p>",
+    return PyString_FromFormat("<cell at %p: %.80s object at %p>",
                                op, Py_TYPE(op->ob_ref)->tp_name,
                                op->ob_ref);
 }

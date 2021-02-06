@@ -230,7 +230,7 @@ PyObject_Repr(PyObject *v)
     if (v == NULL)
         return PyString_FromString("<NULL>");
     if (Py_TYPE(v)->tp_repr == NULL)
-        return PyUnicode_FromFormat("<%s object at %p>",
+        return PyString_FromFormat("<%s object at %p>",
                                     Py_TYPE(v)->tp_name, v);
 
     PyThreadState *tstate = PyThreadState_Get();
@@ -336,14 +336,14 @@ _PyObject_FunctionStr(PyObject *x)
             goto done;
         }
         if (ret > 0) {
-            result = PyUnicode_FromFormat("%S.%S()", module, qualname);
+            result = PyString_FromFormat("%S.%S()", module, qualname);
             goto done;
         }
     }
     else if (ret < 0) {
         goto done;
     }
-    result = PyUnicode_FromFormat("%S()", qualname);
+    result = PyString_FromFormat("%S()", qualname);
 done:
     Py_DECREF(qualname);
     Py_XDECREF(module);

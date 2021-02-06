@@ -384,7 +384,7 @@ _PyGen_FetchStopIterationValue(PyObject **pvalue)
 static PyObject *
 gen_repr(PyGenObject *gen)
 {
-    return PyUnicode_FromFormat("<generator object %S at %p>",
+    return PyString_FromFormat("<generator object %S at %p>",
                                 gen->gi_qualname, gen);
 }
 

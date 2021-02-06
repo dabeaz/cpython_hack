@@ -1444,9 +1444,9 @@ float_hex_impl(PyObject *self)
         esign = (int)'+';
 
     if (x < 0.0)
-        return PyUnicode_FromFormat("-0x%sp%c%d", s, esign, e);
+        return PyString_FromFormat("-0x%sp%c%d", s, esign, e);
     else
-        return PyUnicode_FromFormat("0x%sp%c%d", s, esign, e);
+        return PyString_FromFormat("0x%sp%c%d", s, esign, e);
 }
 
 /* Convert a hexadecimal string to a float. */

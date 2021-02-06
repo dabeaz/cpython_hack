@@ -103,10 +103,10 @@ BaseException_repr(PyBaseExceptionObject *self)
 {
     const char *name = _PyType_Name(Py_TYPE(self));
     if (PyTuple_Size(self->args) == 1)
-        return PyUnicode_FromFormat("%s(%R)", name,
+        return PyString_FromFormat("%s(%R)", name,
                                     PyTuple_GetItem(self->args, 0));
     else
-        return PyUnicode_FromFormat("%s%R", name, self->args);
+        return PyString_FromFormat("%s%R", name, self->args);
 }
 
 /* Pickling support */
@@ -974,20 +974,20 @@ OSError_str(PyOSErrorObject *self)
 #define OR_NONE(x) ((x)?(x):Py_None)
     if (self->filename) {
         if (self->filename2) {
-            return PyUnicode_FromFormat("[Errno %S] %S: %R -> %R",
+            return PyString_FromFormat("[Errno %S] %S: %R -> %R",
                                         OR_NONE(self->myerrno),
                                         OR_NONE(self->strerror),
                                         self->filename,
                                         self->filename2);
         } else {
-            return PyUnicode_FromFormat("[Errno %S] %S: %R",
+            return PyString_FromFormat("[Errno %S] %S: %R",
                                         OR_NONE(self->myerrno),
                                         OR_NONE(self->strerror),
                                         self->filename);
         }
     }
     if (self->myerrno && self->strerror)
-        return PyUnicode_FromFormat("[Errno %S] %S",
+        return PyString_FromFormat("[Errno %S] %S",
                                     self->myerrno, self->strerror);
     return BaseException_str((PyBaseExceptionObject *)self);
 }
@@ -1307,16 +1307,16 @@ SyntaxError_str(PySyntaxErrorObject *self)
         return PyObject_Str(self->msg ? self->msg : Py_None);
 
     if (filename && have_lineno)
-        result = PyUnicode_FromFormat("%S (%U, line %ld)",
+        result = PyString_FromFormat("%S (%U, line %ld)",
                    self->msg ? self->msg : Py_None,
                    filename,
                    PyLong_AsLongAndOverflow(self->lineno, &overflow));
     else if (filename)
-        result = PyUnicode_FromFormat("%S (%U)",
+        result = PyString_FromFormat("%S (%U)",
                    self->msg ? self->msg : Py_None,
                    filename);
     else /* only have_lineno */
-        result = PyUnicode_FromFormat("%S (line %ld)",
+        result = PyString_FromFormat("%S (line %ld)",
                    self->msg ? self->msg : Py_None,
                    PyLong_AsLongAndOverflow(self->lineno, &overflow));
     Py_XDECREF(filename);
@@ -1938,7 +1938,7 @@ _set_legacy_print_statement_msg(PySyntaxErrorObject *self, Py_ssize_t start)
     if (text_len > 0 && PyUnicode_READ_CHAR(new_data, text_len-1) == ',') {
         maybe_end_arg = " end=\" \"";
     }
-    PyObject *error_msg = PyUnicode_FromFormat(
+    PyObject *error_msg = PyString_FromFormat(
         "Missing parentheses in call to 'print'. Did you mean print(%U%s)?",
         new_data, maybe_end_arg
     );

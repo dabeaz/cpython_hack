@@ -3558,7 +3558,7 @@ dictview_repr(_PyDictViewObject *dv)
     if (seq == NULL) {
         goto Done;
     }
-    result = PyUnicode_FromFormat("%s(%R)", Py_TYPE(dv)->tp_name, seq);
+    result = PyString_FromFormat("%s(%R)", Py_TYPE(dv)->tp_name, seq);
     Py_DECREF(seq);
 
 Done:

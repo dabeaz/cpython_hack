@@ -91,16 +91,8 @@ PyAPI_FUNC(PyObject*) PyString_FromStringAndSize(const char *, Py_ssize_t);
 PyAPI_FUNC(PyObject*) PyString_FromString(const char *);
 PyAPI_FUNC(PyObject*) PyString_Substring(PyObject *str, Py_ssize_t start, Py_ssize_t end);
 PyAPI_FUNC(int) PyString_Resize(PyObject **str, Py_ssize_t length);
-  
-PyAPI_FUNC(PyObject *) PyString_FromFormatV(
-    const char *format,   /* ASCII-encoded string  */
-    va_list vargs
-    );
-  
-PyAPI_FUNC(PyObject *) PyUnicode_FromFormat(
-    const char *format,   /* ASCII-encoded string  */
-    ...
-    );
+PyAPI_FUNC(PyObject *) PyString_FromFormatV(const char *format, va_list vargs);
+PyAPI_FUNC(PyObject *) PyString_FromFormat(const char *format, ...);
 
 PyAPI_FUNC(void) PyUnicode_InternInPlace(PyObject **);
 PyAPI_FUNC(void) PyUnicode_InternImmortal(PyObject **);
@@ -112,73 +104,8 @@ PyAPI_FUNC(PyObject *) PyUnicode_InternFromString(
 #define PyUnicode_CHECK_INTERNED(op) \
     (((PyUnicodeObject *)(op))->state.interned)
  
-/* --- Unicode ordinals --------------------------------------------------- */
-
-/* Create a Unicode Object from the given Unicode code point ordinal.
-
-   The ordinal must be in range(0x110000). A ValueError is
-   raised in case it is not.
-
-*/
-
-PyAPI_FUNC(PyObject*) PyUnicode_FromOrdinal(int ordinal);
-
-/* === Builtin Codecs =====================================================
-
-   Many of these APIs take two arguments encoding and errors. These
-   parameters encoding and errors have the same semantics as the ones
-   of the builtin str() API.
-
-   Setting encoding to NULL causes the default encoding (UTF-8) to be used.
-
-   Error handling is set by errors which may also be set to NULL
-   meaning to use the default handling defined for the codec. Default
-   error handling for all builtin codecs is "strict" (ValueErrors are
-   raised).
-
-   The codecs all use a similar interface. Only deviation from the
-   generic ones are documented.
-
-*/
-
-/* --- Manage the default encoding ---------------------------------------- */
-
-/* Returns "utf-8".  */
-PyAPI_FUNC(const char*) PyUnicode_GetDefaultEncoding(void);
-
-/* --- Generic Codecs ----------------------------------------------------- */
-
-/* Create a Unicode object by decoding the encoded string s of the
-   given size. */
-
-PyAPI_FUNC(PyObject*) PyUnicode_Decode(
-    const char *s,              /* encoded string */
-    Py_ssize_t size,            /* size of buffer */
-    const char *encoding,       /* encoding */
-    const char *errors          /* error handling */
-    );
+PyAPI_FUNC(PyObject*) PyString_FromOrdinal(int ordinal);
   
-PyAPI_FUNC(PyObject*) PyUnicode_AsEncodedString(
-    PyObject *unicode,          /* Unicode object */
-    const char *encoding,       /* encoding */
-    const char *errors          /* error handling */
-    );
-
-/* --- UTF-8 Codecs ------------------------------------------------------- */
-
-PyAPI_FUNC(PyObject*) PyUnicode_DecodeUTF8(
-    const char *string,         /* UTF-8 encoded string */
-    Py_ssize_t length,          /* size of string */
-    const char *errors          /* error handling */
-    );
-
-PyAPI_FUNC(PyObject*) PyUnicode_DecodeUTF8Stateful(
-    const char *string,         /* UTF-8 encoded string */
-    Py_ssize_t length,          /* size of string */
-    const char *errors,         /* error handling */
-    Py_ssize_t *consumed        /* bytes consumed */
-    );
-
 /* --- Methods & Slots ----------------------------------------------------
 
    These are capable of handling Unicode objects and strings on input
@@ -187,10 +114,7 @@ PyAPI_FUNC(PyObject*) PyUnicode_DecodeUTF8Stateful(
 
 /* Concat two strings giving a new Unicode string. */
 
-PyAPI_FUNC(PyObject*) PyUnicode_Concat(
-    PyObject *left,             /* Left string */
-    PyObject *right             /* Right string */
-    );
+PyAPI_FUNC(PyObject*) PyString_Concat(PyObject *left, PyObject *right);
 
 /* Concat two strings and put the result in *pleft
    (sets *pleft to NULL on error) */

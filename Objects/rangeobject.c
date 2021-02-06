@@ -618,9 +618,9 @@ range_repr(rangeobject *r)
     }
 
     if (istep == 1)
-        return PyUnicode_FromFormat("range(%R, %R)", r->start, r->stop);
+        return PyString_FromFormat("range(%R, %R)", r->start, r->stop);
     else
-        return PyUnicode_FromFormat("range(%R, %R, %R)",
+        return PyString_FromFormat("range(%R, %R, %R)",
                                     r->start, r->stop, r->step);
 }
 

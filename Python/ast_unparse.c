@@ -926,7 +926,7 @@ maybe_init_static_strings(void)
         return -1;
     }
     if (!_str_replace_inf &&
-        !(_str_replace_inf = PyUnicode_FromFormat("1e%d", 1 + DBL_MAX_10_EXP))) {
+        !(_str_replace_inf = PyString_FromFormat("1e%d", 1 + DBL_MAX_10_EXP))) {
         return -1;
     }
     return 0;

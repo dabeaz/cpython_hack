@@ -319,7 +319,7 @@ method_repr(PyMethodObject *a)
     }
 
     /* XXX Shouldn't use repr()/%R here! */
-    result = PyUnicode_FromFormat("<bound method %V of %R>",
+    result = PyString_FromFormat("<bound method %V of %R>",
                                   funcname, defname, self);
 
     Py_XDECREF(funcname);
@@ -533,7 +533,7 @@ instancemethod_repr(PyObject *self)
         funcname = NULL;
     }
 
-    result = PyUnicode_FromFormat("<instancemethod %V at %p>",
+    result = PyString_FromFormat("<instancemethod %V at %p>",
                                   funcname, defname, self);
 
     Py_XDECREF(funcname);

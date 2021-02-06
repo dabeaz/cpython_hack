@@ -15,7 +15,7 @@ static int
 warn_invalid_escape_sequence(Parser *p, unsigned char first_invalid_escape_char, Token *t)
 {
     PyObject *msg =
-        PyUnicode_FromFormat("invalid escape sequence \\%c", first_invalid_escape_char);
+        PyString_FromFormat("invalid escape sequence \\%c", first_invalid_escape_char);
     if (msg == NULL) {
         return -1;
     }
