@@ -2811,7 +2811,7 @@ PyUnicode_Count(PyObject *str,
 }
 
 Py_ssize_t
-PyUnicode_Find(PyObject *str,
+PyString_Find(PyObject *str,
                PyObject *substr,
                Py_ssize_t start,
                Py_ssize_t end,
@@ -2897,7 +2897,7 @@ tailmatch(PyObject *self,
 }
 
 Py_ssize_t
-PyUnicode_Tailmatch(PyObject *str,
+PyString_Tailmatch(PyObject *str,
                     PyObject *substr,
                     Py_ssize_t start,
                     Py_ssize_t end,
@@ -3068,7 +3068,7 @@ case_operation(PyObject *self,
 }
 
 PyObject *
-PyUnicode_Join(PyObject *separator, PyObject *seq)
+PyString_Join(PyObject *separator, PyObject *seq)
 {
     PyObject *res;
     PyObject *fseq;
@@ -3320,7 +3320,7 @@ pad(PyObject *self,
 }
 
 PyObject *
-PyUnicode_Splitlines(PyObject *string, int keepends)
+PyString_Splitlines(PyObject *string, int keepends)
 {
     PyObject *list;
 
@@ -3998,7 +3998,7 @@ PyString_Concat(PyObject *left, PyObject *right)
 }
 
 void
-PyUnicode_Append(PyObject **p_left, PyObject *right)
+PyString_Append(PyObject **p_left, PyObject *right)
 {
     PyObject *left, *res;
     Py_ssize_t left_len, right_len, new_len;
@@ -4068,9 +4068,9 @@ error:
 }
 
 void
-PyUnicode_AppendAndDel(PyObject **pleft, PyObject *right)
+PyString_AppendAndDel(PyObject **pleft, PyObject *right)
 {
-    PyUnicode_Append(pleft, right);
+    PyString_Append(pleft, right);
     Py_XDECREF(right);
 }
 
@@ -4787,7 +4787,7 @@ static PyObject *
 unicode_join(PyObject *self, PyObject *iterable)
 /*[clinic end generated code: output=6857e7cecfe7bf98 input=2f70422bfb8fa189]*/
 {
-    return PyUnicode_Join(self, iterable);
+    return PyString_Join(self, iterable);
 }
 
 static Py_ssize_t
@@ -5407,7 +5407,7 @@ unicode_rjust_impl(PyObject *self, Py_ssize_t width, Py_UCS4 fillchar)
 }
 
 PyObject *
-PyUnicode_Split(PyObject *s, PyObject *sep, Py_ssize_t maxsplit)
+PyString_Split(PyObject *s, PyObject *sep, Py_ssize_t maxsplit)
 {
     if (ensure_unicode(s) < 0 || (sep != NULL && ensure_unicode(sep) < 0))
         return NULL;
@@ -5445,7 +5445,7 @@ unicode_split_impl(PyObject *self, PyObject *sep, Py_ssize_t maxsplit)
 }
 
 PyObject *
-PyUnicode_Partition(PyObject *str_obj, PyObject *sep_obj)
+PyString_Partition(PyObject *str_obj, PyObject *sep_obj)
 {
     PyObject* out;
     const void *buf1, *buf2;
@@ -5474,7 +5474,7 @@ PyUnicode_Partition(PyObject *str_obj, PyObject *sep_obj)
 
 
 PyObject *
-PyUnicode_RPartition(PyObject *str_obj, PyObject *sep_obj)
+PyString_RPartition(PyObject *str_obj, PyObject *sep_obj)
 {
     PyObject* out;
     const void *buf1, *buf2;
@@ -5521,7 +5521,7 @@ static PyObject *
 unicode_partition(PyObject *self, PyObject *sep)
 /*[clinic end generated code: output=e4ced7bd253ca3c4 input=f29b8d06c63e50be]*/
 {
-    return PyUnicode_Partition(self, sep);
+    return PyString_Partition(self, sep);
 }
 
 /*[clinic input]
@@ -5541,11 +5541,11 @@ static PyObject *
 unicode_rpartition(PyObject *self, PyObject *sep)
 /*[clinic end generated code: output=1aa13cf1156572aa input=c4b7db3ef5cf336a]*/
 {
-    return PyUnicode_RPartition(self, sep);
+    return PyString_RPartition(self, sep);
 }
 
 PyObject *
-PyUnicode_RSplit(PyObject *s, PyObject *sep, Py_ssize_t maxsplit)
+PyString_RSplit(PyObject *s, PyObject *sep, Py_ssize_t maxsplit)
 {
     if (ensure_unicode(s) < 0 || (sep != NULL && ensure_unicode(sep) < 0))
         return NULL;
@@ -5591,7 +5591,7 @@ static PyObject *
 unicode_splitlines_impl(PyObject *self, int keepends)
 /*[clinic end generated code: output=f664dcdad153ec40 input=b508e180459bdd8b]*/
 {
-    return PyUnicode_Splitlines(self, keepends);
+    return PyString_Splitlines(self, keepends);
 }
 
 static
@@ -6131,7 +6131,8 @@ static PyNumberMethods unicode_as_number = {
 };
 
 static PySequenceMethods unicode_as_sequence = {
-    (lenfunc) unicode_length,       /* sq_length */
+    (lenfunc
+     ) unicode_length,       /* sq_length */
     PyString_Concat,           /* sq_concat */
     (ssizeargfunc) unicode_repeat,  /* sq_repeat */
     (ssizeargfunc) unicode_getitem,     /* sq_item */

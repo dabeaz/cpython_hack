@@ -119,20 +119,14 @@ PyAPI_FUNC(PyObject*) PyString_Concat(PyObject *left, PyObject *right);
 /* Concat two strings and put the result in *pleft
    (sets *pleft to NULL on error) */
 
-PyAPI_FUNC(void) PyUnicode_Append(
-    PyObject **pleft,           /* Pointer to left string */
-    PyObject *right             /* Right string */
-    );
+PyAPI_FUNC(void) PyString_Append(PyObject **pleft, PyObject *right);
 
 /* Concat two strings, put the result in *pleft and drop the right object
    (sets *pleft to NULL on error) */
 
-PyAPI_FUNC(void) PyUnicode_AppendAndDel(
-    PyObject **pleft,           /* Pointer to left string */
-    PyObject *right             /* Right string */
-    );
+PyAPI_FUNC(void) PyString_AppendAndDel(PyObject **pleft,  PyObject *right);
 
-/* Split a string giving a list of Unicode strings.
+/* Split a string giving a list of strings.
 
    If sep is NULL, splitting will be done at all whitespace
    substrings. Otherwise, splits occur at the given separator.
@@ -143,36 +137,23 @@ PyAPI_FUNC(void) PyUnicode_AppendAndDel(
 
 */
 
-PyAPI_FUNC(PyObject*) PyUnicode_Split(
-    PyObject *s,                /* String to split */
-    PyObject *sep,              /* String separator */
-    Py_ssize_t maxsplit         /* Maxsplit count */
-    );
+PyAPI_FUNC(PyObject*) PyString_Split(PyObject *s, PyObject *sep, Py_ssize_t maxsplit);
 
 /* Dito, but split at line breaks.
 
    CRLF is considered to be one line break. Line breaks are not
    included in the resulting list. */
 
-PyAPI_FUNC(PyObject*) PyUnicode_Splitlines(
-    PyObject *s,                /* String to split */
-    int keepends                /* If true, line end markers are included */
-    );
+PyAPI_FUNC(PyObject*) PyString_Splitlines(PyObject *s, int keepends);
 
 /* Partition a string using a given separator. */
 
-PyAPI_FUNC(PyObject*) PyUnicode_Partition(
-    PyObject *s,                /* String to partition */
-    PyObject *sep               /* String separator */
-    );
+PyAPI_FUNC(PyObject*) PyString_Partition(PyObject *s, PyObject *sep);
 
 /* Partition a string using a given separator, searching from the end of the
    string. */
 
-PyAPI_FUNC(PyObject*) PyUnicode_RPartition(
-    PyObject *s,                /* String to partition */
-    PyObject *sep               /* String separator */
-    );
+PyAPI_FUNC(PyObject*) PyString_RPartition(PyObject *s, PyObject *sep);
 
 /* Split a string giving a list of Unicode strings.
 
@@ -187,42 +168,17 @@ PyAPI_FUNC(PyObject*) PyUnicode_RPartition(
 
 */
 
-PyAPI_FUNC(PyObject*) PyUnicode_RSplit(
-    PyObject *s,                /* String to split */
-    PyObject *sep,              /* String separator */
-    Py_ssize_t maxsplit         /* Maxsplit count */
-    );
-
-/* Translate a string by applying a character mapping table to it and
-   return the resulting Unicode object.
-
-   The mapping table must map Unicode ordinal integers to Unicode strings,
-   Unicode ordinal integers or None (causing deletion of the character).
-
-   Mapping tables may be dictionaries or sequences. Unmapped character
-   ordinals (ones which cause a LookupError) are left untouched and
-   are copied as-is.
-
-*/
-
-PyAPI_FUNC(PyObject *) PyUnicode_Translate(
-    PyObject *str,              /* String */
-    PyObject *table,            /* Translate table */
-    const char *errors          /* error handling */
-    );
-
+PyAPI_FUNC(PyObject*) PyString_RSplit(PyObject *s, PyObject *sep, Py_ssize_t maxsplit);
+  
 /* Join a sequence of strings using the given separator and return
    the resulting Unicode string. */
 
-PyAPI_FUNC(PyObject*) PyUnicode_Join(
-    PyObject *separator,        /* Separator string */
-    PyObject *seq               /* Sequence object */
-    );
+PyAPI_FUNC(PyObject*) PyString_Join(PyObject *separator, PyObject *seq);
 
 /* Return 1 if substr matches str[start:end] at the given tail end, 0
    otherwise. */
 
-PyAPI_FUNC(Py_ssize_t) PyUnicode_Tailmatch(
+PyAPI_FUNC(Py_ssize_t) PyString_Tailmatch(
     PyObject *str,              /* String */
     PyObject *substr,           /* Prefix or Suffix string */
     Py_ssize_t start,           /* Start index */
@@ -234,7 +190,7 @@ PyAPI_FUNC(Py_ssize_t) PyUnicode_Tailmatch(
    given search direction or -1 if not found. -2 is returned in case
    an error occurred and an exception is set. */
 
-PyAPI_FUNC(Py_ssize_t) PyUnicode_Find(
+PyAPI_FUNC(Py_ssize_t) PyString_Find(
     PyObject *str,              /* String */
     PyObject *substr,           /* Substring to find */
     Py_ssize_t start,           /* Start index */

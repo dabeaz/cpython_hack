@@ -9,7 +9,7 @@ join_list_unicode(PyObject *lst)
     /* return ''.join(lst) */
     PyObject *sep, *ret;
     sep = PyString_FromStringAndSize("", 0);
-    ret = PyUnicode_Join(sep, lst);
+    ret = PyString_Join(sep, lst);
     Py_DECREF(sep);
     return ret;
 }

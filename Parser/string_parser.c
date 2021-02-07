@@ -1162,7 +1162,7 @@ _PyPegen_FstringParser_ConcatAndDel(FstringParser *state, PyObject *str)
         state->last_str = str;
     } else {
         /* Concatenate this with the previous string. */
-        PyUnicode_AppendAndDel(&state->last_str, str);
+        PyString_AppendAndDel(&state->last_str, str);
         if (!state->last_str)
             return -1;
     }

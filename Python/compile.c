@@ -698,7 +698,7 @@ compiler_set_qualname(struct compiler *c)
         Py_DECREF(base);
         if (name == NULL)
             return 0;
-        PyUnicode_Append(&name, u->u_name);
+        PyString_Append(&name, u->u_name);
         if (name == NULL)
             return 0;
     }

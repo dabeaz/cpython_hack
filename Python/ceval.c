@@ -2036,7 +2036,7 @@ format_missing(PyThreadState *tstate, const char *kind,
             Py_DECREF(tail);
             return;
         }
-        tmp = PyUnicode_Join(comma, names);
+        tmp = PyString_Join(comma, names);
         Py_DECREF(comma);
         if (tmp == NULL) {
             Py_DECREF(tail);
@@ -2195,7 +2195,7 @@ positional_only_passed_as_keyword(PyThreadState *tstate, PyCodeObject *co,
         if (comma == NULL) {
             goto fail;
         }
-        PyObject* error_names = PyUnicode_Join(comma, posonly_names);
+        PyObject* error_names = PyString_Join(comma, posonly_names);
         Py_DECREF(comma);
         if (error_names == NULL) {
             goto fail;

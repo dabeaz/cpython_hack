@@ -663,7 +663,7 @@ append_formattedvalue(_PyUnicodeWriter *writer, expr_ty e)
     if (!temp_fv_str) {
         return -1;
     }
-    if (PyUnicode_Find(temp_fv_str, _str_open_br, 0, 1, 1) == 0) {
+    if (PyString_Find(temp_fv_str, _str_open_br, 0, 1, 1) == 0) {
         /* Expression starts with a brace, split it with a space from the outer
            one. */
         outer_brace = "{ ";

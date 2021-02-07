@@ -1982,7 +1982,7 @@ _check_for_legacy_statements(PySyntaxErrorObject *self, Py_ssize_t start)
             return -1;
         }
     }
-    match = PyUnicode_Tailmatch(self->text, print_prefix,
+    match = PyString_Tailmatch(self->text, print_prefix,
                                 start, text_len, -1);
     if (match == -1) {
         return -1;
@@ -1998,7 +1998,7 @@ _check_for_legacy_statements(PySyntaxErrorObject *self, Py_ssize_t start)
             return -1;
         }
     }
-    match = PyUnicode_Tailmatch(self->text, exec_prefix, start, text_len, -1);
+    match = PyString_Tailmatch(self->text, exec_prefix, start, text_len, -1);
     if (match == -1) {
         return -1;
     }
