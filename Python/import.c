@@ -894,7 +894,7 @@ PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
         Py_ssize_t len = PyUnicode_GET_LENGTH(name);
         if (level == 0 || len > 0) {
             Py_ssize_t dot;
-            dot = PyUnicode_FindChar(name, '.', 0, len, 1);
+            dot = PyString_FindChar(name, '.', 0, len, 1);
             if (dot == -2) {
                 goto error;
             }

@@ -395,7 +395,7 @@ error_at_directive(PySTEntryObject *ste, PyObject *name)
         data = PyList_GetItem(ste->ste_directives, i);
         assert(PyTuple_CheckExact(data));
         assert(PyUnicode_CheckExact(PyTuple_GetItem(data, 0)));
-        if (PyUnicode_Compare(PyTuple_GetItem(data, 0), name) == 0) {
+        if (PyString_Compare(PyTuple_GetItem(data, 0), name) == 0) {
             PyErr_SyntaxLocationObject(ste->ste_table->st_filename,
                                        PyLong_AsLong(PyTuple_GetItem(data, 1)),
                                        PyLong_AsLong(PyTuple_GetItem(data, 2)) + 1);
@@ -1630,7 +1630,7 @@ symtable_visit_alias(struct symtable *st, alias_ty a)
     */
     PyObject *store_name;
     PyObject *name = (a->asname == NULL) ? a->name : a->asname;
-    Py_ssize_t dot = PyUnicode_FindChar(name, '.', 0,
+    Py_ssize_t dot = PyString_FindChar(name, '.', 0,
                                         PyUnicode_GET_LENGTH(name), 1);
     if (dot != -1) {
         store_name = PyString_Substring(name, 0, dot);

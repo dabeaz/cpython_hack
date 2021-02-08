@@ -2783,7 +2783,7 @@ _PyUnicode_InsertThousandsGrouping(
 
 
 Py_ssize_t
-PyUnicode_Count(PyObject *str,
+PyString_Count(PyObject *str,
                 PyObject *substr,
                 Py_ssize_t start,
                 Py_ssize_t end)
@@ -2824,7 +2824,7 @@ PyString_Find(PyObject *str,
 }
 
 Py_ssize_t
-PyUnicode_FindChar(PyObject *str, Py_UCS4 ch,
+PyString_FindChar(PyObject *str, Py_UCS4 ch,
                    Py_ssize_t start, Py_ssize_t end,
                    int direction)
 {
@@ -3793,7 +3793,7 @@ unicode_compare_eq(PyObject *str1, PyObject *str2)
 
 
 int
-PyUnicode_Compare(PyObject *left, PyObject *right)
+PyString_Compare(PyObject *left, PyObject *right)
 {
     if (PyUnicode_Check(left) && PyUnicode_Check(right)) {
 
@@ -3811,7 +3811,7 @@ PyUnicode_Compare(PyObject *left, PyObject *right)
 }
 
 int
-PyUnicode_CompareWithASCIIString(PyObject* uni, const char* str)
+PyString_CompareWithASCIIString(PyObject* uni, const char* str)
 {
     assert(_PyUnicode_CHECK(uni));
     {
@@ -3883,7 +3883,7 @@ _PyUnicode_EqualToASCIIId(PyObject *left, _Py_Identifier *right)
 }
 
 PyObject *
-PyUnicode_RichCompare(PyObject *left, PyObject *right, int op)
+PyString_RichCompare(PyObject *left, PyObject *right, int op)
 {
     int result;
 
@@ -3924,7 +3924,7 @@ _PyUnicode_EQ(PyObject *aa, PyObject *bb)
 }
 
 int
-PyUnicode_Contains(PyObject *str, PyObject *substr)
+PyString_Contains(PyObject *str, PyObject *substr)
 {
     const void *buf1, *buf2;
     Py_ssize_t len1, len2;
@@ -4713,7 +4713,7 @@ _PyUnicode_ScanIdentifier(PyObject *self)
 }
 
 int
-PyUnicode_IsIdentifier(PyObject *self)
+PyString_IsIdentifier(PyObject *self)
 {
   Py_ssize_t i = _PyUnicode_ScanIdentifier(self);
   Py_ssize_t len = PyUnicode_GET_LENGTH(self);
@@ -4734,7 +4734,7 @@ static PyObject *
 unicode_isidentifier_impl(PyObject *self)
 /*[clinic end generated code: output=fe585a9666572905 input=2d807a104f21c0c5]*/
 {
-    return PyBool_FromLong(PyUnicode_IsIdentifier(self));
+    return PyBool_FromLong(PyString_IsIdentifier(self));
 }
 
 /*[clinic input]
@@ -4861,7 +4861,7 @@ _PyUnicode_XStrip(PyObject *self, int striptype, PyObject *sepobj)
             Py_UCS4 ch = PyUnicode_READ( data, i);
             if (!BLOOM(sepmask, ch))
                 break;
-            if (PyUnicode_FindChar(sepobj, ch, 0, seplen, 1) < 0)
+            if (PyString_FindChar(sepobj, ch, 0, seplen, 1) < 0)
                 break;
             i++;
         }
@@ -4874,7 +4874,7 @@ _PyUnicode_XStrip(PyObject *self, int striptype, PyObject *sepobj)
             Py_UCS4 ch = PyUnicode_READ( data, j);
             if (!BLOOM(sepmask, ch))
                 break;
-            if (PyUnicode_FindChar(sepobj, ch, 0, seplen, 1) < 0)
+            if (PyString_FindChar(sepobj, ch, 0, seplen, 1) < 0)
                 break;
             j--;
         }
@@ -5070,7 +5070,7 @@ unicode_repeat(PyObject *str, Py_ssize_t len)
 }
 
 PyObject *
-PyUnicode_Replace(PyObject *str,
+PyString_Replace(PyObject *str,
                   PyObject *substr,
                   PyObject *replstr,
                   Py_ssize_t maxcount)
@@ -6120,7 +6120,7 @@ unicode_mod(PyObject *v, PyObject *w)
 {
     if (!PyUnicode_Check(v))
         Py_RETURN_NOTIMPLEMENTED;
-    return PyUnicode_Format(v, w);
+    return PyString_Format(v, w);
 }
 
 static PyNumberMethods unicode_as_number = {
@@ -6139,7 +6139,7 @@ static PySequenceMethods unicode_as_sequence = {
     0,                  /* sq_slice */
     0,                  /* sq_ass_item */
     0,                  /* sq_ass_slice */
-    PyUnicode_Contains,         /* sq_contains */
+    PyString_Contains,         /* sq_contains */
 };
 
 static PyObject*
@@ -7053,7 +7053,7 @@ unicode_format_arg(struct unicode_formatter_t *ctx)
 }
 
 PyObject *
-PyUnicode_Format(PyObject *format, PyObject *args)
+PyString_Format(PyObject *format, PyObject *args)
 {
     struct unicode_formatter_t ctx;
 
@@ -7244,7 +7244,7 @@ PyTypeObject PyUnicode_Type = {
     unicode_doc,                  /* tp_doc */
     0,                            /* tp_traverse */
     0,                            /* tp_clear */
-    PyUnicode_RichCompare,        /* tp_richcompare */
+    PyString_RichCompare,        /* tp_richcompare */
     0,                            /* tp_weaklistoffset */
     unicode_iter,                 /* tp_iter */
     0,                            /* tp_iternext */

@@ -411,7 +411,7 @@ PyCode_NewWithPosOnlyArgs(int argcount, int posonlyargcount, int kwonlyargcount,
             cell2arg[i] = CO_CELL_NOT_AN_ARG;
             for (j = 0; j < total_args; j++) {
                 PyObject *arg = PyTuple_GetItem(varnames, j);
-                int cmp = PyUnicode_Compare(cell, arg);
+                int cmp = PyString_Compare(cell, arg);
                 if (cmp == -1 && PyErr_Occurred()) {
                     PyMem_Free(cell2arg);
                     return NULL;

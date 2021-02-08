@@ -72,7 +72,7 @@ append_repr(_PyUnicodeWriter *writer, PyObject *obj)
 
     if ((PyFloat_CheckExact(obj) && Py_IS_INFINITY(PyFloat_AsDouble(obj))))
     {
-        PyObject *new_repr = PyUnicode_Replace(
+        PyObject *new_repr = PyString_Replace(
             repr,
             _str_inf,
             _str_replace_inf,
@@ -565,11 +565,11 @@ escape_braces(PyObject *orig)
 {
     PyObject *temp;
     PyObject *result;
-    temp = PyUnicode_Replace(orig, _str_open_br, _str_dbl_open_br, -1);
+    temp = PyString_Replace(orig, _str_open_br, _str_dbl_open_br, -1);
     if (!temp) {
         return NULL;
     }
-    result = PyUnicode_Replace(temp, _str_close_br, _str_dbl_close_br, -1);
+    result = PyString_Replace(temp, _str_close_br, _str_dbl_close_br, -1);
     Py_DECREF(temp);
     return result;
 }

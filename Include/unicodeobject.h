@@ -198,45 +198,23 @@ PyAPI_FUNC(Py_ssize_t) PyString_Find(
     int direction               /* Find direction: +1 forward, -1 backward */
     );
 
-#if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03030000
 /* Like PyUnicode_Find, but search for single character only. */
-PyAPI_FUNC(Py_ssize_t) PyUnicode_FindChar(
-    PyObject *str,
-    Py_UCS4 ch,
-    Py_ssize_t start,
-    Py_ssize_t end,
-    int direction
-    );
-#endif
-
+PyAPI_FUNC(Py_ssize_t) PyString_FindChar(PyObject *str, Py_UCS4 ch, Py_ssize_t start, Py_ssize_t end, int direction);
+  
 /* Count the number of occurrences of substr in str[start:end]. */
 
-PyAPI_FUNC(Py_ssize_t) PyUnicode_Count(
-    PyObject *str,              /* String */
-    PyObject *substr,           /* Substring to count */
-    Py_ssize_t start,           /* Start index */
-    Py_ssize_t end              /* Stop index */
-    );
+PyAPI_FUNC(Py_ssize_t) PyString_Count(PyObject *str, PyObject *substr, Py_ssize_t start, Py_ssize_t end);
 
 /* Replace at most maxcount occurrences of substr in str with replstr
    and return the resulting Unicode object. */
 
-PyAPI_FUNC(PyObject *) PyUnicode_Replace(
-    PyObject *str,              /* String */
-    PyObject *substr,           /* Substring to find */
-    PyObject *replstr,          /* Substring to replace */
-    Py_ssize_t maxcount         /* Max. number of replacements to apply;
-                                   -1 = all */
-    );
+PyAPI_FUNC(PyObject *) PyString_Replace(PyObject *str, PyObject *substr, PyObject *replstr, Py_ssize_t maxcount);
 
 /* Compare two strings and return -1, 0, 1 for less than, equal,
    greater than resp.
    Raise an exception and return -1 on error. */
 
-PyAPI_FUNC(int) PyUnicode_Compare(
-    PyObject *left,             /* Left string */
-    PyObject *right             /* Right string */
-    );
+PyAPI_FUNC(int) PyString_Compare(PyObject *left, PyObject *right);
 
 /* Compare a Unicode object with C string and return -1, 0, 1 for less than,
    equal, and greater than, respectively.  It is best to pass only
@@ -244,10 +222,7 @@ PyAPI_FUNC(int) PyUnicode_Compare(
    ISO-8859-1 if it contains non-ASCII characters.
    This function does not raise exceptions. */
 
-PyAPI_FUNC(int) PyUnicode_CompareWithASCIIString(
-    PyObject *left,
-    const char *right           /* ASCII-encoded string */
-    );
+PyAPI_FUNC(int) PyString_CompareWithASCIIString(PyObject *left, const char *right);
 
 /* Rich compare two strings and return one of the following:
 
@@ -261,19 +236,12 @@ PyAPI_FUNC(int) PyUnicode_CompareWithASCIIString(
 
 */
 
-PyAPI_FUNC(PyObject *) PyUnicode_RichCompare(
-    PyObject *left,             /* Left string */
-    PyObject *right,            /* Right string */
-    int op                      /* Operation: Py_EQ, Py_NE, Py_GT, etc. */
-    );
+PyAPI_FUNC(PyObject *) PyString_RichCompare(PyObject *left, PyObject *right, int op);
 
 /* Apply an argument tuple or dictionary to a format string and return
    the resulting Unicode string. */
 
-PyAPI_FUNC(PyObject *) PyUnicode_Format(
-    PyObject *format,           /* Format string */
-    PyObject *args              /* Argument tuple or dictionary */
-    );
+PyAPI_FUNC(PyObject *) PyString_Format(PyObject *format, PyObject *args);
 
 /* Checks whether element is contained in container and return 1/0
    accordingly.
@@ -281,14 +249,11 @@ PyAPI_FUNC(PyObject *) PyUnicode_Format(
    element has to coerce to a one element Unicode string. -1 is
    returned in case of an error. */
 
-PyAPI_FUNC(int) PyUnicode_Contains(
-    PyObject *container,        /* Container string */
-    PyObject *element           /* Element string */
-    );
+PyAPI_FUNC(int) PyString_Contains(PyObject *container, PyObject *element);
 
 /* Checks whether argument is a valid identifier. */
 
-PyAPI_FUNC(int) PyUnicode_IsIdentifier(PyObject *s);
+PyAPI_FUNC(int) PyString_IsIdentifier(PyObject *s);
 
 /* === Characters Type APIs =============================================== */
 

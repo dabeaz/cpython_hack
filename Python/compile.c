@@ -242,7 +242,7 @@ _Py_Mangle(PyObject *privateobj, PyObject *ident)
     */
     if ((PyUnicode_READ_CHAR(ident, nlen-1) == '_' &&
          PyUnicode_READ_CHAR(ident, nlen-2) == '_') ||
-        PyUnicode_FindChar(ident, '.', 0, nlen, 1) != -1) {
+        PyString_FindChar(ident, '.', 0, nlen, 1) != -1) {
         Py_INCREF(ident);
         return ident; /* Don't mangle __whatever__ */
     }
@@ -2873,7 +2873,7 @@ compiler_import_as(struct compiler *c, identifier name, identifier asname)
        IMPORT_FROM for each name.
     */
     Py_ssize_t len = PyUnicode_GET_LENGTH(name);
-    Py_ssize_t dot = PyUnicode_FindChar(name, '.', 0, len, 1);
+    Py_ssize_t dot = PyString_FindChar(name, '.', 0, len, 1);
     if (dot == -2)
         return 0;
     if (dot != -1) {
@@ -2881,7 +2881,7 @@ compiler_import_as(struct compiler *c, identifier name, identifier asname)
         while (1) {
             Py_ssize_t pos = dot + 1;
             PyObject *attr;
-            dot = PyUnicode_FindChar(name, '.', pos, len, 1);
+            dot = PyString_FindChar(name, '.', pos, len, 1);
             if (dot == -2)
                 return 0;
             attr = PyString_Substring(name, pos, (dot != -1) ? dot : len);
@@ -2930,7 +2930,7 @@ compiler_import(struct compiler *c, stmt_ty s)
         }
         else {
             identifier tmp = alias->name;
-            Py_ssize_t dot = PyUnicode_FindChar(
+            Py_ssize_t dot = PyString_FindChar(
                 alias->name, '.', 0, PyUnicode_GET_LENGTH(alias->name), 1);
             if (dot != -1) {
                 tmp = PyString_Substring(alias->name, 0, dot);
@@ -3796,7 +3796,7 @@ validate_keywords(struct compiler *c, asdl_seq *keywords)
         }
         for (Py_ssize_t j = i + 1; j < nkeywords; j++) {
             keyword_ty other = ((keyword_ty)asdl_seq_GET(keywords, j));
-            if (other->arg && !PyUnicode_Compare(key->arg, other->arg)) {
+            if (other->arg && !PyString_Compare(key->arg, other->arg)) {
                 PyObject *msg = PyString_FromFormat("keyword argument repeated: %U", key->arg);
                 if (msg == NULL) {
                     return -1;

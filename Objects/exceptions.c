@@ -1907,7 +1907,7 @@ _set_legacy_print_statement_msg(PySyntaxErrorObject *self, Py_ssize_t start)
     Py_ssize_t start_pos = start + PRINT_OFFSET;
     Py_ssize_t text_len = PyUnicode_GET_LENGTH(self->text);
     Py_UCS4 semicolon = ';';
-    Py_ssize_t end_pos = PyUnicode_FindChar(self->text, semicolon,
+    Py_ssize_t end_pos = PyString_FindChar(self->text, semicolon,
                                             start_pos, text_len, 1);
     if (end_pos < -1) {
       return -1;
@@ -2024,7 +2024,7 @@ _report_missing_parentheses(PySyntaxErrorObject *self)
     int legacy_check_result = 0;
 
     /* Skip entirely if there is an opening parenthesis */
-    left_paren_index = PyUnicode_FindChar(self->text, left_paren,
+    left_paren_index = PyString_FindChar(self->text, left_paren,
                                           0, text_len, 1);
     if (left_paren_index < -1) {
         return -1;
@@ -2043,7 +2043,7 @@ _report_missing_parentheses(PySyntaxErrorObject *self)
         /* Handle the one-line complex statement case */
         Py_UCS4 colon = 58;
         Py_ssize_t colon_index;
-        colon_index = PyUnicode_FindChar(self->text, colon,
+        colon_index = PyString_FindChar(self->text, colon,
                                          0, text_len, 1);
         if (colon_index < -1) {
             return -1;
