@@ -165,6 +165,7 @@ data. Removal of macros and performance hacks.
 - Day 37 (2/6/2021). Continued string cleanup.
 - Day 38 (2/7/2021). Continued string cleanup.
 - Day 39 (2/8/2021). Continued string cleanup.
+- Day 40 (2/9/2021). Continued string cleanup (at 15 minutes/day this could take awhile).
   
 Copyright and License Information
 ---------------------------------

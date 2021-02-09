@@ -1848,7 +1848,7 @@ long_to_decimal_string_internal(PyObject *aa,
         }
     }
     else {
-      str = PyUnicode_New(strlen);
+      str = PyString_New(strlen);
         if (str == NULL) {
             Py_DECREF(scratch);
             return -1;
@@ -1990,7 +1990,7 @@ long_format_binary(PyObject *aa, int base, int alternate,
     }
     
     else {
-      v = PyUnicode_New(sz);
+      v = PyString_New(sz);
         if (v == NULL)
             return -1;
     }

@@ -106,153 +106,34 @@ PyAPI_FUNC(PyObject *) PyUnicode_InternFromString(
  
 PyAPI_FUNC(PyObject*) PyString_FromOrdinal(int ordinal);
   
-/* --- Methods & Slots ----------------------------------------------------
-
-   These are capable of handling Unicode objects and strings on input
-   (we refer to them as strings in the descriptions) and return
-   Unicode objects or integers as appropriate. */
-
-/* Concat two strings giving a new Unicode string. */
+  /* --- Methods & Slots ---------------------------------------------------- */
 
 PyAPI_FUNC(PyObject*) PyString_Concat(PyObject *left, PyObject *right);
-
-/* Concat two strings and put the result in *pleft
-   (sets *pleft to NULL on error) */
-
 PyAPI_FUNC(void) PyString_Append(PyObject **pleft, PyObject *right);
-
-/* Concat two strings, put the result in *pleft and drop the right object
-   (sets *pleft to NULL on error) */
-
 PyAPI_FUNC(void) PyString_AppendAndDel(PyObject **pleft,  PyObject *right);
-
-/* Split a string giving a list of strings.
-
-   If sep is NULL, splitting will be done at all whitespace
-   substrings. Otherwise, splits occur at the given separator.
-
-   At most maxsplit splits will be done. If negative, no limit is set.
-
-   Separators are not included in the resulting list.
-
-*/
-
 PyAPI_FUNC(PyObject*) PyString_Split(PyObject *s, PyObject *sep, Py_ssize_t maxsplit);
-
-/* Dito, but split at line breaks.
-
-   CRLF is considered to be one line break. Line breaks are not
-   included in the resulting list. */
-
 PyAPI_FUNC(PyObject*) PyString_Splitlines(PyObject *s, int keepends);
-
-/* Partition a string using a given separator. */
-
 PyAPI_FUNC(PyObject*) PyString_Partition(PyObject *s, PyObject *sep);
-
-/* Partition a string using a given separator, searching from the end of the
-   string. */
-
 PyAPI_FUNC(PyObject*) PyString_RPartition(PyObject *s, PyObject *sep);
-
-/* Split a string giving a list of Unicode strings.
-
-   If sep is NULL, splitting will be done at all whitespace
-   substrings. Otherwise, splits occur at the given separator.
-
-   At most maxsplit splits will be done. But unlike PyUnicode_Split
-   PyUnicode_RSplit splits from the end of the string. If negative,
-   no limit is set.
-
-   Separators are not included in the resulting list.
-
-*/
-
 PyAPI_FUNC(PyObject*) PyString_RSplit(PyObject *s, PyObject *sep, Py_ssize_t maxsplit);
-  
-/* Join a sequence of strings using the given separator and return
-   the resulting Unicode string. */
-
 PyAPI_FUNC(PyObject*) PyString_Join(PyObject *separator, PyObject *seq);
+PyAPI_FUNC(Py_ssize_t) PyString_Tailmatch(PyObject *str, PyObject *substr, Py_ssize_t start,
+					  Py_ssize_t end, int direction);
+PyAPI_FUNC(Py_ssize_t) PyString_Find(PyObject *str, PyObject *substr, 
+				     Py_ssize_t start, Py_ssize_t end,int direction);
+PyAPI_FUNC(Py_ssize_t) PyString_FindChar(PyObject *str, Py_UCS4 ch, Py_ssize_t start,
+					 Py_ssize_t end, int direction);
+PyAPI_FUNC(Py_ssize_t) PyString_Count(PyObject *str, PyObject *substr,
+				      Py_ssize_t start, Py_ssize_t end);
 
-/* Return 1 if substr matches str[start:end] at the given tail end, 0
-   otherwise. */
-
-PyAPI_FUNC(Py_ssize_t) PyString_Tailmatch(
-    PyObject *str,              /* String */
-    PyObject *substr,           /* Prefix or Suffix string */
-    Py_ssize_t start,           /* Start index */
-    Py_ssize_t end,             /* Stop index */
-    int direction               /* Tail end: -1 prefix, +1 suffix */
-    );
-
-/* Return the first position of substr in str[start:end] using the
-   given search direction or -1 if not found. -2 is returned in case
-   an error occurred and an exception is set. */
-
-PyAPI_FUNC(Py_ssize_t) PyString_Find(
-    PyObject *str,              /* String */
-    PyObject *substr,           /* Substring to find */
-    Py_ssize_t start,           /* Start index */
-    Py_ssize_t end,             /* Stop index */
-    int direction               /* Find direction: +1 forward, -1 backward */
-    );
-
-/* Like PyUnicode_Find, but search for single character only. */
-PyAPI_FUNC(Py_ssize_t) PyString_FindChar(PyObject *str, Py_UCS4 ch, Py_ssize_t start, Py_ssize_t end, int direction);
-  
-/* Count the number of occurrences of substr in str[start:end]. */
-
-PyAPI_FUNC(Py_ssize_t) PyString_Count(PyObject *str, PyObject *substr, Py_ssize_t start, Py_ssize_t end);
-
-/* Replace at most maxcount occurrences of substr in str with replstr
-   and return the resulting Unicode object. */
-
-PyAPI_FUNC(PyObject *) PyString_Replace(PyObject *str, PyObject *substr, PyObject *replstr, Py_ssize_t maxcount);
-
-/* Compare two strings and return -1, 0, 1 for less than, equal,
-   greater than resp.
-   Raise an exception and return -1 on error. */
+PyAPI_FUNC(PyObject *) PyString_Replace(PyObject *str, PyObject *substr, PyObject *replstr,
+					Py_ssize_t maxcount);
 
 PyAPI_FUNC(int) PyString_Compare(PyObject *left, PyObject *right);
-
-/* Compare a Unicode object with C string and return -1, 0, 1 for less than,
-   equal, and greater than, respectively.  It is best to pass only
-   ASCII-encoded strings, but the function interprets the input string as
-   ISO-8859-1 if it contains non-ASCII characters.
-   This function does not raise exceptions. */
-
 PyAPI_FUNC(int) PyString_CompareWithASCIIString(PyObject *left, const char *right);
-
-/* Rich compare two strings and return one of the following:
-
-   - NULL in case an exception was raised
-   - Py_True or Py_False for successful comparisons
-   - Py_NotImplemented in case the type combination is unknown
-
-   Possible values for op:
-
-     Py_GT, Py_GE, Py_EQ, Py_NE, Py_LT, Py_LE
-
-*/
-
 PyAPI_FUNC(PyObject *) PyString_RichCompare(PyObject *left, PyObject *right, int op);
-
-/* Apply an argument tuple or dictionary to a format string and return
-   the resulting Unicode string. */
-
 PyAPI_FUNC(PyObject *) PyString_Format(PyObject *format, PyObject *args);
-
-/* Checks whether element is contained in container and return 1/0
-   accordingly.
-
-   element has to coerce to a one element Unicode string. -1 is
-   returned in case of an error. */
-
 PyAPI_FUNC(int) PyString_Contains(PyObject *container, PyObject *element);
-
-/* Checks whether argument is a valid identifier. */
-
 PyAPI_FUNC(int) PyString_IsIdentifier(PyObject *s);
 
 /* === Characters Type APIs =============================================== */
@@ -265,51 +146,11 @@ PyAPI_FUNC(int) PyString_IsIdentifier(PyObject *s);
    _Py_ascii_whitespace (see below) with an inlined check.
 
  */
+
 #define Py_UNICODE_ISSPACE(ch) \
     ((ch) < 128U ? _Py_ascii_whitespace[(ch)] : _PyUnicode_IsWhitespace(ch))
-
-#define Py_UNICODE_ISLOWER(ch) _PyUnicode_IsLowercase(ch)
-#define Py_UNICODE_ISUPPER(ch) _PyUnicode_IsUppercase(ch)
-#define Py_UNICODE_ISTITLE(ch) _PyUnicode_IsTitlecase(ch)
-#define Py_UNICODE_ISLINEBREAK(ch) _PyUnicode_IsLinebreak(ch)
-
-#define Py_UNICODE_TOLOWER(ch) _PyUnicode_ToLowercase(ch)
-#define Py_UNICODE_TOUPPER(ch) _PyUnicode_ToUppercase(ch)
-#define Py_UNICODE_TOTITLE(ch) _PyUnicode_ToTitlecase(ch)
-
-#define Py_UNICODE_ISDECIMAL(ch) _PyUnicode_IsDecimalDigit(ch)
-#define Py_UNICODE_ISDIGIT(ch) _PyUnicode_IsDigit(ch)
-#define Py_UNICODE_ISNUMERIC(ch) _PyUnicode_IsNumeric(ch)
-#define Py_UNICODE_ISPRINTABLE(ch) _PyUnicode_IsPrintable(ch)
-
 #define Py_UNICODE_TODECIMAL(ch) _PyUnicode_ToDecimalDigit(ch)
-#define Py_UNICODE_TODIGIT(ch) _PyUnicode_ToDigit(ch)
-#define Py_UNICODE_TONUMERIC(ch) _PyUnicode_ToNumeric(ch)
-
-#define Py_UNICODE_ISALPHA(ch) _PyUnicode_IsAlpha(ch)
-
-#define Py_UNICODE_ISALNUM(ch) \
-       (Py_UNICODE_ISALPHA(ch) || \
-    Py_UNICODE_ISDECIMAL(ch) || \
-    Py_UNICODE_ISDIGIT(ch) || \
-    Py_UNICODE_ISNUMERIC(ch))
-
-#define Py_UNICODE_COPY(target, source, length) \
-    memcpy((target), (source), (length)*sizeof(Py_UNICODE))
-
-#define Py_UNICODE_FILL(target, value, length) \
-    do {Py_ssize_t i_; Py_UNICODE *t_ = (target); Py_UNICODE v_ = (value);\
-        for (i_ = 0; i_ < (length); i_++) t_[i_] = v_;\
-    } while (0)
   
-/* Check if substring matches at given offset.  The offset must be
-   valid, and the substring must not be empty. */
-
-#define Py_UNICODE_MATCH(string, offset, substring) \
-    ((*((string)->wstr + (offset)) == *((substring)->wstr)) && \
-     ((*((string)->wstr + (offset) + (substring)->wstr_length-1) == *((substring)->wstr + (substring)->wstr_length-1))) && \
-     !memcmp((string)->wstr + (offset), (substring)->wstr, (substring)->wstr_length*sizeof(Py_UNICODE)))
-
 /* --- Unicode Type ------------------------------------------------------- */
 
 typedef struct {
@@ -412,19 +253,8 @@ enum PyUnicode_Kind {
 
 /* === Public API ========================================================= */
 
-/* --- Plain Py_UNICODE --------------------------------------------------- */
-
-/* With PEP 393, this is the recommended way to allocate a new unicode object.
-   This function will allocate the object and its buffer in a single memory
-   block.  Objects created using this function are not resizable. */
-PyAPI_FUNC(PyObject*) PyUnicode_New(
-    Py_ssize_t size            /* Number of code points in the new string */
-    );
-
-/* Get a copy of a Unicode string. */
-PyAPI_FUNC(PyObject*) _PyUnicode_Copy(
-    PyObject *unicode
-    );
+  PyAPI_FUNC(PyObject*) PyString_New(Py_ssize_t size);
+  PyAPI_FUNC(PyObject*) _PyString_Copy(PyObject *);
 
 /* Copy character from one unicode object into another, this function performs
    character conversion when necessary and falls back to memcpy() if possible.

@@ -1050,7 +1050,7 @@ main_loop:
 
         case BUILD_STRING: {
             PyObject *str;
-            PyObject *empty = PyUnicode_New(0);
+            PyObject *empty = PyString_New(0);
             if (empty == NULL) {
                 goto error;
             }

@@ -3070,7 +3070,7 @@ type_setattro(PyTypeObject *type, PyObject *name, PyObject *value)
             Py_INCREF(name);
         }
         else {
-            name = _PyUnicode_Copy(name);
+            name = _PyString_Copy(name);
             if (name == NULL)
                 return -1;
         }

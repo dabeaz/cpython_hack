@@ -790,7 +790,7 @@ import_find_and_load(PyThreadState *tstate, PyObject *abs_name)
 	    PyObject *dict;
 	    PyObject *v;
 	    _Py_fstat(fd, &stat);
-	    src = PyUnicode_New(stat.st_size);
+	    src = PyString_New(stat.st_size);
 	    _Py_read(fd, (char *) PyUnicode_AsChar(src), stat.st_size);
 	    close(fd);
 	    mod = PyImport_AddModuleObject(abs_name);

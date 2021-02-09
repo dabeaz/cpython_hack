@@ -262,7 +262,7 @@ _Py_Mangle(PyObject *privateobj, PyObject *ident)
         return NULL;
     }
 
-    result = PyUnicode_New(1 + nlen + plen);
+    result = PyString_New(1 + nlen + plen);
     if (!result)
         return 0;
     /* ident = "_" + priv[ipriv:] + ident # i.e. 1+plen+nlen bytes */

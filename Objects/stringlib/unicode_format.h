@@ -70,7 +70,7 @@ Py_LOCAL_INLINE(PyObject *)
 SubString_new_object_or_empty(SubString *str)
 {
     if (str->str == NULL) {
-        return PyUnicode_New(0);
+        return PyString_New(0);
     }
     return SubString_new_object(str);
 }
@@ -527,7 +527,7 @@ render_field(PyObject *fieldobj, SubString *format_spec, _PyUnicodeWriter *write
                                                      format_spec->start,
                                                      format_spec->end);
         else
-	  format_spec_object = PyUnicode_New(0);
+	  format_spec_object = PyString_New(0);
         if (format_spec_object == NULL)
             goto done;
 
