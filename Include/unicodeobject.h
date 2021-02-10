@@ -187,16 +187,6 @@ PyAPI_FUNC(int) _PyUnicode_CheckConsistency(
 #define SSTATE_INTERNED_MORTAL 1
 #define SSTATE_INTERNED_IMMORTAL 2
 
-enum PyUnicode_Kind {
-/* String contains only wstr byte characters.  This is only possible
-   when the string was created with a legacy API and _PyUnicode_Ready()
-   has not been called yet.  */
-/* Return values of the PyUnicode_KIND() macro: */
-    PyUnicode_1BYTE_KIND = 1,
-    PyUnicode_2BYTE_KIND = 2,
-    PyUnicode_4BYTE_KIND = 4
-};
-
 /* Return pointers to the canonical representation cast to unsigned char,
    Py_UCS2, or Py_UCS4 for direct character access.
    No checks are performed, use PyUnicode_KIND() before to ensure
@@ -256,25 +246,7 @@ enum PyUnicode_Kind {
   PyAPI_FUNC(PyObject*) PyString_New(Py_ssize_t size);
   PyAPI_FUNC(PyObject*) _PyString_Copy(PyObject *);
 
-/* Copy character from one unicode object into another, this function performs
-   character conversion when necessary and falls back to memcpy() if possible.
-
-   Fail if to is too small (smaller than *how_many* or smaller than
-   len(from)-from_start), or if kind(from[from_start:from_start+how_many]) >
-   kind(to), or if *to* has more than 1 reference.
-
-   Return the number of written character, or return -1 and raise an exception
-   on error.
-
-   Pseudo-code:
-
-       how_many = min(how_many, len(from) - from_start)
-       to[to_start:to_start+how_many] = from[from_start:from_start+how_many]
-       return how_many
-
-   Note: The function doesn't write a terminating null character.
-   */
-PyAPI_FUNC(Py_ssize_t) PyUnicode_CopyCharacters(
+  PyAPI_FUNC(Py_ssize_t) PyString_CopyCharacters(
     PyObject *to,
     Py_ssize_t to_start,
     PyObject *from,
@@ -285,7 +257,7 @@ PyAPI_FUNC(Py_ssize_t) PyUnicode_CopyCharacters(
 /* Unsafe version of PyUnicode_CopyCharacters(): don't check arguments and so
    may crash if parameters are invalid (e.g. if the output string
    is too short). */
-PyAPI_FUNC(void) _PyUnicode_FastCopyCharacters(
+PyAPI_FUNC(void) _PyString_FastCopyCharacters(
     PyObject *to,
     Py_ssize_t to_start,
     PyObject *from,
@@ -301,8 +273,8 @@ PyAPI_FUNC(void) _PyUnicode_FastCopyCharacters(
 
    Return the number of written character, or return -1 and raise an exception
    on error. */
-PyAPI_FUNC(Py_ssize_t) PyUnicode_Fill(
-    PyObject *unicode,
+PyAPI_FUNC(Py_ssize_t) PyString_Fill(
+    PyObject *str,
     Py_ssize_t start,
     Py_ssize_t length,
     unsigned char fill_char
@@ -310,19 +282,13 @@ PyAPI_FUNC(Py_ssize_t) PyUnicode_Fill(
 
 /* Unsafe version of PyUnicode_Fill(): don't check arguments and so may crash
    if parameters are invalid (e.g. if length is longer than the string). */
-PyAPI_FUNC(void) _PyUnicode_FastFill(
-    PyObject *unicode,
+PyAPI_FUNC(void) _PyString_FastFill(
+    PyObject *str,
     Py_ssize_t start,
     Py_ssize_t length,
     unsigned char fill_char
     );
-
-/* Create a new string from a buffer of ASCII characters.
-   WARNING: Don't check if the string contains any non-ASCII character. */
-PyAPI_FUNC(PyObject*) _PyUnicode_FromASCII(
-    const char *buffer,
-    Py_ssize_t size);
-
+  
 /* --- _PyUnicodeWriter API ----------------------------------------------- */
 
 typedef struct {
@@ -496,107 +462,15 @@ PyAPI_DATA(const unsigned char) _Py_ascii_whitespace[];
    These APIs are implemented in Objects/unicodectype.c.
 
 */
-
-PyAPI_FUNC(int) _PyUnicode_IsLowercase(
-    Py_UCS4 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyUnicode_IsUppercase(
-    Py_UCS4 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyUnicode_IsTitlecase(
-    Py_UCS4 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyUnicode_IsXidStart(
-    Py_UCS4 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyUnicode_IsXidContinue(
-    Py_UCS4 ch       /* Unicode character */
-    );
-
+  
 PyAPI_FUNC(int) _PyUnicode_IsWhitespace(
     const Py_UCS4 ch         /* Unicode character */
     );
-
-PyAPI_FUNC(int) _PyUnicode_IsLinebreak(
-    const Py_UCS4 ch         /* Unicode character */
-    );
-
-/* Py_DEPRECATED(3.3) */ PyAPI_FUNC(Py_UCS4) _PyUnicode_ToLowercase(
-    Py_UCS4 ch       /* Unicode character */
-    );
-
-/* Py_DEPRECATED(3.3) */ PyAPI_FUNC(Py_UCS4) _PyUnicode_ToUppercase(
-    Py_UCS4 ch       /* Unicode character */
-    );
-
-Py_DEPRECATED(3.3) PyAPI_FUNC(Py_UCS4) _PyUnicode_ToTitlecase(
-    Py_UCS4 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyUnicode_ToLowerFull(
-    Py_UCS4 ch,       /* Unicode character */
-    Py_UCS4 *res
-    );
-
-PyAPI_FUNC(int) _PyUnicode_ToTitleFull(
-    Py_UCS4 ch,       /* Unicode character */
-    Py_UCS4 *res
-    );
-
-PyAPI_FUNC(int) _PyUnicode_ToUpperFull(
-    Py_UCS4 ch,       /* Unicode character */
-    Py_UCS4 *res
-    );
-
-PyAPI_FUNC(int) _PyUnicode_ToFoldedFull(
-    Py_UCS4 ch,       /* Unicode character */
-    Py_UCS4 *res
-    );
-
-PyAPI_FUNC(int) _PyUnicode_IsCaseIgnorable(
-    Py_UCS4 ch         /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyUnicode_IsCased(
-    Py_UCS4 ch         /* Unicode character */
-    );
-
+  
 PyAPI_FUNC(int) _PyUnicode_ToDecimalDigit(
     Py_UCS4 ch       /* Unicode character */
     );
-
-PyAPI_FUNC(int) _PyUnicode_ToDigit(
-    Py_UCS4 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(double) _PyUnicode_ToNumeric(
-    Py_UCS4 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyUnicode_IsDecimalDigit(
-    Py_UCS4 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyUnicode_IsDigit(
-    Py_UCS4 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyUnicode_IsNumeric(
-    Py_UCS4 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyUnicode_IsPrintable(
-    Py_UCS4 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyUnicode_IsAlpha(
-    Py_UCS4 ch       /* Unicode character */
-    );
-
+  
 PyAPI_FUNC(PyObject*) _PyUnicode_FormatLong(PyObject *, int, int, int);
 
 /* Create a copy of a unicode string ending with a nul character. Return NULL

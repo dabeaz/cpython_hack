@@ -50,6 +50,108 @@ OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "pycore_pystate.h"        // _PyInterpreterState_GET()
 #include "stringlib/eq.h"
 
+  
+PyAPI_FUNC(int) _PyUnicode_IsLowercase(
+    Py_UCS4 ch       /* Unicode character */
+    );
+
+PyAPI_FUNC(int) _PyUnicode_IsUppercase(
+    Py_UCS4 ch       /* Unicode character */
+    );
+
+PyAPI_FUNC(int) _PyUnicode_IsTitlecase(
+    Py_UCS4 ch       /* Unicode character */
+    );
+
+PyAPI_FUNC(int) _PyUnicode_IsXidStart(
+    Py_UCS4 ch       /* Unicode character */
+    );
+
+PyAPI_FUNC(int) _PyUnicode_IsXidContinue(
+    Py_UCS4 ch       /* Unicode character */
+    );
+  
+PyAPI_FUNC(int) _PyUnicode_IsWhitespace(
+    const Py_UCS4 ch         /* Unicode character */
+    );
+
+PyAPI_FUNC(int) _PyUnicode_IsLinebreak(
+    const Py_UCS4 ch         /* Unicode character */
+    );
+
+/* Py_DEPRECATED(3.3) */ PyAPI_FUNC(Py_UCS4) _PyUnicode_ToLowercase(
+    Py_UCS4 ch       /* Unicode character */
+    );
+
+/* Py_DEPRECATED(3.3) */ PyAPI_FUNC(Py_UCS4) _PyUnicode_ToUppercase(
+    Py_UCS4 ch       /* Unicode character */
+    );
+
+Py_DEPRECATED(3.3) PyAPI_FUNC(Py_UCS4) _PyUnicode_ToTitlecase(
+    Py_UCS4 ch       /* Unicode character */
+    );
+
+PyAPI_FUNC(int) _PyUnicode_ToLowerFull(
+    Py_UCS4 ch,       /* Unicode character */
+    Py_UCS4 *res
+    );
+
+PyAPI_FUNC(int) _PyUnicode_ToTitleFull(
+    Py_UCS4 ch,       /* Unicode character */
+    Py_UCS4 *res
+    );
+
+PyAPI_FUNC(int) _PyUnicode_ToUpperFull(
+    Py_UCS4 ch,       /* Unicode character */
+    Py_UCS4 *res
+    );
+
+PyAPI_FUNC(int) _PyUnicode_ToFoldedFull(
+    Py_UCS4 ch,       /* Unicode character */
+    Py_UCS4 *res
+    );
+
+PyAPI_FUNC(int) _PyUnicode_IsCaseIgnorable(
+    Py_UCS4 ch         /* Unicode character */
+    );
+
+PyAPI_FUNC(int) _PyUnicode_IsCased(
+    Py_UCS4 ch         /* Unicode character */
+    );
+
+PyAPI_FUNC(int) _PyUnicode_ToDecimalDigit(
+    Py_UCS4 ch       /* Unicode character */
+    );
+
+PyAPI_FUNC(int) _PyUnicode_ToDigit(
+    Py_UCS4 ch       /* Unicode character */
+    );
+
+PyAPI_FUNC(double) _PyUnicode_ToNumeric(
+    Py_UCS4 ch       /* Unicode character */
+    );
+
+PyAPI_FUNC(int) _PyUnicode_IsDecimalDigit(
+    Py_UCS4 ch       /* Unicode character */
+    );
+
+PyAPI_FUNC(int) _PyUnicode_IsDigit(
+    Py_UCS4 ch       /* Unicode character */
+    );
+
+PyAPI_FUNC(int) _PyUnicode_IsNumeric(
+    Py_UCS4 ch       /* Unicode character */
+    );
+
+PyAPI_FUNC(int) _PyUnicode_IsPrintable(
+    Py_UCS4 ch       /* Unicode character */
+    );
+
+PyAPI_FUNC(int) _PyUnicode_IsAlpha(
+    Py_UCS4 ch       /* Unicode character */
+    );
+
+
 #define Py_UNICODE_ISSPACE(ch) \
     ((ch) < 128U ? _Py_ascii_whitespace[(ch)] : _PyUnicode_IsWhitespace(ch))
 
@@ -1615,7 +1717,7 @@ resize_copy(PyObject *unicode, Py_ssize_t length)
             return NULL;
 
         copy_length = Py_MIN(length, PyUnicode_GET_LENGTH(unicode));
-        _PyUnicode_FastCopyCharacters(copy, 0, unicode, 0, copy_length);
+        _PyString_FastCopyCharacters(copy, 0, unicode, 0, copy_length);
         return copy;
     }
 }
@@ -1768,7 +1870,7 @@ _copy_characters(PyObject *to, Py_ssize_t to_start,
 }
 
 void
-_PyUnicode_FastCopyCharacters(
+_PyString_FastCopyCharacters(
     PyObject *to, Py_ssize_t to_start,
     PyObject *from, Py_ssize_t from_start, Py_ssize_t how_many)
 {
@@ -1776,7 +1878,7 @@ _PyUnicode_FastCopyCharacters(
 }
 
 Py_ssize_t
-PyUnicode_CopyCharacters(PyObject *to, Py_ssize_t to_start,
+PyString_CopyCharacters(PyObject *to, Py_ssize_t to_start,
                          PyObject *from, Py_ssize_t from_start,
                          Py_ssize_t how_many)
 {
@@ -2091,12 +2193,12 @@ unicode_fromformat_write_str(_PyUnicodeWriter *writer, PyObject *str,
 
     if (width > length) {
         fill = width - length;
-        if (PyUnicode_Fill(writer->buffer, writer->pos, fill, ' ') == -1)
+        if (PyString_Fill(writer->buffer, writer->pos, fill, ' ') == -1)
             return -1;
         writer->pos += fill;
     }
 
-    _PyUnicode_FastCopyCharacters(writer->buffer, writer->pos,
+    _PyString_FastCopyCharacters(writer->buffer, writer->pos,
                                   str, 0, length);
     writer->pos += length;
     return 0;
@@ -2283,13 +2385,13 @@ unicode_fromformat_arg(_PyUnicodeWriter *writer,
             Py_UCS4 fillchar;
             fill = width - precision;
             fillchar = zeropad?'0':' ';
-            if (PyUnicode_Fill(writer->buffer, writer->pos, fill, fillchar) == -1)
+            if (PyString_Fill(writer->buffer, writer->pos, fill, fillchar) == -1)
                 return NULL;
             writer->pos += fill;
         }
         if (precision > len) {
             fill = precision - len;
-            if (PyUnicode_Fill(writer->buffer, writer->pos, fill, '0') == -1)
+            if (PyString_Fill(writer->buffer, writer->pos, fill, '0') == -1)
                 return NULL;
             writer->pos += fill;
         }
@@ -3260,13 +3362,13 @@ _PyUnicode_JoinArray(PyObject *separator, PyObject *const *items, Py_ssize_t seq
 
             /* Copy item, and maybe the separator. */
             if (i && seplen != 0) {
-                _PyUnicode_FastCopyCharacters(res, res_offset, sep, 0, seplen);
+                _PyString_FastCopyCharacters(res, res_offset, sep, 0, seplen);
                 res_offset += seplen;
             }
 
             itemlen = PyUnicode_GET_LENGTH(item);
             if (itemlen != 0) {
-                _PyUnicode_FastCopyCharacters(res, res_offset, item, 0, itemlen);
+                _PyString_FastCopyCharacters(res, res_offset, item, 0, itemlen);
                 res_offset += itemlen;
             }
         }
@@ -3284,7 +3386,7 @@ _PyUnicode_JoinArray(PyObject *separator, PyObject *const *items, Py_ssize_t seq
 }
 
 void
-_PyUnicode_FastFill(PyObject *unicode, Py_ssize_t start, Py_ssize_t length,
+_PyString_FastFill(PyObject *unicode, Py_ssize_t start, Py_ssize_t length,
                     unsigned char fill_char)
 {
     void *data = PyUnicode_DATA(unicode);
@@ -3296,7 +3398,7 @@ _PyUnicode_FastFill(PyObject *unicode, Py_ssize_t start, Py_ssize_t length,
 }
 
 Py_ssize_t
-PyUnicode_Fill(PyObject *unicode, Py_ssize_t start, Py_ssize_t length,
+PyString_Fill(PyObject *unicode, Py_ssize_t start, Py_ssize_t length,
                unsigned char fill_char)
 {
     Py_ssize_t maxlen;
@@ -3324,7 +3426,7 @@ PyUnicode_Fill(PyObject *unicode, Py_ssize_t start, Py_ssize_t length,
     if (length <= 0)
         return 0;
 
-    _PyUnicode_FastFill(unicode, start, length, fill_char);
+    _PyString_FastFill(unicode, start, length, fill_char);
     return length;
 }
 
@@ -3359,7 +3461,7 @@ pad(PyObject *self,
         unicode_fill(data, fill, 0, left);
     if (right)
         unicode_fill(data, fill, left + _PyUnicode_LENGTH(self), right);
-    _PyUnicode_FastCopyCharacters(u, left, self, 0, _PyUnicode_LENGTH(self));
+    _PyString_FastCopyCharacters(u, left, self, 0, _PyUnicode_LENGTH(self));
     assert(_PyUnicode_CheckConsistency(u, 1));
     return u;
 }
@@ -3519,7 +3621,7 @@ replace(PyObject *self, PyObject *str1,
             if (!u)
                 goto error;
 
-            _PyUnicode_FastCopyCharacters(u, 0, self, 0, slen);
+            _PyString_FastCopyCharacters(u, 0, self, 0, slen);
             replace_1char_inplace(u, pos, u1, u2, maxcount);
         }
         else {
@@ -4036,8 +4138,8 @@ PyString_Concat(PyObject *left, PyObject *right)
     result = PyString_New(new_len);
     if (result == NULL)
         return NULL;
-    _PyUnicode_FastCopyCharacters(result, 0, left, 0, left_len);
-    _PyUnicode_FastCopyCharacters(result, left_len, right, 0, right_len);
+    _PyString_FastCopyCharacters(result, 0, left, 0, left_len);
+    _PyString_FastCopyCharacters(result, left_len, right, 0, right_len);
     assert(_PyUnicode_CheckConsistency(result, 1));
     return result;
 }
@@ -4093,15 +4195,15 @@ PyString_Append(PyObject **p_left, PyObject *right)
             goto error;
 
         /* copy 'right' into the newly allocated area of 'left' */
-        _PyUnicode_FastCopyCharacters(*p_left, left_len, right, 0, right_len);
+        _PyString_FastCopyCharacters(*p_left, left_len, right, 0, right_len);
     }
     else {
         /* Concat the two Unicode strings */
         res = PyString_New(new_len);
         if (res == NULL)
             goto error;
-        _PyUnicode_FastCopyCharacters(res, 0, left, 0, left_len);
-        _PyUnicode_FastCopyCharacters(res, left_len, right, 0, right_len);
+        _PyString_FastCopyCharacters(res, 0, left, 0, left_len);
+        _PyString_FastCopyCharacters(res, left_len, right, 0, right_len);
         Py_DECREF(left);
         *p_left = res;
     }
@@ -5277,7 +5379,7 @@ unicode_repr(PyObject *unicode)
     PyUnicode_WRITE(odata, 0, quote);
     PyUnicode_WRITE(odata, osize-1, quote);
     if (unchanged) {
-        _PyUnicode_FastCopyCharacters(repr, 1,
+        _PyString_FastCopyCharacters(repr, 1,
                                       unicode, 0,
                                       isize);
     }
@@ -5922,7 +6024,7 @@ _PyUnicodeWriter_WriteStr(_PyUnicodeWriter *writer, PyObject *str)
     if (_PyUnicodeWriter_PrepareInternal(writer, len) == -1)
       return -1;
 	
-    _PyUnicode_FastCopyCharacters(writer->buffer, writer->pos,
+    _PyString_FastCopyCharacters(writer->buffer, writer->pos,
                                   str, 0, len);
     writer->pos += len;
     return 0;
@@ -5948,7 +6050,7 @@ _PyUnicodeWriter_WriteSubstring(_PyUnicodeWriter *writer, PyObject *str,
     if (_PyUnicodeWriter_Prepare(writer, len) < 0)
         return -1;
 
-    _PyUnicode_FastCopyCharacters(writer->buffer, writer->pos,
+    _PyString_FastCopyCharacters(writer->buffer, writer->pos,
                                   str, start, len);
     writer->pos += len;
     return 0;
@@ -7037,7 +7139,7 @@ unicode_format_arg_output(struct unicode_formatter_t *ctx,
 
     /* Write characters */
     if (len) {
-        _PyUnicode_FastCopyCharacters(writer->buffer, writer->pos,
+        _PyString_FastCopyCharacters(writer->buffer, writer->pos,
                                       str, pindex, len);
         writer->pos += len;
     }

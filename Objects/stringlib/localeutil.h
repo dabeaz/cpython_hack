@@ -56,14 +56,14 @@ InsertThousandsGrouping_fill(_PyUnicodeWriter *writer, Py_ssize_t *buffer_pos,
         *buffer_pos -= thousands_sep_len;
 
         /* Copy the thousands_sep chars into the buffer. */
-        _PyUnicode_FastCopyCharacters(writer->buffer, *buffer_pos,
+        _PyString_FastCopyCharacters(writer->buffer, *buffer_pos,
                                       thousands_sep, 0,
                                       thousands_sep_len);
     }
 
     *buffer_pos -= n_chars;
     *digits_pos -= n_chars;
-    _PyUnicode_FastCopyCharacters(writer->buffer, *buffer_pos,
+    _PyString_FastCopyCharacters(writer->buffer, *buffer_pos,
                                   digits, *digits_pos,
                                   n_chars);
 
