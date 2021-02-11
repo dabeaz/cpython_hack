@@ -136,7 +136,7 @@ parse_and_bind(PyObject *self, PyObject *string)
         Py_DECREF(encoded);
         return PyErr_NoMemory();
     }
-    strcpy(copy, PyUnicode_AsChar(encoded));
+    strcpy(copy, PyString_AsChar(encoded));
     Py_DECREF(encoded);
     rl_parse_and_bind(copy);
     PyMem_Free(copy); /* Free the copy */
@@ -160,7 +160,7 @@ read_init_file(PyObject *self, PyObject *args)
 	if (!PyUnicode_Check(filename_obj)) {
 	  return NULL;
 	}
-	errno = rl_read_init_file(PyUnicode_AsChar(filename_obj));
+	errno = rl_read_init_file(PyString_AsChar(filename_obj));
     } else
         errno = rl_read_init_file(NULL);
     if (errno)
@@ -186,7 +186,7 @@ read_history_file(PyObject *self, PyObject *args)
 	if (!PyUnicode_Check(filename_obj)) {
 	  return NULL;
 	}
-	errno = read_history(PyUnicode_AsChar(filename_obj));
+	errno = read_history(PyString_AsChar(filename_obj));
     } else
         errno = read_history(NULL);
     if (errno)
@@ -215,7 +215,7 @@ write_history_file(PyObject *self, PyObject *args)
 	if (!PyUnicode_Check(filename_obj)) {
 	  return NULL;
 	}
-	filename = PyUnicode_AsChar(filename_obj);
+	filename = PyString_AsChar(filename_obj);
 	filename_bytes = NULL;
     } else {
         filename_bytes = NULL;
@@ -409,7 +409,7 @@ set_completer_delims(PyObject *self, PyObject *string)
     /* Keep a reference to the allocated memory in the module state in case
        some other module modifies rl_completer_word_break_characters
        (see issue #17289). */
-    break_chars = strdup(PyUnicode_AsChar(encoded));
+    break_chars = strdup(PyString_AsChar(encoded));
     Py_DECREF(encoded);
     if (break_chars) {
         free(completer_word_break_characters);
@@ -507,7 +507,7 @@ py_replace_history(PyObject *self, PyObject *args)
     if (encoded == NULL) {
         return NULL;
     }
-    old_entry = replace_history_entry(entry_number, PyUnicode_AsChar(encoded), (void *)NULL);
+    old_entry = replace_history_entry(entry_number, PyString_AsChar(encoded), (void *)NULL);
     Py_DECREF(encoded);
     if (!old_entry) {
         PyErr_Format(PyExc_ValueError,
@@ -533,7 +533,7 @@ py_add_history(PyObject *self, PyObject *string)
     if (encoded == NULL) {
         return NULL;
     }
-    add_history(PyUnicode_AsChar(encoded));
+    add_history(PyString_AsChar(encoded));
     Py_DECREF(encoded);
     Py_RETURN_NONE;
 }
@@ -717,7 +717,7 @@ insert_text(PyObject *self, PyObject *string)
     if (encoded == NULL) {
         return NULL;
     }
-    rl_insert_text(PyUnicode_AsChar(encoded));
+    rl_insert_text(PyString_AsChar(encoded));
     Py_DECREF(encoded);
     Py_RETURN_NONE;
 }
@@ -930,7 +930,7 @@ on_completion(const char *text, int state)
             PyObject *encoded = encode(r);
             if (encoded == NULL)
                 goto error;
-            result = strdup(PyUnicode_AsChar(encoded));
+            result = strdup(PyString_AsChar(encoded));
             Py_DECREF(encoded);
         }
         Py_DECREF(r);

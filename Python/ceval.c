@@ -236,7 +236,7 @@ _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *f, int throwflag)
     consts = co->co_consts;
     fastlocals = f->f_localsplus;
     freevars = f->f_localsplus + co->co_nlocals;
-    first_instr = (_Py_CODEUNIT *) PyUnicode_AsChar(co->co_code);
+    first_instr = (_Py_CODEUNIT *) PyString_AsChar(co->co_code);
     /*
        f->f_lasti refers to the index of the last instruction,
        unless it's -1 in which case next_instr should be first_instr.
@@ -1054,7 +1054,7 @@ main_loop:
             if (empty == NULL) {
                 goto error;
             }
-            str = _PyUnicode_JoinArray(empty, stack_pointer - oparg, oparg);
+            str = _PyString_JoinArray(empty, stack_pointer - oparg, oparg);
             Py_DECREF(empty);
             if (str == NULL)
                 goto error;
@@ -2835,7 +2835,7 @@ PyEval_GetFuncName(PyObject *func)
     if (PyMethod_Check(func))
         return PyEval_GetFuncName(PyMethod_Function(func));
     else if (PyFunction_Check(func))
-        return PyUnicode_AsChar(((PyFunctionObject*)func)->func_name);
+        return PyString_AsChar(((PyFunctionObject*)func)->func_name);
     else if (PyCFunction_Check(func))
       return PyCFunction_GetName(func);
     #if 0
@@ -3178,7 +3178,7 @@ format_exc_check_arg(PyThreadState *tstate, PyObject *exc,
     if (!obj)
         return;
 
-    obj_str = PyUnicode_AsChar(obj);
+    obj_str = PyString_AsChar(obj);
     if (!obj_str)
         return;
 

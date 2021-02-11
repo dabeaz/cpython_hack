@@ -846,7 +846,7 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
             if (c == 'z' && arg == Py_None)
                 *p = NULL;
             else if (PyUnicode_Check(arg)) {
-                sarg = PyUnicode_AsCharAndSize(arg, &len);
+                sarg = PyString_AsCharAndSize(arg, &len);
                 if (sarg == NULL)
                     return converterr(CONV_UNICODE,
                                       arg, msgbuf, bufsize);

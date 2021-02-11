@@ -745,7 +745,7 @@ import_find_and_load(PyThreadState *tstate, PyObject *abs_name)
       for (p = PyImport_Inittab; p->name != NULL; p++) {
 	if (_PyUnicode_EqualToASCIIString(abs_name, p->name)) {
 	  if (p->initfunc == 0) {
-	    mod = PyImport_AddModule(PyUnicode_AsChar(abs_name));
+	    mod = PyImport_AddModule(PyString_AsChar(abs_name));
 	    return mod;
 	  }
 	  mod = (*p->initfunc)();
@@ -777,12 +777,12 @@ import_find_and_load(PyThreadState *tstate, PyObject *abs_name)
 	  int fd;
 	  struct _Py_stat_struct stat;
 	  if (PyUnicode_GET_SIZE(p) > 0) {
-	    strcpy(name, PyUnicode_AsChar(p));
+	    strcpy(name, PyString_AsChar(p));
 	    strcat(name, "/");
 	  } else {
 	    strcpy(name, "");
 	  }
-	  strcat(name, PyUnicode_AsChar(abs_name));
+	  strcat(name, PyString_AsChar(abs_name));
 	  strcat(name, ".py");
 	  fd = _Py_open(name, O_RDONLY);
 	  if (fd > 0) {
@@ -791,7 +791,7 @@ import_find_and_load(PyThreadState *tstate, PyObject *abs_name)
 	    PyObject *v;
 	    _Py_fstat(fd, &stat);
 	    src = PyString_New(stat.st_size);
-	    _Py_read(fd, (char *) PyUnicode_AsChar(src), stat.st_size);
+	    _Py_read(fd, (char *) PyString_AsChar(src), stat.st_size);
 	    close(fd);
 	    mod = PyImport_AddModuleObject(abs_name);
 	    if (mod == NULL) {
@@ -799,7 +799,7 @@ import_find_and_load(PyThreadState *tstate, PyObject *abs_name)
 	    }
 	    dict = PyModule_GetDict(mod);
 	    PyDict_SetItemString(dict, "__file__", PyString_FromString(name));
-	    v = PyRun_StringFlags(PyUnicode_AsChar(src), Py_file_input, dict, dict, NULL);
+	    v = PyRun_StringFlags(PyString_AsChar(src), Py_file_input, dict, dict, NULL);
 	    if (v == NULL) {
 	      return NULL;
 	    }

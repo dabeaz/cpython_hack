@@ -244,7 +244,7 @@ _io_FileIO___init___impl(fileio *self, PyObject *nameobj, const char *mode,
     }
 
     if (fd < 0) {
-        name = PyUnicode_AsChar(nameobj);
+        name = PyString_AsChar(nameobj);
     }
 
     s = mode;
@@ -999,7 +999,7 @@ _io_FileIO___init__(PyObject *self, PyObject *args, PyObject *kwargs)
             goto exit;
         }
         Py_ssize_t mode_length;
-        mode = PyUnicode_AsCharAndSize(fastargs[1], &mode_length);
+        mode = PyString_AsCharAndSize(fastargs[1], &mode_length);
         if (mode == NULL) {
             goto exit;
         }
@@ -1182,7 +1182,7 @@ _io_FileIO_write(fileio *self, PyObject *arg)
     _PyArg_BadArgument("write", "argument", "string", arg);
     return NULL;
   }
-  buf = PyUnicode_AsCharAndSize(arg, &len);
+  buf = PyString_AsCharAndSize(arg, &len);
   if (self->fd < 0)
     return err_closed();
   if (!self->writable)

@@ -382,7 +382,7 @@ _io_open(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *kw
             goto exit;
         }
         Py_ssize_t mode_length;
-        mode = PyUnicode_AsCharAndSize(args[1], &mode_length);
+        mode = PyString_AsCharAndSize(args[1], &mode_length);
         if (mode == NULL) {
             goto exit;
         }

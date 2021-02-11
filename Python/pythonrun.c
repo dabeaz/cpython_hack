@@ -147,7 +147,7 @@ PyRun_InteractiveOneObjectEx(FILE *fp, PyObject *filename,
         if (v && v != Py_None) {
             oenc = _PyObject_GetAttrId(v, &PyId_encoding);
             if (oenc)
-                enc = PyUnicode_AsChar(oenc);
+                enc = PyString_AsChar(oenc);
             if (!enc)
                 PyErr_Clear();
         }
@@ -158,7 +158,7 @@ PyRun_InteractiveOneObjectEx(FILE *fp, PyObject *filename,
         if (v == NULL)
             PyErr_Clear();
         else if (PyUnicode_Check(v)) {
-            ps1 = PyUnicode_AsChar(v);
+            ps1 = PyString_AsChar(v);
             if (ps1 == NULL) {
                 PyErr_Clear();
                 ps1 = "";
@@ -171,7 +171,7 @@ PyRun_InteractiveOneObjectEx(FILE *fp, PyObject *filename,
         if (w == NULL)
             PyErr_Clear();
         else if (PyUnicode_Check(w)) {
-            ps2 = PyUnicode_AsChar(w);
+            ps2 = PyString_AsChar(w);
             if (ps2 == NULL) {
                 PyErr_Clear();
                 ps2 = "";
@@ -387,7 +387,7 @@ static void
 print_error_text(PyObject *f, Py_ssize_t offset, PyObject *text_obj)
 {
     /* Convert text to a char pointer; return if error */
-    const char *text = PyUnicode_AsChar(text_obj);
+    const char *text = PyString_AsChar(text_obj);
     if (text == NULL)
         return;
 
@@ -1046,7 +1046,7 @@ _Py_SourceAsString(PyObject *cmd, const char *funcname, const char *what, PyComp
     *cmd_copy = NULL;
     if (PyUnicode_Check(cmd)) {
         cf->cf_flags |= PyCF_IGNORE_COOKIE;
-        str = PyUnicode_AsCharAndSize(cmd, &size);
+        str = PyString_AsCharAndSize(cmd, &size);
         if (str == NULL)
             return NULL;
     }

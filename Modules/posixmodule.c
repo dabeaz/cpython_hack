@@ -652,7 +652,7 @@ path_converter(PyObject *o, void *p)
     }
 
     length = PyUnicode_GET_SIZE(bytes);
-    narrow = PyUnicode_AsChar(bytes);
+    narrow = PyString_AsChar(bytes);
     if ((size_t)length != strlen(narrow)) {
         FORMAT_EXCEPTION(PyExc_ValueError, "embedded null character in %s");
         goto error_exit;
@@ -2037,7 +2037,7 @@ os_system_impl(PyObject *module, PyObject *command)
 /*[clinic end generated code: output=290fc437dd4f33a0 input=86a58554ba6094af]*/
 {
     long result;
-    const char *bytes = PyUnicode_AsChar(command);
+    const char *bytes = PyString_AsChar(command);
     
     result = system(bytes);
     
@@ -2313,7 +2313,7 @@ os_read_impl(PyObject *module, int fd, Py_ssize_t length)
     if (buffer == NULL)
         return NULL;
 
-    n = _Py_read(fd, (void *) PyUnicode_AsChar(buffer), length);
+    n = _Py_read(fd, (void *) PyString_AsChar(buffer), length);
     if (n == -1) {
         Py_DECREF(buffer);
         return NULL;
@@ -2394,8 +2394,8 @@ static PyObject *
 os_putenv_impl(PyObject *module, PyObject *name, PyObject *value)
 /*[clinic end generated code: output=d29a567d6b2327d2 input=a97bc6152f688d31]*/
 {
-  const char *name_string = PyUnicode_AsChar(name);
-  const char *value_string = PyUnicode_AsChar(value);
+  const char *name_string = PyString_AsChar(name);
+  const char *value_string = PyString_AsChar(value);
 
   if (strchr(name_string, '=') != NULL) {
     PyErr_SetString(PyExc_ValueError, "illegal environment variable name");
@@ -2420,9 +2420,9 @@ os_unsetenv_impl(PyObject *module, PyObject *name)
 /*[clinic end generated code: output=54c4137ab1834f02 input=2bb5288a599c7107]*/
 {
 #ifdef HAVE_BROKEN_UNSETENV
-  unsetenv(PyUnicode_AsChar(name));
+  unsetenv(PyString_AsChar(name));
 #else
-  int err = unsetenv(PyUnicode_AsChar(name));
+  int err = unsetenv(PyString_AsChar(name));
     if (err) {
         return posix_error();
     }
@@ -3402,7 +3402,7 @@ os_write(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
       goto exit;
     }
 
-    _return_value = _Py_write(fd, PyUnicode_AsChar(args[1]), PyUnicode_GET_SIZE(args[1]));
+    _return_value = _Py_write(fd, PyString_AsChar(args[1]), PyUnicode_GET_SIZE(args[1]));
     if ((_return_value == -1) && PyErr_Occurred()) {
         goto exit;
     }

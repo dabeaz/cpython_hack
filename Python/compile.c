@@ -1749,12 +1749,12 @@ get_ref_type(struct compiler *c, PyObject *name)
         _Py_FatalErrorFormat(__func__,
            "unknown scope for %.100s in %.100s(%s)\n"
            "symbols: %s\nlocals: %s\nglobals: %s",
-           PyUnicode_AsChar(name),
-           PyUnicode_AsChar(c->u->u_name),
-           PyUnicode_AsChar(PyObject_Repr(c->u->u_ste->ste_id)),
-           PyUnicode_AsChar(PyObject_Repr(c->u->u_ste->ste_symbols)),
-           PyUnicode_AsChar(PyObject_Repr(c->u->u_varnames)),
-           PyUnicode_AsChar(PyObject_Repr(c->u->u_names)));
+           PyString_AsChar(name),
+           PyString_AsChar(c->u->u_name),
+           PyString_AsChar(PyObject_Repr(c->u->u_ste->ste_id)),
+           PyString_AsChar(PyObject_Repr(c->u->u_ste->ste_symbols)),
+           PyString_AsChar(PyObject_Repr(c->u->u_varnames)),
+           PyString_AsChar(PyObject_Repr(c->u->u_names)));
     }
 
     return scope;
@@ -1800,11 +1800,11 @@ compiler_make_closure(struct compiler *c, PyCodeObject *co, Py_ssize_t flags, Py
                 _Py_FatalErrorFormat(__func__,
                     "lookup %s in %s %d %d\n"
                     "freevars of %s: %s\n",
-                    PyUnicode_AsChar(PyObject_Repr(name)),
-                    PyUnicode_AsChar(c->u->u_name),
+                    PyString_AsChar(PyObject_Repr(name)),
+                    PyString_AsChar(c->u->u_name),
                     reftype, arg,
-                    PyUnicode_AsChar(co->co_name),
-                    PyUnicode_AsChar(PyObject_Repr(co->co_freevars)));
+                    PyString_AsChar(co->co_name),
+                    PyString_AsChar(PyObject_Repr(co->co_freevars)));
             }
             ADDOP_I(c, LOAD_CLOSURE, arg);
         }
@@ -3802,7 +3802,7 @@ validate_keywords(struct compiler *c, asdl_seq *keywords)
                     return -1;
                 }
                 c->u->u_col_offset = other->col_offset;
-                compiler_error(c, PyUnicode_AsChar(msg));
+                compiler_error(c, PyString_AsChar(msg));
                 Py_DECREF(msg);
                 return -1;
             }
@@ -4941,7 +4941,7 @@ assemble_lnotab(struct assembler *a, struct instr *i)
                 return 0;
         }
         lnotab = (unsigned char *)
-                   PyUnicode_AsChar(a->a_lnotab) + a->a_lnotab_off;
+                   PyString_AsChar(a->a_lnotab) + a->a_lnotab_off;
         for (j = 0; j < ncodes; j++) {
             *lnotab++ = 255;
             *lnotab++ = 0;
@@ -4979,7 +4979,7 @@ assemble_lnotab(struct assembler *a, struct instr *i)
                 return 0;
         }
         lnotab = (unsigned char *)
-                   PyUnicode_AsChar(a->a_lnotab) + a->a_lnotab_off;
+                   PyString_AsChar(a->a_lnotab) + a->a_lnotab_off;
         *lnotab++ = d_bytecode;
         *lnotab++ = k;
         d_bytecode = 0;
@@ -4997,7 +4997,7 @@ assemble_lnotab(struct assembler *a, struct instr *i)
             return 0;
     }
     lnotab = (unsigned char *)
-                    PyUnicode_AsChar(a->a_lnotab) + a->a_lnotab_off;
+                    PyString_AsChar(a->a_lnotab) + a->a_lnotab_off;
 
     a->a_lnotab_off += 2;
     if (d_bytecode) {
@@ -5035,7 +5035,7 @@ assemble_emit(struct assembler *a, struct instr *i)
         if (PyString_Resize(&a->a_bytecode, len * 2) < 0)
             return 0;
     }
-    code = (_Py_CODEUNIT *)PyUnicode_AsChar(a->a_bytecode) + a->a_offset;
+    code = (_Py_CODEUNIT *)PyString_AsChar(a->a_bytecode) + a->a_offset;
     a->a_offset += size;
     write_op_arg(code, i->i_opcode, arg, size);
     return 1;

@@ -105,7 +105,7 @@ _Py_stat(PyObject *path, struct stat *statbuf)
 {
     int ret;
     char *cpath;
-    cpath = (char *) PyUnicode_AsChar(path);
+    cpath = (char *) PyString_AsChar(path);
     ret = stat(cpath, statbuf);
     return ret;
 }
@@ -375,7 +375,7 @@ _Py_fopen_obj(PyObject *path, const char *mode)
     FILE *f;
     int async_err = 0;
     const char *path_bytes;
-    path_bytes = PyUnicode_AsChar(path);
+    path_bytes = PyString_AsChar(path);
     do {
         
         f = fopen(path_bytes, mode);

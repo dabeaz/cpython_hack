@@ -101,7 +101,7 @@ static int64_t *
 markblocks(PyCodeObject *code_obj, int len)
 {
     const _Py_CODEUNIT *code =
-        (const _Py_CODEUNIT *)PyUnicode_AsChar(code_obj->co_code);
+        (const _Py_CODEUNIT *)PyString_AsChar(code_obj->co_code);
     int64_t *blocks = PyMem_New(int64_t, len+1);
     int i, j, opcode;
 
@@ -244,7 +244,7 @@ marklines(PyCodeObject *code, int len)
         return NULL;
     }
     Py_ssize_t size = PyUnicode_GET_SIZE(code->co_lnotab) / 2;
-    unsigned char *p = (unsigned char*)PyUnicode_AsChar(code->co_lnotab);
+    unsigned char *p = (unsigned char*)PyString_AsChar(code->co_lnotab);
     int line = code->co_firstlineno;
     int addr = 0;
     int index = 0;

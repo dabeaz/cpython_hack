@@ -241,7 +241,8 @@ static int
 all_name_chars(PyObject *o)
 {
     const unsigned char *s, *e;
-    s = PyUnicode_1BYTE_DATA(o);
+    // s = PyUnicode_1BYTE_DATA(o);
+    s = PyUnicode_DATA(o);    
     e = s + PyUnicode_GET_LENGTH(o);
     for (; s != e; s++) {
         if (!Py_ISALNUM(*s) && *s != '_')
@@ -1090,7 +1091,7 @@ int
 PyCode_Addr2Line(PyCodeObject *co, int addrq)
 {
   Py_ssize_t size = PyUnicode_GET_SIZE(co->co_lnotab) / 2;
-    unsigned char *p = (unsigned char*)PyUnicode_AsChar(co->co_lnotab);
+    unsigned char *p = (unsigned char*)PyString_AsChar(co->co_lnotab);
     int line = co->co_firstlineno;
     int addr = 0;
     while (--size >= 0) {
@@ -1112,7 +1113,7 @@ _PyCode_CheckLineNumber(PyCodeObject* co, int lasti, PyAddrPair *bounds)
     int addr, line;
     unsigned char* p;
 
-    p = (unsigned char*)PyUnicode_AsChar(co->co_lnotab);
+    p = (unsigned char*)PyString_AsChar(co->co_lnotab);
     size = PyUnicode_GET_SIZE(co->co_lnotab) / 2;
 
     addr = 0;

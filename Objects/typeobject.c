@@ -731,7 +731,7 @@ type_set_name(PyTypeObject *type, PyObject *value, void *context)
         return -1;
     }
 
-    tp_name = PyUnicode_AsCharAndSize(value, &name_size);
+    tp_name = PyString_AsCharAndSize(value, &name_size);
     if (tp_name == NULL)
         return -1;
     if (strlen(tp_name) != (size_t)name_size) {
@@ -1584,7 +1584,7 @@ consistent method resolution\norder (MRO) for bases");
         const char *name_str = NULL;
         if (name != NULL) {
             if (PyUnicode_Check(name)) {
-                name_str = PyUnicode_AsChar(name);
+                name_str = PyString_AsChar(name);
             }
             else {
                 name_str = "?";
@@ -2365,7 +2365,7 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
     type->tp_as_number = &et->as_number;
     type->tp_as_sequence = &et->as_sequence;
     type->tp_as_mapping = &et->as_mapping;
-    type->tp_name = PyUnicode_AsCharAndSize(name, &name_size);
+    type->tp_name = PyString_AsCharAndSize(name, &name_size);
     if (!type->tp_name)
         goto error;
     if (strlen(type->tp_name) != (size_t)name_size) {
@@ -2437,7 +2437,7 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
             const char *doc_str;
             char *tp_doc;
 
-            doc_str = PyUnicode_AsChar(doc);
+            doc_str = PyString_AsChar(doc);
             if (doc_str == NULL)
                 goto error;
             /* Silently truncate the docstring if it contains null bytes. */
@@ -2956,7 +2956,7 @@ is_dunder_name(PyObject *name)
 {
     Py_ssize_t length = PyUnicode_GET_LENGTH(name);
     if (length > 4) {
-        const Py_UCS1 *characters = PyUnicode_1BYTE_DATA(name);
+        const Py_UCS1 *characters = PyUnicode_DATA(name);
         return (
             ((characters[length-2] == '_') && (characters[length-1] == '_')) &&
             ((characters[0] == '_') && (characters[1] == '_'))

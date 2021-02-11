@@ -27,11 +27,7 @@ _PyObject_CheckConsistency(PyObject *op, int check_content)
     CHECK(Py_REFCNT(op) >= 1);
 
     _PyType_CheckConsistency(Py_TYPE(op));
-
-    if (PyUnicode_Check(op)) {
-        _PyUnicode_CheckConsistency(op, check_content);
-    }
-    else if (PyDict_Check(op)) {
+    if (PyDict_Check(op)) {
         _PyDict_CheckConsistency(op, check_content);
     }
     return 1;
@@ -168,7 +164,7 @@ PyObject_Print(PyObject *op, FILE *fp, int flags)
             if (s == NULL)
                 ret = -1;
             else if (PyUnicode_Check(s)) {
-	      fwrite(PyUnicode_AsChar(s), 1,
+	      fwrite(PyString_AsChar(s), 1,
 		     PyUnicode_GET_SIZE(s), fp);
 	    }
             else {
@@ -602,7 +598,7 @@ PyObject_GetAttr(PyObject *v, PyObject *name)
     if (tp->tp_getattro != NULL)
         return (*tp->tp_getattro)(v, name);
     if (tp->tp_getattr != NULL) {
-        const char *name_str = PyUnicode_AsChar(name);
+        const char *name_str = PyString_AsChar(name);
         if (name_str == NULL)
             return NULL;
         return (*tp->tp_getattr)(v, (char *)name_str);
@@ -640,7 +636,7 @@ _PyObject_LookupAttr(PyObject *v, PyObject *name, PyObject **result)
         *result = (*tp->tp_getattro)(v, name);
     }
     else if (tp->tp_getattr != NULL) {
-        const char *name_str = PyUnicode_AsChar(name);
+        const char *name_str = PyString_AsChar(name);
         if (name_str == NULL) {
             *result = NULL;
             return -1;
@@ -709,7 +705,7 @@ PyObject_SetAttr(PyObject *v, PyObject *name, PyObject *value)
         return err;
     }
     if (tp->tp_setattr != NULL) {
-        const char *name_str = PyUnicode_AsChar(name);
+        const char *name_str = PyString_AsChar(name);
         if (name_str == NULL) {
             Py_DECREF(name);
             return -1;

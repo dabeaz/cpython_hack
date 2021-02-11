@@ -31,7 +31,7 @@ _create_dummy_identifier(Parser *p)
 static inline Py_ssize_t
 byte_offset_to_character_offset(PyObject *line, int col_offset)
 {
-    const char *str = PyUnicode_AsChar(line);
+    const char *str = PyString_AsChar(line);
     if (!str) {
         return 0;
     }
@@ -40,7 +40,7 @@ byte_offset_to_character_offset(PyObject *line, int col_offset)
         return 0;
     }
     Py_ssize_t size = PyUnicode_GET_LENGTH(text);
-    str = PyUnicode_AsChar(text);
+    str = PyString_AsChar(text);
     if (str != NULL && (int)strlen(str) == col_offset) {
         size = strlen(str);
     }
@@ -594,7 +594,7 @@ _PyPegen_expect_soft_keyword(Parser *p, const char *keyword)
     if (t->type != NAME) {
         return NULL;
     }
-    char *s = (char *) PyUnicode_AsChar(t->bytes);
+    char *s = (char *) PyString_AsChar(t->bytes);
     if (!s) {
         p->error_indicator = 1;
         return NULL;
@@ -626,7 +626,7 @@ _PyPegen_name_token(Parser *p)
     if (t == NULL) {
         return NULL;
     }
-    char* s = (char *) PyUnicode_AsChar(t->bytes);
+    char* s = (char *) PyString_AsChar(t->bytes);
     if (!s) {
         p->error_indicator = 1;
         return NULL;
@@ -710,7 +710,7 @@ _PyPegen_number_token(Parser *p)
         return NULL;
     }
 
-    char *num_raw = (char *) PyUnicode_AsChar(t->bytes);
+    char *num_raw = (char *) PyString_AsChar(t->bytes);
     if (num_raw == NULL) {
         p->error_indicator = 1;
         return NULL;
@@ -1085,11 +1085,11 @@ _PyPegen_join_names_with_dot(Parser *p, expr_ty first_name, expr_ty second_name)
     assert(first_name != NULL && second_name != NULL);
     PyObject *first_identifier = first_name->v.Name.id;
     PyObject *second_identifier = second_name->v.Name.id;
-    const char *first_str = PyUnicode_AsChar(first_identifier);
+    const char *first_str = PyString_AsChar(first_identifier);
     if (!first_str) {
         return NULL;
     }
-    const char *second_str = PyUnicode_AsChar(second_identifier);
+    const char *second_str = PyString_AsChar(second_identifier);
     if (!second_str) {
         return NULL;
     }
@@ -1100,7 +1100,7 @@ _PyPegen_join_names_with_dot(Parser *p, expr_ty first_name, expr_ty second_name)
         return NULL;
     }
 
-    char *s = (char *) PyUnicode_AsChar(str);
+    char *s = (char *) PyString_AsChar(str);
     if (!s) {
         return NULL;
     }
@@ -1112,7 +1112,7 @@ _PyPegen_join_names_with_dot(Parser *p, expr_ty first_name, expr_ty second_name)
     s += strlen(second_str);
     *s = '\0';
 
-    PyObject *uni = PyString_FromStringAndSize(PyUnicode_AsChar(str), PyUnicode_GET_SIZE(str));
+    PyObject *uni = PyString_FromStringAndSize(PyString_AsChar(str), PyUnicode_GET_SIZE(str));
     Py_DECREF(str);
     if (!uni) {
         return NULL;

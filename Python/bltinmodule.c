@@ -222,7 +222,7 @@ builtin_compile(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObj
         goto exit;
     }
     Py_ssize_t mode_length;
-    mode = PyUnicode_AsCharAndSize(args[2], &mode_length);
+    mode = PyString_AsCharAndSize(args[2], &mode_length);
     if (mode == NULL) {
         goto exit;
     }
@@ -2772,8 +2772,8 @@ builtin_input_impl(PyObject *module, PyObject *prompt)
             tty = 0;
             goto _readline_errors;
         }
-        stdin_encoding_str = PyUnicode_AsChar(stdin_encoding);
-        stdin_errors_str = PyUnicode_AsChar(stdin_errors);
+        stdin_encoding_str = PyString_AsChar(stdin_encoding);
+        stdin_errors_str = PyString_AsChar(stdin_errors);
         if (!stdin_encoding_str || !stdin_errors_str)
             goto _readline_errors;
         tmp = _PyObject_CallMethodIdNoArgs(fout, &PyId_flush);
@@ -2782,7 +2782,7 @@ builtin_input_impl(PyObject *module, PyObject *prompt)
         else
             Py_DECREF(tmp);
         if (prompt != NULL) {
-	  promptstr = PyUnicode_AsChar(prompt);
+	  promptstr = PyString_AsChar(prompt);
         }
         else {
             po = NULL;

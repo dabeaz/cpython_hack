@@ -232,7 +232,7 @@ _PyGen_yf(PyGenObject *gen)
 
     if (f && f->f_stacktop) {
         PyObject *bytecode = f->f_code->co_code;
-        unsigned char *code = (unsigned char *)PyUnicode_AsChar(bytecode);
+        unsigned char *code = (unsigned char *)PyString_AsChar(bytecode);
 
         if (f->f_lasti < 0) {
             /* Return immediately if the frame didn't start yet. YIELD_FROM

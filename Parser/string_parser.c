@@ -30,7 +30,7 @@ decode_unicode_with_escapes(Parser *parser, const char *s, size_t len, Token *t)
 {
   PyObject *result;
   PyObject *temp = decode_bytes_with_escapes(parser, s, len, t);
-  result = PyString_FromStringAndSize(PyUnicode_AsChar(temp), PyUnicode_GET_SIZE(temp));
+  result = PyString_FromStringAndSize(PyString_AsChar(temp), PyUnicode_GET_SIZE(temp));
   Py_XDECREF(temp);
   return result;
 }
@@ -62,7 +62,7 @@ int
 _PyPegen_parsestr(Parser *p, int *bytesmode, int *rawmode, PyObject **result,
                   const char **fstr, Py_ssize_t *fstrlen, Token *t)
 {
-  const char *s = PyUnicode_AsChar(t->bytes);
+  const char *s = PyString_AsChar(t->bytes);
   if (s == NULL) {
     return -1;
   }
@@ -417,7 +417,7 @@ fstring_fix_expr_location(Token *parent, expr_ty n, char *expr_str)
     int cols = 0;
 
     if (parent && parent->bytes) {
-      char *parent_str = (char *) PyUnicode_AsChar(parent->bytes);
+      char *parent_str = (char *) PyString_AsChar(parent->bytes);
         if (!parent_str) {
             return;
         }
@@ -1128,7 +1128,7 @@ make_str_node_and_del(Parser *p, PyObject **str, Token* first_token, Token *last
     PyObject *kind = NULL;
     *str = NULL;
     assert(PyUnicode_CheckExact(s));
-    const char* the_str = PyUnicode_AsChar(first_token->bytes);
+    const char* the_str = PyString_AsChar(first_token->bytes);
     if (the_str && the_str[0] == 'u') {
         kind = _PyPegen_new_identifier(p, "u");
     }

@@ -1315,7 +1315,7 @@ sys_format(_Py_Identifier *key, FILE *fp, const char *format, va_list va)
     if (message != NULL) {
         if (sys_pyfile_write_unicode(message, file) != 0) {
             _PyErr_Clear(tstate);
-            utf8 = PyUnicode_AsChar(message);
+            utf8 = PyString_AsChar(message);
             if (utf8 != NULL)
                 fputs(utf8, fp);
         }

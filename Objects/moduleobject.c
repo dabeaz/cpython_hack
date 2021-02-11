@@ -233,7 +233,7 @@ PyModule_FromDefAndName2(struct PyModuleDef* def, PyObject *nameobj, int module_
     int ret;
 
     PyModuleDef_Init(def);
-    name = PyUnicode_AsChar(nameobj);
+    name = PyString_AsChar(nameobj);
     if (name == NULL) {
         goto error;
     }
@@ -453,7 +453,7 @@ PyModule_GetName(PyObject *m)
     if (name == NULL)
         return NULL;
     Py_DECREF(name);   /* module dict has still a reference */
-    return PyUnicode_AsChar(name);
+    return PyString_AsChar(name);
 }
 
 PyObject*
@@ -660,7 +660,7 @@ module_repr(PyModuleObject *m)
   char *temp;
   int size = PyUnicode_GET_SIZE(m->md_name);
   temp = PyMem_Malloc(size + 50);
-  sprintf(temp, "<module '%s'>", PyUnicode_AsChar(m->md_name));
+  sprintf(temp, "<module '%s'>", PyString_AsChar(m->md_name));
   r = PyString_FromString(temp);
   PyMem_Free(temp);
   return r;

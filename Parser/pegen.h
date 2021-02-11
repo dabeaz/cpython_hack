@@ -187,7 +187,7 @@ NEW_TYPE_COMMENT(Parser *p, Token *tc)
     if (tc == NULL) {
         return NULL;
     }
-    char *bytes = (char *) PyUnicode_AsChar(tc->bytes);
+    char *bytes = (char *) PyString_AsChar(tc->bytes);
     if (bytes == NULL) {
         goto error;
     }

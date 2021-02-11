@@ -165,19 +165,22 @@ typedef struct {
 } PyUnicodeObject;
 
 
+  #if 0
 PyAPI_FUNC(int) _PyUnicode_CheckConsistency(
     PyObject *op,
     int check_content);
-
+#endif
+  
 /* Returns the deprecated Py_UNICODE representation's size in code units
    (this includes surrogate pairs as 2 units).
    If the Py_UNICODE representation is not available, it will be computed
    on request.  Use PyUnicode_GET_LENGTH() for the length in code points. */
 
 /* Py_DEPRECATED(3.3) */
+
 #define PyUnicode_GET_SIZE(op)                       \
   (((PyUnicodeObject*)op)->length)  
-
+  
 /* --- Flexible String Representation Helper Macros (PEP 393) -------------- */
 
 /* Values for PyASCIIObject.state: */
@@ -192,8 +195,10 @@ PyAPI_FUNC(int) _PyUnicode_CheckConsistency(
    No checks are performed, use PyUnicode_KIND() before to ensure
    these will work correctly. */
 
+  #if 0
 #define PyUnicode_1BYTE_DATA(op) ((Py_UCS1*)PyUnicode_DATA(op))
-
+#endif
+  
 /* Return a void pointer to the raw unicode buffer. */
 #define PyUnicode_DATA(op) \
     (assert(((PyUnicodeObject*)(op))->data),        \
@@ -388,12 +393,8 @@ PyAPI_FUNC(int) _PyUnicode_FormatAdvancedWriter(
     Py_ssize_t start,
     Py_ssize_t end);
 
-/* Return a raw char * to internal String data.  Used to be UTF-8 */
-PyAPI_FUNC(const char *) PyUnicode_AsCharAndSize(
-    PyObject *unicode,
-    Py_ssize_t *size);
-
-PyAPI_FUNC(const char *) PyUnicode_AsChar(PyObject *unicode);
+PyAPI_FUNC(const char *) PyString_AsCharAndSize(PyObject *s, Py_ssize_t *size);
+PyAPI_FUNC(const char *) PyString_AsChar(PyObject *s);
 
 /* Coverts a Unicode object holding a decimal value to an ASCII string
    for using in int, float and complex parsers.
@@ -408,11 +409,7 @@ PyAPI_FUNC(PyObject*) _PyUnicode_TransformDecimalAndSpaceToASCII(
 
 /* --- Methods & Slots ---------------------------------------------------- */
 
-PyAPI_FUNC(PyObject *) _PyUnicode_JoinArray(
-    PyObject *separator,
-    PyObject *const *items,
-    Py_ssize_t seqlen
-    );
+PyAPI_FUNC(PyObject *) _PyString_JoinArray(PyObject *separator, PyObject *const *items, Py_ssize_t seqlen);
 
 /* Test whether a unicode is equal to ASCII identifier.  Return 1 if true,
    0 otherwise.  The right argument must be ASCII identifier.

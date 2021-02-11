@@ -2590,7 +2590,7 @@ PyLong_FromUnicodeObject(PyObject *u, int base)
         return NULL;
     assert(PyUnicode_IS_ASCII(asciidig));
     /* Simply get a pointer to existing ASCII characters. */
-    buffer = PyUnicode_AsCharAndSize(asciidig, &buflen);
+    buffer = PyString_AsCharAndSize(asciidig, &buflen);
     assert(buffer != NULL);
 
     result = PyLong_FromString(buffer, &end, base);
@@ -5290,7 +5290,7 @@ int_to_bytes_impl(PyObject *self, Py_ssize_t length, PyObject *byteorder,
         return NULL;
 
     if (_PyLong_AsByteArray((PyLongObject *)self,
-                            (unsigned char *)PyUnicode_AsChar(bytes),
+                            (unsigned char *)PyString_AsChar(bytes),
                             length, little_endian, is_signed) < 0) {
         Py_DECREF(bytes);
         return NULL;
@@ -5338,7 +5338,7 @@ int_from_bytes_impl(PyTypeObject *type, PyObject *bytes_obj,
         return NULL;
     }
     long_obj = _PyLong_FromByteArray(
-				     (unsigned char *)PyUnicode_AsChar(bytes_obj),
+				     (unsigned char *)PyString_AsChar(bytes_obj),
 				     PyUnicode_GET_SIZE(bytes_obj),
 				     little_endian, is_signed);
     if (long_obj != NULL && type != &PyLong_Type) {

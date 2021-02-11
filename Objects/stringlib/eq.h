@@ -18,6 +18,6 @@ unicode_eq(PyObject *aa, PyObject *bb)
         return 0;
     if (PyUnicode_GET_LENGTH(a) == 0)
         return 1;
-    return memcmp(PyUnicode_1BYTE_DATA(a), PyUnicode_1BYTE_DATA(b),
+    return memcmp(PyUnicode_DATA(a), PyUnicode_DATA(b),
                   PyUnicode_GET_LENGTH(a)) == 0;
 }

@@ -565,7 +565,7 @@ _io__IOBase_readline_impl(PyObject *self, Py_ssize_t limit)
 	  bufmax = newmax;
 	}
         memcpy(buffer+bufsize, 
-               PyUnicode_AsChar(b), bsize);
+               PyString_AsChar(b), bsize);
 	bufsize += bsize;
         Py_DECREF(b);
         if (buffer[bufsize-1] == '\n')

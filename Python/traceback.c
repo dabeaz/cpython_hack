@@ -340,7 +340,7 @@ _Py_FindSourceFile(PyObject *filename, char* namebuf, size_t namelen, PyObject *
     Py_ssize_t len;
     PyObject* result;
 
-    filepath = PyUnicode_AsChar(filename);
+    filepath = PyString_AsChar(filename);
     
     /* Search tail of filename in sys.path before giving up */
     tail = strrchr(filepath, SEP);
@@ -368,7 +368,7 @@ _Py_FindSourceFile(PyObject *filename, char* namebuf, size_t namelen, PyObject *
         if (len + 1 + (Py_ssize_t)taillen >= (Py_ssize_t)namelen - 1) {
             continue; /* Too long */
         }
-        strcpy(namebuf, PyUnicode_AsChar(path));
+        strcpy(namebuf, PyString_AsChar(path));
         if (strlen(namebuf) != (size_t)len)
             continue; /* v contains '\0' */
         if (len > 0 && namebuf[len-1] != SEP)

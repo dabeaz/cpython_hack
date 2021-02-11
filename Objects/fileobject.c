@@ -358,7 +358,7 @@ stdprinter_write(PyStdPrinter_Object *self, PyObject *args)
         return NULL;
     }
 
-    str = PyUnicode_AsCharAndSize(unicode, &n);
+    str = PyString_AsCharAndSize(unicode, &n);
     n = _Py_write(self->fd, str, n);
     /* save errno, it can be modified indirectly by Py_XDECREF() */
     err = errno;
