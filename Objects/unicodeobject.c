@@ -48,6 +48,59 @@ OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "pycore_pathconfig.h"
 #include "pycore_pylifecycle.h"
 #include "pycore_pystate.h"        // _PyInterpreterState_GET()
+
+typedef struct {
+    PyObject_HEAD
+    Py_ssize_t length;          /* Number of code points in the string */
+    Py_hash_t hash;             /* Hash value; -1 if not set */
+    struct {
+        unsigned int interned:2;
+        unsigned int :30;
+    } state;
+    void *data;
+} PyUnicodeObject;
+
+
+#define PyUnicode_GET_SIZE(op)                       \
+  (((PyUnicodeObject*)op)->length)  
+
+Py_ssize_t PyString_Size(PyObject *s) {
+  return PyUnicde_GET_SIZE(s);
+}
+
+/* Return a void pointer to the raw unicode buffer. */
+#define PyUnicode_DATA(op) \
+    (assert(((PyUnicodeObject*)(op))->data),        \
+     ((((PyUnicodeObject *)(op))->data)))
+
+#define PyUnicode_GET_LENGTH(op)                \
+    (assert(PyUnicode_Check(op)),               \
+     ((PyUnicodeObject *)(op))->length)
+
+#define PyUnicode_WRITE(data, index, value) \
+    do { \
+            ((unsigned char *)(data))[(index)] = (unsigned char)(value); \
+    } while (0)
+
+/* Read a code point from the string's canonical representation.  No checks
+   or ready calls are performed. */
+#define PyUnicode_READ(data, index) \
+    ((unsigned char) \
+     ((const unsigned char *)(data))[(index)])
+
+/* PyUnicode_READ_CHAR() is less efficient than PyUnicode_READ() because it
+   calls PyUnicode_KIND() and might call it twice.  For single reads, use
+   PyUnicode_READ_CHAR, for multiple consecutive reads callers should
+   cache kind and use PyUnicode_READ instead. */
+#define PyUnicode_READ_CHAR(unicode, index) \
+    (assert(PyUnicode_Check(unicode)),          \
+     (unsigned char)                                  \
+     ((const unsigned char *)(PyUnicode_DATA((unicode))))[(index)])
+
+unsigned char PyString_ReadChar(PyObject *s, Py_ssize_t index) {
+  return PyUnicode_READ_CHAR(s, index);
+}
+
 #include "stringlib/eq.h"
 
   

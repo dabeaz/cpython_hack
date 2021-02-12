@@ -30,7 +30,7 @@ decode_unicode_with_escapes(Parser *parser, const char *s, size_t len, Token *t)
 {
   PyObject *result;
   PyObject *temp = decode_bytes_with_escapes(parser, s, len, t);
-  result = PyString_FromStringAndSize(PyString_AsChar(temp), PyUnicode_GET_SIZE(temp));
+  result = PyString_FromStringAndSize(PyString_AsChar(temp), PyString_Size(temp));
   Py_XDECREF(temp);
   return result;
 }
@@ -1152,7 +1152,7 @@ _PyPegen_FstringParser_ConcatAndDel(FstringParser *state, PyObject *str)
 
     assert(PyUnicode_CheckExact(str));
 
-    if (PyUnicode_GET_LENGTH(str) == 0) {
+    if (PyString_Size(str) == 0) {
         Py_DECREF(str);
         return 0;
     }

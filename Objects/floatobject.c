@@ -2009,7 +2009,7 @@ float___format___impl(PyObject *self, PyObject *format_spec)
     ret = _PyFloat_FormatAdvancedWriter(
         &writer,
         self,
-        format_spec, 0, PyUnicode_GET_LENGTH(format_spec));
+        format_spec, 0, PyString_Size(format_spec));
     if (ret == -1) {
         _PyUnicodeWriter_Dealloc(&writer);
         return NULL;

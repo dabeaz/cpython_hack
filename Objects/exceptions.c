@@ -1260,13 +1260,13 @@ static PyObject*
 my_basename(PyObject *name)
 {
     Py_ssize_t i, size, offset;
-    const void *data;
+    const char *data;
 
-    data = PyUnicode_DATA(name);
-    size = PyUnicode_GET_LENGTH(name);
+    data = PyString_AsChar(name);
+    size = PyString_Size(name);
     offset = 0;
     for(i=0; i < size; i++) {
-        if (PyUnicode_READ(data, i) == SEP) {
+        if (data[i] == SEP) {
             offset = i + 1;
         }
     }
@@ -1905,7 +1905,7 @@ _set_legacy_print_statement_msg(PySyntaxErrorObject *self, Py_ssize_t start)
     const int PRINT_OFFSET = 6;
     const int STRIP_BOTH = 2;
     Py_ssize_t start_pos = start + PRINT_OFFSET;
-    Py_ssize_t text_len = PyUnicode_GET_LENGTH(self->text);
+    Py_ssize_t text_len = PyString_Size(self->text);
     Py_UCS4 semicolon = ';';
     Py_ssize_t end_pos = PyString_FindChar(self->text, semicolon,
                                             start_pos, text_len, 1);
@@ -1933,9 +1933,9 @@ _set_legacy_print_statement_msg(PySyntaxErrorObject *self, Py_ssize_t start)
         return -1;
     }
     // gets the modified text_len after stripping `print `
-    text_len = PyUnicode_GET_LENGTH(new_data);
+    text_len = PyString_Size(new_data);
     const char *maybe_end_arg = "";
-    if (text_len > 0 && PyUnicode_READ_CHAR(new_data, text_len-1) == ',') {
+    if (text_len > 0 && PyString_ReadChar(new_data, text_len-1) == ',') {
         maybe_end_arg = " end=\" \"";
     }
     PyObject *error_msg = PyString_FromFormat(
@@ -1960,14 +1960,14 @@ _check_for_legacy_statements(PySyntaxErrorObject *self, Py_ssize_t start)
      */
     static PyObject *print_prefix = NULL;
     static PyObject *exec_prefix = NULL;
-    Py_ssize_t text_len = PyUnicode_GET_LENGTH(self->text), match;
-    const void *data = PyUnicode_DATA(self->text);
+    Py_ssize_t text_len = PyString_Size(self->text), match;
+    const void *data = (void *) PyString_AsChar(self->text);
 
     /* Ignore leading whitespace */
     while (start < text_len) {
-        unsigned char ch = PyUnicode_READ(data, start);
-        if (!Py_UNICODE_ISSPACE(ch))
-            break;
+      unsigned char ch = ((unsigned char *) data)[start];
+      if (!Py_UNICODE_ISSPACE(ch))
+	break;
         start++;
     }
     /* Checking against an empty or whitespace-only part of the string */
@@ -2020,7 +2020,7 @@ _report_missing_parentheses(PySyntaxErrorObject *self)
 {
     Py_UCS4 left_paren = 40;
     Py_ssize_t left_paren_index;
-    Py_ssize_t text_len = PyUnicode_GET_LENGTH(self->text);
+    Py_ssize_t text_len = PyString_Size(self->text);
     int legacy_check_result = 0;
 
     /* Skip entirely if there is an opening parenthesis */

@@ -242,8 +242,8 @@ all_name_chars(PyObject *o)
 {
     const unsigned char *s, *e;
     // s = PyUnicode_1BYTE_DATA(o);
-    s = PyUnicode_DATA(o);    
-    e = s + PyUnicode_GET_LENGTH(o);
+    s = PyString_AsChar(o);    
+    e = s + PyString_Size(o);
     for (; s != e; s++) {
         if (!Py_ISALNUM(*s) && *s != '_')
             return 0;
@@ -370,7 +370,7 @@ PyCode_NewWithPosOnlyArgs(int argcount, int posonlyargcount, int kwonlyargcount,
     /* Make sure that code is indexable with an int, this is
        a long running assumption in ceval.c and many parts of
        the interpreter. */
-    if (PyUnicode_GET_SIZE(code) > INT_MAX) {
+    if (PyString_Size(code) > INT_MAX) {
         PyErr_SetString(PyExc_OverflowError, "co_code larger than INT_MAX");
         return NULL;
     }
@@ -1090,7 +1090,7 @@ PyTypeObject PyCode_Type = {
 int
 PyCode_Addr2Line(PyCodeObject *co, int addrq)
 {
-  Py_ssize_t size = PyUnicode_GET_SIZE(co->co_lnotab) / 2;
+  Py_ssize_t size = PyString_Size(co->co_lnotab) / 2;
     unsigned char *p = (unsigned char*)PyString_AsChar(co->co_lnotab);
     int line = co->co_firstlineno;
     int addr = 0;
@@ -1114,7 +1114,7 @@ _PyCode_CheckLineNumber(PyCodeObject* co, int lasti, PyAddrPair *bounds)
     unsigned char* p;
 
     p = (unsigned char*)PyString_AsChar(co->co_lnotab);
-    size = PyUnicode_GET_SIZE(co->co_lnotab) / 2;
+    size = PyString_Size(co->co_lnotab) / 2;
 
     addr = 0;
     line = co->co_firstlineno;

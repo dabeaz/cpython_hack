@@ -75,14 +75,14 @@ PyFile_GetLine(PyObject *f, int n)
                    "object.readline() returned non-string");
     }
     if (n < 0 && result != NULL && PyUnicode_Check(result)) {
-        Py_ssize_t len = PyUnicode_GET_LENGTH(result);
+        Py_ssize_t len = PyString_Size(result);
         if (len == 0) {
             Py_DECREF(result);
             result = NULL;
             PyErr_SetString(PyExc_EOFError,
                             "EOF when reading a line");
         }
-        else if (PyUnicode_READ_CHAR(result, len-1) == '\n') {
+        else if (PyString_ReadChar(result, len-1) == '\n') {
             PyObject *v;
             v = PyString_Substring(result, 0, len-1);
             Py_DECREF(result);

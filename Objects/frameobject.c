@@ -243,7 +243,7 @@ marklines(PyCodeObject *code, int len)
     if (linestarts == NULL) {
         return NULL;
     }
-    Py_ssize_t size = PyUnicode_GET_SIZE(code->co_lnotab) / 2;
+    Py_ssize_t size = PyString_Size(code->co_lnotab) / 2;
     unsigned char *p = (unsigned char*)PyString_AsChar(code->co_lnotab);
     int line = code->co_firstlineno;
     int addr = 0;
@@ -398,7 +398,7 @@ frame_setlineno(PyFrameObject *f, PyObject* p_new_lineno, void *Py_UNUSED(ignore
 
     /* PyCode_NewWithPosOnlyArgs limits co_code to be under INT_MAX so this
      * should never overflow. */
-    int len = (int)(PyUnicode_GET_SIZE(f->f_code->co_code) / sizeof(_Py_CODEUNIT));
+    int len = (int)(PyString_Size(f->f_code->co_code) / sizeof(_Py_CODEUNIT));
     int *lines = marklines(f->f_code, len);
     if (lines == NULL) {
         return -1;

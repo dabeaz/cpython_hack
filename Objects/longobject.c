@@ -1881,17 +1881,17 @@ long_to_decimal_string_internal(PyObject *aa,
 #define WRITE_UNICODE_DIGITS(TYPE)                                    \
     do {                                                              \
         if (writer)                                                   \
-            p = (TYPE*)PyUnicode_DATA(writer->buffer) + writer->pos + strlen; \
+            p = (TYPE*)PyString_AsChar(writer->buffer) + writer->pos + strlen; \
         else                                                          \
-            p = (TYPE*)PyUnicode_DATA(str) + strlen;                  \
+            p = (TYPE*)PyString_AsChar(str) + strlen;                  \
                                                                       \
         WRITE_DIGITS(p);                                              \
                                                                       \
         /* check we've counted correctly */                           \
         if (writer)                                                   \
-            assert(p == ((TYPE*)PyUnicode_DATA(writer->buffer) + writer->pos)); \
+            assert(p == ((TYPE*)PyString_AsChar(writer->buffer) + writer->pos)); \
         else                                                          \
-            assert(p == (TYPE*)PyUnicode_DATA(str));                  \
+            assert(p == (TYPE*)PyString_AsChar(str));                  \
     } while (0)
 
     {
@@ -2036,16 +2036,16 @@ long_format_binary(PyObject *aa, int base, int alternate,
 #define WRITE_UNICODE_DIGITS(TYPE)                                      \
     do {                                                                \
         if (writer)                                                     \
-            p = (TYPE*)PyUnicode_DATA(writer->buffer) + writer->pos + sz; \
+            p = (TYPE*)PyString_AsChar(writer->buffer) + writer->pos + sz; \
         else                                                            \
-            p = (TYPE*)PyUnicode_DATA(v) + sz;                          \
+            p = (TYPE*)PyString_AsChar(v) + sz;                          \
                                                                         \
         WRITE_DIGITS(p);                                                \
                                                                         \
         if (writer)                                                     \
-            assert(p == ((TYPE*)PyUnicode_DATA(writer->buffer) + writer->pos)); \
+            assert(p == ((TYPE*)PyString_AsChar(writer->buffer) + writer->pos)); \
         else                                                            \
-            assert(p == (TYPE*)PyUnicode_DATA(v));                      \
+            assert(p == (TYPE*)PyString_AsChar(v));                      \
     } while (0)
     {
         Py_UCS1 *p;
@@ -4894,7 +4894,7 @@ int___format___impl(PyObject *self, PyObject *format_spec)
     ret = _PyLong_FormatAdvancedWriter(
         &writer,
         self,
-        format_spec, 0, PyUnicode_GET_LENGTH(format_spec));
+        format_spec, 0, PyString_Size(format_spec));
     if (ret == -1) {
         _PyUnicodeWriter_Dealloc(&writer);
         return NULL;
@@ -5339,7 +5339,7 @@ int_from_bytes_impl(PyTypeObject *type, PyObject *bytes_obj,
     }
     long_obj = _PyLong_FromByteArray(
 				     (unsigned char *)PyString_AsChar(bytes_obj),
-				     PyUnicode_GET_SIZE(bytes_obj),
+				     PyString_Size(bytes_obj),
 				     little_endian, is_signed);
     if (long_obj != NULL && type != &PyLong_Type) {
         Py_SETREF(long_obj, PyObject_CallOneArg((PyObject *)type, long_obj));

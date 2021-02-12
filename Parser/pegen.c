@@ -39,7 +39,7 @@ byte_offset_to_character_offset(PyObject *line, int col_offset)
     if (!text) {
         return 0;
     }
-    Py_ssize_t size = PyUnicode_GET_LENGTH(text);
+    Py_ssize_t size = PyString_Size(text);
     str = PyString_AsChar(text);
     if (str != NULL && (int)strlen(str) == col_offset) {
         size = strlen(str);
@@ -1112,7 +1112,7 @@ _PyPegen_join_names_with_dot(Parser *p, expr_ty first_name, expr_ty second_name)
     s += strlen(second_str);
     *s = '\0';
 
-    PyObject *uni = PyString_FromStringAndSize(PyString_AsChar(str), PyUnicode_GET_SIZE(str));
+    PyObject *uni = PyString_FromStringAndSize(PyString_AsChar(str), PyString_Size(str));
     Py_DECREF(str);
     if (!uni) {
         return NULL;

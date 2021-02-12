@@ -87,6 +87,8 @@ PyAPI_DATA(PyTypeObject) PyUnicodeIter_Type;
   
 /* === Public API ========================================================= */
 
+PyAPI_FUNC(Py_ssize_t) PyString_Size(PyObject *str);
+PyAPI_FUNC(unsigned char) PyString_ReadChar(PyObject *str, Py_ssize_t index);
 PyAPI_FUNC(PyObject*) PyString_FromStringAndSize(const char *, Py_ssize_t);
 PyAPI_FUNC(PyObject*) PyString_FromString(const char *);
 PyAPI_FUNC(PyObject*) PyString_Substring(PyObject *str, Py_ssize_t start, Py_ssize_t end);
@@ -153,6 +155,7 @@ PyAPI_FUNC(int) PyString_IsIdentifier(PyObject *s);
   
 /* --- Unicode Type ------------------------------------------------------- */
 
+  #if 0
 typedef struct {
     PyObject_HEAD
     Py_ssize_t length;          /* Number of code points in the string */
@@ -163,13 +166,6 @@ typedef struct {
     } state;
     void *data;
 } PyUnicodeObject;
-
-
-  #if 0
-PyAPI_FUNC(int) _PyUnicode_CheckConsistency(
-    PyObject *op,
-    int check_content);
-#endif
   
 /* Returns the deprecated Py_UNICODE representation's size in code units
    (this includes surrogate pairs as 2 units).
@@ -180,6 +176,8 @@ PyAPI_FUNC(int) _PyUnicode_CheckConsistency(
 
 #define PyUnicode_GET_SIZE(op)                       \
   (((PyUnicodeObject*)op)->length)  
+
+  #endif
   
 /* --- Flexible String Representation Helper Macros (PEP 393) -------------- */
 
@@ -190,24 +188,19 @@ PyAPI_FUNC(int) _PyUnicode_CheckConsistency(
 #define SSTATE_INTERNED_MORTAL 1
 #define SSTATE_INTERNED_IMMORTAL 2
 
-/* Return pointers to the canonical representation cast to unsigned char,
-   Py_UCS2, or Py_UCS4 for direct character access.
-   No checks are performed, use PyUnicode_KIND() before to ensure
-   these will work correctly. */
-
   #if 0
-#define PyUnicode_1BYTE_DATA(op) ((Py_UCS1*)PyUnicode_DATA(op))
-#endif
-  
 /* Return a void pointer to the raw unicode buffer. */
 #define PyUnicode_DATA(op) \
     (assert(((PyUnicodeObject*)(op))->data),        \
      ((((PyUnicodeObject *)(op))->data)))
 
+  #endif
+  
 /* In the access macros below, "kind" may be evaluated more than once.
    All other macro parameters are evaluated exactly once, so it is safe
    to put side effects into them (such as increasing the index). */
 
+  #if 0
 /* Write into the canonical representation, this macro does not do any sanity
    checks and is intended for usage in loops.  The caller should cache the
    kind and data pointers obtained from other macro calls.
@@ -233,13 +226,17 @@ PyAPI_FUNC(int) _PyUnicode_CheckConsistency(
      (unsigned char)                                  \
      ((const unsigned char *)(PyUnicode_DATA((unicode))))[(index)])
 
+  #endif
+  
+  #if 0
 /* Returns the length of the unicode string. The caller has to make sure that
    the string has it's canonical representation set before calling
    this macro.  Call PyUnicode_(FAST_)Ready to ensure that. */
 #define PyUnicode_GET_LENGTH(op)                \
     (assert(PyUnicode_Check(op)),               \
      ((PyUnicodeObject *)(op))->length)
-
+#endif
+  
 
 /* Return a maximum character value which is suitable for creating another
    string based on op.  This is always an approximation but more efficient

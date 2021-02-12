@@ -2355,12 +2355,12 @@ unsafe_latin_compare(PyObject *v, PyObject *w, MergeState *ms)
     assert(PyUnicode_KIND(v) == PyUnicode_KIND(w));
     assert(PyUnicode_KIND(v) == PyUnicode_1BYTE_KIND);
 
-    len = Py_MIN(PyUnicode_GET_LENGTH(v), PyUnicode_GET_LENGTH(w));
-    res = memcmp(PyUnicode_DATA(v), PyUnicode_DATA(w), len);
+    len = Py_MIN(PyString_Size(v), PyString_Size(w));
+    res = memcmp(PyString_AsChar(v), PyString_AsChar(w), len);
 
     res = (res != 0 ?
            res < 0 :
-           PyUnicode_GET_LENGTH(v) < PyUnicode_GET_LENGTH(w));
+           PyString_Size(v) < PyString_Size(w));
 
     assert(res == PyObject_RichCompareBool(v, w, Py_LT));;
     return res;
