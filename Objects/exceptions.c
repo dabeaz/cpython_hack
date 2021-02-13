@@ -1906,7 +1906,7 @@ _set_legacy_print_statement_msg(PySyntaxErrorObject *self, Py_ssize_t start)
     const int STRIP_BOTH = 2;
     Py_ssize_t start_pos = start + PRINT_OFFSET;
     Py_ssize_t text_len = PyString_Size(self->text);
-    Py_UCS4 semicolon = ';';
+    Py_UCS1 semicolon = ';';
     Py_ssize_t end_pos = PyString_FindChar(self->text, semicolon,
                                             start_pos, text_len, 1);
     if (end_pos < -1) {
@@ -1926,7 +1926,7 @@ _set_legacy_print_statement_msg(PySyntaxErrorObject *self, Py_ssize_t start)
         return -1;
     }
 
-    PyObject *new_data = _PyUnicode_XStrip(data, STRIP_BOTH, strip_sep_obj);
+    PyObject *new_data = _PyString_XStrip(data, STRIP_BOTH, strip_sep_obj);
     Py_DECREF(data);
     Py_DECREF(strip_sep_obj);
     if (new_data == NULL) {
@@ -2018,7 +2018,7 @@ _check_for_legacy_statements(PySyntaxErrorObject *self, Py_ssize_t start)
 static int
 _report_missing_parentheses(PySyntaxErrorObject *self)
 {
-    Py_UCS4 left_paren = 40;
+    Py_UCS1 left_paren = 40;
     Py_ssize_t left_paren_index;
     Py_ssize_t text_len = PyString_Size(self->text);
     int legacy_check_result = 0;
@@ -2041,7 +2041,7 @@ _report_missing_parentheses(PySyntaxErrorObject *self)
     }
     if (legacy_check_result == 0) {
         /* Handle the one-line complex statement case */
-        Py_UCS4 colon = 58;
+        Py_UCS1 colon = 58;
         Py_ssize_t colon_index;
         colon_index = PyString_FindChar(self->text, colon,
                                          0, text_len, 1);

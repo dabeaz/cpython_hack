@@ -1631,7 +1631,7 @@ symtable_visit_alias(struct symtable *st, alias_ty a)
     PyObject *store_name;
     PyObject *name = (a->asname == NULL) ? a->name : a->asname;
     Py_ssize_t dot = PyString_FindChar(name, '.', 0,
-                                        PyUnicode_GET_LENGTH(name), 1);
+                                        PyString_Size(name), 1);
     if (dot != -1) {
         store_name = PyString_Substring(name, 0, dot);
         if (!store_name)

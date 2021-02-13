@@ -241,7 +241,7 @@ structseq_repr(PyStructSequence *obj)
     _PyUnicodeWriter_Init(&writer);
     writer.overallocate = 1;
     /* count 5 characters per item: "x=1, " */
-    writer.min_length = (PyUnicode_GET_LENGTH(type_name) + 1
+    writer.min_length = (PyString_Size(type_name) + 1
                          + VISIBLE_SIZE(obj) * 5 + 1);
 
     if (_PyUnicodeWriter_WriteStr(&writer, type_name) < 0) {

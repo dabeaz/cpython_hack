@@ -131,7 +131,7 @@ parse_and_bind(PyObject *self, PyObject *string)
     }
     /* Make a copy -- rl_parse_and_bind() modifies its argument */
     /* Bernard Herzog */
-    copy = PyMem_Malloc(1 + PyUnicode_GET_SIZE(encoded));
+    copy = PyMem_Malloc(1 + PyString_Size(encoded));
     if (copy == NULL) {
         Py_DECREF(encoded);
         return PyErr_NoMemory();

@@ -224,13 +224,13 @@ _Py_Mangle(PyObject *privateobj, PyObject *ident)
     PyObject *result;
     size_t nlen, plen, ipriv;
     if (privateobj == NULL || !PyUnicode_Check(privateobj) ||
-        PyUnicode_READ_CHAR(ident, 0) != '_' ||
-        PyUnicode_READ_CHAR(ident, 1) != '_') {
+        PyString_ReadChar(ident, 0) != '_' ||
+        PyString_ReadChar(ident, 1) != '_') {
         Py_INCREF(ident);
         return ident;
     }
-    nlen = PyUnicode_GET_LENGTH(ident);
-    plen = PyUnicode_GET_LENGTH(privateobj);
+    nlen = PyString_Size(ident);
+    plen = PyString_Size(privateobj);
     /* Don't mangle __id__ or names with dots.
 
        The only time a name with a dot can occur is when
@@ -240,15 +240,15 @@ _Py_Mangle(PyObject *privateobj, PyObject *ident)
        TODO(jhylton): Decide whether we want to support
        mangling of the module name, e.g. __M.X.
     */
-    if ((PyUnicode_READ_CHAR(ident, nlen-1) == '_' &&
-         PyUnicode_READ_CHAR(ident, nlen-2) == '_') ||
+    if ((PyString_ReadChar(ident, nlen-1) == '_' &&
+         PyString_ReadChar(ident, nlen-2) == '_') ||
         PyString_FindChar(ident, '.', 0, nlen, 1) != -1) {
         Py_INCREF(ident);
         return ident; /* Don't mangle __whatever__ */
     }
     /* Strip leading underscores from class name */
     ipriv = 0;
-    while (PyUnicode_READ_CHAR(privateobj, ipriv) == '_')
+    while (PyString_ReadChar(privateobj, ipriv) == '_')
         ipriv++;
     if (ipriv == plen) {
         Py_INCREF(ident);
@@ -266,7 +266,7 @@ _Py_Mangle(PyObject *privateobj, PyObject *ident)
     if (!result)
         return 0;
     /* ident = "_" + priv[ipriv:] + ident # i.e. 1+plen+nlen bytes */
-    PyUnicode_WRITE(PyUnicode_DATA(result), 0, '_');
+    ((char *) PyString_AsChar(result))[0] = '_';
     if (PyString_CopyCharacters(result, 1, privateobj, ipriv, plen) < 0) {
         Py_DECREF(result);
         return NULL;
@@ -2872,7 +2872,7 @@ compiler_import_as(struct compiler *c, identifier name, identifier asname)
        If there is a dot in name, we need to split it and emit a
        IMPORT_FROM for each name.
     */
-    Py_ssize_t len = PyUnicode_GET_LENGTH(name);
+    Py_ssize_t len = PyString_Size(name);
     Py_ssize_t dot = PyString_FindChar(name, '.', 0, len, 1);
     if (dot == -2)
         return 0;
@@ -2931,7 +2931,7 @@ compiler_import(struct compiler *c, stmt_ty s)
         else {
             identifier tmp = alias->name;
             Py_ssize_t dot = PyString_FindChar(
-                alias->name, '.', 0, PyUnicode_GET_LENGTH(alias->name), 1);
+                alias->name, '.', 0, PyString_Size(alias->name), 1);
             if (dot != -1) {
                 tmp = PyString_Substring(alias->name, 0, dot);
                 if (tmp == NULL)
@@ -2986,7 +2986,7 @@ compiler_from_import(struct compiler *c, stmt_ty s)
         alias_ty alias = (alias_ty)asdl_seq_GET(s->v.ImportFrom.names, i);
         identifier store_name;
 
-        if (i == 0 && PyUnicode_READ_CHAR(alias->name, 0) == '*') {
+        if (i == 0 && PyString_ReadChar(alias->name, 0) == '*') {
             assert(n == 1);
             ADDOP(c, IMPORT_STAR);
             return 1;
@@ -3273,7 +3273,7 @@ compiler_nameop(struct compiler *c, identifier name, expr_context_ty ctx)
     }
 
     /* XXX Leave assert here, but handle __doc__ and the like better */
-    assert(scope || PyUnicode_READ_CHAR(name, 0) == '_');
+    assert(scope || PyString_ReadChar(name, 0) == '_');
 
     switch (optype) {
     case OP_DEREF:
@@ -4927,7 +4927,7 @@ assemble_lnotab(struct assembler *a, struct instr *i)
     if (d_bytecode > 255) {
         int j, nbytes, ncodes = d_bytecode / 255;
         nbytes = a->a_lnotab_off + 2 * ncodes;
-        len = PyUnicode_GET_SIZE(a->a_lnotab);
+        len = PyString_Size(a->a_lnotab);
         if (nbytes >= len) {
             if ((len <= INT_MAX / 2) && (len * 2 < nbytes))
                 len = nbytes;
@@ -4965,7 +4965,7 @@ assemble_lnotab(struct assembler *a, struct instr *i)
         d_lineno -= ncodes * k;
         assert(ncodes >= 1);
         nbytes = a->a_lnotab_off + 2 * ncodes;
-        len = PyUnicode_GET_SIZE(a->a_lnotab);
+        len = PyString_Size(a->a_lnotab);
         if (nbytes >= len) {
             if ((len <= INT_MAX / 2) && len * 2 < nbytes)
                 len = nbytes;
@@ -4991,7 +4991,7 @@ assemble_lnotab(struct assembler *a, struct instr *i)
     }
     assert(-128 <= d_lineno && d_lineno <= 127);
 
-    len = PyUnicode_GET_SIZE(a->a_lnotab);
+    len = PyString_Size(a->a_lnotab);
     if (a->a_lnotab_off + 2 >= len) {
         if (PyString_Resize(&a->a_lnotab, len * 2) < 0)
             return 0;
@@ -5022,7 +5022,7 @@ static int
 assemble_emit(struct assembler *a, struct instr *i)
 {
     int size, arg = 0;
-    Py_ssize_t len = PyUnicode_GET_SIZE(a->a_bytecode);
+    Py_ssize_t len = PyString_Size(a->a_bytecode);
     _Py_CODEUNIT *code;
 
     arg = i->i_oparg;

@@ -36,7 +36,7 @@ const _PyUnicode_TypeRecord _PyUnicode_TypeRecords[] = {
 
 /* extended case mappings */
 
-const Py_UCS4 _PyUnicode_ExtendedCase[] = {
+const Py_UCS1 _PyUnicode_ExtendedCase[] = {
     181,
     956,
     924,
@@ -70,7 +70,7 @@ static const unsigned char index2[] = {
 /* Returns the numeric value as double for Unicode characters
  * having this property, -1.0 otherwise.
  */
-double _PyUnicode_ToNumeric(Py_UCS4 ch)
+double _PyUnicode_ToNumeric(Py_UCS1 ch)
 {
     switch (ch) {
     case 0x0030:
@@ -109,7 +109,7 @@ double _PyUnicode_ToNumeric(Py_UCS4 ch)
 /* Returns 1 for Unicode characters having the bidirectional
  * type 'WS', 'B' or 'S' or the category 'Zs', 0 otherwise.
  */
-int _PyUnicode_IsWhitespace(const Py_UCS4 ch)
+int _PyUnicode_IsWhitespace(const Py_UCS1 ch)
 {
     switch (ch) {
     case 0x0009:
@@ -133,7 +133,7 @@ int _PyUnicode_IsWhitespace(const Py_UCS4 ch)
  * property 'BK', 'CR', 'LF' or 'NL' or having bidirectional
  * type 'B', 0 otherwise.
  */
-int _PyUnicode_IsLinebreak(const Py_UCS4 ch)
+int _PyUnicode_IsLinebreak(const Py_UCS1 ch)
 {
     switch (ch) {
     case 0x000A:

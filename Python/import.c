@@ -773,10 +773,10 @@ import_find_and_load(PyThreadState *tstate, PyObject *abs_name)
       for (n = 0; n < len; n++) {
 	char name[MAXPATHLEN];
 	PyObject *p = PySequence_GetItem(sys_path, n);
-	if (PyUnicode_GET_SIZE(p) < MAXPATHLEN - PyUnicode_GET_SIZE(abs_name) - 5) {
+	if (PyString_Size(p) < MAXPATHLEN - PyString_Size(abs_name) - 5) {
 	  int fd;
 	  struct _Py_stat_struct stat;
-	  if (PyUnicode_GET_SIZE(p) > 0) {
+	  if (PyString_Size(p) > 0) {
 	    strcpy(name, PyString_AsChar(p));
 	    strcat(name, "/");
 	  } else {
@@ -861,7 +861,7 @@ PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
 	goto error;
     }
     else {  /* level == 0 */
-        if (PyUnicode_GET_LENGTH(name) == 0) {
+        if (PyString_Size(name) == 0) {
             _PyErr_SetString(tstate, PyExc_ValueError, "Empty module name");
             goto error;
         }
@@ -891,7 +891,7 @@ PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
     }
 
     if (!has_from) {
-        Py_ssize_t len = PyUnicode_GET_LENGTH(name);
+        Py_ssize_t len = PyString_Size(name);
         if (level == 0 || len > 0) {
             Py_ssize_t dot;
             dot = PyString_FindChar(name, '.', 0, len, 1);
@@ -920,7 +920,7 @@ PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
             }
             else {
                 Py_ssize_t cut_off = len - dot;
-                Py_ssize_t abs_name_len = PyUnicode_GET_LENGTH(abs_name);
+                Py_ssize_t abs_name_len = PyString_Size(abs_name);
                 PyObject *to_return = PyString_Substring(abs_name, 0,
                                                         abs_name_len - cut_off);
                 if (to_return == NULL) {

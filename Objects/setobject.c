@@ -415,7 +415,7 @@ set_add_key(PySetObject *so, PyObject *key)
     Py_hash_t hash;
 
     if (!PyUnicode_CheckExact(key) ||
-        (hash = ((PyUnicodeObject *) key)->hash) == -1) {
+        (hash = PyString_Hash(key)) == -1) {
         hash = PyObject_Hash(key);
         if (hash == -1)
             return -1;
@@ -429,7 +429,7 @@ set_contains_key(PySetObject *so, PyObject *key)
     Py_hash_t hash;
 
     if (!PyUnicode_CheckExact(key) ||
-        (hash = ((PyUnicodeObject *) key)->hash) == -1) {
+        (hash = PyString_Hash(key)) == -1) {
         hash = PyObject_Hash(key);
         if (hash == -1)
             return -1;
@@ -443,7 +443,7 @@ set_discard_key(PySetObject *so, PyObject *key)
     Py_hash_t hash;
 
     if (!PyUnicode_CheckExact(key) ||
-        (hash = ((PyUnicodeObject *) key)->hash) == -1) {
+        (hash = PyString_Hash(key)) == -1) {
         hash = PyObject_Hash(key);
         if (hash == -1)
             return -1;
@@ -596,7 +596,7 @@ set_repr(PySetObject *so)
     Py_DECREF(keys);
     if (listrepr == NULL)
         goto done;
-    tmp = PyString_Substring(listrepr, 1, PyUnicode_GET_LENGTH(listrepr)-1);
+    tmp = PyString_Substring(listrepr, 1, PyString_Size(listrepr)-1);
     Py_DECREF(listrepr);
     if (tmp == NULL)
         goto done;

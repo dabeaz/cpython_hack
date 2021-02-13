@@ -811,11 +811,11 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
         if (!PyUnicode_Check(arg))
             return converterr("a unicode character", arg, msgbuf, bufsize);
 
-        if (PyUnicode_GET_LENGTH(arg) != 1)
+        if (PyString_Size(arg) != 1)
             return converterr("a unicode character", arg, msgbuf, bufsize);
 
-        data = PyUnicode_DATA(arg);
-        *p = PyUnicode_READ(data, 0);
+        data = (void *) PyString_AsChar(arg);
+        *p = ((char *) data)[0];
         break;
     }
 

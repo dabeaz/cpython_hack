@@ -651,7 +651,7 @@ path_converter(PyObject *o, void *p)
         goto error_exit;
     }
 
-    length = PyUnicode_GET_SIZE(bytes);
+    length = PyString_Size(bytes);
     narrow = PyString_AsChar(bytes);
     if ((size_t)length != strlen(narrow)) {
         FORMAT_EXCEPTION(PyExc_ValueError, "embedded null character in %s");
@@ -3402,7 +3402,7 @@ os_write(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
       goto exit;
     }
 
-    _return_value = _Py_write(fd, PyString_AsChar(args[1]), PyUnicode_GET_SIZE(args[1]));
+    _return_value = _Py_write(fd, PyString_AsChar(args[1]), PyString_Size(args[1]));
     if ((_return_value == -1) && PyErr_Occurred()) {
         goto exit;
     }

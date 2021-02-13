@@ -145,7 +145,7 @@ safe_multiply(PyObject *v, PyObject *w)
         }
     }
     else if (PyLong_Check(v) && (PyUnicode_Check(w))) {
-      Py_ssize_t size = PyUnicode_GET_LENGTH(w);
+      Py_ssize_t size = PyString_Size(w);
       if (size) {
 	long n = PyLong_AsLong(v);
 	if (n < 0 || n > MAX_STR_SIZE / size) {

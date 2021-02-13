@@ -280,10 +280,10 @@ object___dir__(PyObject *self, PyObject *Py_UNUSED(ignored))
 
 #define MCACHE_HASH_METHOD(type, name)                                  \
         MCACHE_HASH((type)->tp_version_tag,                     \
-                    ((PyUnicodeObject *)(name))->hash)
+		    (PyString_Hash(name)))
 #define MCACHE_CACHEABLE_NAME(name)                             \
         PyUnicode_CheckExact(name) &&                           \
-        PyUnicode_GET_LENGTH(name) <= MCACHE_MAX_ATTR_SIZE
+        PyString_Size(name) <= MCACHE_MAX_ATTR_SIZE
 
 struct method_cache_entry {
     unsigned int version;
@@ -2826,7 +2826,7 @@ find_name_in_mro(PyTypeObject *type, PyObject *name, int *error)
     Py_hash_t hash;
 
     if (!PyUnicode_CheckExact(name) ||
-        (hash = ((PyUnicodeObject *) name)->hash) == -1)
+        (hash = PyString_Hash(name)) == -1)
     {
         hash = PyObject_Hash(name);
         if (hash == -1) {
@@ -2954,9 +2954,9 @@ _PyType_LookupId(PyTypeObject *type, struct _Py_Identifier *name)
 static int
 is_dunder_name(PyObject *name)
 {
-    Py_ssize_t length = PyUnicode_GET_LENGTH(name);
+    Py_ssize_t length = PyString_Size(name);
     if (length > 4) {
-        const Py_UCS1 *characters = PyUnicode_DATA(name);
+        const Py_UCS1 *characters = PyString_AsChar(name);
         return (
             ((characters[length-2] == '_') && (characters[length-1] == '_')) &&
             ((characters[0] == '_') && (characters[1] == '_'))
@@ -3075,9 +3075,9 @@ type_setattro(PyTypeObject *type, PyObject *name, PyObject *value)
                 return -1;
         }
 #ifdef INTERN_NAME_STRINGS
-        if (!PyUnicode_CHECK_INTERNED(name)) {
+        if (!PyString_CheckInterned(name)) {
             PyUnicode_InternInPlace(&name);
-            if (!PyUnicode_CHECK_INTERNED(name)) {
+            if (!PyString_CheckInterned(name)) {
                 PyErr_SetString(PyExc_MemoryError,
                                 "Out of memory interning an attribute name");
                 Py_DECREF(name);
@@ -4354,7 +4354,7 @@ object___format___impl(PyObject *self, PyObject *format_spec)
 {
     /* Issue 7994: If we're converting to a string, we
        should reject format specifications */
-    if (PyUnicode_GET_LENGTH(format_spec) > 0) {
+    if (PyString_Size(format_spec) > 0) {
         PyErr_Format(PyExc_TypeError,
                      "unsupported format string passed to %.200s.__format__",
                      Py_TYPE(self)->tp_name);
@@ -6871,7 +6871,7 @@ _PyTypes_InitSlotDefs(void)
         assert(!p[1].name || p->offset <= p[1].offset);
 #ifdef INTERN_NAME_STRINGS
         p->name_strobj = PyUnicode_InternFromString(p->name);
-        if (!p->name_strobj || !PyUnicode_CHECK_INTERNED(p->name_strobj)) {
+        if (!p->name_strobj || !PyString_CheckInterned(p->name_strobj)) {
             return _PyStatus_NO_MEMORY();
         }
 #else
@@ -6905,7 +6905,7 @@ update_slot(PyTypeObject *type, PyObject *name)
 
     assert(PyUnicode_CheckExact(name));
 #ifdef INTERN_NAME_STRINGS
-    assert(PyUnicode_CHECK_INTERNED(name));
+    assert(PyString_CheckInterned(name));
 #endif
 
     assert(slotdefs_initialized);
@@ -7217,7 +7217,7 @@ super_getattro(PyObject *self, PyObject *name)
     /* We want __class__ to return the class of the super object
        (i.e. super, or a subclass), not the class of su->obj. */
     if (PyUnicode_Check(name) &&
-        PyUnicode_GET_LENGTH(name) == 9 &&
+        PyString_Size(name) == 9 &&
         _PyUnicode_EqualToASCIIId(name, &PyId___class__))
         goto skip;
 

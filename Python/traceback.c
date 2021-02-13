@@ -364,7 +364,7 @@ _Py_FindSourceFile(PyObject *filename, char* namebuf, size_t namelen, PyObject *
         if (!PyUnicode_Check(v))
             continue;
         path = v;
-        len = PyUnicode_GET_SIZE(path);
+        len = PyString_Size(path);
         if (len + 1 + (Py_ssize_t)taillen >= (Py_ssize_t)namelen - 1) {
             continue; /* Too long */
         }
@@ -443,15 +443,15 @@ _Py_DisplaySourceLine(PyObject *f, PyObject *filename, int lineno, int indent)
     }
 
     /* remove the indentation of the line */
-    data = PyUnicode_DATA(lineobj);
-    for (i=0; i < PyUnicode_GET_LENGTH(lineobj); i++) {
-        Py_UCS4 ch = PyUnicode_READ(data, i);
+    data = (void *) PyString_AsChar(lineobj);
+    for (i=0; i < PyString_Size(lineobj); i++) {
+      Py_UCS1 ch = ((unsigned char *)data)[i];
         if (ch != ' ' && ch != '\t' && ch != '\014')
             break;
     }
     if (i) {
         PyObject *truncated;
-        truncated = PyString_Substring(lineobj, i, PyUnicode_GET_LENGTH(lineobj));
+        truncated = PyString_Substring(lineobj, i, PyString_Size(lineobj));
         if (truncated) {
             Py_DECREF(lineobj);
             lineobj = truncated;
@@ -660,18 +660,17 @@ _Py_DumpHexadecimal(int fd, unsigned long value, Py_ssize_t width)
 void
 _Py_DumpASCII(int fd, PyObject *text)
 {
-    PyUnicodeObject *ascii = (PyUnicodeObject *)text;
     Py_ssize_t i, size;
     int truncated;
     void *data = NULL;
-    Py_UCS4 ch;
+    Py_UCS1 ch;
 
     if (!PyUnicode_Check(text))
         return;
 
-    size = ascii->length;
+    size = PyString_Size(text);
     {
-      data = ((PyUnicodeObject *)text)->data;
+      data = (void *) PyString_AsChar(text);
         if (data == NULL)
             return;
     }
@@ -685,7 +684,7 @@ _Py_DumpASCII(int fd, PyObject *text)
     }
 
     for (i=0; i < size; i++) {
-      ch = PyUnicode_READ(data, i);
+      ch = ((char *) data)[i];
         if (' ' <= ch && ch <= 126) {
             /* printable ASCII character */
             char c = (char)ch;

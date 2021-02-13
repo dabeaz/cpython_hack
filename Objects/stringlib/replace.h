@@ -6,7 +6,7 @@
 
 Py_LOCAL_INLINE(void)
 STRINGLIB(replace_1char_inplace)(STRINGLIB_CHAR* s, STRINGLIB_CHAR* end,
-                                 Py_UCS4 u1, Py_UCS4 u2, Py_ssize_t maxcount)
+                                 Py_UCS1 u1, Py_UCS1 u2, Py_ssize_t maxcount)
 {
     *s = u2;
     while (--maxcount && ++s != end) {

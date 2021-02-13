@@ -2539,10 +2539,10 @@ builtin_ord(PyObject *module, PyObject *c)
     long ord;
     Py_ssize_t size;
     if (PyUnicode_Check(c)) {
-        size = PyUnicode_GET_LENGTH(c);
+      size = PyString_Size(c);
         if (size == 1) {
-            ord = (long)PyUnicode_READ_CHAR(c, 0);
-            return PyLong_FromLong(ord);
+	  ord = (long)PyString_ReadChar(c, 0);
+	  return PyLong_FromLong(ord);
         }
     }
     else {

@@ -1246,7 +1246,7 @@ _PyDict_GetItemIdWithError(PyObject *dp, struct _Py_Identifier *key)
     kv = _PyUnicode_FromId(key); /* borrowed */
     if (kv == NULL)
         return NULL;
-    Py_hash_t hash = ((PyUnicodeObject *) kv)->hash;
+    Py_hash_t hash = PyString_Hash(kv); // ((PyUnicodeObject *) kv)->hash;
     assert (hash != -1);  /* interned strings have their hash value initialised */
     return _PyDict_GetItem_KnownHash(dp, kv, hash);
 }

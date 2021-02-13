@@ -60,12 +60,28 @@ typedef struct {
     void *data;
 } PyUnicodeObject;
 
+#define SSTATE_NOT_INTERNED 0
+#define SSTATE_INTERNED_MORTAL 1
+#define SSTATE_INTERNED_IMMORTAL 2
 
 #define PyUnicode_GET_SIZE(op)                       \
   (((PyUnicodeObject*)op)->length)  
 
 Py_ssize_t PyString_Size(PyObject *s) {
-  return PyUnicde_GET_SIZE(s);
+  return PyUnicode_GET_SIZE(s);
+}
+
+Py_hash_t PyString_Hash(PyObject *s) {
+  return ((PyUnicodeObject *) s)->hash;
+}
+
+
+/* Use only if you know it's a string */
+#define PyUnicode_CHECK_INTERNED(op) \
+    (((PyUnicodeObject *)(op))->state.interned)
+
+int PyString_CheckInterned(PyObject *s) {
+  return PyUnicode_CHECK_INTERNED(s);
 }
 
 /* Return a void pointer to the raw unicode buffer. */
@@ -105,103 +121,103 @@ unsigned char PyString_ReadChar(PyObject *s, Py_ssize_t index) {
 
   
 PyAPI_FUNC(int) _PyUnicode_IsLowercase(
-    Py_UCS4 ch       /* Unicode character */
+    Py_UCS1 ch       /* Unicode character */
     );
 
 PyAPI_FUNC(int) _PyUnicode_IsUppercase(
-    Py_UCS4 ch       /* Unicode character */
+    Py_UCS1 ch       /* Unicode character */
     );
 
 PyAPI_FUNC(int) _PyUnicode_IsTitlecase(
-    Py_UCS4 ch       /* Unicode character */
+    Py_UCS1 ch       /* Unicode character */
     );
 
 PyAPI_FUNC(int) _PyUnicode_IsXidStart(
-    Py_UCS4 ch       /* Unicode character */
+    Py_UCS1 ch       /* Unicode character */
     );
 
 PyAPI_FUNC(int) _PyUnicode_IsXidContinue(
-    Py_UCS4 ch       /* Unicode character */
+    Py_UCS1 ch       /* Unicode character */
     );
   
 PyAPI_FUNC(int) _PyUnicode_IsWhitespace(
-    const Py_UCS4 ch         /* Unicode character */
+    const Py_UCS1 ch         /* Unicode character */
     );
 
 PyAPI_FUNC(int) _PyUnicode_IsLinebreak(
-    const Py_UCS4 ch         /* Unicode character */
+    const Py_UCS1 ch         /* Unicode character */
     );
 
-/* Py_DEPRECATED(3.3) */ PyAPI_FUNC(Py_UCS4) _PyUnicode_ToLowercase(
-    Py_UCS4 ch       /* Unicode character */
+/* Py_DEPRECATED(3.3) */ PyAPI_FUNC(Py_UCS1) _PyUnicode_ToLowercase(
+    Py_UCS1 ch       /* Unicode character */
     );
 
-/* Py_DEPRECATED(3.3) */ PyAPI_FUNC(Py_UCS4) _PyUnicode_ToUppercase(
-    Py_UCS4 ch       /* Unicode character */
+/* Py_DEPRECATED(3.3) */ PyAPI_FUNC(Py_UCS1) _PyUnicode_ToUppercase(
+    Py_UCS1 ch       /* Unicode character */
     );
 
-Py_DEPRECATED(3.3) PyAPI_FUNC(Py_UCS4) _PyUnicode_ToTitlecase(
-    Py_UCS4 ch       /* Unicode character */
+Py_DEPRECATED(3.3) PyAPI_FUNC(Py_UCS1) _PyUnicode_ToTitlecase(
+    Py_UCS1 ch       /* Unicode character */
     );
 
 PyAPI_FUNC(int) _PyUnicode_ToLowerFull(
-    Py_UCS4 ch,       /* Unicode character */
-    Py_UCS4 *res
+    Py_UCS1 ch,       /* Unicode character */
+    Py_UCS1 *res
     );
 
 PyAPI_FUNC(int) _PyUnicode_ToTitleFull(
-    Py_UCS4 ch,       /* Unicode character */
-    Py_UCS4 *res
+    Py_UCS1 ch,       /* Unicode character */
+    Py_UCS1 *res
     );
 
 PyAPI_FUNC(int) _PyUnicode_ToUpperFull(
-    Py_UCS4 ch,       /* Unicode character */
-    Py_UCS4 *res
+    Py_UCS1 ch,       /* Unicode character */
+    Py_UCS1 *res
     );
 
 PyAPI_FUNC(int) _PyUnicode_ToFoldedFull(
-    Py_UCS4 ch,       /* Unicode character */
-    Py_UCS4 *res
+    Py_UCS1 ch,       /* Unicode character */
+    Py_UCS1 *res
     );
 
 PyAPI_FUNC(int) _PyUnicode_IsCaseIgnorable(
-    Py_UCS4 ch         /* Unicode character */
+    Py_UCS1 ch         /* Unicode character */
     );
 
 PyAPI_FUNC(int) _PyUnicode_IsCased(
-    Py_UCS4 ch         /* Unicode character */
+    Py_UCS1 ch         /* Unicode character */
     );
 
 PyAPI_FUNC(int) _PyUnicode_ToDecimalDigit(
-    Py_UCS4 ch       /* Unicode character */
+    Py_UCS1 ch       /* Unicode character */
     );
 
 PyAPI_FUNC(int) _PyUnicode_ToDigit(
-    Py_UCS4 ch       /* Unicode character */
+    Py_UCS1 ch       /* Unicode character */
     );
 
 PyAPI_FUNC(double) _PyUnicode_ToNumeric(
-    Py_UCS4 ch       /* Unicode character */
+    Py_UCS1 ch       /* Unicode character */
     );
 
 PyAPI_FUNC(int) _PyUnicode_IsDecimalDigit(
-    Py_UCS4 ch       /* Unicode character */
+    Py_UCS1 ch       /* Unicode character */
     );
 
 PyAPI_FUNC(int) _PyUnicode_IsDigit(
-    Py_UCS4 ch       /* Unicode character */
+    Py_UCS1 ch       /* Unicode character */
     );
 
 PyAPI_FUNC(int) _PyUnicode_IsNumeric(
-    Py_UCS4 ch       /* Unicode character */
+    Py_UCS1 ch       /* Unicode character */
     );
 
 PyAPI_FUNC(int) _PyUnicode_IsPrintable(
-    Py_UCS4 ch       /* Unicode character */
+    Py_UCS1 ch       /* Unicode character */
     );
 
 PyAPI_FUNC(int) _PyUnicode_IsAlpha(
-    Py_UCS4 ch       /* Unicode character */
+    Py_UCS1 ch       /* Unicode character */
     );
 
 
@@ -259,8 +275,8 @@ class str "PyObject *" "&PyUnicode_Type"
 /*[clinic end generated code: output=da39a3ee5e6b4b0d input=4884c934de622cf6]*/
 
 /*[python input]
-class Py_UCS4_converter(CConverter):
-    type = 'Py_UCS4'
+class Py_UCS1_converter(CConverter):
+    type = 'Py_UCS1'
     converter = 'convert_uc'
 
     def converter_init(self):
@@ -373,7 +389,7 @@ unicode_fill(void *data, unsigned char value,
 
 /* Forward declaration */
 static inline int
-_PyUnicodeWriter_WriteCharInline(_PyUnicodeWriter *writer, Py_UCS4 ch);
+_PyUnicodeWriter_WriteCharInline(_PyUnicodeWriter *writer, Py_UCS1 ch);
 
 /* List of static strings. */
 static _Py_Identifier *static_strings = NULL;
@@ -533,14 +549,14 @@ PyDoc_STRVAR(unicode_center__doc__,
     {"center", (PyCFunction)(void(*)(void))unicode_center, METH_FASTCALL, unicode_center__doc__},
 
 static PyObject *
-unicode_center_impl(PyObject *self, Py_ssize_t width, Py_UCS4 fillchar);
+unicode_center_impl(PyObject *self, Py_ssize_t width, Py_UCS1 fillchar);
 
 static PyObject *
 unicode_center(PyObject *self, PyObject *const *args, Py_ssize_t nargs)
 {
     PyObject *return_value = NULL;
     Py_ssize_t width;
-    Py_UCS4 fillchar = ' ';
+    Py_UCS1 fillchar = ' ';
 
     if (!_PyArg_CheckPositional("center", nargs, 1, 2)) {
         goto exit;
@@ -890,14 +906,14 @@ PyDoc_STRVAR(unicode_ljust__doc__,
     {"ljust", (PyCFunction)(void(*)(void))unicode_ljust, METH_FASTCALL, unicode_ljust__doc__},
 
 static PyObject *
-unicode_ljust_impl(PyObject *self, Py_ssize_t width, Py_UCS4 fillchar);
+unicode_ljust_impl(PyObject *self, Py_ssize_t width, Py_UCS1 fillchar);
 
 static PyObject *
 unicode_ljust(PyObject *self, PyObject *const *args, Py_ssize_t nargs)
 {
     PyObject *return_value = NULL;
     Py_ssize_t width;
-    Py_UCS4 fillchar = ' ';
+    Py_UCS1 fillchar = ' ';
 
     if (!_PyArg_CheckPositional("ljust", nargs, 1, 2)) {
         goto exit;
@@ -1187,14 +1203,14 @@ PyDoc_STRVAR(unicode_rjust__doc__,
     {"rjust", (PyCFunction)(void(*)(void))unicode_rjust, METH_FASTCALL, unicode_rjust__doc__},
 
 static PyObject *
-unicode_rjust_impl(PyObject *self, Py_ssize_t width, Py_UCS4 fillchar);
+unicode_rjust_impl(PyObject *self, Py_ssize_t width, Py_UCS1 fillchar);
 
 static PyObject *
 unicode_rjust(PyObject *self, PyObject *const *args, Py_ssize_t nargs)
 {
     PyObject *return_value = NULL;
     Py_ssize_t width;
-    Py_UCS4 fillchar = ' ';
+    Py_UCS1 fillchar = ' ';
 
     if (!_PyArg_CheckPositional("rjust", nargs, 1, 2)) {
         goto exit;
@@ -1567,7 +1583,7 @@ unicode_result_ready(PyObject *unicode)
     if (length == 1) {
         const void *data = PyUnicode_DATA(unicode);
 
-        Py_UCS4 ch = PyUnicode_READ(data, 0);
+        Py_UCS1 ch = PyUnicode_READ(data, 0);
         if (ch < 256) {
             PyObject *latin1_char = unicode_latin1[ch];
             if (latin1_char != NULL) {
@@ -2079,7 +2095,7 @@ get_latin1_char(unsigned char ch)
 }
 
 static PyObject*
-unicode_char(Py_UCS4 ch)
+unicode_char(Py_UCS1 ch)
 {
     assert(ch < 256);
     return get_latin1_char(ch);
@@ -2398,7 +2414,7 @@ unicode_fromformat_arg(_PyUnicodeWriter *writer,
             return NULL;
 
         if (width > precision) {
-            Py_UCS4 fillchar;
+            Py_UCS1 fillchar;
             fill = width - precision;
             fillchar = zeropad?'0':' ';
             if (PyString_Fill(writer->buffer, writer->pos, fill, fillchar) == -1)
@@ -2627,7 +2643,7 @@ PyString_FromOrdinal(int ordinal)
         return NULL;
     }
 
-    return unicode_char((Py_UCS4)ordinal);
+    return unicode_char((Py_UCS1)ordinal);
 }
 
 PyObject *
@@ -2737,7 +2753,7 @@ _PyUnicode_TransformDecimalAndSpaceToASCII(PyObject *unicode)
     const void *data = PyUnicode_DATA(unicode);
     Py_ssize_t i;
     for (i = 0; i < len; ++i) {
-        Py_UCS4 ch = PyUnicode_READ(data, i);
+        Py_UCS1 ch = PyUnicode_READ(data, i);
         if (ch < 127) {
             out[i] = ch;
         }
@@ -2796,7 +2812,7 @@ any_find_slice(PyObject* s1, PyObject* s2,
     buf1 = PyUnicode_DATA(s1);
     buf2 = PyUnicode_DATA(s2);
     if (len2 == 1) {
-        Py_UCS4 ch = PyUnicode_READ(buf2, 0);
+        Py_UCS1 ch = PyUnicode_READ(buf2, 0);
         result = findchar((const char *)buf1 + start,
                           end - start, ch, direction);
         if (result == -1)
@@ -2841,7 +2857,7 @@ any_find_slice(PyObject* s1, PyObject* s2,
  * Return value: -1 on error, number of characters otherwise.
  **/
 Py_ssize_t
-_PyUnicode_InsertThousandsGrouping(
+_PyString_InsertThousandsGrouping(
     _PyUnicodeWriter *writer,
     Py_ssize_t n_buffer,
     PyObject *digits,
@@ -2986,7 +3002,7 @@ PyString_Find(PyObject *str,
 }
 
 Py_ssize_t
-PyString_FindChar(PyObject *str, Py_UCS4 ch,
+PyString_FindChar(PyObject *str, Py_UCS1 ch,
                    Py_ssize_t start, Py_ssize_t end,
                    int direction)
 {
@@ -3073,17 +3089,17 @@ PyString_Tailmatch(PyObject *str,
 
 static int
 lower_ucs4(const void *data, Py_ssize_t length, Py_ssize_t i,
-           Py_UCS4 c, Py_UCS4 *mapped)
+           Py_UCS1 c, Py_UCS1 *mapped)
 {
     return _PyUnicode_ToLowerFull(c, mapped);
 }
 
 static Py_ssize_t
-do_capitalize(const void *data, Py_ssize_t length, Py_UCS4 *res)
+do_capitalize(const void *data, Py_ssize_t length, Py_UCS1 *res)
 {
     Py_ssize_t i, k = 0;
     int n_res, j;
-    Py_UCS4 c, mapped[3];
+    Py_UCS1 c, mapped[3];
 
     c = PyUnicode_READ(data, 0);
     n_res = _PyUnicode_ToTitleFull(c, mapped);
@@ -3101,11 +3117,11 @@ do_capitalize(const void *data, Py_ssize_t length, Py_UCS4 *res)
 }
 
 static Py_ssize_t
-do_swapcase(const void *data, Py_ssize_t length, Py_UCS4 *res) {
+do_swapcase(const void *data, Py_ssize_t length, Py_UCS1 *res) {
     Py_ssize_t i, k = 0;
 
     for (i = 0; i < length; i++) {
-        Py_UCS4 c = PyUnicode_READ(data, i), mapped[3];
+        Py_UCS1 c = PyUnicode_READ(data, i), mapped[3];
         int n_res, j;
         if (Py_UNICODE_ISUPPER(c)) {
             n_res = lower_ucs4(data, length, i, c, mapped);
@@ -3125,13 +3141,13 @@ do_swapcase(const void *data, Py_ssize_t length, Py_UCS4 *res) {
 }
 
 static Py_ssize_t
-do_upper_or_lower(const void *data, Py_ssize_t length, Py_UCS4 *res,
+do_upper_or_lower(const void *data, Py_ssize_t length, Py_UCS1 *res,
                   int lower)
 {
     Py_ssize_t i, k = 0;
 
     for (i = 0; i < length; i++) {
-        Py_UCS4 c = PyUnicode_READ(data, i), mapped[3];
+        Py_UCS1 c = PyUnicode_READ(data, i), mapped[3];
         int n_res, j;
         if (lower)
             n_res = lower_ucs4(data, length, i, c, mapped);
@@ -3145,25 +3161,25 @@ do_upper_or_lower(const void *data, Py_ssize_t length, Py_UCS4 *res,
 }
 
 static Py_ssize_t
-do_upper(const void *data, Py_ssize_t length, Py_UCS4 *res)
+do_upper(const void *data, Py_ssize_t length, Py_UCS1 *res)
 {
     return do_upper_or_lower(data, length, res, 0);
 }
 
 static Py_ssize_t
-do_lower(const void *data, Py_ssize_t length, Py_UCS4 *res)
+do_lower(const void *data, Py_ssize_t length, Py_UCS1 *res)
 {
     return do_upper_or_lower(data, length, res, 1);
 }
 
 static Py_ssize_t
-do_casefold(const void *data, Py_ssize_t length, Py_UCS4 *res)
+do_casefold(const void *data, Py_ssize_t length, Py_UCS1 *res)
 {
     Py_ssize_t i, k = 0;
 
     for (i = 0; i < length; i++) {
-        Py_UCS4 c = PyUnicode_READ(data, i);
-        Py_UCS4 mapped[3];
+        Py_UCS1 c = PyUnicode_READ(data, i);
+        Py_UCS1 mapped[3];
         int j, n_res = _PyUnicode_ToFoldedFull(c, mapped);
         for (j = 0; j < n_res; j++) {
             res[k++] = mapped[j];
@@ -3173,15 +3189,15 @@ do_casefold(const void *data, Py_ssize_t length, Py_UCS4 *res)
 }
 
 static Py_ssize_t
-do_title(const void *data, Py_ssize_t length, Py_UCS4 *res)
+do_title(const void *data, Py_ssize_t length, Py_UCS1 *res)
 {
     Py_ssize_t i, k = 0;
     int previous_is_cased;
 
     previous_is_cased = 0;
     for (i = 0; i < length; i++) {
-        const Py_UCS4 c = PyUnicode_READ(data, i);
-        Py_UCS4 mapped[3];
+        const Py_UCS1 c = PyUnicode_READ(data, i);
+        Py_UCS1 mapped[3];
         int n_res, j;
 
         if (previous_is_cased)
@@ -3200,21 +3216,21 @@ do_title(const void *data, Py_ssize_t length, Py_UCS4 *res)
 
 static PyObject *
 case_operation(PyObject *self,
-               Py_ssize_t (*perform)(const void *, Py_ssize_t, Py_UCS4 *))
+               Py_ssize_t (*perform)(const void *, Py_ssize_t, Py_UCS1 *))
 {
     PyObject *res = NULL;
     Py_ssize_t length, newlength = 0;
     const void *data;
     void *outdata;
-    Py_UCS4 *tmp, *tmpend;
+    Py_UCS1 *tmp, *tmpend;
 
     data = PyUnicode_DATA(self);
     length = PyUnicode_GET_LENGTH(self);
-    if ((size_t) length > PY_SSIZE_T_MAX / (3 * sizeof(Py_UCS4))) {
+    if ((size_t) length > PY_SSIZE_T_MAX / (3 * sizeof(Py_UCS1))) {
         PyErr_SetString(PyExc_OverflowError, "string is too long");
         return NULL;
     }
-    tmp = PyMem_Malloc(sizeof(Py_UCS4) * 3 * length);
+    tmp = PyMem_Malloc(sizeof(Py_UCS1) * 3 * length);
     if (tmp == NULL)
         return PyErr_NoMemory();
     newlength = perform(data, length, tmp);
@@ -3223,7 +3239,7 @@ case_operation(PyObject *self,
         goto leave;
     tmpend = tmp + newlength;
     outdata = PyUnicode_DATA(res);
-    _PyUnicode_CONVERT_BYTES(Py_UCS4, Py_UCS1, tmp, tmpend, outdata);
+    _PyUnicode_CONVERT_BYTES(Py_UCS1, Py_UCS1, tmp, tmpend, outdata);
   leave:
     PyMem_Free(tmp);
     return res;
@@ -3581,7 +3597,7 @@ anylib_count(PyObject *sstr, const void* sbuf, Py_ssize_t slen,
 
 static void
 replace_1char_inplace(PyObject *u, Py_ssize_t pos,
-                      Py_UCS4 u1, Py_UCS4 u2, Py_ssize_t maxcount)
+                      Py_UCS1 u1, Py_UCS1 u2, Py_ssize_t maxcount)
 {
 
     void *data = PyUnicode_DATA(u);
@@ -3622,7 +3638,7 @@ replace(PyObject *self, PyObject *str1,
             goto nothing;
         if (len1 == 1) {
             /* replace characters */
-            Py_UCS4 u1, u2;
+            Py_UCS1 u1, u2;
             Py_ssize_t pos;
 
             u1 = PyUnicode_READ(buf1, 0);
@@ -3844,7 +3860,7 @@ unicode_casefold_impl(PyObject *self)
 static int
 convert_uc(PyObject *obj, void *addr)
 {
-    Py_UCS4 *fillcharloc = (Py_UCS4 *)addr;
+    Py_UCS1 *fillcharloc = (Py_UCS1 *)addr;
 
     if (!PyUnicode_Check(obj)) {
         PyErr_Format(PyExc_TypeError,
@@ -3865,7 +3881,7 @@ convert_uc(PyObject *obj, void *addr)
 str.center as unicode_center
 
     width: Py_ssize_t
-    fillchar: Py_UCS4 = ' '
+    fillchar: Py_UCS1 = ' '
     /
 
 Return a centered string of length width.
@@ -3874,7 +3890,7 @@ Padding is done using the specified fill character (default is a space).
 [clinic start generated code]*/
 
 static PyObject *
-unicode_center_impl(PyObject *self, Py_ssize_t width, Py_UCS4 fillchar)
+unicode_center_impl(PyObject *self, Py_ssize_t width, Py_UCS1 fillchar)
 /*[clinic end generated code: output=420c8859effc7c0c input=b42b247eb26e6519]*/
 {
     Py_ssize_t marg, left;
@@ -3898,7 +3914,7 @@ unicode_compare(PyObject *str1, PyObject *str2)
         TYPE1* p1 = (TYPE1 *)data1; \
         TYPE2* p2 = (TYPE2 *)data2; \
         TYPE1* end = p1 + len; \
-        Py_UCS4 c1, c2; \
+        Py_UCS1 c1, c2; \
         for (; p1 != end; p1++, p2++) { \
             c1 = *p1; \
             c2 = *p2; \
@@ -4105,7 +4121,7 @@ PyString_Contains(PyObject *str, PyObject *substr)
     buf1 = PyUnicode_DATA(str);
     buf2 = PyUnicode_DATA(substr);
     if (len2 == 1) {
-        Py_UCS4 ch = PyUnicode_READ(buf2, 0);
+        Py_UCS1 ch = PyUnicode_READ(buf2, 0);
         result = findchar((const char *)buf1, len1, ch, 1) != -1;
         return result;
     }
@@ -4302,7 +4318,7 @@ unicode_expandtabs_impl(PyObject *self, int tabsize)
 /*[clinic end generated code: output=3457c5dcee26928f input=8a01914034af4c85]*/
 {
     Py_ssize_t i, j, line_pos, src_len, incr;
-    Py_UCS4 ch;
+    Py_UCS1 ch;
     PyObject *u;
     const void *src_data;
     void *dest_data;
@@ -4405,7 +4421,7 @@ static PyObject *
 unicode_getitem(PyObject *self, Py_ssize_t index)
 {
     const void *data;
-    Py_UCS4 ch;
+    Py_UCS1 ch;
 
     if (!PyUnicode_Check(self)) {
         PyErr_BadArgument();
@@ -4515,7 +4531,7 @@ unicode_islower_impl(PyObject *self)
 
     cased = 0;
     for (i = 0; i < length; i++) {
-        const Py_UCS4 ch = PyUnicode_READ(data, i);
+        const Py_UCS1 ch = PyUnicode_READ(data, i);
 
         if (Py_UNICODE_ISUPPER(ch) || Py_UNICODE_ISTITLE(ch))
             Py_RETURN_FALSE;
@@ -4556,7 +4572,7 @@ unicode_isupper_impl(PyObject *self)
 
     cased = 0;
     for (i = 0; i < length; i++) {
-        const Py_UCS4 ch = PyUnicode_READ(data, i);
+        const Py_UCS1 ch = PyUnicode_READ(data, i);
 
         if (Py_UNICODE_ISLOWER(ch) || Py_UNICODE_ISTITLE(ch))
             Py_RETURN_FALSE;
@@ -4588,7 +4604,7 @@ unicode_istitle_impl(PyObject *self)
 
     /* Shortcut for single character strings */
     if (length == 1) {
-        Py_UCS4 ch = PyUnicode_READ(data, 0);
+        Py_UCS1 ch = PyUnicode_READ(data, 0);
         return PyBool_FromLong((Py_UNICODE_ISTITLE(ch) != 0) ||
                                (Py_UNICODE_ISUPPER(ch) != 0));
     }
@@ -4600,7 +4616,7 @@ unicode_istitle_impl(PyObject *self)
     cased = 0;
     previous_is_cased = 0;
     for (i = 0; i < length; i++) {
-        const Py_UCS4 ch = PyUnicode_READ(data, i);
+        const Py_UCS1 ch = PyUnicode_READ(data, i);
 
         if (Py_UNICODE_ISUPPER(ch) || Py_UNICODE_ISTITLE(ch)) {
             if (previous_is_cased)
@@ -4649,7 +4665,7 @@ unicode_isspace_impl(PyObject *self)
         Py_RETURN_FALSE;
 
     for (i = 0; i < length; i++) {
-        const Py_UCS4 ch = PyUnicode_READ(data, i);
+        const Py_UCS1 ch = PyUnicode_READ(data, i);
         if (!Py_UNICODE_ISSPACE(ch))
             Py_RETURN_FALSE;
     }
@@ -4712,7 +4728,7 @@ unicode_isalnum_impl(PyObject *self)
 
     /* Shortcut for single character strings */
     if (len == 1) {
-        const Py_UCS4 ch = PyUnicode_READ(data, 0);
+        const Py_UCS1 ch = PyUnicode_READ(data, 0);
         return PyBool_FromLong(Py_UNICODE_ISALNUM(ch));
     }
 
@@ -4721,7 +4737,7 @@ unicode_isalnum_impl(PyObject *self)
         Py_RETURN_FALSE;
 
     for (i = 0; i < len; i++) {
-        const Py_UCS4 ch = PyUnicode_READ(data, i);
+        const Py_UCS1 ch = PyUnicode_READ(data, i);
         if (!Py_UNICODE_ISALNUM(ch))
             Py_RETURN_FALSE;
     }
@@ -4784,7 +4800,7 @@ unicode_isdigit_impl(PyObject *self)
 
     /* Shortcut for single character strings */
     if (length == 1) {
-        const Py_UCS4 ch = PyUnicode_READ(data, 0);
+        const Py_UCS1 ch = PyUnicode_READ(data, 0);
         return PyBool_FromLong(Py_UNICODE_ISDIGIT(ch));
     }
 
@@ -4847,7 +4863,7 @@ _PyUnicode_ScanIdentifier(PyObject *self)
 
 
     const void *data = PyUnicode_DATA(self);
-    Py_UCS4 ch = PyUnicode_READ(data, 0);
+    Py_UCS1 ch = PyUnicode_READ(data, 0);
     /* PEP 3131 says that the first character must be in
        XID_Start and subsequent characters in XID_Continue,
        and for the ASCII range, the 2.x rules apply (i.e
@@ -4957,7 +4973,7 @@ unicode_length(PyObject *self)
 str.ljust as unicode_ljust
 
     width: Py_ssize_t
-    fillchar: Py_UCS4 = ' '
+    fillchar: Py_UCS1 = ' '
     /
 
 Return a left-justified string of length width.
@@ -4966,7 +4982,7 @@ Padding is done using the specified fill character (default is a space).
 [clinic start generated code]*/
 
 static PyObject *
-unicode_ljust_impl(PyObject *self, Py_ssize_t width, Py_UCS4 fillchar)
+unicode_ljust_impl(PyObject *self, Py_ssize_t width, Py_UCS1 fillchar)
 /*[clinic end generated code: output=1cce0e0e0a0b84b3 input=3ab599e335e60a32]*/
 {
     if (PyUnicode_GET_LENGTH(self) >= width)
@@ -4999,7 +5015,7 @@ static const char *stripfuncnames[] = {"lstrip", "rstrip", "strip"};
 
 /* externally visible for str.strip(unicode) */
 PyObject *
-_PyUnicode_XStrip(PyObject *self, int striptype, PyObject *sepobj)
+_PyString_XStrip(PyObject *self, int striptype, PyObject *sepobj)
 {
     const void *data;
     Py_ssize_t i, j, len;
@@ -5015,7 +5031,7 @@ _PyUnicode_XStrip(PyObject *self, int striptype, PyObject *sepobj)
     i = 0;
     if (striptype != RIGHTSTRIP) {
         while (i < len) {
-            Py_UCS4 ch = PyUnicode_READ( data, i);
+            Py_UCS1 ch = PyUnicode_READ( data, i);
             if (!BLOOM(sepmask, ch))
                 break;
             if (PyString_FindChar(sepobj, ch, 0, seplen, 1) < 0)
@@ -5028,7 +5044,7 @@ _PyUnicode_XStrip(PyObject *self, int striptype, PyObject *sepobj)
     if (striptype != LEFTSTRIP) {
         j--;
         while (j >= i) {
-            Py_UCS4 ch = PyUnicode_READ( data, j);
+            Py_UCS1 ch = PyUnicode_READ( data, j);
             if (!BLOOM(sepmask, ch))
                 break;
             if (PyString_FindChar(sepobj, ch, 0, seplen, 1) < 0)
@@ -5081,7 +5097,7 @@ do_strip(PyObject *self, int striptype)
         i = 0;
         if (striptype != RIGHTSTRIP) {
             while (i < len) {
-                Py_UCS4 ch = PyUnicode_READ( data, i);
+                Py_UCS1 ch = PyUnicode_READ( data, i);
                 if (!Py_UNICODE_ISSPACE(ch))
                     break;
                 i++;
@@ -5092,7 +5108,7 @@ do_strip(PyObject *self, int striptype)
         if (striptype != LEFTSTRIP) {
             j--;
             while (j >= i) {
-                Py_UCS4 ch = PyUnicode_READ( data, j);
+                Py_UCS1 ch = PyUnicode_READ( data, j);
                 if (!Py_UNICODE_ISSPACE(ch))
                     break;
                 j--;
@@ -5110,7 +5126,7 @@ do_argstrip(PyObject *self, int striptype, PyObject *sep)
 {
     if (sep != Py_None) {
         if (PyUnicode_Check(sep))
-            return _PyUnicode_XStrip(self, striptype, sep);
+            return _PyString_XStrip(self, striptype, sep);
         else {
             PyErr_Format(PyExc_TypeError,
                          "%s arg must be None or str",
@@ -5205,7 +5221,7 @@ unicode_repeat(PyObject *str, Py_ssize_t len)
         return NULL;
 
     if (PyUnicode_GET_LENGTH(str) == 1) {
-        Py_UCS4 fill_char = PyUnicode_READ( PyUnicode_DATA(str), 0);
+        Py_UCS1 fill_char = PyUnicode_READ( PyUnicode_DATA(str), 0);
 	void *to = PyUnicode_DATA(u);
 	memset(to, (unsigned char)fill_char, len);
     }
@@ -5322,7 +5338,7 @@ unicode_repr(PyObject *unicode)
     PyObject *repr;
     Py_ssize_t isize;
     Py_ssize_t osize, squote, dquote, i, o;
-    Py_UCS4 max, quote;
+    Py_UCS1 max, quote;
     int unchanged;
     const void *idata;
     void *odata;
@@ -5336,7 +5352,7 @@ unicode_repr(PyObject *unicode)
     max = 127;
     squote = dquote = 0;
     for (i = 0; i < isize; i++) {
-        Py_UCS4 ch = PyUnicode_READ(idata, i);
+        Py_UCS1 ch = PyUnicode_READ(idata, i);
         Py_ssize_t incr = 1;
         switch (ch) {
         case '\'': squote++; break;
@@ -5394,7 +5410,7 @@ unicode_repr(PyObject *unicode)
     }
     else {
         for (i = 0, o = 1; i < isize; i++) {
-            Py_UCS4 ch = PyUnicode_READ(idata, i);
+            Py_UCS1 ch = PyUnicode_READ(idata, i);
 
             /* Escape quotes and backslashes */
             if ((ch == quote) || (ch == '\\')) {
@@ -5542,7 +5558,7 @@ unicode_rindex(PyObject *self, PyObject *args)
 str.rjust as unicode_rjust
 
     width: Py_ssize_t
-    fillchar: Py_UCS4 = ' '
+    fillchar: Py_UCS1 = ' '
     /
 
 Return a right-justified string of length width.
@@ -5551,7 +5567,7 @@ Padding is done using the specified fill character (default is a space).
 [clinic start generated code]*/
 
 static PyObject *
-unicode_rjust_impl(PyObject *self, Py_ssize_t width, Py_UCS4 fillchar)
+unicode_rjust_impl(PyObject *self, Py_ssize_t width, Py_UCS1 fillchar)
 /*[clinic end generated code: output=804a1a57fbe8d5cf input=d05f550b5beb1f72]*/
 {
 
@@ -5799,7 +5815,7 @@ unicode_zfill_impl(PyObject *self, Py_ssize_t width)
     Py_ssize_t fill;
     PyObject *u;
     const void *data;
-    Py_UCS4 chr;
+    Py_UCS1 chr;
 
     if (PyUnicode_GET_LENGTH(self) >= width)
         return unicode_result_unchanged(self);
@@ -5995,7 +6011,7 @@ _PyUnicodeWriter_PrepareInternal(_PyUnicodeWriter *writer,
 }
 
 static inline int
-_PyUnicodeWriter_WriteCharInline(_PyUnicodeWriter *writer, Py_UCS4 ch)
+_PyUnicodeWriter_WriteCharInline(_PyUnicodeWriter *writer, Py_UCS1 ch)
 {
     assert(ch <= MAX_UNICODE);
     if (_PyUnicodeWriter_Prepare(writer, 1) < 0)
@@ -6006,7 +6022,7 @@ _PyUnicodeWriter_WriteCharInline(_PyUnicodeWriter *writer, Py_UCS4 ch)
 }
 
 int
-_PyUnicodeWriter_WriteChar(_PyUnicodeWriter *writer, Py_UCS4 ch)
+_PyUnicodeWriter_WriteChar(_PyUnicodeWriter *writer, Py_UCS1 ch)
 {
     return _PyUnicodeWriter_WriteCharInline(writer, ch);
 }
@@ -6335,7 +6351,7 @@ unicode_subscript(PyObject* self, PyObject* item)
         dest_data = PyUnicode_DATA(result);
 
         for (cur = start, i = 0; i < slicelength; cur += step, i++) {
-            Py_UCS4 ch = PyUnicode_READ(src_data, cur);
+            Py_UCS1 ch = PyUnicode_READ(src_data, cur);
             PyUnicode_WRITE(dest_data, i, ch);
         }
         return result;
@@ -6368,7 +6384,7 @@ struct unicode_formatter_t {
 };
 
 struct unicode_format_arg_t {
-    Py_UCS4 ch;
+    Py_UCS1 ch;
     int flags;
     Py_ssize_t width;
     int prec;
@@ -6685,7 +6701,7 @@ wrongtype:
     return -1;
 }
 
-static Py_UCS4
+static Py_UCS1
 formatchar(PyObject *v)
 {
     /* presume that the buffer is at least 3 characters long */
@@ -6716,16 +6732,16 @@ formatchar(PyObject *v)
         if (x < 0 || x > 0xff) {
             PyErr_SetString(PyExc_OverflowError,
                             "%c arg not in range(0x100)");
-            return (Py_UCS4) -1;
+            return (Py_UCS1) -1;
         }
 
-        return (Py_UCS4) x;
+        return (Py_UCS1) x;
     }
 
   onError:
     PyErr_SetString(PyExc_TypeError,
                     "%c requires int or char");
-    return (Py_UCS4) -1;
+    return (Py_UCS1) -1;
 }
 
 /* Parse options of an argument: flags, width, precision.
@@ -6998,8 +7014,8 @@ unicode_format_arg_format(struct unicode_formatter_t *ctx,
 
     case 'c':
     {
-        Py_UCS4 ch = formatchar(v);
-        if (ch == (Py_UCS4) -1)
+        Py_UCS1 ch = formatchar(v);
+        if (ch == (Py_UCS1) -1)
             return -1;
         if (arg->width == -1 && arg->prec == -1) {
             /* Fast path */
@@ -7034,11 +7050,11 @@ unicode_format_arg_output(struct unicode_formatter_t *ctx,
     Py_ssize_t len;
     const void *pbuf;
     Py_ssize_t pindex;
-    Py_UCS4 signchar;
+    Py_UCS1 signchar;
     Py_ssize_t buflen;
     Py_ssize_t sublen;
     _PyUnicodeWriter *writer = &ctx->writer;
-    Py_UCS4 fill;
+    Py_UCS1 fill;
 
     fill = ' ';
     if (arg->sign && arg->flags & F_ZERO)
@@ -7067,7 +7083,7 @@ unicode_format_arg_output(struct unicode_formatter_t *ctx,
     pindex = 0;
     signchar = '\0';
     if (arg->sign) {
-        Py_UCS4 ch = PyUnicode_READ( pbuf, pindex);
+        Py_UCS1 ch = PyUnicode_READ( pbuf, pindex);
         if (ch == '-' || ch == '+') {
             signchar = ch;
             len--;
@@ -7536,7 +7552,7 @@ unicodeiter_next(unicodeiterobject *it)
 
     if (it->it_index < PyUnicode_GET_LENGTH(seq)) {
         const void *data = PyUnicode_DATA(seq);
-        Py_UCS4 chr = PyUnicode_READ(data, it->it_index);
+        Py_UCS1 chr = PyUnicode_READ(data, it->it_index);
         item = PyString_FromOrdinal(chr);
         if (item != NULL)
             ++it->it_index;

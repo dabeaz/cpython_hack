@@ -523,8 +523,8 @@ _PyModule_ClearDict(PyObject *d)
     pos = 0;
     while (PyDict_Next(d, &pos, &key, &value)) {
         if (value != Py_None && PyUnicode_Check(key)) {
-            if (PyUnicode_READ_CHAR(key, 0) == '_' &&
-                PyUnicode_READ_CHAR(key, 1) != '_') {
+            if (PyString_ReadChar(key, 0) == '_' &&
+                PyString_ReadChar(key, 1) != '_') {
                 if (PyDict_SetItem(d, key, Py_None) != 0) {
                     PyErr_WriteUnraisable(NULL);
                 }
@@ -536,7 +536,7 @@ _PyModule_ClearDict(PyObject *d)
     pos = 0;
     while (PyDict_Next(d, &pos, &key, &value)) {
         if (value != Py_None && PyUnicode_Check(key)) {
-            if (PyUnicode_READ_CHAR(key, 0) != '_' ||
+            if (PyString_ReadChar(key, 0) != '_' ||
                 !_PyUnicode_EqualToASCIIString(key, "__builtins__"))
             {
                 if (PyDict_SetItem(d, key, Py_None) != 0) {
@@ -658,7 +658,7 @@ module_repr(PyModuleObject *m)
 {
   PyObject *r;
   char *temp;
-  int size = PyUnicode_GET_SIZE(m->md_name);
+  int size = PyString_Size(m->md_name);
   temp = PyMem_Malloc(size + 50);
   sprintf(temp, "<module '%s'>", PyString_AsChar(m->md_name));
   r = PyString_FromString(temp);

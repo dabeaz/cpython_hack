@@ -548,7 +548,7 @@ _io__IOBase_readline_impl(PyObject *self, Py_ssize_t limit)
             }
             goto fail;
         }
-	bsize = PyUnicode_GET_SIZE(b);
+	bsize = PyString_Size(b);
 	if (bsize == 0) {
 	  Py_DECREF(b);
 	  break;

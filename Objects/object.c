@@ -165,7 +165,7 @@ PyObject_Print(PyObject *op, FILE *fp, int flags)
                 ret = -1;
             else if (PyUnicode_Check(s)) {
 	      fwrite(PyString_AsChar(s), 1,
-		     PyUnicode_GET_SIZE(s), fp);
+		     PyString_Size(s), fp);
 	    }
             else {
                 PyErr_Format(PyExc_TypeError,
