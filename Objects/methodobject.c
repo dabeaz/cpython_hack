@@ -265,7 +265,7 @@ meth_get__qualname__(PyCFunctionObject *m, void *closure)
     if (type_qualname == NULL)
         return NULL;
 
-    if (!PyUnicode_Check(type_qualname)) {
+    if (!PyString_Check(type_qualname)) {
         PyErr_SetString(PyExc_TypeError, "<method>.__class__."
                         "__qualname__ is not a unicode object");
         Py_XDECREF(type_qualname);

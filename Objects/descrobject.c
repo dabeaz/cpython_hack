@@ -26,7 +26,7 @@ descr_dealloc(PyDescrObject *descr)
 static PyObject *
 descr_name(PyDescrObject *descr)
 {
-    if (descr->d_name != NULL && PyUnicode_Check(descr->d_name))
+    if (descr->d_name != NULL && PyString_Check(descr->d_name))
         return descr->d_name;
     return NULL;
 }
@@ -35,7 +35,7 @@ static PyObject *
 descr_repr(PyDescrObject *descr, const char *format)
 {
     PyObject *name = NULL;
-    if (descr->d_name != NULL && PyUnicode_Check(descr->d_name))
+    if (descr->d_name != NULL && PyString_Check(descr->d_name))
         name = descr->d_name;
 
     return PyString_FromFormat(format, name, "?", descr->d_type->tp_name);
@@ -556,7 +556,7 @@ calculate_qualname(PyDescrObject *descr)
     PyObject *type_qualname, *res;
     _Py_IDENTIFIER(__qualname__);
 
-    if (descr->d_name == NULL || !PyUnicode_Check(descr->d_name)) {
+    if (descr->d_name == NULL || !PyString_Check(descr->d_name)) {
         PyErr_SetString(PyExc_TypeError,
                         "<descriptor>.__name__ is not a unicode object");
         return NULL;
@@ -567,7 +567,7 @@ calculate_qualname(PyDescrObject *descr)
     if (type_qualname == NULL)
         return NULL;
 
-    if (!PyUnicode_Check(type_qualname)) {
+    if (!PyString_Check(type_qualname)) {
         PyErr_SetString(PyExc_TypeError, "<descriptor>.__objclass__."
                         "__qualname__ is not a unicode object");
         Py_XDECREF(type_qualname);

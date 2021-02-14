@@ -213,7 +213,7 @@ object___format__(PyObject *self, PyObject *arg)
     PyObject *return_value = NULL;
     PyObject *format_spec;
 
-    if (!PyUnicode_Check(arg)) {
+    if (!PyString_Check(arg)) {
         _PyArg_BadArgument("__format__", "argument", "str", arg);
         goto exit;
     }
@@ -282,7 +282,7 @@ object___dir__(PyObject *self, PyObject *Py_UNUSED(ignored))
         MCACHE_HASH((type)->tp_version_tag,                     \
 		    (PyString_Hash(name)))
 #define MCACHE_CACHEABLE_NAME(name)                             \
-        PyUnicode_CheckExact(name) &&                           \
+        PyString_CheckExact(name) &&                           \
         PyString_Size(name) <= MCACHE_MAX_ATTR_SIZE
 
 struct method_cache_entry {
@@ -724,7 +724,7 @@ type_set_name(PyTypeObject *type, PyObject *value, void *context)
 
     if (!check_set_special_type_attr(type, value, "__name__"))
         return -1;
-    if (!PyUnicode_Check(value)) {
+    if (!PyString_Check(value)) {
         PyErr_Format(PyExc_TypeError,
                      "can only assign string to %s.__name__, not '%s'",
                      type->tp_name, Py_TYPE(value)->tp_name);
@@ -754,7 +754,7 @@ type_set_qualname(PyTypeObject *type, PyObject *value, void *context)
 
     if (!check_set_special_type_attr(type, value, "__qualname__"))
         return -1;
-    if (!PyUnicode_Check(value)) {
+    if (!PyString_Check(value)) {
         PyErr_Format(PyExc_TypeError,
                      "can only assign string to %s.__qualname__, not '%s'",
                      type->tp_name, Py_TYPE(value)->tp_name);
@@ -1124,7 +1124,7 @@ type_repr(PyTypeObject *type)
     mod = type_module(type, NULL);
     if (mod == NULL)
         PyErr_Clear();
-    else if (!PyUnicode_Check(mod)) {
+    else if (!PyString_Check(mod)) {
         Py_DECREF(mod);
         mod = NULL;
     }
@@ -1529,7 +1529,7 @@ check_duplicates(PyObject *tuple)
             if (PyTuple_GetItem(tuple, j) == o) {
                 o = class_name(o);
                 if (o != NULL) {
-                    if (PyUnicode_Check(o)) {
+                    if (PyString_Check(o)) {
                         PyErr_Format(PyExc_TypeError,
                                      "duplicate base class %U", o);
                     }
@@ -1583,7 +1583,7 @@ consistent method resolution\norder (MRO) for bases");
         PyObject *name = class_name(k);
         const char *name_str = NULL;
         if (name != NULL) {
-            if (PyUnicode_Check(name)) {
+            if (PyString_Check(name)) {
                 name_str = PyString_AsChar(name);
             }
             else {
@@ -2408,7 +2408,7 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
     */
     qualname = _PyDict_GetItemIdWithError(dict, &PyId___qualname__);
     if (qualname != NULL) {
-        if (!PyUnicode_Check(qualname)) {
+        if (!PyString_Check(qualname)) {
             PyErr_Format(PyExc_TypeError,
                          "type __qualname__ must be a str, not %s",
                          Py_TYPE(qualname)->tp_name);
@@ -2432,7 +2432,7 @@ type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
     */
     {
         PyObject *doc = _PyDict_GetItemIdWithError(dict, &PyId___doc__);
-        if (doc != NULL && PyUnicode_Check(doc)) {
+        if (doc != NULL && PyString_Check(doc)) {
             Py_ssize_t len;
             const char *doc_str;
             char *tp_doc;
@@ -2825,7 +2825,7 @@ find_name_in_mro(PyTypeObject *type, PyObject *name, int *error)
     PyObject *mro, *res, *base, *dict;
     Py_hash_t hash;
 
-    if (!PyUnicode_CheckExact(name) ||
+    if (!PyString_CheckExact(name) ||
         (hash = PyString_Hash(name)) == -1)
     {
         hash = PyObject_Hash(name);
@@ -2975,7 +2975,7 @@ type_getattro(PyTypeObject *type, PyObject *name)
     descrgetfunc meta_get;
     PyObject* res;
 
-    if (!PyUnicode_Check(name)) {
+    if (!PyString_Check(name)) {
         PyErr_Format(PyExc_TypeError,
                      "attribute name must be string, not '%.200s'",
                      Py_TYPE(name)->tp_name);
@@ -3065,8 +3065,8 @@ type_setattro(PyTypeObject *type, PyObject *name, PyObject *value)
             type->tp_name);
         return -1;
     }
-    if (PyUnicode_Check(name)) {
-        if (PyUnicode_CheckExact(name)) {
+    if (PyString_Check(name)) {
+        if (PyString_CheckExact(name)) {
             Py_INCREF(name);
         }
         else {
@@ -3515,7 +3515,7 @@ object_repr(PyObject *self)
     mod = type_module(type, NULL);
     if (mod == NULL)
         PyErr_Clear();
-    else if (!PyUnicode_Check(mod)) {
+    else if (!PyString_Check(mod)) {
         Py_DECREF(mod);
         mod = NULL;
     }
@@ -4677,7 +4677,7 @@ inherit_special(PyTypeObject *type, PyTypeObject *base)
         type->tp_flags |= Py_TPFLAGS_TYPE_SUBCLASS;
     else if (PyType_IsSubtype(base, &PyLong_Type))
         type->tp_flags |= Py_TPFLAGS_LONG_SUBCLASS;
-    else if (PyType_IsSubtype(base, &PyUnicode_Type))
+    else if (PyType_IsSubtype(base, &PyString_Type))
         type->tp_flags |= Py_TPFLAGS_UNICODE_SUBCLASS;
     else if (PyType_IsSubtype(base, &PyTuple_Type))
         type->tp_flags |= Py_TPFLAGS_TUPLE_SUBCLASS;
@@ -6903,7 +6903,7 @@ update_slot(PyTypeObject *type, PyObject *name)
     slotdef **pp;
     int offset;
 
-    assert(PyUnicode_CheckExact(name));
+    assert(PyString_CheckExact(name));
 #ifdef INTERN_NAME_STRINGS
     assert(PyString_CheckInterned(name));
 #endif
@@ -6911,8 +6911,8 @@ update_slot(PyTypeObject *type, PyObject *name)
     assert(slotdefs_initialized);
     pp = ptrs;
     for (p = slotdefs; p->name; p++) {
-        assert(PyUnicode_CheckExact(p->name_strobj));
-        assert(PyUnicode_CheckExact(name));
+        assert(PyString_CheckExact(p->name_strobj));
+        assert(PyString_CheckExact(name));
 #ifdef INTERN_NAME_STRINGS
         if (p->name_strobj == name) {
             *pp++ = p;
@@ -7216,7 +7216,7 @@ super_getattro(PyObject *self, PyObject *name)
 
     /* We want __class__ to return the class of the super object
        (i.e. super, or a subclass), not the class of su->obj. */
-    if (PyUnicode_Check(name) &&
+    if (PyString_Check(name) &&
         PyString_Size(name) == 9 &&
         _PyUnicode_EqualToASCIIId(name, &PyId___class__))
         goto skip;
@@ -7410,7 +7410,7 @@ super_init_without_args(PyFrameObject *f, PyCodeObject *co,
     PyTypeObject *type = NULL;
     for (i = 0; i < n; i++) {
         PyObject *name = PyTuple_GetItem(co->co_freevars, i);
-        assert(PyUnicode_Check(name));
+        assert(PyString_Check(name));
         if (_PyUnicode_EqualToASCIIId(name, &PyId___class__)) {
             Py_ssize_t index = co->co_nlocals +
                 PyTuple_Size(co->co_cellvars) + i;

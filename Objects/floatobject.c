@@ -302,7 +302,7 @@ float___getformat__(PyTypeObject *type, PyObject *arg)
     PyObject *return_value = NULL;
     const char *typestr;
 
-    if (!PyUnicode_Check(arg)) {
+    if (!PyString_Check(arg)) {
         _PyArg_BadArgument("__getformat__", "argument", "str", arg);
         goto exit;
     }
@@ -356,7 +356,7 @@ float___set_format__(PyTypeObject *type, PyObject *const *args, Py_ssize_t nargs
     if (!_PyArg_CheckPositional("__set_format__", nargs, 2, 2)) {
         goto exit;
     }
-    if (!PyUnicode_Check(args[0])) {
+    if (!PyString_Check(args[0])) {
         _PyArg_BadArgument("__set_format__", "argument 1", "str", args[0]);
         goto exit;
     }
@@ -369,7 +369,7 @@ float___set_format__(PyTypeObject *type, PyObject *const *args, Py_ssize_t nargs
         PyErr_SetString(PyExc_ValueError, "embedded null character");
         goto exit;
     }
-    if (!PyUnicode_Check(args[1])) {
+    if (!PyString_Check(args[1])) {
         _PyArg_BadArgument("__set_format__", "argument 2", "str", args[1]);
         goto exit;
     }
@@ -406,7 +406,7 @@ float___format__(PyObject *self, PyObject *arg)
     PyObject *return_value = NULL;
     PyObject *format_spec;
 
-    if (!PyUnicode_Check(arg)) {
+    if (!PyString_Check(arg)) {
         _PyArg_BadArgument("__format__", "argument", "str", arg);
         goto exit;
     }
@@ -484,7 +484,7 @@ PyFloat_FromString(PyObject *v)
     Py_ssize_t len;
     PyObject *result = NULL;
 
-    if (PyUnicode_Check(v)) {
+    if (PyString_Check(v)) {
         s_buffer = _PyUnicode_TransformDecimalAndSpaceToASCII(v);
         if (s_buffer == NULL)
             return NULL;
@@ -1816,7 +1816,7 @@ float_new_impl(PyTypeObject *type, PyObject *x)
         return float_subtype_new(type, x); /* Wimp out */
     /* If it's a string, but not a string subclass, use
        PyFloat_FromString. */
-    if (PyUnicode_CheckExact(x))
+    if (PyString_CheckExact(x))
         return PyFloat_FromString(x);
     return PyNumber_Float(x);
 }

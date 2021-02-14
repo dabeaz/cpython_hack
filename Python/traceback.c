@@ -361,7 +361,7 @@ _Py_FindSourceFile(PyObject *filename, char* namebuf, size_t namelen, PyObject *
             PyErr_Clear();
             break;
         }
-        if (!PyUnicode_Check(v))
+        if (!PyString_Check(v))
             continue;
         path = v;
         len = PyString_Size(path);
@@ -437,7 +437,7 @@ _Py_DisplaySourceLine(PyObject *f, PyObject *filename, int lineno, int indent)
     else
         PyErr_Clear();
     Py_DECREF(binary);
-    if (!lineobj || !PyUnicode_Check(lineobj)) {
+    if (!lineobj || !PyString_Check(lineobj)) {
         Py_XDECREF(lineobj);
         return err;
     }
@@ -665,7 +665,7 @@ _Py_DumpASCII(int fd, PyObject *text)
     void *data = NULL;
     Py_UCS1 ch;
 
-    if (!PyUnicode_Check(text))
+    if (!PyString_Check(text))
         return;
 
     size = PyString_Size(text);
@@ -718,7 +718,7 @@ dump_frame(int fd, PyFrameObject *frame)
     PyCodeObject *code = PyFrame_GetCode(frame);
     PUTS(fd, "  File ");
     if (code->co_filename != NULL
-        && PyUnicode_Check(code->co_filename))
+        && PyString_Check(code->co_filename))
     {
         PUTS(fd, "\"");
         _Py_DumpASCII(fd, code->co_filename);
@@ -739,7 +739,7 @@ dump_frame(int fd, PyFrameObject *frame)
     PUTS(fd, " in ");
 
     if (code->co_name != NULL
-       && PyUnicode_Check(code->co_name)) {
+       && PyString_Check(code->co_name)) {
         _Py_DumpASCII(fd, code->co_name);
     }
     else {

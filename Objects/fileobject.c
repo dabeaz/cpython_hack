@@ -68,13 +68,13 @@ PyFile_GetLine(PyObject *f, int n)
         result = _PyObject_CallMethodId(f, &PyId_readline, "i", n);
     }
     if (result != NULL && 
-        !PyUnicode_Check(result)) {
+        !PyString_Check(result)) {
         Py_DECREF(result);
         result = NULL;
         PyErr_SetString(PyExc_TypeError,
                    "object.readline() returned non-string");
     }
-    if (n < 0 && result != NULL && PyUnicode_Check(result)) {
+    if (n < 0 && result != NULL && PyString_Check(result)) {
         Py_ssize_t len = PyString_Size(result);
         if (len == 0) {
             Py_DECREF(result);
@@ -490,7 +490,7 @@ PyFile_OpenCodeObject(PyObject *path)
 {
     PyObject *iomod, *f = NULL;
 
-    if (!PyUnicode_Check(path)) {
+    if (!PyString_Check(path)) {
         PyErr_Format(PyExc_TypeError, "'path' must be 'str', not '%.200s'",
                      Py_TYPE(path)->tp_name);
         return NULL;

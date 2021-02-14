@@ -846,7 +846,7 @@ PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
     /* The below code is importlib.__import__() & _gcd_import(), ported to C
        for added performance. */
 
-    if (!PyUnicode_Check(name)) {
+    if (!PyString_Check(name)) {
         _PyErr_SetString(tstate, PyExc_TypeError,
                          "module name must be a string");
         goto error;

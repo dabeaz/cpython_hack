@@ -400,7 +400,7 @@ gen_set_name(PyGenObject *op, PyObject *value, void *Py_UNUSED(ignored))
 {
     /* Not legal to del gen.gi_name or to set it to anything
      * other than a string object. */
-    if (value == NULL || !PyUnicode_Check(value)) {
+    if (value == NULL || !PyString_Check(value)) {
         PyErr_SetString(PyExc_TypeError,
                         "__name__ must be set to a string object");
         return -1;
@@ -422,7 +422,7 @@ gen_set_qualname(PyGenObject *op, PyObject *value, void *Py_UNUSED(ignored))
 {
     /* Not legal to del gen.__qualname__ or to set it to anything
      * other than a string object. */
-    if (value == NULL || !PyUnicode_Check(value)) {
+    if (value == NULL || !PyString_Check(value)) {
         PyErr_SetString(PyExc_TypeError,
                         "__qualname__ must be set to a string object");
         return -1;

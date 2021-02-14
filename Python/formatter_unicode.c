@@ -1099,12 +1099,12 @@ _PyUnicode_FormatAdvancedWriter(_PyUnicodeWriter *writer,
 {
     InternalFormatSpec format;
 
-    assert(PyUnicode_Check(obj));
+    assert(PyString_Check(obj));
 
     /* check for the special case of zero length format spec, make
        it equivalent to str(obj) */
     if (start == end) {
-        if (PyUnicode_CheckExact(obj))
+        if (PyString_CheckExact(obj))
             return _PyUnicodeWriter_WriteStr(writer, obj);
         else
             return format_obj(obj, writer);

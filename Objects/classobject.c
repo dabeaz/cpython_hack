@@ -313,7 +313,7 @@ method_repr(PyMethodObject *a)
         return NULL;
     }
 
-    if (funcname != NULL && !PyUnicode_Check(funcname)) {
+    if (funcname != NULL && !PyString_Check(funcname)) {
         Py_DECREF(funcname);
         funcname = NULL;
     }
@@ -528,7 +528,7 @@ instancemethod_repr(PyObject *self)
     if (_PyObject_LookupAttrId(func, &PyId___name__, &funcname) < 0) {
         return NULL;
     }
-    if (funcname != NULL && !PyUnicode_Check(funcname)) {
+    if (funcname != NULL && !PyString_Check(funcname)) {
         Py_DECREF(funcname);
         funcname = NULL;
     }

@@ -1064,7 +1064,7 @@ write_unraisable_exc_file(PyThreadState *tstate, PyObject *exc_type,
     }
 
     PyObject *moduleName = _PyObject_GetAttrId(exc_type, &PyId___module__);
-    if (moduleName == NULL || !PyUnicode_Check(moduleName)) {
+    if (moduleName == NULL || !PyString_Check(moduleName)) {
         Py_XDECREF(moduleName);
         _PyErr_Clear(tstate);
         if (PyFile_WriteString("<unknown>", file) < 0) {

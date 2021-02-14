@@ -39,7 +39,7 @@ PyFunction_NewWithQualName(PyObject *code, PyObject *globals, PyObject *qualname
     consts = ((PyCodeObject *)code)->co_consts;
     if (PyTuple_Size(consts) >= 1) {
         doc = PyTuple_GetItem(consts, 0);
-        if (!PyUnicode_Check(doc))
+        if (!PyString_Check(doc))
             doc = Py_None;
     }
     else
@@ -257,7 +257,7 @@ func_set_name(PyFunctionObject *op, PyObject *value, void *Py_UNUSED(ignored))
 {
     /* Not legal to del f.func_name or to set it to anything
      * other than a string object. */
-    if (value == NULL || !PyUnicode_Check(value)) {
+    if (value == NULL || !PyString_Check(value)) {
         PyErr_SetString(PyExc_TypeError,
                         "__name__ must be set to a string object");
         return -1;
@@ -279,7 +279,7 @@ func_set_qualname(PyFunctionObject *op, PyObject *value, void *Py_UNUSED(ignored
 {
     /* Not legal to del f.__qualname__ or to set it to anything
      * other than a string object. */
-    if (value == NULL || !PyUnicode_Check(value)) {
+    if (value == NULL || !PyString_Check(value)) {
         PyErr_SetString(PyExc_TypeError,
                         "__qualname__ must be set to a string object");
         return -1;
@@ -477,7 +477,7 @@ func_new_impl(PyTypeObject *type, PyCodeObject *code, PyObject *globals,
     PyFunctionObject *newfunc;
     Py_ssize_t nfree, nclosure;
 
-    if (name != Py_None && !PyUnicode_Check(name)) {
+    if (name != Py_None && !PyString_Check(name)) {
         PyErr_SetString(PyExc_TypeError,
                         "arg 3 (name) must be None or string");
         return NULL;

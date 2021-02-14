@@ -68,7 +68,7 @@ module_init_dict(PyModuleObject *mod, PyObject *md_dict,
         return -1;
     if (_PyDict_SetItemId(md_dict, &PyId___loader__, Py_None) != 0)
         return -1;
-    if (PyUnicode_CheckExact(name)) {
+    if (PyString_CheckExact(name)) {
         Py_INCREF(name);
         Py_XSETREF(mod->md_name, name);
     }
@@ -437,7 +437,7 @@ PyModule_GetNameObject(PyObject *m)
     d = ((PyModuleObject *)m)->md_dict;
     if (d == NULL ||
         (name = _PyDict_GetItemId(d, &PyId___name__)) == NULL ||
-        !PyUnicode_Check(name))
+        !PyString_Check(name))
     {
         PyErr_SetString(PyExc_SystemError, "nameless module");
         return NULL;
@@ -469,7 +469,7 @@ PyModule_GetFilenameObject(PyObject *m)
     d = ((PyModuleObject *)m)->md_dict;
     if (d == NULL ||
         (fileobj = _PyDict_GetItemId(d, &PyId___file__)) == NULL ||
-        !PyUnicode_Check(fileobj))
+        !PyString_Check(fileobj))
     {
         PyErr_SetString(PyExc_SystemError, "module filename missing");
         return NULL;
@@ -522,7 +522,7 @@ _PyModule_ClearDict(PyObject *d)
     /* First, clear only names starting with a single underscore */
     pos = 0;
     while (PyDict_Next(d, &pos, &key, &value)) {
-        if (value != Py_None && PyUnicode_Check(key)) {
+        if (value != Py_None && PyString_Check(key)) {
             if (PyString_ReadChar(key, 0) == '_' &&
                 PyString_ReadChar(key, 1) != '_') {
                 if (PyDict_SetItem(d, key, Py_None) != 0) {
@@ -535,7 +535,7 @@ _PyModule_ClearDict(PyObject *d)
     /* Next, clear all names except for __builtins__ */
     pos = 0;
     while (PyDict_Next(d, &pos, &key, &value)) {
-        if (value != Py_None && PyUnicode_Check(key)) {
+        if (value != Py_None && PyString_Check(key)) {
             if (PyString_ReadChar(key, 0) != '_' ||
                 !_PyUnicode_EqualToASCIIString(key, "__builtins__"))
             {
@@ -589,7 +589,7 @@ module___init__(PyObject *self, PyObject *args, PyObject *kwargs)
     if (!fastargs) {
         goto exit;
     }
-    if (!PyUnicode_Check(fastargs[0])) {
+    if (!PyString_Check(fastargs[0])) {
         _PyArg_BadArgument("module", "argument 'name'", "str", fastargs[0]);
         goto exit;
     }

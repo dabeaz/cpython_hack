@@ -176,7 +176,7 @@ sys_intern(PyObject *module, PyObject *arg)
     PyObject *return_value = NULL;
     PyObject *s;
 
-    if (!PyUnicode_Check(arg)) {
+    if (!PyString_Check(arg)) {
         _PyArg_BadArgument("intern", "argument", "str", arg);
         goto exit;
     }
@@ -550,7 +550,7 @@ sys_intern_impl(PyObject *module, PyObject *s)
 /*[clinic end generated code: output=be680c24f5c9e5d6 input=849483c006924e2f]*/
 {
     PyThreadState *tstate = PyThreadState_Get();
-    if (PyUnicode_CheckExact(s)) {
+    if (PyString_CheckExact(s)) {
         Py_INCREF(s);
         PyUnicode_InternInPlace(&s);
         return s;

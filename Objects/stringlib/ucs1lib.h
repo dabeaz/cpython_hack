@@ -19,8 +19,8 @@
 #define STRINGLIB_STR            PyUnicode_1BYTE_DATA
 #define STRINGLIB_LEN            PyUnicode_GET_LENGTH
 #define STRINGLIB_NEW            _PyUnicode_FromUCS1
-#define STRINGLIB_CHECK          PyUnicode_Check
-#define STRINGLIB_CHECK_EXACT    PyUnicode_CheckExact
+#define STRINGLIB_CHECK          PyString_Check
+#define STRINGLIB_CHECK_EXACT    PyString_CheckExact
 
 #define STRINGLIB_TOSTR          PyObject_Str
 #define STRINGLIB_TOASCII        PyObject_ASCII

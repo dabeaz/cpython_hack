@@ -1027,7 +1027,7 @@ static int obj2ast_constant(PyObject* obj, PyObject** out)
 
 static int obj2ast_identifier(PyObject* obj, PyObject** out)
 {
-    if (!PyUnicode_CheckExact(obj) && obj != Py_None) {
+    if (!PyString_CheckExact(obj) && obj != Py_None) {
         PyErr_SetString(PyExc_TypeError, "AST identifier must be of type str");
         return 1;
     }
@@ -1036,7 +1036,7 @@ static int obj2ast_identifier(PyObject* obj, PyObject** out)
 
 static int obj2ast_string(PyObject* obj, PyObject** out)
 {
-  if (!PyUnicode_CheckExact(obj)) {
+  if (!PyString_CheckExact(obj)) {
         PyErr_SetString(PyExc_TypeError, "AST string must be of type str");
         return 1;
     }

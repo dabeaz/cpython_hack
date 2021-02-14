@@ -994,7 +994,7 @@ _io_FileIO___init__(PyObject *self, PyObject *args, PyObject *kwargs)
         goto skip_optional_pos;
     }
     if (fastargs[1]) {
-        if (!PyUnicode_Check(fastargs[1])) {
+        if (!PyString_Check(fastargs[1])) {
             _PyArg_BadArgument("FileIO", "argument 'mode'", "str", fastargs[1]);
             goto exit;
         }
@@ -1178,7 +1178,7 @@ _io_FileIO_write(fileio *self, PyObject *arg)
   const char *buf;
   Py_ssize_t len, n;
 
-  if (!PyUnicode_Check(arg)) {
+  if (!PyString_Check(arg)) {
     _PyArg_BadArgument("write", "argument", "string", arg);
     return NULL;
   }

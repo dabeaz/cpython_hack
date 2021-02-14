@@ -625,7 +625,7 @@ path_converter(PyObject *o, void *p)
     /* Only call this here so that we don't treat the return value of
        os.fspath() as an fd or buffer. */
     is_index = path->allow_fd && PyIndex_Check(o);
-    is_unicode = PyUnicode_Check(o);
+    is_unicode = PyString_Check(o);
 
     if (is_unicode) {
       bytes = o;
@@ -3397,7 +3397,7 @@ os_write(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
     if (fd == -1 && PyErr_Occurred()) {
         goto exit;
     }
-    if (!PyUnicode_Check(args[1])) {
+    if (!PyString_Check(args[1])) {
       _PyArg_BadArgument("write", "argument 2", "string", args[1]);
       goto exit;
     }
@@ -3506,11 +3506,11 @@ os_putenv(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
     if (!_PyArg_CheckPositional("putenv", nargs, 2, 2)) {
         goto exit;
     }
-    if (!PyUnicode_Check(args[0])) {
+    if (!PyString_Check(args[0])) {
       _PyArg_BadArgument("putenv", "argument 1", "string", args[0]);
       goto exit;
     }
-    if (!PyUnicode_Check(args[1])) {
+    if (!PyString_Check(args[1])) {
       _PyArg_BadArgument("putenv", "argument 2", "string", args[1]);
       goto exit;
     }
@@ -3536,7 +3536,7 @@ static PyObject *
 os_unsetenv(PyObject *module, PyObject *arg)
 {
     PyObject *return_value = NULL;
-    if (!PyUnicode_Check(arg)) {
+    if (!PyString_Check(arg)) {
       _PyArg_BadArgument("unsetenv", "argument 1", "string", arg);
       goto exit;
     }

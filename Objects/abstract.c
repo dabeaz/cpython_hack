@@ -268,7 +268,7 @@ PyObject_Format(PyObject *obj, PyObject *format_spec)
     PyObject *result = NULL;
     _Py_IDENTIFIER(__format__);
 
-    if (format_spec != NULL && !PyUnicode_Check(format_spec)) {
+    if (format_spec != NULL && !PyString_Check(format_spec)) {
         PyErr_Format(PyExc_SystemError,
                      "Format specifier must be a string, not %.200s",
                      Py_TYPE(format_spec)->tp_name);
@@ -295,7 +295,7 @@ PyObject_Format(PyObject *obj, PyObject *format_spec)
     result = PyObject_CallOneArg(meth, format_spec);
     Py_DECREF(meth);
 
-    if (result && !PyUnicode_Check(result)) {
+    if (result && !PyString_Check(result)) {
         PyErr_Format(PyExc_TypeError,
              "__format__ must return a str, not %.200s",
              Py_TYPE(result)->tp_name);
@@ -806,7 +806,7 @@ PyNumber_Long(PyObject *o)
     if (PyErr_Occurred())
         return NULL;
 
-    if (PyUnicode_Check(o))
+    if (PyString_Check(o))
         /* The below check is done in PyLong_FromUnicode(). */
         return PyLong_FromUnicodeObject(o, 10);
 

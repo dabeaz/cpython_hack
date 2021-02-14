@@ -1868,7 +1868,7 @@ main_loop:
                itself. In that case, skip calling format(). I plan to
                move this optimization in to PyObject_Format()
                itself. */
-            if (PyUnicode_CheckExact(value) && fmt_spec == NULL) {
+            if (PyString_CheckExact(value) && fmt_spec == NULL) {
                 /* Do nothing, just transfer ownership to result. */
                 result = value;
             } else {
@@ -2239,13 +2239,13 @@ _PyEval_EvalCode(PyThreadState *tstate,
         name = co->co_name;
     }
     assert(name != NULL);
-    assert(PyUnicode_Check(name));
+    assert(PyString_Check(name));
 
     if (!qualname) {
         qualname = name;
     }
     assert(qualname != NULL);
-    assert(PyUnicode_Check(qualname));
+    assert(PyString_Check(qualname));
 
     PyObject *retval = NULL;
     const Py_ssize_t total_args = co->co_argcount + co->co_kwonlyargcount;
@@ -2312,7 +2312,7 @@ _PyEval_EvalCode(PyThreadState *tstate,
         PyObject *value = kwargs[i];
         Py_ssize_t j;
 
-        if (keyword == NULL || !PyUnicode_Check(keyword)) {
+        if (keyword == NULL || !PyString_Check(keyword)) {
             _PyErr_Format(tstate, PyExc_TypeError,
                           "%U() keywords must be strings",
                           qualname);
@@ -2978,7 +2978,7 @@ import_from(PyThreadState *tstate, PyObject *v, PyObject *name)
     if (pkgname == NULL) {
         goto error;
     }
-    if (!PyUnicode_Check(pkgname)) {
+    if (!PyString_Check(pkgname)) {
         Py_CLEAR(pkgname);
         goto error;
     }
@@ -3006,7 +3006,7 @@ import_from(PyThreadState *tstate, PyObject *v, PyObject *name)
         pkgname_or_unknown = pkgname;
     }
 
-    if (pkgpath == NULL || !PyUnicode_Check(pkgpath)) {
+    if (pkgpath == NULL || !PyString_Check(pkgpath)) {
         _PyErr_Clear(tstate);
         errmsg = PyString_FromFormat(
             "cannot import name %R from %R (unknown location)",
@@ -3060,14 +3060,14 @@ import_all_from(PyThreadState *tstate, PyObject *locals, PyObject *v)
             }
             break;
         }
-        if (!PyUnicode_Check(name)) {
+        if (!PyString_Check(name)) {
             PyObject *modname = _PyObject_GetAttrId(v, &PyId___name__);
             if (modname == NULL) {
                 Py_DECREF(name);
                 err = -1;
                 break;
             }
-            if (!PyUnicode_Check(modname)) {
+            if (!PyString_Check(modname)) {
                 _PyErr_Format(tstate, PyExc_TypeError,
                               "module __name__ must be a string, not %.100s",
                               Py_TYPE(modname)->tp_name);

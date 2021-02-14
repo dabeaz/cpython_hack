@@ -223,7 +223,7 @@ _Py_Mangle(PyObject *privateobj, PyObject *ident)
        This is independent from how the name is used. */
     PyObject *result;
     size_t nlen, plen, ipriv;
-    if (privateobj == NULL || !PyUnicode_Check(privateobj) ||
+    if (privateobj == NULL || !PyString_Check(privateobj) ||
         PyString_ReadChar(ident, 0) != '_' ||
         PyString_ReadChar(ident, 1) != '_') {
         Py_INCREF(ident);
@@ -275,7 +275,7 @@ _Py_Mangle(PyObject *privateobj, PyObject *ident)
         Py_DECREF(result);
         return NULL;
     }
-    assert(_PyUnicode_CheckConsistency(result, 1));
+    assert(_PyString_CheckConsistency(result, 1));
     return result;
 }
 
@@ -3659,7 +3659,7 @@ infer_type(expr_ty e)
         return &PyFunction_Type;
     case JoinedStr_kind:
     case FormattedValue_kind:
-        return &PyUnicode_Type;
+        return &PyString_Type;
     case Constant_kind:
         return Py_TYPE(e->v.Constant.value);
     default:
@@ -3732,7 +3732,7 @@ check_index(struct compiler *c, expr_ty e, expr_ty s)
     switch (e->kind) {
     case Constant_kind:
         v = e->v.Constant.value;
-        if (!(PyUnicode_Check(v) || PyTuple_Check(v))) {
+        if (!(PyString_Check(v) || PyTuple_Check(v))) {
             return 1;
         }
         /* fall through */

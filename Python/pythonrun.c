@@ -157,7 +157,7 @@ PyRun_InteractiveOneObjectEx(FILE *fp, PyObject *filename,
         v = PyObject_Str(v);
         if (v == NULL)
             PyErr_Clear();
-        else if (PyUnicode_Check(v)) {
+        else if (PyString_Check(v)) {
             ps1 = PyString_AsChar(v);
             if (ps1 == NULL) {
                 PyErr_Clear();
@@ -170,7 +170,7 @@ PyRun_InteractiveOneObjectEx(FILE *fp, PyObject *filename,
         w = PyObject_Str(w);
         if (w == NULL)
             PyErr_Clear();
-        else if (PyUnicode_Check(w)) {
+        else if (PyString_Check(w)) {
             ps2 = PyString_AsChar(w);
             if (ps2 == NULL) {
                 PyErr_Clear();
@@ -702,7 +702,7 @@ print_exception(PyObject *f, PyObject *value)
         }
 
         moduleName = _PyObject_GetAttrId(type, &PyId___module__);
-        if (moduleName == NULL || !PyUnicode_Check(moduleName))
+        if (moduleName == NULL || !PyString_Check(moduleName))
         {
             Py_XDECREF(moduleName);
             err = PyFile_WriteString("<unknown>", f);
@@ -732,7 +732,7 @@ print_exception(PyObject *f, PyObject *value)
             err = -1;
             PyFile_WriteString(": <exception str() failed>", f);
         }
-        else if (!PyUnicode_Check(s) ||
+        else if (!PyString_Check(s) ||
             PyObject_Length(s) != 0)
             err = PyFile_WriteString(": ", f);
         if (err == 0)
@@ -1044,7 +1044,7 @@ _Py_SourceAsString(PyObject *cmd, const char *funcname, const char *what, PyComp
     Py_ssize_t size;
 
     *cmd_copy = NULL;
-    if (PyUnicode_Check(cmd)) {
+    if (PyString_Check(cmd)) {
         cf->cf_flags |= PyCF_IGNORE_COOKIE;
         str = PyString_AsCharAndSize(cmd, &size);
         if (str == NULL)

@@ -144,7 +144,7 @@ safe_multiply(PyObject *v, PyObject *w)
             }
         }
     }
-    else if (PyLong_Check(v) && (PyUnicode_Check(w))) {
+    else if (PyLong_Check(v) && (PyString_Check(w))) {
       Py_ssize_t size = PyString_Size(w);
       if (size) {
 	long n = PyLong_AsLong(v);
@@ -155,7 +155,7 @@ safe_multiply(PyObject *v, PyObject *w)
     }
     else if (PyLong_Check(w) &&
              (PyTuple_Check(v) || PyFrozenSet_Check(v) ||
-              PyUnicode_Check(v)))
+              PyString_Check(v)))
     {
         return safe_multiply(w, v);
     }
@@ -200,7 +200,7 @@ safe_lshift(PyObject *v, PyObject *w)
 static PyObject *
 safe_mod(PyObject *v, PyObject *w)
 {
-  if (PyUnicode_Check(v)) {
+  if (PyString_Check(v)) {
         return NULL;
   }
   return PyNumber_Remainder(v, w);

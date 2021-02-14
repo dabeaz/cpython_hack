@@ -24,7 +24,7 @@ static int validate_expr(expr_ty, expr_context_ty);
 static int
 validate_name(PyObject *name)
 {
-    assert(PyUnicode_Check(name));
+    assert(PyString_Check(name));
     static const char * const forbidden[] = {
         "None",
         "True",
@@ -118,7 +118,7 @@ validate_constant(PyObject *value)
     if (PyLong_CheckExact(value)
             || PyFloat_CheckExact(value)
             || PyBool_Check(value)
-            || PyUnicode_CheckExact(value)
+            || PyString_CheckExact(value)
 	)
         return 1;
 
@@ -510,7 +510,7 @@ _PyAST_GetDocString(asdl_seq *body)
         return NULL;
     }
     expr_ty e = st->v.Expr.value;
-    if (e->kind == Constant_kind && PyUnicode_CheckExact(e->v.Constant.value)) {
+    if (e->kind == Constant_kind && PyString_CheckExact(e->v.Constant.value)) {
         return e->v.Constant.value;
     }
     return NULL;

@@ -505,7 +505,7 @@ render_field(PyObject *fieldobj, SubString *format_spec, _PyUnicodeWriter *write
 
     /* If we know the type exactly, skip the lookup of __format__ and just
        call the formatter directly. */
-    if (PyUnicode_CheckExact(fieldobj))
+    if (PyString_CheckExact(fieldobj))
         formatter = _PyUnicode_FormatAdvancedWriter;
     else if (PyLong_CheckExact(fieldobj))
         formatter = _PyLong_FormatAdvancedWriter;
@@ -1101,7 +1101,7 @@ formatter_parser(PyObject *ignored, PyObject *self)
 {
     formatteriterobject *it;
 
-    if (!PyUnicode_Check(self)) {
+    if (!PyString_Check(self)) {
         PyErr_Format(PyExc_TypeError, "expected str, got %s", Py_TYPE(self)->tp_name);
         return NULL;
     }
@@ -1241,7 +1241,7 @@ formatter_field_name_split(PyObject *ignored, PyObject *self)
     PyObject *first_obj = NULL;
     PyObject *result = NULL;
 
-    if (!PyUnicode_Check(self)) {
+    if (!PyString_Check(self)) {
         PyErr_Format(PyExc_TypeError, "expected str, got %s", Py_TYPE(self)->tp_name);
         return NULL;
     }

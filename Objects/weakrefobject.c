@@ -221,7 +221,7 @@ weakref_repr(PyWeakReference *self)
         Py_DECREF(obj);
         return NULL;
     }
-    if (name == NULL || !PyUnicode_Check(name)) {
+    if (name == NULL || !PyString_Check(name)) {
         repr = PyString_FromFormat(
             "<weakref at %p; to '%s' at %p>",
             self,

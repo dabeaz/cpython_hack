@@ -808,7 +808,7 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
         int *p = va_arg(*p_va, int *);
         const void *data;
 
-        if (!PyUnicode_Check(arg))
+        if (!PyString_Check(arg))
             return converterr("a unicode character", arg, msgbuf, bufsize);
 
         if (PyString_Size(arg) != 1)
@@ -845,7 +845,7 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
 
             if (c == 'z' && arg == Py_None)
                 *p = NULL;
-            else if (PyUnicode_Check(arg)) {
+            else if (PyString_Check(arg)) {
                 sarg = PyString_AsCharAndSize(arg, &len);
                 if (sarg == NULL)
                     return converterr(CONV_UNICODE,
@@ -864,7 +864,7 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
     }
     case 'U': { /* PyUnicode object */
         PyObject **p = va_arg(*p_va, PyObject **);
-        if (PyUnicode_Check(arg)) {
+        if (PyString_Check(arg)) {
             *p = arg;
         }
         else
@@ -1367,7 +1367,7 @@ vgetargskeywords(PyObject *args, PyObject *kwargs, const char *format,
         j = 0;
         while (PyDict_Next(kwargs, &j, &key, NULL)) {
             int match = 0;
-            if (!PyUnicode_Check(key)) {
+            if (!PyString_Check(key)) {
                 PyErr_SetString(PyExc_TypeError,
                                 "keywords must be strings");
                 return cleanreturn(0, &freelist);
@@ -1541,7 +1541,7 @@ find_keyword(PyObject *kwnames, PyObject *const *kwstack, PyObject *key)
 
     for (i = 0; i < nkwargs; i++) {
         PyObject *kwname = PyTuple_GetItem(kwnames, i);
-        assert(PyUnicode_Check(kwname));
+        assert(PyString_Check(kwname));
         if (_PyUnicode_EQ(kwname, key)) {
             return kwstack[i];
         }

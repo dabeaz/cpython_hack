@@ -157,8 +157,8 @@ set_lookkey(PySetObject *so, PyObject *key, Py_hash_t hash)
                 assert(startkey != dummy);
                 if (startkey == key)
                     return entry;
-                if (PyUnicode_CheckExact(startkey)
-                    && PyUnicode_CheckExact(key)
+                if (PyString_CheckExact(startkey)
+                    && PyString_CheckExact(key)
                     && _PyUnicode_EQ(startkey, key))
                     return entry;
                 table = so->table;
@@ -214,8 +214,8 @@ set_add_entry(PySetObject *so, PyObject *key, Py_hash_t hash)
                 assert(startkey != dummy);
                 if (startkey == key)
                     goto found_active;
-                if (PyUnicode_CheckExact(startkey)
-                    && PyUnicode_CheckExact(key)
+                if (PyString_CheckExact(startkey)
+                    && PyString_CheckExact(key)
                     && _PyUnicode_EQ(startkey, key))
                     goto found_active;
                 table = so->table;
@@ -414,7 +414,7 @@ set_add_key(PySetObject *so, PyObject *key)
 {
     Py_hash_t hash;
 
-    if (!PyUnicode_CheckExact(key) ||
+    if (!PyString_CheckExact(key) ||
         (hash = PyString_Hash(key)) == -1) {
         hash = PyObject_Hash(key);
         if (hash == -1)
@@ -428,7 +428,7 @@ set_contains_key(PySetObject *so, PyObject *key)
 {
     Py_hash_t hash;
 
-    if (!PyUnicode_CheckExact(key) ||
+    if (!PyString_CheckExact(key) ||
         (hash = PyString_Hash(key)) == -1) {
         hash = PyObject_Hash(key);
         if (hash == -1)
@@ -442,7 +442,7 @@ set_discard_key(PySetObject *so, PyObject *key)
 {
     Py_hash_t hash;
 
-    if (!PyUnicode_CheckExact(key) ||
+    if (!PyString_CheckExact(key) ||
         (hash = PyString_Hash(key)) == -1) {
         hash = PyObject_Hash(key);
         if (hash == -1)

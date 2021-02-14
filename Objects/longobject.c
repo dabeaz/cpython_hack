@@ -96,7 +96,7 @@ int___format__(PyObject *self, PyObject *arg)
     PyObject *return_value = NULL;
     PyObject *format_spec;
 
-    if (!PyUnicode_Check(arg)) {
+    if (!PyString_Check(arg)) {
         _PyArg_BadArgument("__format__", "argument", "str", arg);
         goto exit;
     }
@@ -266,7 +266,7 @@ int_to_bytes(PyObject *self, PyObject *const *args, Py_ssize_t nargs, PyObject *
         }
         length = ival;
     }
-    if (!PyUnicode_Check(args[1])) {
+    if (!PyString_Check(args[1])) {
         _PyArg_BadArgument("to_bytes", "argument 'byteorder'", "str", args[1]);
         goto exit;
     }
@@ -329,7 +329,7 @@ int_from_bytes(PyTypeObject *type, PyObject *const *args, Py_ssize_t nargs, PyOb
         goto exit;
     }
     bytes_obj = args[0];
-    if (!PyUnicode_Check(args[1])) {
+    if (!PyString_Check(args[1])) {
         _PyArg_BadArgument("from_bytes", "argument 'byteorder'", "str", args[1]);
         goto exit;
     }
@@ -1907,7 +1907,7 @@ long_to_decimal_string_internal(PyObject *aa,
         writer->pos += strlen;
     }
     else {
-        assert(_PyUnicode_CheckConsistency(str, 1));
+        assert(_PyString_CheckConsistency(str, 1));
         *p_output = (PyObject *)str;
     }
     return 0;
@@ -2058,7 +2058,7 @@ long_format_binary(PyObject *aa, int base, int alternate,
         writer->pos += sz;
     }
     else {
-        assert(_PyUnicode_CheckConsistency(v, 1));
+        assert(_PyString_CheckConsistency(v, 1));
         *p_output = v;
     }
     return 0;
@@ -4823,7 +4823,7 @@ long_new_impl(PyTypeObject *type, PyObject *x, PyObject *obase)
         return NULL;
     }
 
-    if (PyUnicode_Check(x))
+    if (PyString_Check(x))
         return PyLong_FromUnicodeObject(x, (int)base);
     else {
         PyErr_SetString(PyExc_TypeError,

@@ -2595,7 +2595,7 @@ list_sort_impl(PyListObject *self, PyObject *keyfunc, int reverse)
         /* Choose the best compare, given what we now know about the keys. */
         if (keys_are_all_same_type) {
 
-            if (key_type == &PyUnicode_Type && strings_are_latin) {
+            if (key_type == &PyString_Type && strings_are_latin) {
                 ms.key_compare = unsafe_latin_compare;
             }
             else if (key_type == &PyLong_Type && ints_are_bounded) {

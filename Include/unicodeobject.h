@@ -67,11 +67,6 @@ Copyright (c) Corporation for National Research Initiatives.
 /* Py_UCS4 and Py_UCS2 are typedefs for the respective
    unicode representations. */
 
-#if 0
-typedef uint32_t Py_UCS4;
-typedef uint16_t Py_UCS2;
-#endif
-
 typedef uint8_t Py_UCS1;
 
 #ifdef __cplusplus
@@ -79,13 +74,12 @@ extern "C" {
 #endif
 
 
-PyAPI_DATA(PyTypeObject) PyUnicode_Type;
-PyAPI_DATA(PyTypeObject) PyUnicodeIter_Type;
+PyAPI_DATA(PyTypeObject) PyString_Type;
+PyAPI_DATA(PyTypeObject) PyStringIter_Type;
 
-#define PyUnicode_Check(op) \
-                 PyType_HasFeature(Py_TYPE(op), Py_TPFLAGS_UNICODE_SUBCLASS)
-#define PyUnicode_CheckExact(op) Py_IS_TYPE(op, &PyUnicode_Type)
-
+PyAPI_FUNC(int) PyString_Check(PyObject *);
+PyAPI_FUNC(int) PyString_CheckExact(PyObject *);
+  
 /* --- Constants ---------------------------------------------------------- */
   
 /* === Public API ========================================================= */

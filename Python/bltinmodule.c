@@ -127,7 +127,7 @@ builtin_format(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
     if (nargs < 2) {
         goto skip_optional;
     }
-    if (!PyUnicode_Check(args[1])) {
+    if (!PyString_Check(args[1])) {
         _PyArg_BadArgument("format", "argument 2", "str", args[1]);
         goto exit;
     }
@@ -217,7 +217,7 @@ builtin_compile(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObj
     filename = args[1];
     Py_INCREF(filename);
     
-    if (!PyUnicode_Check(args[2])) {
+    if (!PyString_Check(args[2])) {
         _PyArg_BadArgument("compile", "argument 'mode'", "str", args[2]);
         goto exit;
     }
@@ -948,7 +948,7 @@ builtin___build_class__(PyObject *self, PyObject *const *args, Py_ssize_t nargs,
         return NULL;
     }
     name = args[1];
-    if (!PyUnicode_Check(name)) {
+    if (!PyString_Check(name)) {
         PyErr_SetString(PyExc_TypeError,
                         "__build_class__: name is not a string");
         return NULL;
@@ -1861,7 +1861,7 @@ builtin_getattr(PyObject *self, PyObject *const *args, Py_ssize_t nargs)
 
     v = args[0];
     name = args[1];
-    if (!PyUnicode_Check(name)) {
+    if (!PyString_Check(name)) {
         PyErr_SetString(PyExc_TypeError,
                         "getattr(): attribute name must be string");
         return NULL;
@@ -1926,7 +1926,7 @@ builtin_hasattr_impl(PyObject *module, PyObject *obj, PyObject *name)
 {
     PyObject *v;
 
-    if (!PyUnicode_Check(name)) {
+    if (!PyString_Check(name)) {
         PyErr_SetString(PyExc_TypeError,
                         "hasattr(): attribute name must be string");
         return NULL;
@@ -2538,7 +2538,7 @@ builtin_ord(PyObject *module, PyObject *c)
 {
     long ord;
     Py_ssize_t size;
-    if (PyUnicode_Check(c)) {
+    if (PyString_Check(c)) {
       size = PyString_Size(c);
         if (size == 1) {
 	  ord = (long)PyString_ReadChar(c, 0);
@@ -2613,7 +2613,7 @@ builtin_print(PyObject *self, PyObject *const *args, Py_ssize_t nargs, PyObject 
     if (sep == Py_None) {
         sep = NULL;
     }
-    else if (sep && !PyUnicode_Check(sep)) {
+    else if (sep && !PyString_Check(sep)) {
         PyErr_Format(PyExc_TypeError,
                      "sep must be None or a string, not %.200s",
                      Py_TYPE(sep)->tp_name);
@@ -2622,7 +2622,7 @@ builtin_print(PyObject *self, PyObject *const *args, Py_ssize_t nargs, PyObject 
     if (end == Py_None) {
         end = NULL;
     }
-    else if (end && !PyUnicode_Check(end)) {
+    else if (end && !PyString_Check(end)) {
         PyErr_Format(PyExc_TypeError,
                      "end must be None or a string, not %.200s",
                      Py_TYPE(end)->tp_name);
@@ -2767,8 +2767,8 @@ builtin_input_impl(PyObject *module, PyObject *prompt)
         stdin_encoding = _PyObject_GetAttrId(fin, &PyId_encoding);
         stdin_errors = _PyObject_GetAttrId(fin, &PyId_errors);
         if (!stdin_encoding || !stdin_errors ||
-                !PyUnicode_Check(stdin_encoding) ||
-                !PyUnicode_Check(stdin_errors)) {
+                !PyString_Check(stdin_encoding) ||
+                !PyString_Check(stdin_errors)) {
             tty = 0;
             goto _readline_errors;
         }
@@ -3030,7 +3030,7 @@ builtin_sum_impl(PyObject *module, PyObject *iterable, PyObject *start)
         }
     } else {
         /* reject string values for 'start' parameter */
-        if (PyUnicode_Check(result)) {
+        if (PyString_Check(result)) {
             PyErr_SetString(PyExc_TypeError,
                 "sum() can't sum strings [use ''.join(seq) instead]");
             Py_DECREF(iter);
@@ -3516,7 +3516,7 @@ _PyBuiltin_Init(PyThreadState *tstate)
     SETBUILTIN("set",                   &PySet_Type);
     SETBUILTIN("slice",                 &PySlice_Type);
     SETBUILTIN("staticmethod",          &PyStaticMethod_Type);
-    SETBUILTIN("str",                   &PyUnicode_Type);
+    SETBUILTIN("str",                   &PyString_Type);
     SETBUILTIN("super",                 &PySuper_Type);
     SETBUILTIN("tuple",                 &PyTuple_Type);
     SETBUILTIN("type",                  &PyType_Type);

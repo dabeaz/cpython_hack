@@ -157,7 +157,7 @@ read_init_file(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "|O:read_init_file", &filename_obj))
         return NULL;
     if (filename_obj != Py_None) {
-	if (!PyUnicode_Check(filename_obj)) {
+	if (!PyString_Check(filename_obj)) {
 	  return NULL;
 	}
 	errno = rl_read_init_file(PyString_AsChar(filename_obj));
@@ -183,7 +183,7 @@ read_history_file(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "|O:read_history_file", &filename_obj))
         return NULL;
     if (filename_obj != Py_None) {
-	if (!PyUnicode_Check(filename_obj)) {
+	if (!PyString_Check(filename_obj)) {
 	  return NULL;
 	}
 	errno = read_history(PyString_AsChar(filename_obj));
@@ -212,7 +212,7 @@ write_history_file(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "|O:write_history_file", &filename_obj))
         return NULL;
     if (filename_obj != Py_None) {
-	if (!PyUnicode_Check(filename_obj)) {
+	if (!PyString_Check(filename_obj)) {
 	  return NULL;
 	}
 	filename = PyString_AsChar(filename_obj);

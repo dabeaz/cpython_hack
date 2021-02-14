@@ -124,7 +124,7 @@ _io_open_impl(PyObject *module, PyObject *file, const char *mode)
     }
 
     if (!is_number &&
-        !PyUnicode_Check(path_or_fd))
+        !PyString_Check(path_or_fd))
       {
         PyErr_Format(PyExc_TypeError, "invalid file: %R", file);
         goto error;
@@ -377,7 +377,7 @@ _io_open(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *kw
         goto skip_optional_pos;
     }
     if (args[1]) {
-        if (!PyUnicode_Check(args[1])) {
+        if (!PyString_Check(args[1])) {
             _PyArg_BadArgument("open", "argument 'mode'", "str", args[1]);
             goto exit;
         }

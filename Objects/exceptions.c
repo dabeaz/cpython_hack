@@ -650,7 +650,7 @@ ImportError_dealloc(PyImportErrorObject *self)
 static PyObject *
 ImportError_str(PyImportErrorObject *self)
 {
-    if (self->msg && PyUnicode_CheckExact(self->msg)) {
+    if (self->msg && PyString_CheckExact(self->msg)) {
         Py_INCREF(self->msg);
         return self->msg;
     }
@@ -1226,7 +1226,7 @@ SyntaxError_init(PySyntaxErrorObject *self, PyObject *args, PyObject *kwds)
          * as TabError or IndentationError (see issue #31161)
          */
         if (Py_IS_TYPE(self, (PyTypeObject *)PyExc_SyntaxError) &&
-                self->text && PyUnicode_Check(self->text) &&
+                self->text && PyString_Check(self->text) &&
                 _report_missing_parentheses(self) < 0) {
             return -1;
         }
@@ -1294,7 +1294,7 @@ SyntaxError_str(PySyntaxErrorObject *self)
     /* XXX -- do all the additional formatting with filename and
        lineno here */
 
-    if (self->filename && PyUnicode_Check(self->filename)) {
+    if (self->filename && PyString_Check(self->filename)) {
         filename = my_basename(self->filename);
         if (filename == NULL)
             return NULL;
@@ -1814,7 +1814,7 @@ _PyErr_TrySetFromCause(const char *format, ...)
     num_args = PyTuple_Size(instance_args);
     if (num_args > 1 ||
         (num_args == 1 &&
-         !PyUnicode_CheckExact(PyTuple_GetItem(instance_args, 0)))) {
+         !PyString_CheckExact(PyTuple_GetItem(instance_args, 0)))) {
         /* More than 1 arg, or the one arg we do have isn't a string
          */
         PyErr_Restore(exc, val, tb);

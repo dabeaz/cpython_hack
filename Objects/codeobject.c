@@ -132,7 +132,7 @@ code_replace(PyCodeObject *self, PyObject *const *args, Py_ssize_t nargs, PyObje
         }
     }
     if (args[7]) {
-        if (!PyUnicode_Check(args[7])) {
+        if (!PyString_Check(args[7])) {
             _PyArg_BadArgument("replace", "argument 'co_code'", "bytes", args[7]);
             goto exit;
         }
@@ -192,7 +192,7 @@ code_replace(PyCodeObject *self, PyObject *const *args, Py_ssize_t nargs, PyObje
         }
     }
     if (args[13]) {
-        if (!PyUnicode_Check(args[13])) {
+        if (!PyString_Check(args[13])) {
             _PyArg_BadArgument("replace", "argument 'co_filename'", "str", args[13]);
             goto exit;
         }
@@ -202,7 +202,7 @@ code_replace(PyCodeObject *self, PyObject *const *args, Py_ssize_t nargs, PyObje
         }
     }
     if (args[14]) {
-        if (!PyUnicode_Check(args[14])) {
+        if (!PyString_Check(args[14])) {
             _PyArg_BadArgument("replace", "argument 'co_name'", "str", args[14]);
             goto exit;
         }
@@ -211,7 +211,7 @@ code_replace(PyCodeObject *self, PyObject *const *args, Py_ssize_t nargs, PyObje
             goto skip_optional_kwonly;
         }
     }
-    if (!PyUnicode_Check(args[15])) {
+    if (!PyString_Check(args[15])) {
         _PyArg_BadArgument("replace", "argument 'co_lnotab'", "bytes", args[15]);
         goto exit;
     }
@@ -258,7 +258,7 @@ intern_strings(PyObject *tuple)
 
     for (i = PyTuple_Size(tuple); --i >= 0; ) {
         PyObject *v = PyTuple_GetItem(tuple, i);
-        if (v == NULL || !PyUnicode_CheckExact(v)) {
+        if (v == NULL || !PyString_CheckExact(v)) {
             PyErr_SetString(PyExc_SystemError,
                             "non-string found in code slot");
             return -1;
@@ -274,7 +274,7 @@ intern_string_constants(PyObject *tuple, int *modified)
 {
     for (Py_ssize_t i = PyTuple_Size(tuple); --i >= 0; ) {
         PyObject *v = PyTuple_GetItem(tuple, i);
-        if (PyUnicode_CheckExact(v)) {
+        if (PyString_CheckExact(v)) {
             if (all_name_chars(v)) {
                 PyObject *w = v;
                 PyUnicode_InternInPlace(&v);
@@ -337,15 +337,15 @@ PyCode_NewWithPosOnlyArgs(int argcount, int posonlyargcount, int kwonlyargcount,
     if (argcount < posonlyargcount || posonlyargcount < 0 ||
         kwonlyargcount < 0 || nlocals < 0 ||
         stacksize < 0 || flags < 0 ||
-        code == NULL || !PyUnicode_Check(code) ||
+        code == NULL || !PyString_Check(code) ||
         consts == NULL || !PyTuple_Check(consts) ||
         names == NULL || !PyTuple_Check(names) ||
         varnames == NULL || !PyTuple_Check(varnames) ||
         freevars == NULL || !PyTuple_Check(freevars) ||
         cellvars == NULL || !PyTuple_Check(cellvars) ||
-        name == NULL || !PyUnicode_Check(name) ||
-        filename == NULL || !PyUnicode_Check(filename) ||
-        lnotab == NULL || !PyUnicode_Check(lnotab)) {
+        name == NULL || !PyString_Check(name) ||
+        filename == NULL || !PyString_Check(filename) ||
+        lnotab == NULL || !PyString_Check(lnotab)) {
         PyErr_BadInternalCall();
         return NULL;
     }
@@ -571,10 +571,10 @@ validate_and_copy_tuple(PyObject *tup)
 
     for (i = 0; i < len; i++) {
         item = PyTuple_GetItem(tup, i);
-        if (PyUnicode_CheckExact(item)) {
+        if (PyString_CheckExact(item)) {
             Py_INCREF(item);
         }
-        else if (!PyUnicode_Check(item)) {
+        else if (!PyString_Check(item)) {
             PyErr_Format(
                 PyExc_TypeError,
                 "name tuples must contain only "
@@ -817,7 +817,7 @@ code_repr(PyCodeObject *co)
         lineno = co->co_firstlineno;
     else
         lineno = -1;
-    if (co->co_filename && PyUnicode_Check(co->co_filename)) {
+    if (co->co_filename && PyString_Check(co->co_filename)) {
         return PyString_FromFormat(
             "<code object %U at %p, file \"%U\", line %d>",
             co->co_name, co, co->co_filename, lineno);
@@ -836,7 +836,7 @@ _PyCode_ConstantKey(PyObject *op)
     /* Py_None and Py_Ellipsis are singletons. */
     if (op == Py_None || op == Py_Ellipsis
        || PyLong_CheckExact(op)
-       || PyUnicode_CheckExact(op)
+       || PyString_CheckExact(op)
           /* code_richcompare() uses _PyCode_ConstantKey() internally */
        || PyCode_Check(op))
     {

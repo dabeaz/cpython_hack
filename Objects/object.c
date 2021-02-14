@@ -163,7 +163,7 @@ PyObject_Print(PyObject *op, FILE *fp, int flags)
                 s = PyObject_Repr(op);
             if (s == NULL)
                 ret = -1;
-            else if (PyUnicode_Check(s)) {
+            else if (PyString_Check(s)) {
 	      fwrite(PyString_AsChar(s), 1,
 		     PyString_Size(s), fp);
 	    }
@@ -238,7 +238,7 @@ PyObject_Repr(PyObject *v)
     if (res == NULL) {
         return NULL;
     }
-    if (!PyUnicode_Check(res)) {
+    if (!PyString_Check(res)) {
         _PyErr_Format(tstate, PyExc_TypeError,
                       "__repr__ returned non-string (type %.200s)",
                       Py_TYPE(res)->tp_name);
@@ -254,7 +254,7 @@ PyObject_Str(PyObject *v)
     PyObject *res;
     if (v == NULL)
         return PyString_FromString("<NULL>");
-    if (PyUnicode_CheckExact(v)) {
+    if (PyString_CheckExact(v)) {
         Py_INCREF(v);
         return v;
     }
@@ -270,14 +270,14 @@ PyObject_Str(PyObject *v)
     if (res == NULL) {
         return NULL;
     }
-    if (!PyUnicode_Check(res)) {
+    if (!PyString_Check(res)) {
         _PyErr_Format(tstate, PyExc_TypeError,
                       "__str__ returned non-string (type %.200s)",
                       Py_TYPE(res)->tp_name);
         Py_DECREF(res);
         return NULL;
     }
-    assert(_PyUnicode_CheckConsistency(res, 1));
+    assert(_PyString_CheckConsistency(res, 1));
     return res;
 }
 
@@ -589,7 +589,7 @@ PyObject_GetAttr(PyObject *v, PyObject *name)
 {
     PyTypeObject *tp = Py_TYPE(v);
 
-    if (!PyUnicode_Check(name)) {
+    if (!PyString_Check(name)) {
         PyErr_Format(PyExc_TypeError,
                      "attribute name must be string, not '%.200s'",
                      Py_TYPE(name)->tp_name);
@@ -614,7 +614,7 @@ _PyObject_LookupAttr(PyObject *v, PyObject *name, PyObject **result)
 {
     PyTypeObject *tp = Py_TYPE(v);
 
-    if (!PyUnicode_Check(name)) {
+    if (!PyString_Check(name)) {
         PyErr_Format(PyExc_TypeError,
                      "attribute name must be string, not '%.200s'",
                      Py_TYPE(name)->tp_name);
@@ -690,7 +690,7 @@ PyObject_SetAttr(PyObject *v, PyObject *name, PyObject *value)
     PyTypeObject *tp = Py_TYPE(v);
     int err;
 
-    if (!PyUnicode_Check(name)) {
+    if (!PyString_Check(name)) {
         PyErr_Format(PyExc_TypeError,
                      "attribute name must be string, not '%.200s'",
                      Py_TYPE(name)->tp_name);
@@ -803,7 +803,7 @@ _PyObject_GetMethod(PyObject *obj, PyObject *name, PyObject **method)
     assert(*method == NULL);
 
     if (Py_TYPE(obj)->tp_getattro != PyObject_GenericGetAttr
-            || !PyUnicode_Check(name)) {
+            || !PyString_Check(name)) {
         *method = PyObject_GetAttr(obj, name);
         return 0;
     }
@@ -887,7 +887,7 @@ _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name,
     Py_ssize_t dictoffset;
     PyObject **dictptr;
 
-    if (!PyUnicode_Check(name)){
+    if (!PyString_Check(name)){
         PyErr_Format(PyExc_TypeError,
                      "attribute name must be string, not '%.200s'",
                      Py_TYPE(name)->tp_name);
@@ -999,7 +999,7 @@ _PyObject_GenericSetAttrWithDict(PyObject *obj, PyObject *name,
     PyObject **dictptr;
     int res = -1;
 
-    if (!PyUnicode_Check(name)){
+    if (!PyString_Check(name)){
         PyErr_Format(PyExc_TypeError,
                      "attribute name must be string, not '%.200s'",
                      Py_TYPE(name)->tp_name);
@@ -1456,7 +1456,7 @@ _PyTypes_Init(void)
     INIT_TYPE(&PyDictRevIterValue_Type, "reversed dict values");
     INIT_TYPE(&PyDictRevIterItem_Type, "reversed dict items");
     INIT_TYPE(&PySet_Type, "set");
-    INIT_TYPE(&PyUnicode_Type, "str");
+    INIT_TYPE(&PyString_Type, "str");
     INIT_TYPE(&PySlice_Type, "slice");
     INIT_TYPE(&PyStaticMethod_Type, "static method");
     INIT_TYPE(&PyFloat_Type, "float");
