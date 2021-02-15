@@ -342,7 +342,7 @@ calc_padding(Py_ssize_t nchars, Py_ssize_t width, Py_UCS1 align,
 /* Do the padding, and return a pointer to where the caller-supplied
    content goes. */
 static int
-fill_padding(_PyUnicodeWriter *writer,
+fill_padding(_PyStringWriter *writer,
              Py_ssize_t nchars,
              Py_UCS1 fill_char, Py_ssize_t n_lpadding,
              Py_ssize_t n_rpadding)
@@ -566,7 +566,7 @@ calc_number_widths(NumberFieldWidths *spec, Py_ssize_t n_prefix,
    as determined in calc_number_widths().
    Return -1 on error, or 0 on success. */
 static int
-fill_number(_PyUnicodeWriter *writer, const NumberFieldWidths *spec,
+fill_number(_PyStringWriter *writer, const NumberFieldWidths *spec,
             PyObject *digits, Py_ssize_t d_start,
             PyObject *prefix, Py_ssize_t p_start,
             Py_UCS1 fill_char,
@@ -690,7 +690,7 @@ free_locale_info(LocaleInfo *locale_info)
 
 static int
 format_string_internal(PyObject *value, const InternalFormatSpec *format,
-                       _PyUnicodeWriter *writer)
+                       _PyStringWriter *writer)
 {
     Py_ssize_t lpad;
     Py_ssize_t rpad;
@@ -726,7 +726,7 @@ format_string_internal(PyObject *value, const InternalFormatSpec *format,
     if ((format->width == -1 || format->width <= len)
         && (format->precision == -1 || format->precision >= len)) {
         /* Fast path */
-        return _PyUnicodeWriter_WriteStr(writer, value);
+        return _PyStringWriter_WriteStr(writer, value);
     }
 
     /* if precision is specified, output no more that format.precision
@@ -738,7 +738,7 @@ format_string_internal(PyObject *value, const InternalFormatSpec *format,
     calc_padding(len, format->width, format->align, &lpad, &rpad, &total);
 
     /* allocate the resulting string */
-    if (_PyUnicodeWriter_Prepare(writer, total) == -1)
+    if (_PyStringWriter_Prepare(writer, total) == -1)
         goto done;
 
     /* Write into that space. First the padding. */
@@ -765,7 +765,7 @@ done:
 
 static int
 format_long_internal(PyObject *value, const InternalFormatSpec *format,
-                     _PyUnicodeWriter *writer)
+                     _PyStringWriter *writer)
 {
     int result = -1;
     PyObject *tmp = NULL;
@@ -912,7 +912,7 @@ format_long_internal(PyObject *value, const InternalFormatSpec *format,
     }
 
     /* Allocate the memory. */
-    if (_PyUnicodeWriter_Prepare(writer, n_total) == -1)
+    if (_PyStringWriter_Prepare(writer, n_total) == -1)
         goto done;
 
     /* Populate the memory. */
@@ -935,7 +935,7 @@ done:
 static int
 format_float_internal(PyObject *value,
                       const InternalFormatSpec *format,
-                      _PyUnicodeWriter *writer)
+                      _PyStringWriter *writer)
 {
     char *buf = NULL;       /* buffer returned from PyOS_double_to_string */
     Py_ssize_t n_digits;
@@ -1019,7 +1019,7 @@ format_float_internal(PyObject *value,
         && !format->thousands_separators)
     {
         /* Fast path */
-        result = _PyUnicodeWriter_WriteASCIIString(writer, buf, n_digits);
+        result = _PyStringWriter_WriteASCIIString(writer, buf, n_digits);
         PyMem_Free(buf);
         return result;
     }
@@ -1059,7 +1059,7 @@ format_float_internal(PyObject *value,
     }
 
     /* Allocate the memory. */
-    if (_PyUnicodeWriter_Prepare(writer, n_total) == -1)
+    if (_PyStringWriter_Prepare(writer, n_total) == -1)
         goto done;
 
     /* Populate the memory. */
@@ -1078,7 +1078,7 @@ done:
 /*********** built in formatters ****************************************/
 /************************************************************************/
 static int
-format_obj(PyObject *obj, _PyUnicodeWriter *writer)
+format_obj(PyObject *obj, _PyStringWriter *writer)
 {
     PyObject *str;
     int err;
@@ -1086,13 +1086,13 @@ format_obj(PyObject *obj, _PyUnicodeWriter *writer)
     str = PyObject_Str(obj);
     if (str == NULL)
         return -1;
-    err = _PyUnicodeWriter_WriteStr(writer, str);
+    err = _PyStringWriter_WriteStr(writer, str);
     Py_DECREF(str);
     return err;
 }
 
 int
-_PyUnicode_FormatAdvancedWriter(_PyUnicodeWriter *writer,
+_PyString_FormatAdvancedWriter(_PyStringWriter *writer,
                                 PyObject *obj,
                                 PyObject *format_spec,
                                 Py_ssize_t start, Py_ssize_t end)
@@ -1105,7 +1105,7 @@ _PyUnicode_FormatAdvancedWriter(_PyUnicodeWriter *writer,
        it equivalent to str(obj) */
     if (start == end) {
         if (PyString_CheckExact(obj))
-            return _PyUnicodeWriter_WriteStr(writer, obj);
+            return _PyStringWriter_WriteStr(writer, obj);
         else
             return format_obj(obj, writer);
     }
@@ -1128,7 +1128,7 @@ _PyUnicode_FormatAdvancedWriter(_PyUnicodeWriter *writer,
 }
 
 int
-_PyLong_FormatAdvancedWriter(_PyUnicodeWriter *writer,
+_PyLong_FormatAdvancedWriter(_PyStringWriter *writer,
                              PyObject *obj,
                              PyObject *format_spec,
                              Py_ssize_t start, Py_ssize_t end)
@@ -1190,7 +1190,7 @@ done:
 }
 
 int
-_PyFloat_FormatAdvancedWriter(_PyUnicodeWriter *writer,
+_PyFloat_FormatAdvancedWriter(_PyStringWriter *writer,
                               PyObject *obj,
                               PyObject *format_spec,
                               Py_ssize_t start, Py_ssize_t end)

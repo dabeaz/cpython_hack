@@ -206,7 +206,7 @@ PyAPI_FUNC(void) _PyString_FastFill(
 /* --- _PyUnicodeWriter API ----------------------------------------------- */
 
 typedef struct {
-  PyObject *buffer;               // Unicode String being built up so far
+  PyObject *buffer;               // String being built up so far
   void *data;
   Py_ssize_t size;
   Py_ssize_t pos;
@@ -220,7 +220,7 @@ typedef struct {
   /* If readonly is 1, buffer is a shared string (cannot be modified)
      and size is set to 0. */
   unsigned char readonly;
-} _PyUnicodeWriter ;
+} _PyStringWriter ;
 
 /* Initialize a Unicode writer.
  *
@@ -228,39 +228,39 @@ typedef struct {
  * disabled. Set min_length, min_char and overallocate attributes to control
  * the allocation of the buffer. */
 PyAPI_FUNC(void)
-_PyUnicodeWriter_Init(_PyUnicodeWriter *writer);
+_PyStringWriter_Init(_PyStringWriter *writer);
 
 /* Prepare the buffer to write 'length' characters
    with the specified maximum character.
 
    Return 0 on success, raise an exception and return -1 on error. */
-#define _PyUnicodeWriter_Prepare(WRITER, LENGTH)		\
-  (_PyUnicodeWriter_PrepareInternal((WRITER), (LENGTH)))
+#define _PyStringWriter_Prepare(WRITER, LENGTH)		\
+  (_PyStringWriter_PrepareInternal((WRITER), (LENGTH)))
 
-/* Don't call this function directly, use the _PyUnicodeWriter_Prepare() macro
+/* Don't call this function directly, use the _PyStringWriter_Prepare() macro
    instead. */
 PyAPI_FUNC(int)
-_PyUnicodeWriter_PrepareInternal(_PyUnicodeWriter *writer,
+_PyStringWriter_PrepareInternal(_PyStringWriter *writer,
                                  Py_ssize_t length);
 
 /* Append a Unicode character.
    Return 0 on success, raise an exception and return -1 on error. */
 PyAPI_FUNC(int)
-_PyUnicodeWriter_WriteChar(_PyUnicodeWriter *writer,
+_PyStringWriter_WriteChar(_PyStringWriter *writer,
     Py_UCS1 ch
     );
 
 /* Append a Unicode string.
    Return 0 on success, raise an exception and return -1 on error. */
 PyAPI_FUNC(int)
-_PyUnicodeWriter_WriteStr(_PyUnicodeWriter *writer,
+_PyStringWriter_WriteStr(_PyStringWriter *writer,
     PyObject *str               /* Unicode string */
     );
 
 /* Append a substring of a Unicode string.
    Return 0 on success, raise an exception and return -1 on error. */
 PyAPI_FUNC(int)
-_PyUnicodeWriter_WriteSubstring(_PyUnicodeWriter *writer,
+_PyStringWriter_WriteSubstring(_PyStringWriter *writer,
     PyObject *str,              /* Unicode string */
     Py_ssize_t start,
     Py_ssize_t end
@@ -269,7 +269,7 @@ _PyUnicodeWriter_WriteSubstring(_PyUnicodeWriter *writer,
 /* Append an ASCII-encoded byte string.
    Return 0 on success, raise an exception and return -1 on error. */
 PyAPI_FUNC(int)
-_PyUnicodeWriter_WriteASCIIString(_PyUnicodeWriter *writer,
+_PyStringWriter_WriteASCIIString(_PyStringWriter *writer,
     const char *str,           /* ASCII-encoded byte string */
     Py_ssize_t len             /* number of bytes, or -1 if unknown */
     );
@@ -277,7 +277,7 @@ _PyUnicodeWriter_WriteASCIIString(_PyUnicodeWriter *writer,
 /* Append a latin1-encoded byte string.
    Return 0 on success, raise an exception and return -1 on error. */
 PyAPI_FUNC(int)
-_PyUnicodeWriter_WriteLatin1String(_PyUnicodeWriter *writer,
+_PyStringWriter_WriteLatin1String(_PyStringWriter *writer,
     const char *str,           /* latin1-encoded byte string */
     Py_ssize_t len             /* length in bytes */
     );
@@ -286,17 +286,17 @@ _PyUnicodeWriter_WriteLatin1String(_PyUnicodeWriter *writer,
    buffer of the writer. Raise an exception and return NULL
    on error. */
 PyAPI_FUNC(PyObject *)
-_PyUnicodeWriter_Finish(_PyUnicodeWriter *writer);
+_PyStringWriter_Finish(_PyStringWriter *writer);
 
 /* Deallocate memory of a writer (clear its internal buffer). */
 PyAPI_FUNC(void)
-_PyUnicodeWriter_Dealloc(_PyUnicodeWriter *writer);
+_PyStringWriter_Dealloc(_PyStringWriter *writer);
 
 
 /* Format the object based on the format_spec, as defined in PEP 3101
    (Advanced String Formatting). */
-PyAPI_FUNC(int) _PyUnicode_FormatAdvancedWriter(
-    _PyUnicodeWriter *writer,
+PyAPI_FUNC(int) _PyString_FormatAdvancedWriter(
+    _PyStringWriter *writer,
     PyObject *obj,
     PyObject *format_spec,
     Py_ssize_t start,
@@ -309,7 +309,7 @@ PyAPI_FUNC(int) _PyUnicode_FormatAdvancedWriter(
    Transforms code points starting from the first non-ASCII code point that
    is neither a decimal digit nor a space to the end into '?'. */
 
-PyAPI_FUNC(PyObject*) _PyUnicode_TransformDecimalAndSpaceToASCII(
+PyAPI_FUNC(PyObject*) _PyString_TransformDecimalAndSpaceToASCII(
     PyObject *unicode           /* Unicode object */
     );
 
@@ -321,7 +321,7 @@ PyAPI_FUNC(PyObject *) _PyString_JoinArray(PyObject *separator, PyObject *const 
    0 otherwise.  The right argument must be ASCII identifier.
    Any error occurs inside will be cleared before return. */
 
-PyAPI_FUNC(int) _PyUnicode_EqualToASCIIId(
+PyAPI_FUNC(int) _PyString_EqualToASCIIId(
     PyObject *left,             /* Left string */
     _Py_Identifier *right       /* Right identifier */
     );
@@ -330,7 +330,7 @@ PyAPI_FUNC(int) _PyUnicode_EqualToASCIIId(
    0 otherwise.  The right argument must be ASCII-encoded string.
    Any error occurs inside will be cleared before return. */
 
-PyAPI_FUNC(int) _PyUnicode_EqualToASCIIString(
+PyAPI_FUNC(int) _PyString_EqualToASCIIString(
     PyObject *left,
     const char *right           /* ASCII-encoded string */
     );
@@ -346,7 +346,7 @@ PyAPI_FUNC(PyObject *) _PyString_XStrip(
    into the string pointed to by buffer.  For the argument descriptions,
    see Objects/stringlib/localeutil.h */
 PyAPI_FUNC(Py_ssize_t) _PyString_InsertThousandsGrouping(
-    _PyUnicodeWriter *writer,
+    _PyStringWriter *writer,
     Py_ssize_t n_buffer,
     PyObject *digits,
     Py_ssize_t d_pos,

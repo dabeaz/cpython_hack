@@ -1373,7 +1373,7 @@ vgetargskeywords(PyObject *args, PyObject *kwargs, const char *format,
                 return cleanreturn(0, &freelist);
             }
             for (i = pos; i < len; i++) {
-                if (_PyUnicode_EqualToASCIIString(key, kwlist[i])) {
+                if (_PyString_EqualToASCIIString(key, kwlist[i])) {
                     match = 1;
                     break;
                 }

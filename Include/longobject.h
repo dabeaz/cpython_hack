@@ -162,7 +162,7 @@ PyAPI_FUNC(int) _PyLong_AsByteArray(PyLongObject* v,
 PyAPI_FUNC(PyObject *) _PyLong_Format(PyObject *obj, int base);
 
 PyAPI_FUNC(int) _PyLong_FormatWriter(
-    _PyUnicodeWriter *writer,
+    _PyStringWriter *writer,
     PyObject *obj,
     int base,
     int alternate);
@@ -170,7 +170,7 @@ PyAPI_FUNC(int) _PyLong_FormatWriter(
 /* Format the object based on the format_spec, as defined in PEP 3101
    (Advanced String Formatting). */
 PyAPI_FUNC(int) _PyLong_FormatAdvancedWriter(
-    _PyUnicodeWriter *writer,
+    _PyStringWriter *writer,
     PyObject *obj,
     PyObject *format_spec,
     Py_ssize_t start,

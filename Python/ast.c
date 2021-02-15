@@ -32,7 +32,7 @@ validate_name(PyObject *name)
         NULL
     };
     for (int i = 0; forbidden[i] != NULL; i++) {
-        if (_PyUnicode_EqualToASCIIString(name, forbidden[i])) {
+        if (_PyString_EqualToASCIIString(name, forbidden[i])) {
             PyErr_Format(PyExc_ValueError, "Name node can't be used with '%s' constant", forbidden[i]);
             return 0;
         }

@@ -229,7 +229,7 @@ static PyObject *
 structseq_repr(PyStructSequence *obj)
 {
     PyTypeObject *typ = Py_TYPE(obj);
-    _PyUnicodeWriter writer;
+    _PyStringWriter writer;
 
     /* Write "typename(" */
     PyObject *type_name = PyString_FromStringAndSize(typ->tp_name,
@@ -238,26 +238,26 @@ structseq_repr(PyStructSequence *obj)
         return NULL;
     }
 
-    _PyUnicodeWriter_Init(&writer);
+    _PyStringWriter_Init(&writer);
     writer.overallocate = 1;
     /* count 5 characters per item: "x=1, " */
     writer.min_length = (PyString_Size(type_name) + 1
                          + VISIBLE_SIZE(obj) * 5 + 1);
 
-    if (_PyUnicodeWriter_WriteStr(&writer, type_name) < 0) {
+    if (_PyStringWriter_WriteStr(&writer, type_name) < 0) {
         Py_DECREF(type_name);
         goto error;
     }
     Py_DECREF(type_name);
 
-    if (_PyUnicodeWriter_WriteChar(&writer, '(') < 0) {
+    if (_PyStringWriter_WriteChar(&writer, '(') < 0) {
         goto error;
     }
 
     for (Py_ssize_t i=0; i < VISIBLE_SIZE(obj); i++) {
         if (i > 0) {
             /* Write ", " */
-            if (_PyUnicodeWriter_WriteASCIIString(&writer, ", ", 2) < 0) {
+            if (_PyStringWriter_WriteASCIIString(&writer, ", ", 2) < 0) {
                 goto error;
             }
         }
@@ -274,13 +274,13 @@ structseq_repr(PyStructSequence *obj)
         if (name == NULL) {
             goto error;
         }
-        if (_PyUnicodeWriter_WriteStr(&writer, name) < 0) {
+        if (_PyStringWriter_WriteStr(&writer, name) < 0) {
             Py_DECREF(name);
             goto error;
         }
         Py_DECREF(name);
 
-        if (_PyUnicodeWriter_WriteChar(&writer, '=') < 0) {
+        if (_PyStringWriter_WriteChar(&writer, '=') < 0) {
             goto error;
         }
 
@@ -290,21 +290,21 @@ structseq_repr(PyStructSequence *obj)
         if (repr == NULL) {
             goto error;
         }
-        if (_PyUnicodeWriter_WriteStr(&writer, repr) < 0) {
+        if (_PyStringWriter_WriteStr(&writer, repr) < 0) {
             Py_DECREF(repr);
             goto error;
         }
         Py_DECREF(repr);
     }
 
-    if (_PyUnicodeWriter_WriteChar(&writer, ')') < 0) {
+    if (_PyStringWriter_WriteChar(&writer, ')') < 0) {
         goto error;
     }
 
-    return _PyUnicodeWriter_Finish(&writer);
+    return _PyStringWriter_Finish(&writer);
 
 error:
-    _PyUnicodeWriter_Dealloc(&writer);
+    _PyStringWriter_Dealloc(&writer);
     return NULL;
 }
 

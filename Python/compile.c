@@ -1742,7 +1742,7 @@ get_ref_type(struct compiler *c, PyObject *name)
 {
     int scope;
     if (c->u->u_scope_type == COMPILER_SCOPE_CLASS &&
-        _PyUnicode_EqualToASCIIString(name, "__class__"))
+        _PyString_EqualToASCIIString(name, "__class__"))
         return CELL;
     scope = PyST_GetScope(c->u->u_ste, name);
     if (scope == 0) {
@@ -1922,7 +1922,7 @@ static int
 forbidden_name(struct compiler *c, identifier name, expr_context_ty ctx)
 {
 
-    if (ctx == Store && _PyUnicode_EqualToASCIIString(name, "__debug__")) {
+    if (ctx == Store && _PyString_EqualToASCIIString(name, "__debug__")) {
         compiler_error(c, "cannot assign to __debug__");
         return 1;
     }

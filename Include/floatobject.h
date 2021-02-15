@@ -30,7 +30,7 @@ PyAPI_FUNC(double) PyFloat_AsDouble(PyObject *);
 /* Format the object based on the format_spec, as defined in PEP 3101
    (Advanced String Formatting). */
 PyAPI_FUNC(int) _PyFloat_FormatAdvancedWriter(
-    _PyUnicodeWriter *writer,
+    _PyStringWriter *writer,
     PyObject *obj,
     PyObject *format_spec,
     Py_ssize_t start,

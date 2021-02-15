@@ -1072,7 +1072,7 @@ write_unraisable_exc_file(PyThreadState *tstate, PyObject *exc_type,
         }
     }
     else {
-        if (!_PyUnicode_EqualToASCIIId(moduleName, &PyId_builtins)) {
+        if (!_PyString_EqualToASCIIId(moduleName, &PyId_builtins)) {
             if (PyFile_WriteObject(moduleName, file, Py_PRINT_RAW) < 0) {
                 Py_DECREF(moduleName);
                 return -1;

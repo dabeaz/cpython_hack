@@ -1134,7 +1134,7 @@ type_repr(PyTypeObject *type)
         return NULL;
     }
 
-    if (mod != NULL && !_PyUnicode_EqualToASCIIId(mod, &PyId_builtins))
+    if (mod != NULL && !_PyString_EqualToASCIIId(mod, &PyId_builtins))
         rtn = PyString_FromFormat("<class '%U.%U'>", mod, name);
     else
         rtn = PyString_FromFormat("<class '%s'>", type->tp_name);
@@ -3524,7 +3524,7 @@ object_repr(PyObject *self)
         Py_XDECREF(mod);
         return NULL;
     }
-    if (mod != NULL && !_PyUnicode_EqualToASCIIId(mod, &PyId_builtins))
+    if (mod != NULL && !_PyString_EqualToASCIIId(mod, &PyId_builtins))
         rtn = PyString_FromFormat("<%U.%U object at %p>", mod, name, self);
     else
         rtn = PyString_FromFormat("<%s object at %p>",
@@ -7218,7 +7218,7 @@ super_getattro(PyObject *self, PyObject *name)
        (i.e. super, or a subclass), not the class of su->obj. */
     if (PyString_Check(name) &&
         PyString_Size(name) == 9 &&
-        _PyUnicode_EqualToASCIIId(name, &PyId___class__))
+        _PyString_EqualToASCIIId(name, &PyId___class__))
         goto skip;
 
     mro = starttype->tp_mro;
@@ -7411,7 +7411,7 @@ super_init_without_args(PyFrameObject *f, PyCodeObject *co,
     for (i = 0; i < n; i++) {
         PyObject *name = PyTuple_GetItem(co->co_freevars, i);
         assert(PyString_Check(name));
-        if (_PyUnicode_EqualToASCIIId(name, &PyId___class__)) {
+        if (_PyString_EqualToASCIIId(name, &PyId___class__)) {
             Py_ssize_t index = co->co_nlocals +
                 PyTuple_Size(co->co_cellvars) + i;
             PyObject *cell = f->f_localsplus[index];

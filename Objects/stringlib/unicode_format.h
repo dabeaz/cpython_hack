@@ -495,18 +495,18 @@ error:
     appends to the output.
 */
 static int
-render_field(PyObject *fieldobj, SubString *format_spec, _PyUnicodeWriter *writer)
+render_field(PyObject *fieldobj, SubString *format_spec, _PyStringWriter *writer)
 {
     int ok = 0;
     PyObject *result = NULL;
     PyObject *format_spec_object = NULL;
-    int (*formatter) (_PyUnicodeWriter*, PyObject *, PyObject *, Py_ssize_t, Py_ssize_t) = NULL;
+    int (*formatter) (_PyStringWriter*, PyObject *, PyObject *, Py_ssize_t, Py_ssize_t) = NULL;
     int err;
 
     /* If we know the type exactly, skip the lookup of __format__ and just
        call the formatter directly. */
     if (PyString_CheckExact(fieldobj))
-        formatter = _PyUnicode_FormatAdvancedWriter;
+        formatter = _PyString_FormatAdvancedWriter;
     else if (PyLong_CheckExact(fieldobj))
         formatter = _PyLong_FormatAdvancedWriter;
     else if (PyFloat_CheckExact(fieldobj))
@@ -536,7 +536,7 @@ render_field(PyObject *fieldobj, SubString *format_spec, _PyUnicodeWriter *write
     if (result == NULL)
         goto done;
 
-    if (_PyUnicodeWriter_WriteStr(writer, result) == -1)
+    if (_PyStringWriter_WriteStr(writer, result) == -1)
         goto done;
     ok = 1;
 
@@ -801,7 +801,7 @@ do_conversion(PyObject *obj, unsigned char conversion)
 static int
 output_markup(SubString *field_name, SubString *format_spec,
               int format_spec_needs_expanding, unsigned char conversion,
-              _PyUnicodeWriter *writer, PyObject *args, PyObject *kwargs,
+              _PyStringWriter *writer, PyObject *args, PyObject *kwargs,
               int recursion_depth, AutoNumber *auto_number)
 {
     PyObject *tmp = NULL;
@@ -862,7 +862,7 @@ done:
 */
 static int
 do_markup(SubString *input, PyObject *args, PyObject *kwargs,
-          _PyUnicodeWriter *writer, int recursion_depth, AutoNumber *auto_number)
+          _PyStringWriter *writer, int recursion_depth, AutoNumber *auto_number)
 {
     MarkupIterator iter;
     int format_spec_needs_expanding;
@@ -881,7 +881,7 @@ do_markup(SubString *input, PyObject *args, PyObject *kwargs,
         if (literal.end != literal.start) {
             if (!field_present && iter.str.start == iter.str.end)
                 writer->overallocate = 0;
-            if (_PyUnicodeWriter_WriteSubstring(writer, literal.str,
+            if (_PyStringWriter_WriteSubstring(writer, literal.str,
                                                 literal.start, literal.end) < 0)
                 return 0;
         }
@@ -907,7 +907,7 @@ static PyObject *
 build_string(SubString *input, PyObject *args, PyObject *kwargs,
              int recursion_depth, AutoNumber *auto_number)
 {
-    _PyUnicodeWriter writer;
+    _PyStringWriter writer;
 
     /* check the recursion level */
     if (recursion_depth <= 0) {
@@ -916,17 +916,17 @@ build_string(SubString *input, PyObject *args, PyObject *kwargs,
         return NULL;
     }
 
-    _PyUnicodeWriter_Init(&writer);
+    _PyStringWriter_Init(&writer);
     writer.overallocate = 1;
     writer.min_length = PyUnicode_GET_LENGTH(input->str) + 100;
 
     if (!do_markup(input, args, kwargs, &writer, recursion_depth,
                    auto_number)) {
-        _PyUnicodeWriter_Dealloc(&writer);
+        _PyStringWriter_Dealloc(&writer);
         return NULL;
     }
 
-    return _PyUnicodeWriter_Finish(&writer);
+    return _PyStringWriter_Finish(&writer);
 }
 
 /************************************************************************/

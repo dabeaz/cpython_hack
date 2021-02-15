@@ -555,7 +555,7 @@ astfold_expr(expr_ty node_, _PyASTOptimizeState *state)
         break;
     case Name_kind:
         if (node_->v.Name.ctx == Load &&
-                _PyUnicode_EqualToASCIIString(node_->v.Name.id, "__debug__")) {
+                _PyString_EqualToASCIIString(node_->v.Name.id, "__debug__")) {
             return make_const(node_, PyBool_FromLong(!state->optimize));
         }
         break;

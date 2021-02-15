@@ -1764,7 +1764,7 @@ divrem1(PyLongObject *a, digit n, digit *prem)
 static int
 long_to_decimal_string_internal(PyObject *aa,
                                 PyObject **p_output,
-                                _PyUnicodeWriter *writer,
+                                _PyStringWriter *writer,
                                 char **bytes_str)
 {
     PyLongObject *scratch, *a;
@@ -1842,7 +1842,7 @@ long_to_decimal_string_internal(PyObject *aa,
         strlen++;
     }
     if (writer) {
-        if (_PyUnicodeWriter_Prepare(writer, strlen) == -1) {
+        if (_PyStringWriter_Prepare(writer, strlen) == -1) {
             Py_DECREF(scratch);
             return -1;
         }
@@ -1929,7 +1929,7 @@ long_to_decimal_string(PyObject *aa)
 
 static int
 long_format_binary(PyObject *aa, int base, int alternate,
-                   PyObject **p_output, _PyUnicodeWriter *writer,
+                   PyObject **p_output, _PyStringWriter *writer,
                    char **bytes_str)
 {
     PyLongObject *a = (PyLongObject *)aa;
@@ -1985,7 +1985,7 @@ long_format_binary(PyObject *aa, int base, int alternate,
     }
 
     if (writer) {
-        if (_PyUnicodeWriter_Prepare(writer, sz) == -1)
+        if (_PyStringWriter_Prepare(writer, sz) == -1)
             return -1;
     }
     
@@ -2079,7 +2079,7 @@ _PyLong_Format(PyObject *obj, int base)
 }
 
 int
-_PyLong_FormatWriter(_PyUnicodeWriter *writer,
+_PyLong_FormatWriter(_PyStringWriter *writer,
                      PyObject *obj,
                      int base, int alternate)
 {
@@ -2585,7 +2585,7 @@ PyLong_FromUnicodeObject(PyObject *u, int base)
     char *end = NULL;
     Py_ssize_t buflen;
 
-    asciidig = _PyUnicode_TransformDecimalAndSpaceToASCII(u);
+    asciidig = _PyString_TransformDecimalAndSpaceToASCII(u);
     if (asciidig == NULL)
         return NULL;
     assert(PyUnicode_IS_ASCII(asciidig));
@@ -4887,19 +4887,19 @@ static PyObject *
 int___format___impl(PyObject *self, PyObject *format_spec)
 /*[clinic end generated code: output=b4929dee9ae18689 input=e31944a9b3e428b7]*/
 {
-    _PyUnicodeWriter writer;
+    _PyStringWriter writer;
     int ret;
 
-    _PyUnicodeWriter_Init(&writer);
+    _PyStringWriter_Init(&writer);
     ret = _PyLong_FormatAdvancedWriter(
         &writer,
         self,
         format_spec, 0, PyString_Size(format_spec));
     if (ret == -1) {
-        _PyUnicodeWriter_Dealloc(&writer);
+        _PyStringWriter_Dealloc(&writer);
         return NULL;
     }
-    return _PyUnicodeWriter_Finish(&writer);
+    return _PyStringWriter_Finish(&writer);
 }
 
 /* Return a pair (q, r) such that a = b * q + r, and
@@ -5269,9 +5269,9 @@ int_to_bytes_impl(PyObject *self, Py_ssize_t length, PyObject *byteorder,
     int little_endian;
     PyObject *bytes;
 
-    if (_PyUnicode_EqualToASCIIId(byteorder, &PyId_little))
+    if (_PyString_EqualToASCIIId(byteorder, &PyId_little))
         little_endian = 1;
-    else if (_PyUnicode_EqualToASCIIId(byteorder, &PyId_big))
+    else if (_PyString_EqualToASCIIId(byteorder, &PyId_big))
         little_endian = 0;
     else {
         PyErr_SetString(PyExc_ValueError,
@@ -5328,9 +5328,9 @@ int_from_bytes_impl(PyTypeObject *type, PyObject *bytes_obj,
     int little_endian;
     PyObject *long_obj;
 
-    if (_PyUnicode_EqualToASCIIId(byteorder, &PyId_little))
+    if (_PyString_EqualToASCIIId(byteorder, &PyId_little))
         little_endian = 1;
-    else if (_PyUnicode_EqualToASCIIId(byteorder, &PyId_big))
+    else if (_PyString_EqualToASCIIId(byteorder, &PyId_big))
         little_endian = 0;
     else {
         PyErr_SetString(PyExc_ValueError,

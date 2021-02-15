@@ -485,7 +485,7 @@ PyFloat_FromString(PyObject *v)
     PyObject *result = NULL;
 
     if (PyString_Check(v)) {
-        s_buffer = _PyUnicode_TransformDecimalAndSpaceToASCII(v);
+        s_buffer = _PyString_TransformDecimalAndSpaceToASCII(v);
         if (s_buffer == NULL)
             return NULL;
         assert(PyUnicode_IS_ASCII(s_buffer));
@@ -2002,19 +2002,19 @@ static PyObject *
 float___format___impl(PyObject *self, PyObject *format_spec)
 /*[clinic end generated code: output=b260e52a47eade56 input=2ece1052211fd0e6]*/
 {
-    _PyUnicodeWriter writer;
+    _PyStringWriter writer;
     int ret;
 
-    _PyUnicodeWriter_Init(&writer);
+    _PyStringWriter_Init(&writer);
     ret = _PyFloat_FormatAdvancedWriter(
         &writer,
         self,
         format_spec, 0, PyString_Size(format_spec));
     if (ret == -1) {
-        _PyUnicodeWriter_Dealloc(&writer);
+        _PyStringWriter_Dealloc(&writer);
         return NULL;
     }
-    return _PyUnicodeWriter_Finish(&writer);
+    return _PyStringWriter_Finish(&writer);
 }
 
 static PyMethodDef float_methods[] = {

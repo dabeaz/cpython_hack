@@ -700,7 +700,7 @@ list_repr(PyListObject *v)
 {
     Py_ssize_t i;
     PyObject *s;
-    _PyUnicodeWriter writer;
+    _PyStringWriter writer;
 
     if (Py_SIZE(v) == 0) {
         return PyString_FromString("[]");
@@ -711,19 +711,19 @@ list_repr(PyListObject *v)
         return i > 0 ? PyString_FromString("[...]") : NULL;
     }
 
-    _PyUnicodeWriter_Init(&writer);
+    _PyStringWriter_Init(&writer);
     writer.overallocate = 1;
     /* "[" + "1" + ", 2" * (len - 1) + "]" */
     writer.min_length = 1 + 1 + (2 + 1) * (Py_SIZE(v) - 1) + 1;
 
-    if (_PyUnicodeWriter_WriteChar(&writer, '[') < 0)
+    if (_PyStringWriter_WriteChar(&writer, '[') < 0)
         goto error;
 
     /* Do repr() on each element.  Note that this may mutate the list,
        so must refetch the list size on each iteration. */
     for (i = 0; i < Py_SIZE(v); ++i) {
         if (i > 0) {
-            if (_PyUnicodeWriter_WriteASCIIString(&writer, ", ", 2) < 0)
+            if (_PyStringWriter_WriteASCIIString(&writer, ", ", 2) < 0)
                 goto error;
         }
 
@@ -731,7 +731,7 @@ list_repr(PyListObject *v)
         if (s == NULL)
             goto error;
 
-        if (_PyUnicodeWriter_WriteStr(&writer, s) < 0) {
+        if (_PyStringWriter_WriteStr(&writer, s) < 0) {
             Py_DECREF(s);
             goto error;
         }
@@ -739,14 +739,14 @@ list_repr(PyListObject *v)
     }
 
     writer.overallocate = 0;
-    if (_PyUnicodeWriter_WriteChar(&writer, ']') < 0)
+    if (_PyStringWriter_WriteChar(&writer, ']') < 0)
         goto error;
 
     Py_ReprLeave((PyObject *)v);
-    return _PyUnicodeWriter_Finish(&writer);
+    return _PyStringWriter_Finish(&writer);
 
 error:
-    _PyUnicodeWriter_Dealloc(&writer);
+    _PyStringWriter_Dealloc(&writer);
     Py_ReprLeave((PyObject *)v);
     return NULL;
 }

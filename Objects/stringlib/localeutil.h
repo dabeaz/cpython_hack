@@ -43,7 +43,7 @@ GroupGenerator_next(GroupGenerator *self)
 /* Fill in some digits, leading zeros, and thousands separator. All
    are optional, depending on when we're called. */
 static void
-InsertThousandsGrouping_fill(_PyUnicodeWriter *writer, Py_ssize_t *buffer_pos,
+InsertThousandsGrouping_fill(_PyStringWriter *writer, Py_ssize_t *buffer_pos,
                              PyObject *digits, Py_ssize_t *digits_pos,
                              Py_ssize_t n_chars, Py_ssize_t n_zeros,
                              PyObject *thousands_sep, Py_ssize_t thousands_sep_len)

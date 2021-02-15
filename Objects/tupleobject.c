@@ -275,7 +275,7 @@ static PyObject *
 tuplerepr(PyTupleObject *v)
 {
     Py_ssize_t i, n;
-    _PyUnicodeWriter writer;
+    _PyStringWriter writer;
 
     n = Py_SIZE(v);
     if (n == 0)
@@ -290,7 +290,7 @@ tuplerepr(PyTupleObject *v)
         return i > 0 ? PyString_FromString("(...)") : NULL;
     }
 
-    _PyUnicodeWriter_Init(&writer);
+    _PyStringWriter_Init(&writer);
     writer.overallocate = 1;
     if (Py_SIZE(v) > 1) {
         /* "(" + "1" + ", 2" * (len - 1) + ")" */
@@ -301,7 +301,7 @@ tuplerepr(PyTupleObject *v)
         writer.min_length = 4;
     }
 
-    if (_PyUnicodeWriter_WriteChar(&writer, '(') < 0)
+    if (_PyStringWriter_WriteChar(&writer, '(') < 0)
         goto error;
 
     /* Do repr() on each element. */
@@ -309,7 +309,7 @@ tuplerepr(PyTupleObject *v)
         PyObject *s;
 
         if (i > 0) {
-            if (_PyUnicodeWriter_WriteASCIIString(&writer, ", ", 2) < 0)
+            if (_PyStringWriter_WriteASCIIString(&writer, ", ", 2) < 0)
                 goto error;
         }
 
@@ -317,7 +317,7 @@ tuplerepr(PyTupleObject *v)
         if (s == NULL)
             goto error;
 
-        if (_PyUnicodeWriter_WriteStr(&writer, s) < 0) {
+        if (_PyStringWriter_WriteStr(&writer, s) < 0) {
             Py_DECREF(s);
             goto error;
         }
@@ -326,19 +326,19 @@ tuplerepr(PyTupleObject *v)
 
     writer.overallocate = 0;
     if (n > 1) {
-        if (_PyUnicodeWriter_WriteChar(&writer, ')') < 0)
+        if (_PyStringWriter_WriteChar(&writer, ')') < 0)
             goto error;
     }
     else {
-        if (_PyUnicodeWriter_WriteASCIIString(&writer, ",)", 2) < 0)
+        if (_PyStringWriter_WriteASCIIString(&writer, ",)", 2) < 0)
             goto error;
     }
 
     Py_ReprLeave((PyObject *)v);
-    return _PyUnicodeWriter_Finish(&writer);
+    return _PyStringWriter_Finish(&writer);
 
 error:
-    _PyUnicodeWriter_Dealloc(&writer);
+    _PyStringWriter_Dealloc(&writer);
     Py_ReprLeave((PyObject *)v);
     return NULL;
 }

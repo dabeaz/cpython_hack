@@ -537,7 +537,7 @@ _PyModule_ClearDict(PyObject *d)
     while (PyDict_Next(d, &pos, &key, &value)) {
         if (value != Py_None && PyString_Check(key)) {
             if (PyString_ReadChar(key, 0) != '_' ||
-                !_PyUnicode_EqualToASCIIString(key, "__builtins__"))
+                !_PyString_EqualToASCIIString(key, "__builtins__"))
             {
                 if (PyDict_SetItem(d, key, Py_None) != 0) {
                     PyErr_WriteUnraisable(NULL);

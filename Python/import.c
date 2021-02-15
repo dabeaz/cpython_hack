@@ -543,7 +543,7 @@ is_builtin(PyObject *name)
 {
     int i;
     for (i = 0; PyImport_Inittab[i].name != NULL; i++) {
-        if (_PyUnicode_EqualToASCIIString(name, PyImport_Inittab[i].name)) {
+        if (_PyString_EqualToASCIIString(name, PyImport_Inittab[i].name)) {
             if (PyImport_Inittab[i].initfunc == NULL)
                 return -1;
             else
@@ -697,8 +697,8 @@ remove_importlib_frames(PyThreadState *tstate)
         int now_in_importlib;
 
         assert(PyTraceBack_Check(tb));
-        now_in_importlib = _PyUnicode_EqualToASCIIString(code->co_filename, importlib_filename) ||
-                           _PyUnicode_EqualToASCIIString(code->co_filename, external_filename);
+        now_in_importlib = _PyString_EqualToASCIIString(code->co_filename, importlib_filename) ||
+                           _PyString_EqualToASCIIString(code->co_filename, external_filename);
         if (now_in_importlib && !in_importlib) {
             /* This is the link to this chunk of importlib tracebacks */
             outer_link = prev_link;
@@ -707,7 +707,7 @@ remove_importlib_frames(PyThreadState *tstate)
 
         if (in_importlib &&
             (always_trim ||
-             _PyUnicode_EqualToASCIIString(code->co_name, remove_frames))) {
+             _PyString_EqualToASCIIString(code->co_name, remove_frames))) {
             Py_XINCREF(next);
             Py_XSETREF(*outer_link, next);
             prev_link = outer_link;
@@ -743,7 +743,7 @@ import_find_and_load(PyThreadState *tstate, PyObject *abs_name)
     if (is_builtin(abs_name)) {
       struct _inittab *p;
       for (p = PyImport_Inittab; p->name != NULL; p++) {
-	if (_PyUnicode_EqualToASCIIString(abs_name, p->name)) {
+	if (_PyString_EqualToASCIIString(abs_name, p->name)) {
 	  if (p->initfunc == 0) {
 	    mod = PyImport_AddModule(PyString_AsChar(abs_name));
 	    return mod;
