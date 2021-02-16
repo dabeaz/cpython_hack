@@ -543,7 +543,7 @@ PyObject_SetAttrString(PyObject *v, const char *name, PyObject *w)
 
     if (Py_TYPE(v)->tp_setattr != NULL)
         return (*Py_TYPE(v)->tp_setattr)(v, (char*)name, w);
-    s = PyUnicode_InternFromString(name);
+    s = PyString_InternFromString(name);
     if (s == NULL)
         return -1;
     res = PyObject_SetAttr(v, s, w);
@@ -698,7 +698,7 @@ PyObject_SetAttr(PyObject *v, PyObject *name, PyObject *value)
     }
     Py_INCREF(name);
 
-    PyUnicode_InternInPlace(&name);
+    PyString_InternInPlace(&name);
     if (tp->tp_setattro != NULL) {
         err = (*tp->tp_setattro)(v, name, value);
         Py_DECREF(name);

@@ -788,7 +788,7 @@ type_module(PyTypeObject *type, void *context)
             mod = PyString_FromStringAndSize(
                 type->tp_name, (Py_ssize_t)(s - type->tp_name));
             if (mod != NULL)
-                PyUnicode_InternInPlace(&mod);
+                PyString_InternInPlace(&mod);
         }
         else {
             mod = _PyUnicode_FromId(&PyId_builtins);
@@ -3076,7 +3076,7 @@ type_setattro(PyTypeObject *type, PyObject *name, PyObject *value)
         }
 #ifdef INTERN_NAME_STRINGS
         if (!PyString_CheckInterned(name)) {
-            PyUnicode_InternInPlace(&name);
+            PyString_InternInPlace(&name);
             if (!PyString_CheckInterned(name)) {
                 PyErr_SetString(PyExc_MemoryError,
                                 "Out of memory interning an attribute name");
@@ -6870,7 +6870,7 @@ _PyTypes_InitSlotDefs(void)
         /* Slots must be ordered by their offset in the PyHeapTypeObject. */
         assert(!p[1].name || p->offset <= p[1].offset);
 #ifdef INTERN_NAME_STRINGS
-        p->name_strobj = PyUnicode_InternFromString(p->name);
+        p->name_strobj = PyString_InternFromString(p->name);
         if (!p->name_strobj || !PyString_CheckInterned(p->name_strobj)) {
             return _PyStatus_NO_MEMORY();
         }

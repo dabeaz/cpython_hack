@@ -263,7 +263,7 @@ intern_strings(PyObject *tuple)
                             "non-string found in code slot");
             return -1;
         }
-        PyUnicode_InternInPlace(&PyTuple_Items(tuple)[i]);
+        PyString_InternInPlace(&PyTuple_Items(tuple)[i]);
     }
     return 0;
 }
@@ -277,7 +277,7 @@ intern_string_constants(PyObject *tuple, int *modified)
         if (PyString_CheckExact(v)) {
             if (all_name_chars(v)) {
                 PyObject *w = v;
-                PyUnicode_InternInPlace(&v);
+                PyString_InternInPlace(&v);
                 if (w != v) {
                     PyTuple_InitItem(tuple, i, v);
                     if (modified) {

@@ -1592,8 +1592,7 @@ unicode_result_ready(PyObject *unicode)
         const void *data = PyUnicode_DATA(unicode);
 
         Py_UCS1 ch = PyUnicode_READ(data, 0);
-        if (ch < 256) {
-            PyObject *latin1_char = unicode_latin1[ch];
+	PyObject *latin1_char = unicode_latin1[ch];
             if (latin1_char != NULL) {
                 if (unicode != latin1_char) {
                     Py_INCREF(latin1_char);
@@ -1606,7 +1605,6 @@ unicode_result_ready(PyObject *unicode)
                 unicode_latin1[ch] = unicode;
                 return unicode;
             }
-        }
     }
 #endif
     return unicode;
@@ -2147,7 +2145,7 @@ _PyUnicode_FromId(_Py_Identifier *id)
     if (!obj) {
         return NULL;
     }
-    PyUnicode_InternInPlace(&obj);
+    PyString_InternInPlace(&obj);
 
     assert(!id->next);
     id->object = obj;
@@ -5374,14 +5372,8 @@ unicode_repr(PyObject *unicode)
                 incr = 4; /* \xHH */
             else if (ch < 0x7f)
                 ;
-            else if (Py_UNICODE_ISPRINTABLE(ch))
-                max = ch > max ? ch : max;
-            else if (ch < 0x100)
-                incr = 4; /* \xHH */
-            else if (ch < 0x10000)
-                incr = 6; /* \uHHHH */
             else
-                incr = 10; /* \uHHHHHHHH */
+                incr = 4; /* \xHH */
         }
         if (osize > PY_SSIZE_T_MAX - incr) {
             PyErr_SetString(PyExc_OverflowError,
@@ -5459,40 +5451,12 @@ unicode_repr(PyObject *unicode)
                 /* Map Unicode whitespace and control characters
                    (categories Z* and C* except ASCII space)
                 */
-                if (!Py_UNICODE_ISPRINTABLE(ch)) {
-                    PyUnicode_WRITE(odata, o++, '\\');
-                    /* Map 8-bit characters to '\xhh' */
-                    if (ch <= 0xff) {
-                        PyUnicode_WRITE(odata, o++, 'x');
-                        PyUnicode_WRITE(odata, o++, Py_hexdigits[(ch >> 4) & 0x000F]);
-                        PyUnicode_WRITE(odata, o++, Py_hexdigits[ch & 0x000F]);
-                    }
-                    /* Map 16-bit characters to '\uxxxx' */
-                    else if (ch <= 0xffff) {
-                        PyUnicode_WRITE(odata, o++, 'u');
-                        PyUnicode_WRITE(odata, o++, Py_hexdigits[(ch >> 12) & 0xF]);
-                        PyUnicode_WRITE(odata, o++, Py_hexdigits[(ch >> 8) & 0xF]);
-                        PyUnicode_WRITE(odata, o++, Py_hexdigits[(ch >> 4) & 0xF]);
-                        PyUnicode_WRITE(odata, o++, Py_hexdigits[ch & 0xF]);
-                    }
-                    /* Map 21-bit characters to '\U00xxxxxx' */
-                    else {
-                        PyUnicode_WRITE(odata, o++, 'U');
-                        PyUnicode_WRITE(odata, o++, Py_hexdigits[(ch >> 28) & 0xF]);
-                        PyUnicode_WRITE(odata, o++, Py_hexdigits[(ch >> 24) & 0xF]);
-                        PyUnicode_WRITE(odata, o++, Py_hexdigits[(ch >> 20) & 0xF]);
-                        PyUnicode_WRITE(odata, o++, Py_hexdigits[(ch >> 16) & 0xF]);
-                        PyUnicode_WRITE(odata, o++, Py_hexdigits[(ch >> 12) & 0xF]);
-                        PyUnicode_WRITE(odata, o++, Py_hexdigits[(ch >> 8) & 0xF]);
-                        PyUnicode_WRITE(odata, o++, Py_hexdigits[(ch >> 4) & 0xF]);
-                        PyUnicode_WRITE(odata, o++, Py_hexdigits[ch & 0xF]);
-                    }
-                }
-                /* Copy characters as-is */
-                else {
-                    PyUnicode_WRITE(odata, o++, ch);
-                }
-            }
+	      PyUnicode_WRITE(odata, o++, '\\');
+	      /* Map 8-bit characters to '\xhh' */
+	      PyUnicode_WRITE(odata, o++, 'x');
+	      PyUnicode_WRITE(odata, o++, Py_hexdigits[(ch >> 4) & 0x000F]);
+	      PyUnicode_WRITE(odata, o++, Py_hexdigits[ch & 0x000F]);
+	    }
         }
     }
     /* Closing quote already added at the beginning */
@@ -7465,7 +7429,7 @@ _PyUnicode_Init(void)
 
 
 void
-PyUnicode_InternInPlace(PyObject **p)
+PyString_InternInPlace(PyObject **p)
 {
     PyObject *s = *p;
     if (s == NULL || !PyString_Check(s)) {
@@ -7512,23 +7476,13 @@ PyUnicode_InternInPlace(PyObject **p)
 #endif
 }
 
-void
-PyUnicode_InternImmortal(PyObject **p)
-{
-    PyUnicode_InternInPlace(p);
-    if (PyUnicode_CHECK_INTERNED(*p) != SSTATE_INTERNED_IMMORTAL) {
-        _PyUnicode_STATE(*p).interned = SSTATE_INTERNED_IMMORTAL;
-        Py_INCREF(*p);
-    }
-}
-
 PyObject *
-PyUnicode_InternFromString(const char *cp)
+PyString_InternFromString(const char *cp)
 {
     PyObject *s = PyString_FromString(cp);
     if (s == NULL)
         return NULL;
-    PyUnicode_InternInPlace(&s);
+    PyString_InternInPlace(&s);
     return s;
 }
 

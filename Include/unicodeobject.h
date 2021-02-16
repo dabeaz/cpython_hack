@@ -97,12 +97,9 @@ PyAPI_FUNC(int) PyString_Resize(PyObject **str, Py_ssize_t length);
 PyAPI_FUNC(PyObject *) PyString_FromFormatV(const char *format, va_list vargs);
 PyAPI_FUNC(PyObject *) PyString_FromFormat(const char *format, ...);
 
-PyAPI_FUNC(void) PyUnicode_InternInPlace(PyObject **);
-PyAPI_FUNC(void) PyUnicode_InternImmortal(PyObject **);
-PyAPI_FUNC(PyObject *) PyUnicode_InternFromString(
-    const char *u              /* UTF-8 encoded string */
-    );
- 
+PyAPI_FUNC(void) PyString_InternInPlace(PyObject **);  
+PyAPI_FUNC(PyObject *) PyString_InternFromString(const char *u);
+  
 PyAPI_FUNC(PyObject*) PyString_FromOrdinal(int ordinal);
 PyAPI_FUNC(int) PyString_CheckInterned(PyObject *s);
   

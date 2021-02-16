@@ -307,7 +307,7 @@ PyAST_CompileObject(mod_ty mod, PyObject *filename, PyCompilerFlags *flags,
     PyCompilerFlags local_flags = _PyCompilerFlags_INIT;
 
     if (!__doc__) {
-        __doc__ = PyUnicode_InternFromString("__doc__");
+        __doc__ = PyString_InternFromString("__doc__");
         if (!__doc__)
             return NULL;
     }
@@ -1698,7 +1698,7 @@ compiler_mod(struct compiler *c, mod_ty mod)
     int addNone = 1;
     static PyObject *module;
     if (!module) {
-        module = PyUnicode_InternFromString("<module>");
+        module = PyString_InternFromString("<module>");
         if (!module)
             return NULL;
     }
@@ -2080,7 +2080,7 @@ compiler_class(struct compiler *c, stmt_ty s)
         Py_INCREF(s->v.ClassDef.name);
         Py_XSETREF(c->u->u_private, s->v.ClassDef.name);
         /* load (global) __name__ ... */
-        str = PyUnicode_InternFromString("__name__");
+        str = PyString_InternFromString("__name__");
         if (!str || !compiler_nameop(c, str, Load)) {
             Py_XDECREF(str);
             compiler_exit_scope(c);
@@ -2088,7 +2088,7 @@ compiler_class(struct compiler *c, stmt_ty s)
         }
         Py_DECREF(str);
         /* ... and store it as __module__ */
-        str = PyUnicode_InternFromString("__module__");
+        str = PyString_InternFromString("__module__");
         if (!str || !compiler_nameop(c, str, Store)) {
             Py_XDECREF(str);
             compiler_exit_scope(c);
@@ -2097,7 +2097,7 @@ compiler_class(struct compiler *c, stmt_ty s)
         Py_DECREF(str);
         assert(c->u->u_qualname);
         ADDOP_LOAD_CONST(c, c->u->u_qualname);
-        str = PyUnicode_InternFromString("__qualname__");
+        str = PyString_InternFromString("__qualname__");
         if (!str || !compiler_nameop(c, str, Store)) {
             Py_XDECREF(str);
             compiler_exit_scope(c);
@@ -2112,7 +2112,7 @@ compiler_class(struct compiler *c, stmt_ty s)
         /* Return __classcell__ if it is referenced, otherwise return None */
         if (c->u->u_ste->ste_needs_class_closure) {
             /* Store __classcell__ into class namespace & return it */
-            str = PyUnicode_InternFromString("__class__");
+            str = PyString_InternFromString("__class__");
             if (str == NULL) {
                 compiler_exit_scope(c);
                 return 0;
@@ -2127,7 +2127,7 @@ compiler_class(struct compiler *c, stmt_ty s)
 
             ADDOP_I(c, LOAD_CLOSURE, i);
             ADDOP(c, DUP_TOP);
-            str = PyUnicode_InternFromString("__classcell__");
+            str = PyString_InternFromString("__classcell__");
             if (!str || !compiler_nameop(c, str, Store)) {
                 Py_XDECREF(str);
                 compiler_exit_scope(c);
@@ -2393,7 +2393,7 @@ compiler_lambda(struct compiler *c, expr_ty e)
         return 0;
 
     if (!name) {
-        name = PyUnicode_InternFromString("<lambda>");
+        name = PyString_InternFromString("<lambda>");
         if (!name)
             return 0;
     }
@@ -4266,7 +4266,7 @@ compiler_genexp(struct compiler *c, expr_ty e)
 {
     static identifier name;
     if (!name) {
-        name = PyUnicode_InternFromString("<genexpr>");
+        name = PyString_InternFromString("<genexpr>");
         if (!name)
             return 0;
     }
@@ -4281,7 +4281,7 @@ compiler_listcomp(struct compiler *c, expr_ty e)
 {
     static identifier name;
     if (!name) {
-        name = PyUnicode_InternFromString("<listcomp>");
+        name = PyString_InternFromString("<listcomp>");
         if (!name)
             return 0;
     }
@@ -4296,7 +4296,7 @@ compiler_setcomp(struct compiler *c, expr_ty e)
 {
     static identifier name;
     if (!name) {
-        name = PyUnicode_InternFromString("<setcomp>");
+        name = PyString_InternFromString("<setcomp>");
         if (!name)
             return 0;
     }
@@ -4312,7 +4312,7 @@ compiler_dictcomp(struct compiler *c, expr_ty e)
 {
     static identifier name;
     if (!name) {
-        name = PyUnicode_InternFromString("<dictcomp>");
+        name = PyString_InternFromString("<dictcomp>");
         if (!name)
             return 0;
     }

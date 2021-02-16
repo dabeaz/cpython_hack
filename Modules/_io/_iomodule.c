@@ -467,7 +467,7 @@ PyInit__io(void)
     /* Interned strings */
 #define ADD_INTERNED(name) \
     if (!_PyIO_str_ ## name && \
-        !(_PyIO_str_ ## name = PyUnicode_InternFromString(# name))) \
+        !(_PyIO_str_ ## name = PyString_InternFromString(# name))) \
         goto fail;
 
     ADD_INTERNED(close)
@@ -495,7 +495,7 @@ PyInit__io(void)
     ADD_INTERNED(writable)
 
     if (!_PyIO_str_nl &&
-        !(_PyIO_str_nl = PyUnicode_InternFromString("\n")))
+        !(_PyIO_str_nl = PyString_InternFromString("\n")))
         goto fail;
 
     if (!_PyIO_empty_str &&

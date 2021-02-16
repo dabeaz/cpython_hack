@@ -1506,7 +1506,7 @@ parser_init(struct _PyArg_Parser *parser)
             Py_DECREF(kwtuple);
             return 0;
         }
-        PyUnicode_InternInPlace(&str);
+        PyString_InternInPlace(&str);
         PyTuple_InitItem(kwtuple, i, str);
     }
     parser->kwtuple = kwtuple;

@@ -3894,7 +3894,7 @@ posixmodule_exec(PyObject *m)
 
     if ((state->billion = PyLong_FromLong(1000000000)) == NULL)
         return -1;
-    state->st_mode = PyUnicode_InternFromString("st_mode");
+    state->st_mode = PyString_InternFromString("st_mode");
     if (state->st_mode == NULL)
         return -1;
 

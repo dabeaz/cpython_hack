@@ -906,19 +906,19 @@ static int
 maybe_init_static_strings(void)
 {
     if (!_str_open_br &&
-        !(_str_open_br = PyUnicode_InternFromString("{"))) {
+        !(_str_open_br = PyString_InternFromString("{"))) {
         return -1;
     }
     if (!_str_dbl_open_br &&
-        !(_str_dbl_open_br = PyUnicode_InternFromString("{{"))) {
+        !(_str_dbl_open_br = PyString_InternFromString("{{"))) {
         return -1;
     }
     if (!_str_close_br &&
-        !(_str_close_br = PyUnicode_InternFromString("}"))) {
+        !(_str_close_br = PyString_InternFromString("}"))) {
         return -1;
     }
     if (!_str_dbl_close_br &&
-        !(_str_dbl_close_br = PyUnicode_InternFromString("}}"))) {
+        !(_str_dbl_close_br = PyString_InternFromString("}}"))) {
         return -1;
     }
     if (!_str_inf &&

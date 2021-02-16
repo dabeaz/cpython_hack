@@ -391,7 +391,7 @@ _PyImport_FixupBuiltin(PyObject *mod, const char *name, PyObject *modules)
 {
     int res;
     PyObject *nameobj;
-    nameobj = PyUnicode_InternFromString(name);
+    nameobj = PyString_InternFromString(name);
     if (nameobj == NULL)
         return -1;
     res = _PyImport_FixupExtensionObject(mod, nameobj, nameobj, modules);
@@ -464,7 +464,7 @@ PyObject *
 _PyImport_FindBuiltin(PyThreadState *tstate, const char *name)
 {
     PyObject *res, *nameobj;
-    nameobj = PyUnicode_InternFromString(name);
+    nameobj = PyString_InternFromString(name);
     if (nameobj == NULL)
         return NULL;
     res = import_find_extension(tstate, nameobj, nameobj);

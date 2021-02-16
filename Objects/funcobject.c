@@ -15,7 +15,7 @@ PyFunction_NewWithQualName(PyObject *code, PyObject *globals, PyObject *qualname
     static PyObject *__name__ = NULL;
 
     if (__name__ == NULL) {
-        __name__ = PyUnicode_InternFromString("__name__");
+        __name__ = PyString_InternFromString("__name__");
         if (__name__ == NULL)
             return NULL;
     }

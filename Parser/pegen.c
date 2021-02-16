@@ -14,7 +14,7 @@ _PyPegen_new_identifier(Parser *p, char *n)
     }
     /* Check whether there are non-ASCII characters in the
        identifier; if so, normalize to NFKC. */
-    PyUnicode_InternInPlace(&id);
+    PyString_InternInPlace(&id);
     return id;
 
 error:
@@ -1117,7 +1117,7 @@ _PyPegen_join_names_with_dot(Parser *p, expr_ty first_name, expr_ty second_name)
     if (!uni) {
         return NULL;
     }
-    PyUnicode_InternInPlace(&uni);
+    PyString_InternInPlace(&uni);
     return _Py_Name(uni, Load, EXTRA_EXPR(first_name, second_name));
 }
 
@@ -1147,7 +1147,7 @@ _PyPegen_seq_count_dots(asdl_seq *seq)
 alias_ty
 _PyPegen_alias_for_star(Parser *p)
 {
-    PyObject *str = PyUnicode_InternFromString("*");
+    PyObject *str = PyString_InternFromString("*");
     if (!str) {
         return NULL;
     }

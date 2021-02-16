@@ -212,7 +212,7 @@ static identifier top = NULL, lambda = NULL, genexpr = NULL,
     __class__ = NULL;
 
 #define GET_IDENTIFIER(VAR) \
-    ((VAR) ? (VAR) : ((VAR) = PyUnicode_InternFromString(# VAR)))
+    ((VAR) ? (VAR) : ((VAR) = PyString_InternFromString(# VAR)))
 
 #define DUPLICATE_ARGUMENT \
 "duplicate argument '%U' in function definition"

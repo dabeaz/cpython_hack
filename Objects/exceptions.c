@@ -1977,7 +1977,7 @@ _check_for_legacy_statements(PySyntaxErrorObject *self, Py_ssize_t start)
 
     /* Check for legacy print statements */
     if (print_prefix == NULL) {
-        print_prefix = PyUnicode_InternFromString("print ");
+        print_prefix = PyString_InternFromString("print ");
         if (print_prefix == NULL) {
             return -1;
         }
@@ -1993,7 +1993,7 @@ _check_for_legacy_statements(PySyntaxErrorObject *self, Py_ssize_t start)
 
     /* Check for legacy exec statements */
     if (exec_prefix == NULL) {
-        exec_prefix = PyUnicode_InternFromString("exec ");
+        exec_prefix = PyString_InternFromString("exec ");
         if (exec_prefix == NULL) {
             return -1;
         }

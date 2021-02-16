@@ -189,7 +189,7 @@ method_get_doc(PyMethodObject *im, void *context)
 {
     static PyObject *docstr;
     if (docstr == NULL) {
-        docstr= PyUnicode_InternFromString("__doc__");
+        docstr= PyString_InternFromString("__doc__");
         if (docstr == NULL)
             return NULL;
     }
@@ -427,7 +427,7 @@ instancemethod_get_doc(PyObject *self, void *context)
 {
     static PyObject *docstr;
     if (docstr == NULL) {
-        docstr = PyUnicode_InternFromString("__doc__");
+        docstr = PyString_InternFromString("__doc__");
         if (docstr == NULL)
             return NULL;
     }

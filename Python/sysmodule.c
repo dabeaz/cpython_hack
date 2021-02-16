@@ -552,7 +552,7 @@ sys_intern_impl(PyObject *module, PyObject *s)
     PyThreadState *tstate = PyThreadState_Get();
     if (PyString_CheckExact(s)) {
         Py_INCREF(s);
-        PyUnicode_InternInPlace(&s);
+        PyString_InternInPlace(&s);
         return s;
     }
     else {
