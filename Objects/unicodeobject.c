@@ -49,6 +49,8 @@ OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "pycore_pylifecycle.h"
 #include "pycore_pystate.h"        // _PyInterpreterState_GET()
 
+#define PyUnicode_MAX_CHAR_VALUE(op) 0xffU
+
 int PyString_Check(PyObject *op) {
   return PyType_HasFeature(Py_TYPE(op), Py_TPFLAGS_UNICODE_SUBCLASS);
 }

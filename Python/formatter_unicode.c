@@ -65,7 +65,7 @@ get_integer(PyObject *str, Py_ssize_t *ppos, Py_ssize_t end,
 
     accumulator = numdigits = 0;
     for (; pos < end; pos++, numdigits++) {
-      digitval = Py_UNICODE_TODECIMAL(((char *) data)[pos]);
+      digitval = PyString_ToDecimalDigit(((char *) data)[pos]);
         if (digitval < 0)
             break;
         /*

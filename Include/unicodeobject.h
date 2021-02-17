@@ -133,26 +133,7 @@ PyAPI_FUNC(PyObject *) PyString_Format(PyObject *format, PyObject *args);
 PyAPI_FUNC(int) PyString_Contains(PyObject *container, PyObject *element);
 PyAPI_FUNC(int) PyString_IsIdentifier(PyObject *s);
 
-/* === Characters Type APIs =============================================== */
-
-/* --- Internal Unicode Operations ---------------------------------------- */
-
-/* Since splitting on whitespace is an important use case, and
-   whitespace in most situations is solely ASCII whitespace, we
-   optimize for the common case by using a quick look-up table
-   _Py_ascii_whitespace (see below) with an inlined check.
-
- */
-
-#define Py_UNICODE_ISSPACE(ch) \
-    ((ch) < 128U ? _Py_ascii_whitespace[(ch)] : _PyUnicode_IsWhitespace(ch))
-#define Py_UNICODE_TODECIMAL(ch) _PyUnicode_ToDecimalDigit(ch)
-
-/* Return a maximum character value which is suitable for creating another
-   string based on op.  This is always an approximation but more efficient
-   than iterating over the string. */
-#define PyUnicode_MAX_CHAR_VALUE(op) 0xffU
-
+  
 /* === Public API ========================================================= */
 
   PyAPI_FUNC(PyObject*) PyString_New(Py_ssize_t size);
@@ -353,23 +334,18 @@ PyAPI_FUNC(Py_ssize_t) _PyString_InsertThousandsGrouping(
     PyObject *thousands_sep);
 
 /* === Characters Type APIs =============================================== */
-
-/* Helper array used by Py_UNICODE_ISSPACE(). */
-
-PyAPI_DATA(const unsigned char) _Py_ascii_whitespace[];
-
+  
 /* These should not be used directly. Use the Py_UNICODE_IS* and
    Py_UNICODE_TO* macros instead.
 
    These APIs are implemented in Objects/unicodectype.c.
-
 */
   
-PyAPI_FUNC(int) _PyUnicode_IsWhitespace(
+PyAPI_FUNC(int) PyString_IsWhitespace(
     const Py_UCS1 ch         /* Unicode character */
     );
   
-PyAPI_FUNC(int) _PyUnicode_ToDecimalDigit(
+PyAPI_FUNC(int) PyString_ToDecimalDigit(
     Py_UCS1 ch       /* Unicode character */
     );
   

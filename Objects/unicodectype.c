@@ -58,6 +58,12 @@ gettyperecord(Py_UCS1 code)
     return &_PyUnicode_TypeRecords[index];
 }
 
+PyAPI_DATA(const unsigned char) _Py_ascii_whitespace[];
+
+int PyString_IsWhitespace(Py_UCS1 ch) {
+  return ((ch) < 128U ? _Py_ascii_whitespace[(ch)] : _PyUnicode_IsWhitespace(ch));
+}
+
 /* Returns the titlecase Unicode characters corresponding to ch or just
    ch if no titlecase mapping is known. */
 
@@ -109,6 +115,12 @@ int _PyUnicode_ToDecimalDigit(Py_UCS1 ch)
 
     return (ctype->flags & DECIMAL_MASK) ? ctype->decimal : -1;
 }
+
+
+int PyString_ToDecimalDigit(Py_UCS1 ch) {
+  return _PyUnicode_ToDecimalDigit(ch);
+}
+
 
 int _PyUnicode_IsDecimalDigit(Py_UCS1 ch)
 {

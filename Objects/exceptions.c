@@ -1966,7 +1966,7 @@ _check_for_legacy_statements(PySyntaxErrorObject *self, Py_ssize_t start)
     /* Ignore leading whitespace */
     while (start < text_len) {
       unsigned char ch = ((unsigned char *) data)[start];
-      if (!Py_UNICODE_ISSPACE(ch))
+      if (!PyString_IsWhitespace(ch))
 	break;
         start++;
     }
