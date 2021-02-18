@@ -545,7 +545,7 @@ compiler_enter_scope(struct compiler *c, identifier name,
         int res;
         assert(u->u_scope_type == COMPILER_SCOPE_CLASS);
         assert(PyDict_Size(u->u_cellvars) == 0);
-        name = _PyUnicode_FromId(&PyId___class__);
+        name = _PyString_FromId(&PyId___class__);
         if (!name) {
             compiler_unit_free(u);
             return 0;
@@ -674,7 +674,7 @@ compiler_set_qualname(struct compiler *c)
             if (parent->u_scope_type == COMPILER_SCOPE_FUNCTION
                 || parent->u_scope_type == COMPILER_SCOPE_ASYNC_FUNCTION
                 || parent->u_scope_type == COMPILER_SCOPE_LAMBDA) {
-                dot_locals_str = _PyUnicode_FromId(&dot_locals);
+                dot_locals_str = _PyString_FromId(&dot_locals);
                 if (dot_locals_str == NULL)
                     return 0;
                 base = PyString_Concat(parent->u_qualname, dot_locals_str);
@@ -689,7 +689,7 @@ compiler_set_qualname(struct compiler *c)
     }
 
     if (base != NULL) {
-        dot_str = _PyUnicode_FromId(&dot);
+        dot_str = _PyString_FromId(&dot);
         if (dot_str == NULL) {
             Py_DECREF(base);
             return 0;

@@ -74,7 +74,7 @@ _PyImport_IsInitialized(PyInterpreterState *interp)
 PyObject *
 _PyImport_GetModuleId(struct _Py_Identifier *nameid)
 {
-    PyObject *name = _PyUnicode_FromId(nameid); /* borrowed */
+    PyObject *name = _PyString_FromId(nameid); /* borrowed */
     if (name == NULL) {
         return NULL;
     }

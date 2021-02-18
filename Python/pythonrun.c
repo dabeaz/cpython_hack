@@ -136,7 +136,7 @@ PyRun_InteractiveOneObjectEx(FILE *fp, PyObject *filename,
     _Py_IDENTIFIER(encoding);
     _Py_IDENTIFIER(__main__);
 
-    mod_name = _PyUnicode_FromId(&PyId___main__); /* borrowed */
+    mod_name = _PyString_FromId(&PyId___main__); /* borrowed */
     if (mod_name == NULL) {
         return -1;
     }
@@ -333,7 +333,7 @@ parse_syntax_error(PyObject *err, PyObject **message, PyObject **filename,
         goto finally;
     if (v == Py_None) {
         Py_DECREF(v);
-        *filename = _PyUnicode_FromId(&PyId_string);
+        *filename = _PyString_FromId(&PyId_string);
         if (*filename == NULL)
             goto finally;
         Py_INCREF(*filename);
@@ -882,7 +882,7 @@ PyRun_StringFlags(const char *str, int start, PyObject *globals,
     mod_ty mod;
     PyObject *filename;
 
-    filename = _PyUnicode_FromId(&PyId_string); /* borrowed */
+    filename = _PyString_FromId(&PyId_string); /* borrowed */
     if (filename == NULL)
         return NULL;
 

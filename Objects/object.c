@@ -322,7 +322,7 @@ _PyObject_FunctionStr(PyObject *x)
     PyObject *result = NULL;
     ret = _PyObject_LookupAttrId(x, &PyId___module__, &module);
     if (module != NULL && module != Py_None) {
-        PyObject *builtinsname = _PyUnicode_FromId(&PyId_builtins);
+        PyObject *builtinsname = _PyString_FromId(&PyId_builtins);
         if (builtinsname == NULL) {
             goto done;
         }
@@ -555,7 +555,7 @@ PyObject *
 _PyObject_GetAttrId(PyObject *v, _Py_Identifier *name)
 {
     PyObject *result;
-    PyObject *oname = _PyUnicode_FromId(name); /* borrowed */
+    PyObject *oname = _PyString_FromId(name); /* borrowed */
     if (!oname)
         return NULL;
     result = PyObject_GetAttr(v, oname);
@@ -566,7 +566,7 @@ int
 _PyObject_HasAttrId(PyObject *v, _Py_Identifier *name)
 {
     int result;
-    PyObject *oname = _PyUnicode_FromId(name); /* borrowed */
+    PyObject *oname = _PyString_FromId(name); /* borrowed */
     if (!oname)
         return -1;
     result = PyObject_HasAttr(v, oname);
@@ -577,7 +577,7 @@ int
 _PyObject_SetAttrId(PyObject *v, _Py_Identifier *name, PyObject *w)
 {
     int result;
-    PyObject *oname = _PyUnicode_FromId(name); /* borrowed */
+    PyObject *oname = _PyString_FromId(name); /* borrowed */
     if (!oname)
         return -1;
     result = PyObject_SetAttr(v, oname, w);
@@ -661,7 +661,7 @@ _PyObject_LookupAttr(PyObject *v, PyObject *name, PyObject **result)
 int
 _PyObject_LookupAttrId(PyObject *v, _Py_Identifier *name, PyObject **result)
 {
-    PyObject *oname = _PyUnicode_FromId(name); /* borrowed */
+    PyObject *oname = _PyString_FromId(name); /* borrowed */
     if (!oname) {
         *result = NULL;
         return -1;

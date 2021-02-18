@@ -908,7 +908,7 @@ _PyObject_VectorcallMethodId(
     _Py_Identifier *name, PyObject *const *args,
     size_t nargsf, PyObject *kwnames)
 {
-    PyObject *oname = _PyUnicode_FromId(name); /* borrowed */
+    PyObject *oname = _PyString_FromId(name); /* borrowed */
     if (!oname) {
         return NULL;
     }

@@ -521,9 +521,9 @@ PyStructSequence_NewType(PyStructSequence_Desc *desc)
 
 int _PyStructSequence_Init(void)
 {
-    if (_PyUnicode_FromId(&PyId_n_sequence_fields) == NULL
-        || _PyUnicode_FromId(&PyId_n_fields) == NULL
-        || _PyUnicode_FromId(&PyId_n_unnamed_fields) == NULL)
+    if (_PyString_FromId(&PyId_n_sequence_fields) == NULL
+        || _PyString_FromId(&PyId_n_fields) == NULL
+        || _PyString_FromId(&PyId_n_unnamed_fields) == NULL)
         return -1;
 
     return 0;

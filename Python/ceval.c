@@ -759,7 +759,7 @@ main_loop:
 
             PyObject *bc;
 	      {
-                PyObject *build_class_str = _PyUnicode_FromId(&PyId___build_class__);
+                PyObject *build_class_str = _PyString_FromId(&PyId___build_class__);
                 if (build_class_str == NULL)
                     goto error;
                 bc = PyObject_GetItem(f->f_builtins, build_class_str);
@@ -2541,7 +2541,7 @@ special_lookup(PyThreadState *tstate, PyObject *o, _Py_Identifier *id)
     PyObject *res;
     res = _PyObject_LookupSpecial(o, id);
     if (res == NULL && !_PyErr_Occurred(tstate)) {
-        _PyErr_SetObject(tstate, PyExc_AttributeError, _PyUnicode_FromId(id));
+        _PyErr_SetObject(tstate, PyExc_AttributeError, _PyString_FromId(id));
         return NULL;
     }
     return res;
@@ -2774,7 +2774,7 @@ _PyEval_GetBuiltinId(_Py_Identifier *name)
         Py_INCREF(attr);
     }
     else if (!_PyErr_Occurred(tstate)) {
-        _PyErr_SetObject(tstate, PyExc_AttributeError, _PyUnicode_FromId(name));
+        _PyErr_SetObject(tstate, PyExc_AttributeError, _PyString_FromId(name));
     }
     return attr;
 }

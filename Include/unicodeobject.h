@@ -80,11 +80,6 @@ PyAPI_DATA(PyTypeObject) PyStringIter_Type;
 PyAPI_FUNC(int) PyString_Check(PyObject *);
 PyAPI_FUNC(int) PyString_CheckExact(PyObject *);
   
-/* --- Constants ---------------------------------------------------------- */
-  
-/* === Public API ========================================================= */
-
-
 PyAPI_FUNC(const char *) PyString_AsCharAndSize(PyObject *s, Py_ssize_t *size);
 PyAPI_FUNC(const char *) PyString_AsChar(PyObject *s);
 PyAPI_FUNC(Py_ssize_t) PyString_Size(PyObject *str);
@@ -132,7 +127,6 @@ PyAPI_FUNC(PyObject *) PyString_RichCompare(PyObject *left, PyObject *right, int
 PyAPI_FUNC(PyObject *) PyString_Format(PyObject *format, PyObject *args);
 PyAPI_FUNC(int) PyString_Contains(PyObject *container, PyObject *element);
 PyAPI_FUNC(int) PyString_IsIdentifier(PyObject *s);
-
   
 /* === Public API ========================================================= */
 
@@ -145,18 +139,7 @@ PyAPI_FUNC(int) PyString_IsIdentifier(PyObject *s);
     Py_ssize_t from_start,
     Py_ssize_t how_many
     );
-
-/* Unsafe version of PyUnicode_CopyCharacters(): don't check arguments and so
-   may crash if parameters are invalid (e.g. if the output string
-   is too short). */
-PyAPI_FUNC(void) _PyString_FastCopyCharacters(
-    PyObject *to,
-    Py_ssize_t to_start,
-    PyObject *from,
-    Py_ssize_t from_start,
-    Py_ssize_t how_many
-    );
-
+  
 /* Fill a string with a character: write fill_char into
    unicode[start:start+length].
 
@@ -166,15 +149,6 @@ PyAPI_FUNC(void) _PyString_FastCopyCharacters(
    Return the number of written character, or return -1 and raise an exception
    on error. */
 PyAPI_FUNC(Py_ssize_t) PyString_Fill(
-    PyObject *str,
-    Py_ssize_t start,
-    Py_ssize_t length,
-    unsigned char fill_char
-    );
-
-/* Unsafe version of PyUnicode_Fill(): don't check arguments and so may crash
-   if parameters are invalid (e.g. if length is longer than the string). */
-PyAPI_FUNC(void) _PyString_FastFill(
     PyObject *str,
     Py_ssize_t start,
     Py_ssize_t length,
@@ -349,33 +323,23 @@ PyAPI_FUNC(int) PyString_ToDecimalDigit(
     Py_UCS1 ch       /* Unicode character */
     );
   
-PyAPI_FUNC(PyObject*) _PyUnicode_FormatLong(PyObject *, int, int, int);
-
 /* Create a copy of a unicode string ending with a nul character. Return NULL
    and raise a MemoryError exception on memory allocation failure, otherwise
    return a new allocated buffer (use PyMem_Free() to free the buffer). */
 
 /* Return an interned Unicode object for an Identifier; may fail if there is no memory.*/
-PyAPI_FUNC(PyObject*) _PyUnicode_FromId(_Py_Identifier*);
+PyAPI_FUNC(PyObject*) _PyString_FromId(_Py_Identifier*);
 
 /* Fast equality check when the inputs are known to be exact unicode types
    and where the hash values are equal (i.e. a very probable match) */
-PyAPI_FUNC(int) _PyUnicode_EQ(PyObject *, PyObject *);
+PyAPI_FUNC(int) _PyString_EQ(PyObject *, PyObject *);
 
-PyAPI_FUNC(Py_ssize_t) _PyUnicode_ScanIdentifier(PyObject *);
-
+  
   /* Helper for PyBytes_DecodeEscape that detects invalid escape chars. */
 PyAPI_FUNC(PyObject *) _PyBytes_DecodeEscape(const char *, Py_ssize_t,
                                              const char *, const char **);
 
   
-/* Flags used by string formatting */
-#define F_LJUST (1<<0)
-#define F_SIGN  (1<<1)
-#define F_BLANK (1<<2)
-#define F_ALT   (1<<3)
-#define F_ZERO  (1<<4)
-
 #ifdef __cplusplus
 }
 #endif

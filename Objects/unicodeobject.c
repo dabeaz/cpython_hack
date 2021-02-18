@@ -51,6 +51,28 @@ OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define PyUnicode_MAX_CHAR_VALUE(op) 0xffU
 
+PyAPI_FUNC(void) _PyString_FastCopyCharacters(
+    PyObject *to,
+    Py_ssize_t to_start,
+    PyObject *from,
+    Py_ssize_t from_start,
+    Py_ssize_t how_many
+    );
+
+PyAPI_FUNC(void) _PyString_FastFill(
+    PyObject *str,
+    Py_ssize_t start,
+    Py_ssize_t length,
+    unsigned char fill_char
+    );
+
+// Flags used by string formatting
+#define F_LJUST (1<<0)
+#define F_SIGN  (1<<1)
+#define F_BLANK (1<<2)
+#define F_ALT   (1<<3)
+#define F_ZERO  (1<<4)
+
 int PyString_Check(PyObject *op) {
   return PyType_HasFeature(Py_TYPE(op), Py_TPFLAGS_UNICODE_SUBCLASS);
 }
@@ -2135,7 +2157,7 @@ PyString_FromString(const char *u)
 }
 
 PyObject *
-_PyUnicode_FromId(_Py_Identifier *id)
+_PyString_FromId(_Py_Identifier *id)
 {
     if (id->object) {
         return id->object;
@@ -4042,7 +4064,7 @@ _PyString_EqualToASCIIId(PyObject *left, _Py_Identifier *right)
         assert((unsigned char)*p < 128);
     }
 #endif
-    right_uni = _PyUnicode_FromId(right);       /* borrowed */
+    right_uni = _PyString_FromId(right);       /* borrowed */
     if (right_uni == NULL) {
         /* memory error or bad data */
         PyErr_Clear();
@@ -4101,7 +4123,7 @@ PyString_RichCompare(PyObject *left, PyObject *right, int op)
 }
 
 int
-_PyUnicode_EQ(PyObject *aa, PyObject *bb)
+_PyString_EQ(PyObject *aa, PyObject *bb)
 {
     return unicode_eq(aa, bb);
 }

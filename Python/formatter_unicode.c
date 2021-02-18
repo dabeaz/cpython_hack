@@ -352,13 +352,13 @@ fill_padding(_PyStringWriter *writer,
     /* Pad on left. */
     if (n_lpadding) {
         pos = writer->pos;
-        _PyString_FastFill(writer->buffer, pos, n_lpadding, fill_char);
+        PyString_Fill(writer->buffer, pos, n_lpadding, fill_char);
     }
 
     /* Pad on right. */
     if (n_rpadding) {
         pos = writer->pos + nchars + n_lpadding;
-        _PyString_FastFill(writer->buffer, pos, n_rpadding, fill_char);
+        PyString_Fill(writer->buffer, pos, n_rpadding, fill_char);
     }
 
     /* Pointer to the user content. */
@@ -578,7 +578,7 @@ fill_number(_PyStringWriter *writer, const NumberFieldWidths *spec,
     Py_ssize_t r;
 
     if (spec->n_lpadding) {
-        _PyString_FastFill(writer->buffer,
+        PyString_Fill(writer->buffer,
                             writer->pos, spec->n_lpadding, fill_char);
         writer->pos += spec->n_lpadding;
     }
@@ -587,7 +587,7 @@ fill_number(_PyStringWriter *writer, const NumberFieldWidths *spec,
       writer->pos++;
     }
     if (spec->n_prefix) {
-        _PyString_FastCopyCharacters(writer->buffer, writer->pos,
+        PyString_CopyCharacters(writer->buffer, writer->pos,
                                       prefix, p_start,
                                       spec->n_prefix);
         if (toupper) {
@@ -602,7 +602,7 @@ fill_number(_PyStringWriter *writer, const NumberFieldWidths *spec,
         writer->pos += spec->n_prefix;
     }
     if (spec->n_spadding) {
-        _PyString_FastFill(writer->buffer,
+        PyString_Fill(writer->buffer,
                             writer->pos, spec->n_spadding, fill_char);
         writer->pos += spec->n_spadding;
     }
@@ -635,7 +635,7 @@ fill_number(_PyStringWriter *writer, const NumberFieldWidths *spec,
     writer->pos += spec->n_grouped_digits;
 
     if (spec->n_decimal) {
-        _PyString_FastCopyCharacters(
+        PyString_CopyCharacters(
             writer->buffer, writer->pos,
             locale->decimal_point, 0, spec->n_decimal);
         writer->pos += spec->n_decimal;
@@ -643,7 +643,7 @@ fill_number(_PyStringWriter *writer, const NumberFieldWidths *spec,
     }
 
     if (spec->n_remainder) {
-        _PyString_FastCopyCharacters(
+        PyString_CopyCharacters(
             writer->buffer, writer->pos,
             digits, d_pos, spec->n_remainder);
         writer->pos += spec->n_remainder;
@@ -651,7 +651,7 @@ fill_number(_PyStringWriter *writer, const NumberFieldWidths *spec,
     }
 
     if (spec->n_rpadding) {
-        _PyString_FastFill(writer->buffer,
+        PyString_Fill(writer->buffer,
                             writer->pos, spec->n_rpadding,
                             fill_char);
         writer->pos += spec->n_rpadding;
@@ -748,7 +748,7 @@ format_string_internal(PyObject *value, const InternalFormatSpec *format,
 
     /* Then the source string. */
     if (len) {
-        _PyString_FastCopyCharacters(writer->buffer, writer->pos,
+        PyString_CopyCharacters(writer->buffer, writer->pos,
                                       value, 0, len);
     }
     writer->pos += (len + rpad);

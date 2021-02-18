@@ -1542,7 +1542,7 @@ find_keyword(PyObject *kwnames, PyObject *const *kwstack, PyObject *key)
     for (i = 0; i < nkwargs; i++) {
         PyObject *kwname = PyTuple_GetItem(kwnames, i);
         assert(PyString_Check(kwname));
-        if (_PyUnicode_EQ(kwname, key)) {
+        if (_PyString_EQ(kwname, key)) {
             return kwstack[i];
         }
     }

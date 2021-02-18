@@ -753,7 +753,7 @@ _PyObject_CallMethodIdObjArgs(PyObject *obj,
         return null_error(tstate);
     }
 
-    PyObject *oname = _PyUnicode_FromId(name); /* borrowed */
+    PyObject *oname = _PyString_FromId(name); /* borrowed */
     if (!oname) {
         return NULL;
     }

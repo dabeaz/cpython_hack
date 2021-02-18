@@ -1243,7 +1243,7 @@ PyObject *
 _PyDict_GetItemIdWithError(PyObject *dp, struct _Py_Identifier *key)
 {
     PyObject *kv;
-    kv = _PyUnicode_FromId(key); /* borrowed */
+    kv = _PyString_FromId(key); /* borrowed */
     if (kv == NULL)
         return NULL;
     Py_hash_t hash = PyString_Hash(kv); // ((PyUnicodeObject *) kv)->hash;
@@ -2852,7 +2852,7 @@ PyObject *
 _PyDict_GetItemId(PyObject *dp, struct _Py_Identifier *key)
 {
     PyObject *kv;
-    kv = _PyUnicode_FromId(key); /* borrowed */
+    kv = _PyString_FromId(key); /* borrowed */
     if (kv == NULL) {
         PyErr_Clear();
         return NULL;
@@ -2880,7 +2880,7 @@ int
 _PyDict_SetItemId(PyObject *v, struct _Py_Identifier *key, PyObject *item)
 {
     PyObject *kv;
-    kv = _PyUnicode_FromId(key); /* borrowed */
+    kv = _PyString_FromId(key); /* borrowed */
     if (kv == NULL)
         return -1;
     return PyDict_SetItem(v, kv, item);
@@ -2902,7 +2902,7 @@ PyDict_SetItemString(PyObject *v, const char *key, PyObject *item)
 int
 _PyDict_DelItemId(PyObject *v, _Py_Identifier *key)
 {
-    PyObject *kv = _PyUnicode_FromId(key); /* borrowed */
+    PyObject *kv = _PyString_FromId(key); /* borrowed */
     if (kv == NULL)
         return -1;
     return PyDict_DelItem(v, kv);

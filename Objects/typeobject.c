@@ -791,7 +791,7 @@ type_module(PyTypeObject *type, void *context)
                 PyString_InternInPlace(&mod);
         }
         else {
-            mod = _PyUnicode_FromId(&PyId_builtins);
+            mod = _PyString_FromId(&PyId_builtins);
             Py_XINCREF(mod);
         }
     }
@@ -1389,7 +1389,7 @@ lookup_method(PyObject *self, _Py_Identifier *attrid, int *unbound)
 {
     PyObject *res = lookup_maybe_method(self, attrid, unbound);
     if (res == NULL && !PyErr_Occurred()) {
-        PyErr_SetObject(PyExc_AttributeError, _PyUnicode_FromId(attrid));
+        PyErr_SetObject(PyExc_AttributeError, _PyString_FromId(attrid));
     }
     return res;
 }
@@ -2943,7 +2943,7 @@ PyObject *
 _PyType_LookupId(PyTypeObject *type, struct _Py_Identifier *name)
 {
     PyObject *oname;
-    oname = _PyUnicode_FromId(name);   /* borrowed */
+    oname = _PyString_FromId(name);   /* borrowed */
     if (oname == NULL)
         return NULL;
     return _PyType_Lookup(type, oname);
@@ -3762,7 +3762,7 @@ import_copyreg(void)
     PyObject *copyreg_module;
     _Py_IDENTIFIER(copyreg);
 
-    copyreg_str = _PyUnicode_FromId(&PyId_copyreg);
+    copyreg_str = _PyString_FromId(&PyId_copyreg);
     if (copyreg_str == NULL) {
         return NULL;
     }
