@@ -5961,8 +5961,8 @@ _PyStringWriter_Init(_PyStringWriter *writer)
 }
 
 int
-_PyStringWriter_PrepareInternal(_PyStringWriter *writer,
-                                 Py_ssize_t length)
+_PyStringWriter_Prepare(_PyStringWriter *writer,
+                        Py_ssize_t length)
 {
     Py_ssize_t newlen;
 
@@ -6039,7 +6039,7 @@ _PyStringWriter_WriteStr(_PyStringWriter *writer, PyObject *str)
             writer->pos += len;
             return 0;
     }
-    if (_PyStringWriter_PrepareInternal(writer, len) == -1)
+    if (_PyStringWriter_Prepare(writer, len) == -1)
       return -1;
 	
     _PyString_FastCopyCharacters(writer->buffer, writer->pos,

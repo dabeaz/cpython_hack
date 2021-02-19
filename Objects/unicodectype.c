@@ -46,15 +46,8 @@ static const _PyUnicode_TypeRecord *
 gettyperecord(Py_UCS1 code)
 {
     int index;
-
-    if (code >= 0x110000)
-        index = 0;
-    else
-    {
-        index = index1[(code>>SHIFT)];
-        index = index2[(index<<SHIFT)+(code&((1<<SHIFT)-1))];
-    }
-
+    index = index1[(code>>SHIFT)];
+    index = index2[(index<<SHIFT)+(code&((1<<SHIFT)-1))];
     return &_PyUnicode_TypeRecords[index];
 }
 

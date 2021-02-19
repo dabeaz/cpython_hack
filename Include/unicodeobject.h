@@ -182,18 +182,15 @@ typedef struct {
 PyAPI_FUNC(void)
 _PyStringWriter_Init(_PyStringWriter *writer);
 
+  
 /* Prepare the buffer to write 'length' characters
    with the specified maximum character.
 
    Return 0 on success, raise an exception and return -1 on error. */
-#define _PyStringWriter_Prepare(WRITER, LENGTH)		\
-  (_PyStringWriter_PrepareInternal((WRITER), (LENGTH)))
-
-/* Don't call this function directly, use the _PyStringWriter_Prepare() macro
-   instead. */
+  
 PyAPI_FUNC(int)
-_PyStringWriter_PrepareInternal(_PyStringWriter *writer,
-                                 Py_ssize_t length);
+_PyStringWriter_Prepare(_PyStringWriter *writer,
+                        Py_ssize_t length);
 
 /* Append a Unicode character.
    Return 0 on success, raise an exception and return -1 on error. */
@@ -233,7 +230,7 @@ _PyStringWriter_WriteLatin1String(_PyStringWriter *writer,
     const char *str,           /* latin1-encoded byte string */
     Py_ssize_t len             /* length in bytes */
     );
-
+  
 /* Get the value of the writer as a Unicode string. Clear the
    buffer of the writer. Raise an exception and return NULL
    on error. */

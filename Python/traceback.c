@@ -690,17 +690,9 @@ _Py_DumpASCII(int fd, PyObject *text)
             char c = (char)ch;
             _Py_write_noraise(fd, &c, 1);
         }
-        else if (ch <= 0xff) {
+        else {
             PUTS(fd, "\\x");
             _Py_DumpHexadecimal(fd, ch, 2);
-        }
-        else if (ch <= 0xffff) {
-            PUTS(fd, "\\u");
-            _Py_DumpHexadecimal(fd, ch, 4);
-        }
-        else {
-            PUTS(fd, "\\U");
-            _Py_DumpHexadecimal(fd, ch, 8);
         }
     }
     if (truncated) {
