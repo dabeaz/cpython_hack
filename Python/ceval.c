@@ -1054,7 +1054,7 @@ main_loop:
             if (empty == NULL) {
                 goto error;
             }
-            str = _PyString_JoinArray(empty, stack_pointer - oparg, oparg);
+            str = PyString_JoinArray(empty, stack_pointer - oparg, oparg);
             Py_DECREF(empty);
             if (str == NULL)
                 goto error;

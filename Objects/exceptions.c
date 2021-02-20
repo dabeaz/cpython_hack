@@ -1926,7 +1926,7 @@ _set_legacy_print_statement_msg(PySyntaxErrorObject *self, Py_ssize_t start)
         return -1;
     }
 
-    PyObject *new_data = _PyString_XStrip(data, STRIP_BOTH, strip_sep_obj);
+    PyObject *new_data = PyString_Strip(data, STRIP_BOTH, strip_sep_obj);
     Py_DECREF(data);
     Py_DECREF(strip_sep_obj);
     if (new_data == NULL) {

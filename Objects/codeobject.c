@@ -584,7 +584,7 @@ validate_and_copy_tuple(PyObject *tup)
             return NULL;
         }
         else {
-	  item = _PyString_Copy(item);
+	  item = PyString_Copy(item);
             if (item == NULL) {
                 Py_DECREF(newtuple);
                 return NULL;

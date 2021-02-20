@@ -127,11 +127,12 @@ PyAPI_FUNC(PyObject *) PyString_RichCompare(PyObject *left, PyObject *right, int
 PyAPI_FUNC(PyObject *) PyString_Format(PyObject *format, PyObject *args);
 PyAPI_FUNC(int) PyString_Contains(PyObject *container, PyObject *element);
 PyAPI_FUNC(int) PyString_IsIdentifier(PyObject *s);
+PyAPI_FUNC(PyObject *) PyString_Strip(PyObject *self, int striptype, PyObject *sepobj);
   
 /* === Public API ========================================================= */
 
   PyAPI_FUNC(PyObject*) PyString_New(Py_ssize_t size);
-  PyAPI_FUNC(PyObject*) _PyString_Copy(PyObject *);
+  PyAPI_FUNC(PyObject*) PyString_Copy(PyObject *);
   PyAPI_FUNC(Py_ssize_t) PyString_CopyCharacters(
     PyObject *to,
     Py_ssize_t to_start,
@@ -154,6 +155,28 @@ PyAPI_FUNC(Py_ssize_t) PyString_Fill(
     Py_ssize_t length,
     unsigned char fill_char
     );
+
+
+PyAPI_FUNC(PyObject *) PyString_JoinArray(PyObject *separator, PyObject *const *items, Py_ssize_t seqlen);
+
+/* Test whether a unicode is equal to ASCII identifier.  Return 1 if true,
+   0 otherwise.  The right argument must be ASCII identifier.
+   Any error occurs inside will be cleared before return. */
+
+PyAPI_FUNC(int) _PyString_EqualToASCIIId(
+    PyObject *left,             /* Left string */
+    _Py_Identifier *right       /* Right identifier */
+    );
+  
+/* Test whether a unicode is equal to ASCII string.  Return 1 if true,
+   0 otherwise.  The right argument must be ASCII-encoded string.
+   Any error occurs inside will be cleared before return. */
+
+PyAPI_FUNC(int) _PyString_EqualToASCIIString(
+    PyObject *left,
+    const char *right           /* ASCII-encoded string */
+    );
+
   
 /* --- _PyUnicodeWriter API ----------------------------------------------- */
 
@@ -260,35 +283,6 @@ PyAPI_FUNC(int) _PyString_FormatAdvancedWriter(
 
 PyAPI_FUNC(PyObject*) _PyString_TransformDecimalAndSpaceToASCII(
     PyObject *unicode           /* Unicode object */
-    );
-
-/* --- Methods & Slots ---------------------------------------------------- */
-
-PyAPI_FUNC(PyObject *) _PyString_JoinArray(PyObject *separator, PyObject *const *items, Py_ssize_t seqlen);
-
-/* Test whether a unicode is equal to ASCII identifier.  Return 1 if true,
-   0 otherwise.  The right argument must be ASCII identifier.
-   Any error occurs inside will be cleared before return. */
-
-PyAPI_FUNC(int) _PyString_EqualToASCIIId(
-    PyObject *left,             /* Left string */
-    _Py_Identifier *right       /* Right identifier */
-    );
-  
-/* Test whether a unicode is equal to ASCII string.  Return 1 if true,
-   0 otherwise.  The right argument must be ASCII-encoded string.
-   Any error occurs inside will be cleared before return. */
-
-PyAPI_FUNC(int) _PyString_EqualToASCIIString(
-    PyObject *left,
-    const char *right           /* ASCII-encoded string */
-    );
-
-/* Externally visible for str.strip(unicode) */
-PyAPI_FUNC(PyObject *) _PyString_XStrip(
-    PyObject *self,
-    int striptype,
-    PyObject *sepobj
     );
 
 /* Using explicit passed-in values, insert the thousands grouping

@@ -164,11 +164,11 @@ PyAPI_FUNC(int) _PyUnicode_IsTitlecase(
     Py_UCS1 ch       /* Unicode character */
     );
 
-PyAPI_FUNC(int) _PyUnicode_IsXidStart(
+PyAPI_FUNC(int) _PyString_IsXidStart(
     Py_UCS1 ch       /* Unicode character */
     );
 
-PyAPI_FUNC(int) _PyUnicode_IsXidContinue(
+PyAPI_FUNC(int) _PyString_IsXidContinue(
     Py_UCS1 ch       /* Unicode character */
     );
   
@@ -1650,7 +1650,7 @@ unicode_result_unchanged(PyObject *unicode)
     }
     else
         /* Subtype -- return genuine unicode string with the same value. */
-        return _PyString_Copy(unicode);
+        return PyString_Copy(unicode);
 }
 
 /* --- Bloom Filters ----------------------------------------------------- */
@@ -2212,7 +2212,7 @@ _PyUnicode_FromUCS1(const Py_UCS1* u, Py_ssize_t size)
 }
 
 PyObject*
-_PyString_Copy(PyObject *unicode)
+PyString_Copy(PyObject *unicode)
 {
     Py_ssize_t length;
     PyObject *copy;
@@ -2688,7 +2688,7 @@ PyUnicode_FromObject(PyObject *obj)
     if (PyString_Check(obj)) {
         /* For a Unicode subtype that's not a Unicode object,
            return a true Unicode object with the same data. */
-        return _PyString_Copy(obj);
+        return PyString_Copy(obj);
     }
     PyErr_Format(PyExc_TypeError,
                  "Can't convert '%.100s' object to str implicitly",
@@ -3294,13 +3294,13 @@ PyString_Join(PyObject *separator, PyObject *seq)
 
     items = _PySequence_Fast_ITEMS(fseq);
     seqlen = PySequence_Size(fseq);
-    res = _PyString_JoinArray(separator, items, seqlen);
+    res = PyString_JoinArray(separator, items, seqlen);
     Py_DECREF(fseq);
     return res;
 }
 
 PyObject *
-_PyString_JoinArray(PyObject *separator, PyObject *const *items, Py_ssize_t seqlen)
+PyString_JoinArray(PyObject *separator, PyObject *const *items, Py_ssize_t seqlen)
 {
     PyObject *res = NULL; /* the result */
     PyObject *sep = NULL;
@@ -4902,13 +4902,13 @@ _PyUnicode_ScanIdentifier(PyObject *self)
        definition of XID_Start and XID_Continue, it is sufficient
        to check just for these, except that _ must be allowed
        as starting an identifier.  */
-    if (!_PyUnicode_IsXidStart(ch) && ch != 0x5F /* LOW LINE */) {
+    if (!_PyString_IsXidStart(ch) && ch != 0x5F /* LOW LINE */) {
         return 0;
     }
 
     for (i = 1; i < len; i++) {
         ch = PyUnicode_READ(data, i);
-        if (!_PyUnicode_IsXidContinue(ch)) {
+        if (!_PyString_IsXidContinue(ch)) {
             return i;
         }
     }
@@ -5045,7 +5045,7 @@ static const char *stripfuncnames[] = {"lstrip", "rstrip", "strip"};
 
 /* externally visible for str.strip(unicode) */
 PyObject *
-_PyString_XStrip(PyObject *self, int striptype, PyObject *sepobj)
+PyString_Strip(PyObject *self, int striptype, PyObject *sepobj)
 {
     const void *data;
     Py_ssize_t i, j, len;
@@ -5156,7 +5156,7 @@ do_argstrip(PyObject *self, int striptype, PyObject *sep)
 {
     if (sep != Py_None) {
         if (PyString_Check(sep))
-            return _PyString_XStrip(self, striptype, sep);
+            return PyString_Strip(self, striptype, sep);
         else {
             PyErr_Format(PyExc_TypeError,
                          "%s arg must be None or str",
@@ -6222,7 +6222,7 @@ unicode_sizeof_impl(PyObject *self)
 static PyObject *
 unicode_getnewargs(PyObject *v, PyObject *Py_UNUSED(ignored))
 {
-    PyObject *copy = _PyString_Copy(v);
+    PyObject *copy = PyString_Copy(v);
     if (!copy)
         return NULL;
     return Py_BuildValue("(N)", copy);

@@ -176,7 +176,11 @@ data. Removal of macros and performance hacks.
 - Day 48 (2/17/2021). An endless sea of strings.
 - Day 49 (2/18/2021). String cleanup.
 - Day 50 (2/19/2021). Strings.
-  
+
+Halfway to somewhere... or nowhere?
+
+- Day 51 (2/20/2021). Strings.
+
 Copyright and License Information
 ---------------------------------
 

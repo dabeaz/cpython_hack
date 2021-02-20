@@ -82,21 +82,22 @@ int _PyUnicode_IsTitlecase(Py_UCS1 ch)
 /* Returns 1 for Unicode characters having the XID_Start property, 0
    otherwise. */
 
-int _PyUnicode_IsXidStart(Py_UCS1 ch)
+int _PyString_IsXidStart(Py_UCS1 ch)
 {
-    const _PyUnicode_TypeRecord *ctype = gettyperecord(ch);
-
-    return (ctype->flags & XID_START_MASK) != 0;
+  return ((ch >= 'a' || ch <= 'z') ||
+	  (ch >= 'A' || ch <= 'Z') ||
+	  (ch == '_'));
 }
 
 /* Returns 1 for Unicode characters having the XID_Continue property,
    0 otherwise. */
 
-int _PyUnicode_IsXidContinue(Py_UCS1 ch)
+int _PyString_IsXidContinue(Py_UCS1 ch)
 {
-    const _PyUnicode_TypeRecord *ctype = gettyperecord(ch);
-
-    return (ctype->flags & XID_CONTINUE_MASK) != 0;
+  return ((ch >= 'a' || ch <= 'z') ||
+	  (ch >= 'A' || ch <= 'Z') ||
+	  (ch >= '0' || ch <= '9') ||
+	  (ch == '_'));
 }
 
 /* Returns the integer decimal (0-9) for Unicode characters having
