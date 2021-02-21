@@ -59,14 +59,6 @@ Copyright (c) Corporation for National Research Initiatives.
 
 /* === Internal API ======================================================= */
 
-/* --- Internal Unicode Format -------------------------------------------- */
-
-/* Python 3.x requires unicode */
-#define Py_USING_UNICODE
-
-/* Py_UCS4 and Py_UCS2 are typedefs for the respective
-   unicode representations. */
-
 typedef uint8_t Py_UCS1;
 
 #ifdef __cplusplus
@@ -128,13 +120,10 @@ PyAPI_FUNC(PyObject *) PyString_Format(PyObject *format, PyObject *args);
 PyAPI_FUNC(int) PyString_Contains(PyObject *container, PyObject *element);
 PyAPI_FUNC(int) PyString_IsIdentifier(PyObject *s);
 PyAPI_FUNC(PyObject *) PyString_Strip(PyObject *self, int striptype, PyObject *sepobj);
-  
-/* === Public API ========================================================= */
 
-  PyAPI_FUNC(PyObject*) PyString_New(Py_ssize_t size);
-  PyAPI_FUNC(PyObject*) PyString_Copy(PyObject *);
-  PyAPI_FUNC(Py_ssize_t) PyString_CopyCharacters(
-    PyObject *to,
+PyAPI_FUNC(PyObject*) PyString_New(Py_ssize_t size);
+PyAPI_FUNC(PyObject*) PyString_Copy(PyObject *);
+PyAPI_FUNC(Py_ssize_t) PyString_CopyCharacters(PyObject *to,
     Py_ssize_t to_start,
     PyObject *from,
     Py_ssize_t from_start,
@@ -238,18 +227,10 @@ _PyStringWriter_WriteSubstring(_PyStringWriter *writer,
     Py_ssize_t end
     );
 
-/* Append an ASCII-encoded byte string.
-   Return 0 on success, raise an exception and return -1 on error. */
-PyAPI_FUNC(int)
-_PyStringWriter_WriteASCIIString(_PyStringWriter *writer,
-    const char *str,           /* ASCII-encoded byte string */
-    Py_ssize_t len             /* number of bytes, or -1 if unknown */
-    );
-
 /* Append a latin1-encoded byte string.
    Return 0 on success, raise an exception and return -1 on error. */
 PyAPI_FUNC(int)
-_PyStringWriter_WriteLatin1String(_PyStringWriter *writer,
+_PyStringWriter_WriteCString(_PyStringWriter *writer,
     const char *str,           /* latin1-encoded byte string */
     Py_ssize_t len             /* length in bytes */
     );

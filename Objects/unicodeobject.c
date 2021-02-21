@@ -444,26 +444,45 @@ const unsigned char _Py_ascii_whitespace[] = {
 /*     case 0x000C: * FORM FEED */
 /*     case 0x000D: * CARRIAGE RETURN */
     0, 1, 1, 1, 1, 1, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,        /* 0x10 */
 /*     case 0x001C: * FILE SEPARATOR */
 /*     case 0x001D: * GROUP SEPARATOR */
 /*     case 0x001E: * RECORD SEPARATOR */
 /*     case 0x001F: * UNIT SEPARATOR */
     0, 0, 0, 0, 1, 1, 1, 1,
 /*     case 0x0020: * SPACE */
-    1, 0, 0, 0, 0, 0, 0, 0,
+    1, 0, 0, 0, 0, 0, 0, 0,        /* 0x20 */
     0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,        /* 0x30 */
     0, 0, 0, 0, 0, 0, 0, 0,
 
+    0, 0, 0, 0, 0, 0, 0, 0,        /* 0x40 */
     0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,        /* 0x50 */
     0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,        /* 0x60 */
     0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,        /* 0x70 */
     0, 0, 0, 0, 0, 0, 0, 0,
+    /* case 0x0085: NEXT LINE */
+    0, 0, 0, 0, 0, 1, 0, 0,        /* 0x80 */
     0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,        /* 0x90 */
     0, 0, 0, 0, 0, 0, 0, 0,
+    /* case:0x00a0: NO-BREAK SPACE*/
+    1, 0, 0, 0, 0, 0, 0, 0,        /* 0xa0 */
     0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0
+    0, 0, 0, 0, 0, 0, 0, 0,        /* 0xb0 */
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,        /* 0xc0 */
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,        /* 0xd0 */
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,        /* 0xe0 */
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,        /* 0xf0 */
+    0, 0, 0, 0, 0, 0, 0, 0,
+    
 };
 
 /* forward */
@@ -2458,7 +2477,7 @@ unicode_fromformat_arg(_PyStringWriter *writer,
             writer->pos += fill;
         }
 
-        if (_PyStringWriter_WriteASCIIString(writer, buffer, len) < 0)
+        if (_PyStringWriter_WriteCString(writer, buffer, len) < 0)
             return NULL;
         break;
     }
@@ -2481,7 +2500,7 @@ unicode_fromformat_arg(_PyStringWriter *writer,
             len += 2;
         }
 
-        if (_PyStringWriter_WriteASCIIString(writer, number, len) < 0)
+        if (_PyStringWriter_WriteCString(writer, number, len) < 0)
             return NULL;
         break;
     }
@@ -2581,7 +2600,7 @@ unicode_fromformat_arg(_PyStringWriter *writer,
            skip the code, since there's no way to know what's in the
            argument list) */
         len = strlen(p);
-        if (_PyStringWriter_WriteLatin1String(writer, p, len) == -1)
+        if (_PyStringWriter_WriteCString(writer, p, len) == -1)
             return NULL;
         f = p+len;
         return f;
@@ -2633,7 +2652,7 @@ PyString_FromFormatV(const char *format, va_list vargs)
             if (*p == '\0')
                 writer.overallocate = 0;
 
-            if (_PyStringWriter_WriteASCIIString(&writer, f, len) < 0)
+            if (_PyStringWriter_WriteCString(&writer, f, len) < 0)
                 goto fail;
 
             f = p;
@@ -6075,42 +6094,7 @@ _PyStringWriter_WriteSubstring(_PyStringWriter *writer, PyObject *str,
 }
 
 int
-_PyStringWriter_WriteASCIIString(_PyStringWriter *writer,
-                                  const char *ascii, Py_ssize_t len)
-{
-    if (len == -1)
-        len = strlen(ascii);
-
-    assert(ucs1lib_find_max_char((const Py_UCS1*)ascii, (const Py_UCS1*)ascii + len) < 128);
-
-    if (writer->buffer == NULL && !writer->overallocate) {
-        PyObject *str;
-
-        str = PyString_FromStringAndSize(ascii, len);
-        if (str == NULL)
-            return -1;
-
-        writer->readonly = 1;
-        writer->buffer = str;
-        _PyStringWriter_Update(writer);
-        writer->pos += len;
-        return 0;
-    }
-
-    if (_PyStringWriter_Prepare(writer, len) == -1)
-        return -1;
-    {
-        const Py_UCS1 *str = (const Py_UCS1 *)ascii;
-        Py_UCS1 *data = writer->data;
-
-        memcpy(data + writer->pos, str, len);
-    }
-    writer->pos += len;
-    return 0;
-}
-
-int
-_PyStringWriter_WriteLatin1String(_PyStringWriter *writer,
+_PyStringWriter_WriteCString(_PyStringWriter *writer,
                                    const char *str, Py_ssize_t len)
 {
     if (_PyStringWriter_Prepare(writer, len) == -1)
@@ -6438,7 +6422,7 @@ formatfloat(PyObject *v, struct unicode_format_arg_t *arg,
         return -1;
     len = strlen(p);
     if (writer) {
-        if (_PyStringWriter_WriteASCIIString(writer, p, len) < 0) {
+        if (_PyStringWriter_WriteCString(writer, p, len) < 0) {
             PyMem_Free(p);
             return -1;
         }

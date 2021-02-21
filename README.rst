@@ -180,7 +180,8 @@ data. Removal of macros and performance hacks.
 Halfway to somewhere... or nowhere?
 
 - Day 51 (2/20/2021). Strings.
-
+- Day 52 (2/21/2021). Strings.
+  
 Copyright and License Information
 ---------------------------------
 

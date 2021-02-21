@@ -54,7 +54,7 @@ gettyperecord(Py_UCS1 code)
 PyAPI_DATA(const unsigned char) _Py_ascii_whitespace[];
 
 int PyString_IsWhitespace(Py_UCS1 ch) {
-  return ((ch) < 128U ? _Py_ascii_whitespace[(ch)] : _PyUnicode_IsWhitespace(ch));
+  return _Py_ascii_whitespace[(ch)];
 }
 
 /* Returns the titlecase Unicode characters corresponding to ch or just

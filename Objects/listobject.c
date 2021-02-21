@@ -723,7 +723,7 @@ list_repr(PyListObject *v)
        so must refetch the list size on each iteration. */
     for (i = 0; i < Py_SIZE(v); ++i) {
         if (i > 0) {
-            if (_PyStringWriter_WriteASCIIString(&writer, ", ", 2) < 0)
+            if (_PyStringWriter_WriteCString(&writer, ", ", 2) < 0)
                 goto error;
         }
 

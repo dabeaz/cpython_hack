@@ -1019,7 +1019,7 @@ format_float_internal(PyObject *value,
         && !format->thousands_separators)
     {
         /* Fast path */
-        result = _PyStringWriter_WriteASCIIString(writer, buf, n_digits);
+        result = _PyStringWriter_WriteCString(writer, buf, n_digits);
         PyMem_Free(buf);
         return result;
     }

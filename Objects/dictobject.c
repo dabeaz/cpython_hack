@@ -1644,7 +1644,7 @@ dict_repr(PyDictObject *mp)
         Py_INCREF(value);
 
         if (!first) {
-            if (_PyStringWriter_WriteASCIIString(&writer, ", ", 2) < 0)
+            if (_PyStringWriter_WriteCString(&writer, ", ", 2) < 0)
                 goto error;
         }
         first = 0;
@@ -1657,7 +1657,7 @@ dict_repr(PyDictObject *mp)
         if (res < 0)
             goto error;
 
-        if (_PyStringWriter_WriteASCIIString(&writer, ": ", 2) < 0)
+        if (_PyStringWriter_WriteCString(&writer, ": ", 2) < 0)
             goto error;
 
         s = PyObject_Repr(value);

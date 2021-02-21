@@ -257,7 +257,7 @@ structseq_repr(PyStructSequence *obj)
     for (Py_ssize_t i=0; i < VISIBLE_SIZE(obj); i++) {
         if (i > 0) {
             /* Write ", " */
-            if (_PyStringWriter_WriteASCIIString(&writer, ", ", 2) < 0) {
+            if (_PyStringWriter_WriteCString(&writer, ", ", 2) < 0) {
                 goto error;
             }
         }

@@ -25,7 +25,7 @@ append_ast_slice(_PyStringWriter *writer, expr_ty e);
 static int
 append_charp(_PyStringWriter *writer, const char *charp)
 {
-    return _PyStringWriter_WriteASCIIString(writer, charp, -1);
+    return _PyStringWriter_WriteCString(writer, charp, -1);
 }
 
 #define APPEND_STR_FINISH(str)  do { \
@@ -697,7 +697,7 @@ append_formattedvalue(_PyStringWriter *writer, expr_ty e)
         APPEND_STR(conversion);
     }
     if (e->v.FormattedValue.format_spec) {
-        if (-1 == _PyStringWriter_WriteASCIIString(writer, ":", 1) ||
+        if (-1 == _PyStringWriter_WriteCString(writer, ":", 1) ||
             -1 == append_fstring_element(writer,
                                          e->v.FormattedValue.format_spec,
                                          true

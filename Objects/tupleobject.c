@@ -309,7 +309,7 @@ tuplerepr(PyTupleObject *v)
         PyObject *s;
 
         if (i > 0) {
-            if (_PyStringWriter_WriteASCIIString(&writer, ", ", 2) < 0)
+            if (_PyStringWriter_WriteCString(&writer, ", ", 2) < 0)
                 goto error;
         }
 
@@ -330,7 +330,7 @@ tuplerepr(PyTupleObject *v)
             goto error;
     }
     else {
-        if (_PyStringWriter_WriteASCIIString(&writer, ",)", 2) < 0)
+        if (_PyStringWriter_WriteCString(&writer, ",)", 2) < 0)
             goto error;
     }
 
