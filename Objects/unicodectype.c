@@ -100,25 +100,17 @@ int _PyString_IsXidContinue(Py_UCS1 ch)
 	  (ch == '_'));
 }
 
-/* Returns the integer decimal (0-9) for Unicode characters having
-   this property, -1 otherwise. */
-
-int _PyUnicode_ToDecimalDigit(Py_UCS1 ch)
-{
-    const _PyUnicode_TypeRecord *ctype = gettyperecord(ch);
-
-    return (ctype->flags & DECIMAL_MASK) ? ctype->decimal : -1;
-}
-
-
 int PyString_ToDecimalDigit(Py_UCS1 ch) {
-  return _PyUnicode_ToDecimalDigit(ch);
+  if (ch >= '0' && ch <= '9') {
+    return ch - 0x30;
+  } else {
+    return -1;
+  }
 }
 
-
-int _PyUnicode_IsDecimalDigit(Py_UCS1 ch)
+int _PyString_IsDecimalDigit(Py_UCS1 ch)
 {
-    if (_PyUnicode_ToDecimalDigit(ch) < 0)
+    if (PyString_ToDecimalDigit(ch) < 0)
         return 0;
     return 1;
 }
@@ -170,48 +162,32 @@ int _PyUnicode_IsPrintable(Py_UCS1 ch)
     return (ctype->flags & PRINTABLE_MASK) != 0;
 }
 
-/* Returns 1 for Unicode characters having the category 'Ll', 0
-   otherwise. */
-
-int _PyUnicode_IsLowercase(Py_UCS1 ch)
+int _PyString_IsLowercase(Py_UCS1 ch)
 {
-    const _PyUnicode_TypeRecord *ctype = gettyperecord(ch);
-
-    return (ctype->flags & LOWER_MASK) != 0;
+  return (ch >= 'a' && ch <= 'z');
 }
 
-/* Returns 1 for Unicode characters having the category 'Lu', 0
-   otherwise. */
-
-int _PyUnicode_IsUppercase(Py_UCS1 ch)
+int _PyString_IsUppercase(Py_UCS1 ch)
 {
-    const _PyUnicode_TypeRecord *ctype = gettyperecord(ch);
-
-    return (ctype->flags & UPPER_MASK) != 0;
+  return (ch >= 'A' && ch <= 'Z');
 }
 
-/* Returns the uppercase Unicode characters corresponding to ch or just
-   ch if no uppercase mapping is known. */
-
-Py_UCS1 _PyUnicode_ToUppercase(Py_UCS1 ch)
+Py_UCS1 _PyString_ToUppercase(Py_UCS1 ch)
 {
-    const _PyUnicode_TypeRecord *ctype = gettyperecord(ch);
-
-    if (ctype->flags & EXTENDED_CASE_MASK)
-        return _PyUnicode_ExtendedCase[ctype->upper & 0xFFFF];
-    return ch + ctype->upper;
+  if (ch >= 'a' && ch <= 'z') {
+    return ch - 0x20;
+  } else {
+    return ch;
+  }
 }
-
-/* Returns the lowercase Unicode characters corresponding to ch or just
-   ch if no lowercase mapping is known. */
 
 Py_UCS1 _PyUnicode_ToLowercase(Py_UCS1 ch)
 {
-    const _PyUnicode_TypeRecord *ctype = gettyperecord(ch);
-
-    if (ctype->flags & EXTENDED_CASE_MASK)
-        return _PyUnicode_ExtendedCase[ctype->lower & 0xFFFF];
-    return ch + ctype->lower;
+  if (ch >= 'A' && ch <= 'Z') {
+    return ch + 0x20;
+  } else {
+    return ch;
+  }
 }
 
 int _PyUnicode_ToLowerFull(Py_UCS1 ch, Py_UCS1 *res)

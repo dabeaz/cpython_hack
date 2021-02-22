@@ -152,11 +152,11 @@ unsigned char PyString_ReadChar(PyObject *s, Py_ssize_t index) {
 #include "stringlib/eq.h"
 
   
-PyAPI_FUNC(int) _PyUnicode_IsLowercase(
+PyAPI_FUNC(int) _PyString_IsLowercase(
     Py_UCS1 ch       /* Unicode character */
     );
 
-PyAPI_FUNC(int) _PyUnicode_IsUppercase(
+PyAPI_FUNC(int) _PyString_IsUppercase(
     Py_UCS1 ch       /* Unicode character */
     );
 
@@ -180,15 +180,15 @@ PyAPI_FUNC(int) _PyUnicode_IsLinebreak(
     const Py_UCS1 ch         /* Unicode character */
     );
 
-/* Py_DEPRECATED(3.3) */ PyAPI_FUNC(Py_UCS1) _PyUnicode_ToLowercase(
+PyAPI_FUNC(Py_UCS1) _PyString_ToLowercase(
     Py_UCS1 ch       /* Unicode character */
     );
 
-/* Py_DEPRECATED(3.3) */ PyAPI_FUNC(Py_UCS1) _PyUnicode_ToUppercase(
+PyAPI_FUNC(Py_UCS1) _PyString_ToUppercase(
     Py_UCS1 ch       /* Unicode character */
     );
 
-Py_DEPRECATED(3.3) PyAPI_FUNC(Py_UCS1) _PyUnicode_ToTitlecase(
+PyAPI_FUNC(Py_UCS1) _PyUnicode_ToTitlecase(
     Py_UCS1 ch       /* Unicode character */
     );
 
@@ -220,7 +220,7 @@ PyAPI_FUNC(int) _PyUnicode_IsCased(
     Py_UCS1 ch         /* Unicode character */
     );
 
-PyAPI_FUNC(int) _PyUnicode_ToDecimalDigit(
+PyAPI_FUNC(int) PyString_ToDecimalDigit(
     Py_UCS1 ch       /* Unicode character */
     );
 
@@ -232,7 +232,7 @@ PyAPI_FUNC(double) _PyUnicode_ToNumeric(
     Py_UCS1 ch       /* Unicode character */
     );
 
-PyAPI_FUNC(int) _PyUnicode_IsDecimalDigit(
+PyAPI_FUNC(int) _PyString_IsDecimalDigit(
     Py_UCS1 ch       /* Unicode character */
     );
 
@@ -256,21 +256,21 @@ PyAPI_FUNC(int) _PyUnicode_IsAlpha(
 #define Py_UNICODE_ISSPACE(ch) \
     ((ch) < 128U ? _Py_ascii_whitespace[(ch)] : _PyUnicode_IsWhitespace(ch))
 
-#define Py_UNICODE_ISLOWER(ch) _PyUnicode_IsLowercase(ch)
-#define Py_UNICODE_ISUPPER(ch) _PyUnicode_IsUppercase(ch)
+#define Py_UNICODE_ISLOWER(ch) _PyString_IsLowercase(ch)
+#define Py_UNICODE_ISUPPER(ch) _PyString_IsUppercase(ch)
 #define Py_UNICODE_ISTITLE(ch) _PyUnicode_IsTitlecase(ch)
 #define Py_UNICODE_ISLINEBREAK(ch) _PyUnicode_IsLinebreak(ch)
 
-#define Py_UNICODE_TOLOWER(ch) _PyUnicode_ToLowercase(ch)
-#define Py_UNICODE_TOUPPER(ch) _PyUnicode_ToUppercase(ch)
+#define Py_UNICODE_TOLOWER(ch) _PyString_ToLowercase(ch)
+#define Py_UNICODE_TOUPPER(ch) _PyString_ToUppercase(ch)
 #define Py_UNICODE_TOTITLE(ch) _PyUnicode_ToTitlecase(ch)
 
-#define Py_UNICODE_ISDECIMAL(ch) _PyUnicode_IsDecimalDigit(ch)
+#define Py_UNICODE_ISDECIMAL(ch) _PyString_IsDecimalDigit(ch)
 #define Py_UNICODE_ISDIGIT(ch) _PyUnicode_IsDigit(ch)
 #define Py_UNICODE_ISNUMERIC(ch) _PyUnicode_IsNumeric(ch)
 #define Py_UNICODE_ISPRINTABLE(ch) _PyUnicode_IsPrintable(ch)
 
-#define Py_UNICODE_TODECIMAL(ch) _PyUnicode_ToDecimalDigit(ch)
+#define Py_UNICODE_TODECIMAL(ch) PyString_ToDecimalDigit(ch)
 #define Py_UNICODE_TODIGIT(ch) _PyUnicode_ToDigit(ch)
 #define Py_UNICODE_TONUMERIC(ch) _PyUnicode_ToNumeric(ch)
 
