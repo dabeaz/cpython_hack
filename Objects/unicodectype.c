@@ -181,7 +181,7 @@ Py_UCS1 _PyString_ToUppercase(Py_UCS1 ch)
   }
 }
 
-Py_UCS1 _PyUnicode_ToLowercase(Py_UCS1 ch)
+Py_UCS1 _PyString_ToLowercase(Py_UCS1 ch)
 {
   if (ch >= 'A' && ch <= 'Z') {
     return ch + 0x20;

@@ -570,24 +570,6 @@ unicode_capitalize(PyObject *self, PyObject *Py_UNUSED(ignored))
     return unicode_capitalize_impl(self);
 }
 
-PyDoc_STRVAR(unicode_casefold__doc__,
-"casefold($self, /)\n"
-"--\n"
-"\n"
-"Return a version of the string suitable for caseless comparisons.");
-
-#define UNICODE_CASEFOLD_METHODDEF    \
-    {"casefold", (PyCFunction)unicode_casefold, METH_NOARGS, unicode_casefold__doc__},
-
-static PyObject *
-unicode_casefold_impl(PyObject *self);
-
-static PyObject *
-unicode_casefold(PyObject *self, PyObject *Py_UNUSED(ignored))
-{
-    return unicode_casefold_impl(self);
-}
-
 PyDoc_STRVAR(unicode_center__doc__,
 "center($self, width, fillchar=\' \', /)\n"
 "--\n"
@@ -3146,47 +3128,31 @@ lower_ucs4(const void *data, Py_ssize_t length, Py_ssize_t i,
 static Py_ssize_t
 do_capitalize(const void *data, Py_ssize_t length, Py_UCS1 *res)
 {
-    Py_ssize_t i, k = 0;
-    int n_res, j;
-    Py_UCS1 c, mapped[3];
-
-    c = PyUnicode_READ(data, 0);
-    n_res = _PyUnicode_ToTitleFull(c, mapped);
-    for (j = 0; j < n_res; j++) {
-        res[k++] = mapped[j];
+    Py_ssize_t k = 0;
+    Py_UCS1 *src = (Py_UCS1 *) data;
+    res[0] = _PyString_ToUppercase(*(src++));
+    for (k = 1; k < length; k++) {
+      res[k] = _PyString_ToLowercase(*(src++));
     }
-    for (i = 1; i < length; i++) {
-        c = PyUnicode_READ(data, i);
-        n_res = lower_ucs4(data, length, i, c, mapped);
-        for (j = 0; j < n_res; j++) {
-            res[k++] = mapped[j];
-        }
-    }
-    return k;
+    return length;
 }
 
 static Py_ssize_t
 do_swapcase(const void *data, Py_ssize_t length, Py_UCS1 *res) {
-    Py_ssize_t i, k = 0;
-
-    for (i = 0; i < length; i++) {
-        Py_UCS1 c = PyUnicode_READ(data, i), mapped[3];
-        int n_res, j;
-        if (Py_UNICODE_ISUPPER(c)) {
-            n_res = lower_ucs4(data, length, i, c, mapped);
-        }
-        else if (Py_UNICODE_ISLOWER(c)) {
-            n_res = _PyUnicode_ToUpperFull(c, mapped);
-        }
-        else {
-            n_res = 1;
-            mapped[0] = c;
-        }
-        for (j = 0; j < n_res; j++) {
-            res[k++] = mapped[j];
-        }
+    Py_ssize_t k = 0;
+    Py_UCS1 c;
+    Py_UCS1 *src = (Py_UCS1 *) data;
+    for (k = 0; k < length; k++, src++) {
+      c = *src;
+      if (Py_UNICODE_ISUPPER(c)) {
+	res[k] = _PyString_ToLowercase(c);
+      } else if (Py_UNICODE_ISLOWER(c)) {
+	res[k] = _PyString_ToUppercase(c);
+      } else {
+	res[k] = c;
+      }
     }
-    return k;
+    return length;
 }
 
 static Py_ssize_t
@@ -3219,22 +3185,6 @@ static Py_ssize_t
 do_lower(const void *data, Py_ssize_t length, Py_UCS1 *res)
 {
     return do_upper_or_lower(data, length, res, 1);
-}
-
-static Py_ssize_t
-do_casefold(const void *data, Py_ssize_t length, Py_UCS1 *res)
-{
-    Py_ssize_t i, k = 0;
-
-    for (i = 0; i < length; i++) {
-        Py_UCS1 c = PyUnicode_READ(data, i);
-        Py_UCS1 mapped[3];
-        int j, n_res = _PyUnicode_ToFoldedFull(c, mapped);
-        for (j = 0; j < n_res; j++) {
-            res[k++] = mapped[j];
-        }
-    }
-    return k;
 }
 
 static Py_ssize_t
@@ -3888,19 +3838,6 @@ unicode_capitalize_impl(PyObject *self)
     if (PyUnicode_GET_LENGTH(self) == 0)
         return unicode_result_unchanged(self);
     return case_operation(self, do_capitalize);
-}
-
-/*[clinic input]
-str.casefold as unicode_casefold
-
-Return a version of the string suitable for caseless comparisons.
-[clinic start generated code]*/
-
-static PyObject *
-unicode_casefold_impl(PyObject *self)
-/*[clinic end generated code: output=0120daf657ca40af input=384d66cc2ae30daf]*/
-{
-    return case_operation(self, do_casefold);
 }
 
 
@@ -6218,7 +6155,6 @@ static PyMethodDef unicode_methods[] = {
     UNICODE_RSPLIT_METHODDEF
     UNICODE_JOIN_METHODDEF
     UNICODE_CAPITALIZE_METHODDEF
-    UNICODE_CASEFOLD_METHODDEF
     UNICODE_TITLE_METHODDEF
     UNICODE_CENTER_METHODDEF
     {"count", (PyCFunction) unicode_count, METH_VARARGS, count__doc__},
