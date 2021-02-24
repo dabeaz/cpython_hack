@@ -183,6 +183,8 @@ Halfway to somewhere... or nowhere?
 - Day 52 (2/21/2021). Strings.
 - Day 53 (2/22/2021). Strings.
 - Day 54 (2/22/2021). Strings.
+- Day 55 (2/23/2021). Strings.
+- Day 56 (2/24/2021). Strings.
   
 Copyright and License Information
 ---------------------------------

@@ -188,38 +188,6 @@ PyAPI_FUNC(Py_UCS1) _PyString_ToUppercase(
     Py_UCS1 ch       /* Unicode character */
     );
 
-PyAPI_FUNC(Py_UCS1) _PyUnicode_ToTitlecase(
-    Py_UCS1 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyUnicode_ToLowerFull(
-    Py_UCS1 ch,       /* Unicode character */
-    Py_UCS1 *res
-    );
-
-PyAPI_FUNC(int) _PyUnicode_ToTitleFull(
-    Py_UCS1 ch,       /* Unicode character */
-    Py_UCS1 *res
-    );
-
-PyAPI_FUNC(int) _PyUnicode_ToUpperFull(
-    Py_UCS1 ch,       /* Unicode character */
-    Py_UCS1 *res
-    );
-
-PyAPI_FUNC(int) _PyUnicode_ToFoldedFull(
-    Py_UCS1 ch,       /* Unicode character */
-    Py_UCS1 *res
-    );
-
-PyAPI_FUNC(int) _PyUnicode_IsCaseIgnorable(
-    Py_UCS1 ch         /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyUnicode_IsCased(
-    Py_UCS1 ch         /* Unicode character */
-    );
-
 PyAPI_FUNC(int) PyString_ToDecimalDigit(
     Py_UCS1 ch       /* Unicode character */
     );
@@ -3118,13 +3086,6 @@ PyString_Tailmatch(PyObject *str,
     return tailmatch(str, substr, start, end, direction);
 }
 
-static int
-lower_ucs4(const void *data, Py_ssize_t length, Py_ssize_t i,
-           Py_UCS1 c, Py_UCS1 *mapped)
-{
-    return _PyUnicode_ToLowerFull(c, mapped);
-}
-
 static Py_ssize_t
 do_capitalize(const void *data, Py_ssize_t length, Py_UCS1 *res)
 {
@@ -3162,15 +3123,11 @@ do_upper_or_lower(const void *data, Py_ssize_t length, Py_UCS1 *res,
     Py_ssize_t i, k = 0;
 
     for (i = 0; i < length; i++) {
-        Py_UCS1 c = PyUnicode_READ(data, i), mapped[3];
-        int n_res, j;
-        if (lower)
-            n_res = lower_ucs4(data, length, i, c, mapped);
-        else
-            n_res = _PyUnicode_ToUpperFull(c, mapped);
-        for (j = 0; j < n_res; j++) {
-            res[k++] = mapped[j];
-        }
+      Py_UCS1 c = PyUnicode_READ(data, i);
+      if (lower)
+	res[k++] = _PyString_ToLowercase(c);
+      else
+	res[k++] = _PyString_ToUppercase(c);
     }
     return k;
 }
@@ -3196,19 +3153,11 @@ do_title(const void *data, Py_ssize_t length, Py_UCS1 *res)
     previous_is_cased = 0;
     for (i = 0; i < length; i++) {
         const Py_UCS1 c = PyUnicode_READ(data, i);
-        Py_UCS1 mapped[3];
-        int n_res, j;
-
-        if (previous_is_cased)
-            n_res = lower_ucs4(data, length, i, c, mapped);
-        else
-            n_res = _PyUnicode_ToTitleFull(c, mapped);
-
-        for (j = 0; j < n_res; j++) {
-            res[k++] = mapped[j];
-        }
-
-        previous_is_cased = _PyUnicode_IsCased(c);
+	if (previous_is_cased)
+	  res[k++] = _PyString_ToLowercase(c);
+	else 
+	  res[k++] = _PyString_ToUppercase(c);
+	previous_is_cased = _PyString_IsUppercase(c) || _PyString_IsLowercase(c);
     }
     return k;
 }
