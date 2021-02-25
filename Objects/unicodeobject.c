@@ -151,16 +151,11 @@ unsigned char PyString_ReadChar(PyObject *s, Py_ssize_t index) {
 
 #include "stringlib/eq.h"
 
-  
 PyAPI_FUNC(int) _PyString_IsLowercase(
     Py_UCS1 ch       /* Unicode character */
     );
 
 PyAPI_FUNC(int) _PyString_IsUppercase(
-    Py_UCS1 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyUnicode_IsTitlecase(
     Py_UCS1 ch       /* Unicode character */
     );
 
@@ -196,10 +191,6 @@ PyAPI_FUNC(int) _PyUnicode_ToDigit(
     Py_UCS1 ch       /* Unicode character */
     );
 
-PyAPI_FUNC(double) _PyUnicode_ToNumeric(
-    Py_UCS1 ch       /* Unicode character */
-    );
-
 PyAPI_FUNC(int) _PyString_IsDecimalDigit(
     Py_UCS1 ch       /* Unicode character */
     );
@@ -208,15 +199,11 @@ PyAPI_FUNC(int) _PyUnicode_IsDigit(
     Py_UCS1 ch       /* Unicode character */
     );
 
-PyAPI_FUNC(int) _PyUnicode_IsNumeric(
+PyAPI_FUNC(int) _PyString_IsPrintable(
     Py_UCS1 ch       /* Unicode character */
     );
 
-PyAPI_FUNC(int) _PyUnicode_IsPrintable(
-    Py_UCS1 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyUnicode_IsAlpha(
+PyAPI_FUNC(int) _PyString_IsAlpha(
     Py_UCS1 ch       /* Unicode character */
     );
 
@@ -226,29 +213,24 @@ PyAPI_FUNC(int) _PyUnicode_IsAlpha(
 
 #define Py_UNICODE_ISLOWER(ch) _PyString_IsLowercase(ch)
 #define Py_UNICODE_ISUPPER(ch) _PyString_IsUppercase(ch)
-#define Py_UNICODE_ISTITLE(ch) _PyUnicode_IsTitlecase(ch)
 #define Py_UNICODE_ISLINEBREAK(ch) _PyUnicode_IsLinebreak(ch)
 
 #define Py_UNICODE_TOLOWER(ch) _PyString_ToLowercase(ch)
 #define Py_UNICODE_TOUPPER(ch) _PyString_ToUppercase(ch)
-#define Py_UNICODE_TOTITLE(ch) _PyUnicode_ToTitlecase(ch)
 
 #define Py_UNICODE_ISDECIMAL(ch) _PyString_IsDecimalDigit(ch)
 #define Py_UNICODE_ISDIGIT(ch) _PyUnicode_IsDigit(ch)
-#define Py_UNICODE_ISNUMERIC(ch) _PyUnicode_IsNumeric(ch)
-#define Py_UNICODE_ISPRINTABLE(ch) _PyUnicode_IsPrintable(ch)
+#define Py_UNICODE_ISPRINTABLE(ch) _PyString_IsPrintable(ch)
 
 #define Py_UNICODE_TODECIMAL(ch) PyString_ToDecimalDigit(ch)
 #define Py_UNICODE_TODIGIT(ch) _PyUnicode_ToDigit(ch)
-#define Py_UNICODE_TONUMERIC(ch) _PyUnicode_ToNumeric(ch)
 
-#define Py_UNICODE_ISALPHA(ch) _PyUnicode_IsAlpha(ch)
+#define Py_UNICODE_ISALPHA(ch) _PyString_IsAlpha(ch)
 
 #define Py_UNICODE_ISALNUM(ch) \
        (Py_UNICODE_ISALPHA(ch) || \
-    Py_UNICODE_ISDECIMAL(ch) || \
-    Py_UNICODE_ISDIGIT(ch) || \
-    Py_UNICODE_ISNUMERIC(ch))
+        Py_UNICODE_ISDECIMAL(ch) || \
+	Py_UNICODE_ISDIGIT(ch))
 
 #define Py_UNICODE_COPY(target, source, length) \
     memcpy((target), (source), (length)*sizeof(Py_UNICODE))
@@ -492,31 +474,6 @@ static const unsigned char ascii_linebreak[] = {
 
 static int convert_uc(PyObject *obj, void *addr);
 
-/*[clinic input]
-preserve
-[clinic start generated code]*/
-
-PyDoc_STRVAR(unicode_title__doc__,
-"title($self, /)\n"
-"--\n"
-"\n"
-"Return a version of the string where each word is titlecased.\n"
-"\n"
-"More specifically, words start with uppercased characters and all remaining\n"
-"cased characters have lower case.");
-
-#define UNICODE_TITLE_METHODDEF    \
-    {"title", (PyCFunction)unicode_title, METH_NOARGS, unicode_title__doc__},
-
-static PyObject *
-unicode_title_impl(PyObject *self);
-
-static PyObject *
-unicode_title(PyObject *self, PyObject *Py_UNUSED(ignored))
-{
-    return unicode_title_impl(self);
-}
-
 PyDoc_STRVAR(unicode_capitalize__doc__,
 "capitalize($self, /)\n"
 "--\n"
@@ -692,27 +649,6 @@ unicode_isupper(PyObject *self, PyObject *Py_UNUSED(ignored))
     return unicode_isupper_impl(self);
 }
 
-PyDoc_STRVAR(unicode_istitle__doc__,
-"istitle($self, /)\n"
-"--\n"
-"\n"
-"Return True if the string is a title-cased string, False otherwise.\n"
-"\n"
-"In a title-cased string, upper- and title-case characters may only\n"
-"follow uncased characters and lowercase characters only cased ones.");
-
-#define UNICODE_ISTITLE_METHODDEF    \
-    {"istitle", (PyCFunction)unicode_istitle, METH_NOARGS, unicode_istitle__doc__},
-
-static PyObject *
-unicode_istitle_impl(PyObject *self);
-
-static PyObject *
-unicode_istitle(PyObject *self, PyObject *Py_UNUSED(ignored))
-{
-    return unicode_istitle_impl(self);
-}
-
 PyDoc_STRVAR(unicode_isspace__doc__,
 "isspace($self, /)\n"
 "--\n"
@@ -816,27 +752,6 @@ static PyObject *
 unicode_isdigit(PyObject *self, PyObject *Py_UNUSED(ignored))
 {
     return unicode_isdigit_impl(self);
-}
-
-PyDoc_STRVAR(unicode_isnumeric__doc__,
-"isnumeric($self, /)\n"
-"--\n"
-"\n"
-"Return True if the string is a numeric string, False otherwise.\n"
-"\n"
-"A string is numeric if all characters in the string are numeric and there is at\n"
-"least one character in the string.");
-
-#define UNICODE_ISNUMERIC_METHODDEF    \
-    {"isnumeric", (PyCFunction)unicode_isnumeric, METH_NOARGS, unicode_isnumeric__doc__},
-
-static PyObject *
-unicode_isnumeric_impl(PyObject *self);
-
-static PyObject *
-unicode_isnumeric(PyObject *self, PyObject *Py_UNUSED(ignored))
-{
-    return unicode_isnumeric_impl(self);
 }
 
 PyDoc_STRVAR(unicode_isidentifier__doc__,
@@ -3756,22 +3671,6 @@ replace(PyObject *self, PyObject *str1,
 /* --- Unicode Object Methods --------------------------------------------- */
 
 /*[clinic input]
-str.title as unicode_title
-
-Return a version of the string where each word is titlecased.
-
-More specifically, words start with uppercased characters and all remaining
-cased characters have lower case.
-[clinic start generated code]*/
-
-static PyObject *
-unicode_title_impl(PyObject *self)
-/*[clinic end generated code: output=c75ae03809574902 input=fa945d669b26e683]*/
-{
-    return case_operation(self, do_title);
-}
-
-/*[clinic input]
 str.capitalize as unicode_capitalize
 
 Return a capitalized version of the string.
@@ -4468,7 +4367,7 @@ unicode_islower_impl(PyObject *self)
     for (i = 0; i < length; i++) {
         const Py_UCS1 ch = PyUnicode_READ(data, i);
 
-        if (Py_UNICODE_ISUPPER(ch) || Py_UNICODE_ISTITLE(ch))
+        if (Py_UNICODE_ISUPPER(ch))
             Py_RETURN_FALSE;
         else if (!cased && Py_UNICODE_ISLOWER(ch))
             cased = 1;
@@ -4509,64 +4408,10 @@ unicode_isupper_impl(PyObject *self)
     for (i = 0; i < length; i++) {
         const Py_UCS1 ch = PyUnicode_READ(data, i);
 
-        if (Py_UNICODE_ISLOWER(ch) || Py_UNICODE_ISTITLE(ch))
+        if (Py_UNICODE_ISLOWER(ch))
             Py_RETURN_FALSE;
         else if (!cased && Py_UNICODE_ISUPPER(ch))
             cased = 1;
-    }
-    return PyBool_FromLong(cased);
-}
-
-/*[clinic input]
-str.istitle as unicode_istitle
-
-Return True if the string is a title-cased string, False otherwise.
-
-In a title-cased string, upper- and title-case characters may only
-follow uncased characters and lowercase characters only cased ones.
-[clinic start generated code]*/
-
-static PyObject *
-unicode_istitle_impl(PyObject *self)
-/*[clinic end generated code: output=e9bf6eb91f5d3f0e input=98d32bd2e1f06f8c]*/
-{
-    Py_ssize_t i, length;
-    const void *data;
-    int cased, previous_is_cased;
-
-    length = PyUnicode_GET_LENGTH(self);
-    data = PyUnicode_DATA(self);
-
-    /* Shortcut for single character strings */
-    if (length == 1) {
-        Py_UCS1 ch = PyUnicode_READ(data, 0);
-        return PyBool_FromLong((Py_UNICODE_ISTITLE(ch) != 0) ||
-                               (Py_UNICODE_ISUPPER(ch) != 0));
-    }
-
-    /* Special case for empty strings */
-    if (length == 0)
-        Py_RETURN_FALSE;
-
-    cased = 0;
-    previous_is_cased = 0;
-    for (i = 0; i < length; i++) {
-        const Py_UCS1 ch = PyUnicode_READ(data, i);
-
-        if (Py_UNICODE_ISUPPER(ch) || Py_UNICODE_ISTITLE(ch)) {
-            if (previous_is_cased)
-                Py_RETURN_FALSE;
-            previous_is_cased = 1;
-            cased = 1;
-        }
-        else if (Py_UNICODE_ISLOWER(ch)) {
-            if (!previous_is_cased)
-                Py_RETURN_FALSE;
-            previous_is_cased = 1;
-            cased = 1;
-        }
-        else
-            previous_is_cased = 0;
     }
     return PyBool_FromLong(cased);
 }
@@ -4745,41 +4590,6 @@ unicode_isdigit_impl(PyObject *self)
 
     for (i = 0; i < length; i++) {
         if (!Py_UNICODE_ISDIGIT(PyUnicode_READ(data, i)))
-            Py_RETURN_FALSE;
-    }
-    Py_RETURN_TRUE;
-}
-
-/*[clinic input]
-str.isnumeric as unicode_isnumeric
-
-Return True if the string is a numeric string, False otherwise.
-
-A string is numeric if all characters in the string are numeric and there is at
-least one character in the string.
-[clinic start generated code]*/
-
-static PyObject *
-unicode_isnumeric_impl(PyObject *self)
-/*[clinic end generated code: output=9172a32d9013051a input=722507db976f826c]*/
-{
-    Py_ssize_t i, length;
-    const void *data;
-
-    length = PyUnicode_GET_LENGTH(self);
-    data = PyUnicode_DATA(self);
-
-    /* Shortcut for single character strings */
-    if (length == 1)
-        return PyBool_FromLong(
-            Py_UNICODE_ISNUMERIC(PyUnicode_READ(data, 0)));
-
-    /* Special case for empty strings */
-    if (length == 0)
-        Py_RETURN_FALSE;
-
-    for (i = 0; i < length; i++) {
-        if (!Py_UNICODE_ISNUMERIC(PyUnicode_READ(data, i)))
             Py_RETURN_FALSE;
     }
     Py_RETURN_TRUE;
@@ -6104,7 +5914,6 @@ static PyMethodDef unicode_methods[] = {
     UNICODE_RSPLIT_METHODDEF
     UNICODE_JOIN_METHODDEF
     UNICODE_CAPITALIZE_METHODDEF
-    UNICODE_TITLE_METHODDEF
     UNICODE_CENTER_METHODDEF
     {"count", (PyCFunction) unicode_count, METH_VARARGS, count__doc__},
     UNICODE_EXPANDTABS_METHODDEF
@@ -6130,11 +5939,9 @@ static PyMethodDef unicode_methods[] = {
     UNICODE_ISASCII_METHODDEF
     UNICODE_ISLOWER_METHODDEF
     UNICODE_ISUPPER_METHODDEF
-    UNICODE_ISTITLE_METHODDEF
     UNICODE_ISSPACE_METHODDEF
     UNICODE_ISDECIMAL_METHODDEF
     UNICODE_ISDIGIT_METHODDEF
-    UNICODE_ISNUMERIC_METHODDEF
     UNICODE_ISALPHA_METHODDEF
     UNICODE_ISALNUM_METHODDEF
     UNICODE_ISIDENTIFIER_METHODDEF

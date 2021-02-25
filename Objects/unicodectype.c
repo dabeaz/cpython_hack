@@ -57,28 +57,6 @@ int PyString_IsWhitespace(Py_UCS1 ch) {
   return _Py_ascii_whitespace[(ch)];
 }
 
-/* Returns the titlecase Unicode characters corresponding to ch or just
-   ch if no titlecase mapping is known. */
-
-Py_UCS1 _PyUnicode_ToTitlecase(Py_UCS1 ch)
-{
-    const _PyUnicode_TypeRecord *ctype = gettyperecord(ch);
-
-    if (ctype->flags & EXTENDED_CASE_MASK)
-        return _PyUnicode_ExtendedCase[ctype->title & 0xFFFF];
-    return ch + ctype->title;
-}
-
-/* Returns 1 for Unicode characters having the category 'Lt', 0
-   otherwise. */
-
-int _PyUnicode_IsTitlecase(Py_UCS1 ch)
-{
-    const _PyUnicode_TypeRecord *ctype = gettyperecord(ch);
-
-    return (ctype->flags & TITLE_MASK) != 0;
-}
-
 /* Returns 1 for Unicode characters having the XID_Start property, 0
    otherwise. */
 
@@ -132,34 +110,9 @@ int _PyUnicode_IsDigit(Py_UCS1 ch)
     return 1;
 }
 
-/* Returns the numeric value as double for Unicode characters having
-   this property, -1.0 otherwise. */
-
-int _PyUnicode_IsNumeric(Py_UCS1 ch)
+int _PyString_IsPrintable(Py_UCS1 ch)
 {
-    const _PyUnicode_TypeRecord *ctype = gettyperecord(ch);
-
-    return (ctype->flags & NUMERIC_MASK) != 0;
-}
-
-/* Returns 1 for Unicode characters to be hex-escaped when repr()ed,
-   0 otherwise.
-   All characters except those characters defined in the Unicode character
-   database as following categories are considered printable.
-      * Cc (Other, Control)
-      * Cf (Other, Format)
-      * Cs (Other, Surrogate)
-      * Co (Other, Private Use)
-      * Cn (Other, Not Assigned)
-      * Zl Separator, Line ('\u2028', LINE SEPARATOR)
-      * Zp Separator, Paragraph ('\u2029', PARAGRAPH SEPARATOR)
-      * Zs (Separator, Space) other than ASCII space('\x20').
-*/
-int _PyUnicode_IsPrintable(Py_UCS1 ch)
-{
-    const _PyUnicode_TypeRecord *ctype = gettyperecord(ch);
-
-    return (ctype->flags & PRINTABLE_MASK) != 0;
+  return !((ch >= 0 && ch < 0x20) || (ch >= 0x80 && ch <= 0xa0) || (ch == 0xad));
 }
 
 int _PyString_IsLowercase(Py_UCS1 ch)
@@ -190,13 +143,13 @@ Py_UCS1 _PyString_ToLowercase(Py_UCS1 ch)
   }
 }
 
-/* Returns 1 for Unicode characters having the category 'Ll', 'Lu', 'Lt',
-   'Lo' or 'Lm',  0 otherwise. */
-
-int _PyUnicode_IsAlpha(Py_UCS1 ch)
+int _PyString_IsAlpha(Py_UCS1 ch)
 {
-    const _PyUnicode_TypeRecord *ctype = gettyperecord(ch);
-
-    return (ctype->flags & ALPHA_MASK) != 0;
+  return ((ch >= 0x41 && ch <= 0x5a) ||
+	  (ch >= 0x61 && ch <= 0x79) ||
+	  (ch == 0xaa) ||
+	  (ch == 0xb5) ||
+	  (ch == 0xba) ||
+	  (ch >= 0xc0 && ch <= 0xff));
 }
 
