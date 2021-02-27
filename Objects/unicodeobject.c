@@ -151,97 +151,25 @@ unsigned char PyString_ReadChar(PyObject *s, Py_ssize_t index) {
 
 #include "stringlib/eq.h"
 
-PyAPI_FUNC(int) _PyString_IsLowercase(
-    Py_UCS1 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyString_IsUppercase(
-    Py_UCS1 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyString_IsXidStart(
-    Py_UCS1 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyString_IsXidContinue(
-    Py_UCS1 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyString_IsLinebreak(
-    const Py_UCS1 ch         /* Unicode character */
-    );
-
-PyAPI_FUNC(Py_UCS1) _PyString_ToLowercase(
-    Py_UCS1 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(Py_UCS1) _PyString_ToUppercase(
-    Py_UCS1 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) PyString_ToDecimalDigit(
-    Py_UCS1 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyString_ToDigit(
-    Py_UCS1 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyString_IsDecimalDigit(
-    Py_UCS1 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyString_IsDigit(
-    Py_UCS1 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyString_IsPrintable(
-    Py_UCS1 ch       /* Unicode character */
-    );
-
-PyAPI_FUNC(int) _PyString_IsAlpha(
-    Py_UCS1 ch       /* Unicode character */
-    );
+PyAPI_FUNC(int) _PyString_IsLowercase(Py_UCS1 ch);
+PyAPI_FUNC(int) _PyString_IsUppercase(Py_UCS1 ch);
+PyAPI_FUNC(int) _PyString_IsXidStart(Py_UCS1 ch);
+PyAPI_FUNC(int) _PyString_IsXidContinue(Py_UCS1 ch);
+PyAPI_FUNC(int) _PyString_IsLinebreak(Py_UCS1 ch);
+PyAPI_FUNC(Py_UCS1) _PyString_ToLowercase(Py_UCS1 ch);
+PyAPI_FUNC(Py_UCS1) _PyString_ToUppercase(Py_UCS1 ch);
+PyAPI_FUNC(int) PyString_ToDecimalDigit(Py_UCS1 ch);
+PyAPI_FUNC(int) _PyString_ToDigit(Py_UCS1 ch);
+PyAPI_FUNC(int) _PyString_IsDecimalDigit(Py_UCS1 ch);
+PyAPI_FUNC(int) _PyString_IsDigit(Py_UCS1 ch);
+PyAPI_FUNC(int) _PyString_IsPrintable(Py_UCS1 ch);
+PyAPI_FUNC(int) _PyString_IsAlpha(Py_UCS1 ch);
 
 
-#define Py_UNICODE_ISSPACE(ch) PyString_IsWhitespace(ch)
-#define Py_UNICODE_ISLOWER(ch) _PyString_IsLowercase(ch)
-#define Py_UNICODE_ISUPPER(ch) _PyString_IsUppercase(ch)
-#define Py_UNICODE_ISLINEBREAK(ch) _PyString_IsLinebreak(ch)
-
-#define Py_UNICODE_TOLOWER(ch) _PyString_ToLowercase(ch)
-#define Py_UNICODE_TOUPPER(ch) _PyString_ToUppercase(ch)
-
-#define Py_UNICODE_ISDECIMAL(ch) _PyString_IsDecimalDigit(ch)
-#define Py_UNICODE_ISDIGIT(ch) _PyString_IsDigit(ch)
-#define Py_UNICODE_ISPRINTABLE(ch) _PyString_IsPrintable(ch)
-
-#define Py_UNICODE_TODECIMAL(ch) PyString_ToDecimalDigit(ch)
-#define Py_UNICODE_TODIGIT(ch) _PyString_ToDigit(ch)
-
-#define Py_UNICODE_ISALPHA(ch) _PyString_IsAlpha(ch)
-
-#define Py_UNICODE_ISALNUM(ch) \
-       (Py_UNICODE_ISALPHA(ch) || \
-        Py_UNICODE_ISDECIMAL(ch) || \
-	Py_UNICODE_ISDIGIT(ch))
-
-#define Py_UNICODE_COPY(target, source, length) \
-    memcpy((target), (source), (length)*sizeof(Py_UNICODE))
-
-#define Py_UNICODE_FILL(target, value, length) \
-    do {Py_ssize_t i_; Py_UNICODE *t_ = (target); Py_UNICODE v_ = (value);\
-        for (i_ = 0; i_ < (length); i_++) t_[i_] = v_;\
-    } while (0)
-  
-/* Check if substring matches at given offset.  The offset must be
-   valid, and the substring must not be empty. */
-
-#define Py_UNICODE_MATCH(string, offset, substring) \
-    ((*((string)->wstr + (offset)) == *((substring)->wstr)) && \
-     ((*((string)->wstr + (offset) + (substring)->wstr_length-1) == *((substring)->wstr + (substring)->wstr_length-1))) && \
-     !memcmp((string)->wstr + (offset), (substring)->wstr, (substring)->wstr_length*sizeof(Py_UNICODE)))
-
+#define Py_STRING_ISALNUM(ch) \
+       (_PyString_IsAlpha(ch) || \
+        _PyString_IsDecimalDigit(ch) || \
+	_PyString_IsDigit(ch))
 
 const char *Py_hexdigits = "0123456789abcdef";
 
@@ -1557,7 +1485,7 @@ static BLOOM_MASK bloom_linebreak = ~(BLOOM_MASK)0;
 
 #define BLOOM_LINEBREAK(ch)                                             \
     ((ch) < 128U ? ascii_linebreak[(ch)] :                              \
-     (BLOOM(bloom_linebreak, (ch)) && Py_UNICODE_ISLINEBREAK(ch)))
+     (BLOOM(bloom_linebreak, (ch)) && _PyString_IsLinebreak(ch)))
 
 static inline BLOOM_MASK
 make_bloom_mask(const void* ptr, Py_ssize_t len)
@@ -2665,11 +2593,11 @@ _PyString_TransformDecimalAndSpaceToASCII(PyObject *unicode)
         if (ch < 127) {
             out[i] = ch;
         }
-        else if (Py_UNICODE_ISSPACE(ch)) {
+        else if (PyString_IsWhitespace(ch)) {
             out[i] = ' ';
         }
         else {
-            int decimal = Py_UNICODE_TODECIMAL(ch);
+            int decimal = PyString_ToDecimalDigit(ch);
             if (decimal < 0) {
                 out[i] = '?';
                 out[i+1] = '\0';
@@ -3014,9 +2942,9 @@ do_swapcase(const void *data, Py_ssize_t length, Py_UCS1 *res) {
     Py_UCS1 *src = (Py_UCS1 *) data;
     for (k = 0; k < length; k++, src++) {
       c = *src;
-      if (Py_UNICODE_ISUPPER(c)) {
+      if (_PyString_IsUppercase(c)) {
 	res[k] = _PyString_ToLowercase(c);
-      } else if (Py_UNICODE_ISLOWER(c)) {
+      } else if (_PyString_IsLowercase(c)) {
 	res[k] = _PyString_ToUppercase(c);
       } else {
 	res[k] = c;
@@ -4351,7 +4279,7 @@ unicode_islower_impl(PyObject *self)
     /* Shortcut for single character strings */
     if (length == 1)
         return PyBool_FromLong(
-            Py_UNICODE_ISLOWER(PyUnicode_READ(data, 0)));
+            _PyString_IsLowercase(PyUnicode_READ(data, 0)));
 
     /* Special case for empty strings */
     if (length == 0)
@@ -4361,9 +4289,9 @@ unicode_islower_impl(PyObject *self)
     for (i = 0; i < length; i++) {
         const Py_UCS1 ch = PyUnicode_READ(data, i);
 
-        if (Py_UNICODE_ISUPPER(ch))
+        if (_PyString_IsUppercase(ch))
             Py_RETURN_FALSE;
-        else if (!cased && Py_UNICODE_ISLOWER(ch))
+        else if (!cased && _PyString_IsLowercase(ch))
             cased = 1;
     }
     return PyBool_FromLong(cased);
@@ -4392,7 +4320,7 @@ unicode_isupper_impl(PyObject *self)
     /* Shortcut for single character strings */
     if (length == 1)
         return PyBool_FromLong(
-            Py_UNICODE_ISUPPER(PyUnicode_READ(data, 0)) != 0);
+            _PyString_IsUppercase(PyUnicode_READ(data, 0)) != 0);
 
     /* Special case for empty strings */
     if (length == 0)
@@ -4402,9 +4330,9 @@ unicode_isupper_impl(PyObject *self)
     for (i = 0; i < length; i++) {
         const Py_UCS1 ch = PyUnicode_READ(data, i);
 
-        if (Py_UNICODE_ISLOWER(ch))
+        if (_PyString_IsLowercase(ch))
             Py_RETURN_FALSE;
-        else if (!cased && Py_UNICODE_ISUPPER(ch))
+        else if (!cased && _PyString_IsUppercase(ch))
             cased = 1;
     }
     return PyBool_FromLong(cased);
@@ -4432,7 +4360,7 @@ unicode_isspace_impl(PyObject *self)
     /* Shortcut for single character strings */
     if (length == 1)
         return PyBool_FromLong(
-            Py_UNICODE_ISSPACE(PyUnicode_READ(data, 0)));
+            PyString_IsWhitespace(PyUnicode_READ(data, 0)));
 
     /* Special case for empty strings */
     if (length == 0)
@@ -4440,7 +4368,7 @@ unicode_isspace_impl(PyObject *self)
 
     for (i = 0; i < length; i++) {
         const Py_UCS1 ch = PyUnicode_READ(data, i);
-        if (!Py_UNICODE_ISSPACE(ch))
+        if (!PyString_IsWhitespace(ch))
             Py_RETURN_FALSE;
     }
     Py_RETURN_TRUE;
@@ -4468,14 +4396,14 @@ unicode_isalpha_impl(PyObject *self)
     /* Shortcut for single character strings */
     if (length == 1)
         return PyBool_FromLong(
-            Py_UNICODE_ISALPHA(PyUnicode_READ(data, 0)));
+            _PyString_IsAlpha(PyUnicode_READ(data, 0)));
 
     /* Special case for empty strings */
     if (length == 0)
         Py_RETURN_FALSE;
 
     for (i = 0; i < length; i++) {
-        if (!Py_UNICODE_ISALPHA(PyUnicode_READ(data, i)))
+        if (!_PyString_IsAlpha(PyUnicode_READ(data, i)))
             Py_RETURN_FALSE;
     }
     Py_RETURN_TRUE;
@@ -4503,7 +4431,7 @@ unicode_isalnum_impl(PyObject *self)
     /* Shortcut for single character strings */
     if (len == 1) {
         const Py_UCS1 ch = PyUnicode_READ(data, 0);
-        return PyBool_FromLong(Py_UNICODE_ISALNUM(ch));
+        return PyBool_FromLong(Py_STRING_ISALNUM(ch));
     }
 
     /* Special case for empty strings */
@@ -4512,7 +4440,7 @@ unicode_isalnum_impl(PyObject *self)
 
     for (i = 0; i < len; i++) {
         const Py_UCS1 ch = PyUnicode_READ(data, i);
-        if (!Py_UNICODE_ISALNUM(ch))
+        if (!Py_STRING_ISALNUM(ch))
             Py_RETURN_FALSE;
     }
     Py_RETURN_TRUE;
@@ -4540,14 +4468,14 @@ unicode_isdecimal_impl(PyObject *self)
     /* Shortcut for single character strings */
     if (length == 1)
         return PyBool_FromLong(
-            Py_UNICODE_ISDECIMAL(PyUnicode_READ(data, 0)));
+            _PyString_IsDecimalDigit(PyUnicode_READ(data, 0)));
 
     /* Special case for empty strings */
     if (length == 0)
         Py_RETURN_FALSE;
 
     for (i = 0; i < length; i++) {
-        if (!Py_UNICODE_ISDECIMAL(PyUnicode_READ(data, i)))
+        if (!_PyString_IsDecimalDigit(PyUnicode_READ(data, i)))
             Py_RETURN_FALSE;
     }
     Py_RETURN_TRUE;
@@ -4575,7 +4503,7 @@ unicode_isdigit_impl(PyObject *self)
     /* Shortcut for single character strings */
     if (length == 1) {
         const Py_UCS1 ch = PyUnicode_READ(data, 0);
-        return PyBool_FromLong(Py_UNICODE_ISDIGIT(ch));
+        return PyBool_FromLong(_PyString_IsDigit(ch));
     }
 
     /* Special case for empty strings */
@@ -4583,7 +4511,7 @@ unicode_isdigit_impl(PyObject *self)
         Py_RETURN_FALSE;
 
     for (i = 0; i < length; i++) {
-        if (!Py_UNICODE_ISDIGIT(PyUnicode_READ(data, i)))
+        if (!_PyString_IsDigit(PyUnicode_READ(data, i)))
             Py_RETURN_FALSE;
     }
     Py_RETURN_TRUE;
@@ -4671,10 +4599,10 @@ unicode_isprintable_impl(PyObject *self)
     /* Shortcut for single character strings */
     if (length == 1)
         return PyBool_FromLong(
-            Py_UNICODE_ISPRINTABLE(PyUnicode_READ( data, 0)));
+            _PyString_IsPrintable(PyUnicode_READ( data, 0)));
 
     for (i = 0; i < length; i++) {
-        if (!Py_UNICODE_ISPRINTABLE(PyUnicode_READ( data, i))) {
+        if (!_PyString_IsPrintable(PyUnicode_READ( data, i))) {
             Py_RETURN_FALSE;
         }
     }
@@ -4837,7 +4765,7 @@ do_strip(PyObject *self, int striptype)
         if (striptype != RIGHTSTRIP) {
             while (i < len) {
                 Py_UCS1 ch = PyUnicode_READ( data, i);
-                if (!Py_UNICODE_ISSPACE(ch))
+                if (!PyString_IsWhitespace(ch))
                     break;
                 i++;
             }
@@ -4848,7 +4776,7 @@ do_strip(PyObject *self, int striptype)
             j--;
             while (j >= i) {
                 Py_UCS1 ch = PyUnicode_READ( data, j);
-                if (!Py_UNICODE_ISSPACE(ch))
+                if (!PyString_IsWhitespace(ch))
                     break;
                 j--;
             }

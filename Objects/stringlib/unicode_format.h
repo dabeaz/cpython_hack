@@ -117,7 +117,7 @@ get_integer(const SubString *str)
         return -1;
 
     for (i = str->start; i < str->end; i++) {
-        digitval = Py_UNICODE_TODECIMAL(PyUnicode_READ_CHAR(str->str, i));
+        digitval = PyString_ToDecimalDigit(PyUnicode_READ_CHAR(str->str, i));
         if (digitval < 0)
             return -1;
         /*
