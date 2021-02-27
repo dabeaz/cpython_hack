@@ -786,8 +786,7 @@ Python/compile.o Python/symtable.o Python/ast_unparse.o Python/ast.o Python/futu
 Python/getplatform.o: $(srcdir)/Python/getplatform.c
 		$(CC) -c $(PY_CORE_CFLAGS) -DPLATFORM='"$(MACHDEP)"' -o $@ $(srcdir)/Python/getplatform.c
 
-Objects/unicodectype.o:	$(srcdir)/Objects/unicodectype.c \
-				$(srcdir)/Objects/unicodetype_db.h
+Objects/unicodectype.o:	$(srcdir)/Objects/unicodectype.c 
 
 BYTESTR_DEPS = \
 		$(srcdir)/Objects/stringlib/count.h \
