@@ -14,13 +14,8 @@
 #define STRINGLIB_EMPTY          unicode_empty
 #define STRINGLIB_ISSPACE        PyString_IsWhitespace
 #define STRINGLIB_ISLINEBREAK    BLOOM_LINEBREAK
-#define STRINGLIB_ISDECIMAL      Py_UNICODE_ISDECIMAL
-#define STRINGLIB_TODECIMAL      Py_UNICODE_TODECIMAL
-#define STRINGLIB_STR            PyUnicode_1BYTE_DATA
-#define STRINGLIB_LEN            PyUnicode_GET_LENGTH
 #define STRINGLIB_NEW            _PyUnicode_FromUCS1
 #define STRINGLIB_CHECK          PyString_Check
 #define STRINGLIB_CHECK_EXACT    PyString_CheckExact
-
 #define STRINGLIB_TOSTR          PyObject_Str
 #define STRINGLIB_TOASCII        PyObject_ASCII

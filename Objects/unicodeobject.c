@@ -1528,14 +1528,948 @@ ensure_unicode(PyObject *obj)
 /* Compilation of templated routines */
 
 #include "stringlib/ucs1lib.h"
-#include "stringlib/fastsearch.h"
-#include "stringlib/partition.h"
-#include "stringlib/split.h"
-#include "stringlib/count.h"
-#include "stringlib/find.h"
-#include "stringlib/replace.h"
-#include "stringlib/find_max_char.h"
-#include "stringlib/undef.h"
+
+/* ---- fastsearch.h ---- */
+/* stringlib: fastsearch implementation */
+
+#define STRINGLIB_FASTSEARCH_H
+
+/* fast search/count implementation, based on a mix between boyer-
+   moore and horspool, with a few more bells and whistles on the top.
+   for some more background, see: http://effbot.org/zone/stringlib.htm */
+
+/* note: fastsearch may access s[n], which isn't a problem when using
+   Python's ordinary string types, but may cause problems if you're
+   using this code in other contexts.  also, the count mode returns -1
+   if there cannot possible be a match in the target string, and 0 if
+   it has actually checked for matches, but didn't find any.  callers
+   beware! */
+
+#define FAST_COUNT 0
+#define FAST_SEARCH 1
+#define FAST_RSEARCH 2
+
+#if LONG_BIT >= 128
+#define STRINGLIB_BLOOM_WIDTH 128
+#elif LONG_BIT >= 64
+#define STRINGLIB_BLOOM_WIDTH 64
+#elif LONG_BIT >= 32
+#define STRINGLIB_BLOOM_WIDTH 32
+#else
+#error "LONG_BIT is smaller than 32"
+#endif
+
+#define STRINGLIB_BLOOM_ADD(mask, ch) \
+    ((mask |= (1UL << ((ch) & (STRINGLIB_BLOOM_WIDTH -1)))))
+#define STRINGLIB_BLOOM(mask, ch)     \
+    ((mask &  (1UL << ((ch) & (STRINGLIB_BLOOM_WIDTH -1)))))
+
+#if STRINGLIB_SIZEOF_CHAR == 1
+#  define MEMCHR_CUT_OFF 15
+#else
+#  define MEMCHR_CUT_OFF 40
+#endif
+
+Py_LOCAL_INLINE(Py_ssize_t)
+STRINGLIB(find_char)(const STRINGLIB_CHAR* s, Py_ssize_t n, STRINGLIB_CHAR ch)
+{
+    const STRINGLIB_CHAR *p, *e;
+
+    p = s;
+    e = s + n;
+    if (n > MEMCHR_CUT_OFF) {
+#if STRINGLIB_SIZEOF_CHAR == 1
+        p = memchr(s, ch, n);
+        if (p != NULL)
+            return (p - s);
+        return -1;
+#else
+#endif
+    }
+    while (p < e) {
+        if (*p == ch)
+            return (p - s);
+        p++;
+    }
+    return -1;
+}
+
+Py_LOCAL_INLINE(Py_ssize_t)
+STRINGLIB(rfind_char)(const STRINGLIB_CHAR* s, Py_ssize_t n, STRINGLIB_CHAR ch)
+{
+    const STRINGLIB_CHAR *p;
+#ifdef HAVE_MEMRCHR
+    /* memrchr() is a GNU extension, available since glibc 2.1.91.
+       it doesn't seem as optimized as memchr(), but is still quite
+       faster than our hand-written loop below */
+
+    if (n > MEMCHR_CUT_OFF) {
+#if STRINGLIB_SIZEOF_CHAR == 1
+        p = memrchr(s, ch, n);
+        if (p != NULL)
+            return (p - s);
+        return -1;
+#else
+#endif
+    }
+#endif  /* HAVE_MEMRCHR */
+    p = s + n;
+    while (p > s) {
+        p--;
+        if (*p == ch)
+            return (p - s);
+    }
+    return -1;
+}
+
+#undef MEMCHR_CUT_OFF
+
+Py_LOCAL_INLINE(Py_ssize_t)
+FASTSEARCH(const STRINGLIB_CHAR* s, Py_ssize_t n,
+           const STRINGLIB_CHAR* p, Py_ssize_t m,
+           Py_ssize_t maxcount, int mode)
+{
+    unsigned long mask;
+    Py_ssize_t skip, count = 0;
+    Py_ssize_t i, j, mlast, w;
+
+    w = n - m;
+
+    if (w < 0 || (mode == FAST_COUNT && maxcount == 0))
+        return -1;
+
+    /* look for special cases */
+    if (m <= 1) {
+        if (m <= 0)
+            return -1;
+        /* use special case for 1-character strings */
+        if (mode == FAST_SEARCH)
+            return STRINGLIB(find_char)(s, n, p[0]);
+        else if (mode == FAST_RSEARCH)
+            return STRINGLIB(rfind_char)(s, n, p[0]);
+        else {  /* FAST_COUNT */
+            for (i = 0; i < n; i++)
+                if (s[i] == p[0]) {
+                    count++;
+                    if (count == maxcount)
+                        return maxcount;
+                }
+            return count;
+        }
+    }
+
+    mlast = m - 1;
+    skip = mlast - 1;
+    mask = 0;
+
+    if (mode != FAST_RSEARCH) {
+        const STRINGLIB_CHAR *ss = s + m - 1;
+        const STRINGLIB_CHAR *pp = p + m - 1;
+
+        /* create compressed boyer-moore delta 1 table */
+
+        /* process pattern[:-1] */
+        for (i = 0; i < mlast; i++) {
+            STRINGLIB_BLOOM_ADD(mask, p[i]);
+            if (p[i] == p[mlast])
+                skip = mlast - i - 1;
+        }
+        /* process pattern[-1] outside the loop */
+        STRINGLIB_BLOOM_ADD(mask, p[mlast]);
+
+        for (i = 0; i <= w; i++) {
+            /* note: using mlast in the skip path slows things down on x86 */
+            if (ss[i] == pp[0]) {
+                /* candidate match */
+                for (j = 0; j < mlast; j++)
+                    if (s[i+j] != p[j])
+                        break;
+                if (j == mlast) {
+                    /* got a match! */
+                    if (mode != FAST_COUNT)
+                        return i;
+                    count++;
+                    if (count == maxcount)
+                        return maxcount;
+                    i = i + mlast;
+                    continue;
+                }
+                /* miss: check if next character is part of pattern */
+                if (!STRINGLIB_BLOOM(mask, ss[i+1]))
+                    i = i + m;
+                else
+                    i = i + skip;
+            } else {
+                /* skip: check if next character is part of pattern */
+                if (!STRINGLIB_BLOOM(mask, ss[i+1]))
+                    i = i + m;
+            }
+        }
+    } else {    /* FAST_RSEARCH */
+
+        /* create compressed boyer-moore delta 1 table */
+
+        /* process pattern[0] outside the loop */
+        STRINGLIB_BLOOM_ADD(mask, p[0]);
+        /* process pattern[:0:-1] */
+        for (i = mlast; i > 0; i--) {
+            STRINGLIB_BLOOM_ADD(mask, p[i]);
+            if (p[i] == p[0])
+                skip = i - 1;
+        }
+
+        for (i = w; i >= 0; i--) {
+            if (s[i] == p[0]) {
+                /* candidate match */
+                for (j = mlast; j > 0; j--)
+                    if (s[i+j] != p[j])
+                        break;
+                if (j == 0)
+                    /* got a match! */
+                    return i;
+                /* miss: check if previous character is part of pattern */
+                if (i > 0 && !STRINGLIB_BLOOM(mask, s[i-1]))
+                    i = i - m;
+                else
+                    i = i - skip;
+            } else {
+                /* skip: check if previous character is part of pattern */
+                if (i > 0 && !STRINGLIB_BLOOM(mask, s[i-1]))
+                    i = i - m;
+            }
+        }
+    }
+
+    if (mode != FAST_COUNT)
+        return -1;
+    return count;
+}
+
+
+/* -- partition.h -- */
+
+/* stringlib: partition implementation */
+
+#ifndef STRINGLIB_FASTSEARCH_H
+#error must include "stringlib/fastsearch.h" before including this module
+#endif
+
+Py_LOCAL_INLINE(PyObject*)
+STRINGLIB(partition)(PyObject* str_obj,
+                    const STRINGLIB_CHAR* str, Py_ssize_t str_len,
+                    PyObject* sep_obj,
+                    const STRINGLIB_CHAR* sep, Py_ssize_t sep_len)
+{
+    PyObject* out;
+    Py_ssize_t pos;
+
+    if (sep_len == 0) {
+        PyErr_SetString(PyExc_ValueError, "empty separator");
+        return NULL;
+    }
+
+    out = PyTuple_New(3);
+    if (!out)
+        return NULL;
+
+    pos = FASTSEARCH(str, str_len, sep, sep_len, -1, FAST_SEARCH);
+
+    if (pos < 0) {
+#if STRINGLIB_MUTABLE
+        PyTuple_InitItem(out, 0, STRINGLIB_NEW(str, str_len));
+        PyTuple_InitItem(out, 1, STRINGLIB_NEW(NULL, 0));
+        PyTuple_InitItem(out, 2, STRINGLIB_NEW(NULL, 0));
+
+        if (PyErr_Occurred()) {
+            Py_DECREF(out);
+            return NULL;
+        }
+#else
+        Py_INCREF(str_obj);
+        PyTuple_InitItem(out, 0, (PyObject*) str_obj);
+        Py_INCREF(STRINGLIB_EMPTY);
+        PyTuple_InitItem(out, 1, (PyObject*) STRINGLIB_EMPTY);
+        Py_INCREF(STRINGLIB_EMPTY);
+        PyTuple_InitItem(out, 2, (PyObject*) STRINGLIB_EMPTY);
+#endif
+        return out;
+    }
+
+    PyTuple_InitItem(out, 0, STRINGLIB_NEW(str, pos));
+    Py_INCREF(sep_obj);
+    PyTuple_InitItem(out, 1, sep_obj);
+    pos += sep_len;
+    PyTuple_InitItem(out, 2, STRINGLIB_NEW(str + pos, str_len - pos));
+
+    if (PyErr_Occurred()) {
+        Py_DECREF(out);
+        return NULL;
+    }
+
+    return out;
+}
+
+Py_LOCAL_INLINE(PyObject*)
+STRINGLIB(rpartition)(PyObject* str_obj,
+                     const STRINGLIB_CHAR* str, Py_ssize_t str_len,
+                     PyObject* sep_obj,
+                     const STRINGLIB_CHAR* sep, Py_ssize_t sep_len)
+{
+    PyObject* out;
+    Py_ssize_t pos;
+
+    if (sep_len == 0) {
+        PyErr_SetString(PyExc_ValueError, "empty separator");
+        return NULL;
+    }
+
+    out = PyTuple_New(3);
+    if (!out)
+        return NULL;
+
+    pos = FASTSEARCH(str, str_len, sep, sep_len, -1, FAST_RSEARCH);
+
+    if (pos < 0) {
+#if STRINGLIB_MUTABLE
+        PyTuple_InitItem(out, 0, STRINGLIB_NEW(NULL, 0));
+        PyTuple_InitItem(out, 1, STRINGLIB_NEW(NULL, 0));
+        PyTuple_InitItem(out, 2, STRINGLIB_NEW(str, str_len));
+
+        if (PyErr_Occurred()) {
+            Py_DECREF(out);
+            return NULL;
+        }
+#else
+        Py_INCREF(STRINGLIB_EMPTY);
+        PyTuple_InitItem(out, 0, (PyObject*) STRINGLIB_EMPTY);
+        Py_INCREF(STRINGLIB_EMPTY);
+        PyTuple_InitItem(out, 1, (PyObject*) STRINGLIB_EMPTY);
+        Py_INCREF(str_obj);
+        PyTuple_InitItem(out, 2, (PyObject*) str_obj);
+#endif
+        return out;
+    }
+
+    PyTuple_InitItem(out, 0, STRINGLIB_NEW(str, pos));
+    Py_INCREF(sep_obj);
+    PyTuple_InitItem(out, 1, sep_obj);
+    pos += sep_len;
+    PyTuple_InitItem(out, 2, STRINGLIB_NEW(str + pos, str_len - pos));
+
+    if (PyErr_Occurred()) {
+        Py_DECREF(out);
+        return NULL;
+    }
+
+    return out;
+}
+
+/* -- split.h -- */
+/* stringlib: split implementation */
+
+#ifndef STRINGLIB_FASTSEARCH_H
+#error must include "stringlib/fastsearch.h" before including this module
+#endif
+
+/* Overallocate the initial list to reduce the number of reallocs for small
+   split sizes.  Eg, "A A A A A A A A A A".split() (10 elements) has three
+   resizes, to sizes 4, 8, then 16.  Most observed string splits are for human
+   text (roughly 11 words per line) and field delimited data (usually 1-10
+   fields).  For large strings the split algorithms are bandwidth limited
+   so increasing the preallocation likely will not improve things.*/
+
+#define MAX_PREALLOC 12
+
+/* 5 splits gives 6 elements */
+#define PREALLOC_SIZE(maxsplit) \
+    (maxsplit >= MAX_PREALLOC ? MAX_PREALLOC : maxsplit+1)
+
+#define SPLIT_APPEND(data, left, right)         \
+    sub = STRINGLIB_NEW((data) + (left),        \
+                        (right) - (left));      \
+    if (sub == NULL)                            \
+        goto onError;                           \
+    if (PyList_Append(list, sub)) {             \
+        Py_DECREF(sub);                         \
+        goto onError;                           \
+    }                                           \
+    else                                        \
+        Py_DECREF(sub);
+
+#define SPLIT_ADD(data, left, right) {          \
+    sub = STRINGLIB_NEW((data) + (left),        \
+                        (right) - (left));      \
+    if (sub == NULL)                            \
+        goto onError;                           \
+    if (count < MAX_PREALLOC) {                 \
+        PyList_InitItem(list, count, sub);      \
+    } else {                                    \
+        if (PyList_Append(list, sub)) {         \
+            Py_DECREF(sub);                     \
+            goto onError;                       \
+        }                                       \
+        else                                    \
+            Py_DECREF(sub);                     \
+    }                                           \
+    count++; }
+
+
+/* Always force the list to the expected size. */
+#define FIX_PREALLOC_SIZE(list) Py_SET_SIZE(list, count)
+
+Py_LOCAL_INLINE(PyObject *)
+STRINGLIB(split_whitespace)(PyObject* str_obj,
+                           const STRINGLIB_CHAR* str, Py_ssize_t str_len,
+                           Py_ssize_t maxcount)
+{
+    Py_ssize_t i, j, count=0;
+    PyObject *list = PyList_New(PREALLOC_SIZE(maxcount));
+    PyObject *sub;
+
+    if (list == NULL)
+        return NULL;
+
+    i = j = 0;
+    while (maxcount-- > 0) {
+        while (i < str_len && STRINGLIB_ISSPACE(str[i]))
+            i++;
+        if (i == str_len) break;
+        j = i; i++;
+        while (i < str_len && !STRINGLIB_ISSPACE(str[i]))
+            i++;
+#ifndef STRINGLIB_MUTABLE
+        if (j == 0 && i == str_len && STRINGLIB_CHECK_EXACT(str_obj)) {
+            /* No whitespace in str_obj, so just use it as list[0] */
+            Py_INCREF(str_obj);
+            PyList_InitItem(list, 0, (PyObject *)str_obj);
+            count++;
+            break;
+        }
+#endif
+        SPLIT_ADD(str, j, i);
+    }
+
+    if (i < str_len) {
+        /* Only occurs when maxcount was reached */
+        /* Skip any remaining whitespace and copy to end of string */
+        while (i < str_len && STRINGLIB_ISSPACE(str[i]))
+            i++;
+        if (i != str_len)
+            SPLIT_ADD(str, i, str_len);
+    }
+    FIX_PREALLOC_SIZE(list);
+    return list;
+
+  onError:
+    Py_DECREF(list);
+    return NULL;
+}
+
+Py_LOCAL_INLINE(PyObject *)
+STRINGLIB(split_char)(PyObject* str_obj,
+                     const STRINGLIB_CHAR* str, Py_ssize_t str_len,
+                     const STRINGLIB_CHAR ch,
+                     Py_ssize_t maxcount)
+{
+    Py_ssize_t i, j, count=0;
+    PyObject *list = PyList_New(PREALLOC_SIZE(maxcount));
+    PyObject *sub;
+
+    if (list == NULL)
+        return NULL;
+
+    i = j = 0;
+    while ((j < str_len) && (maxcount-- > 0)) {
+        for(; j < str_len; j++) {
+            /* I found that using memchr makes no difference */
+            if (str[j] == ch) {
+                SPLIT_ADD(str, i, j);
+                i = j = j + 1;
+                break;
+            }
+        }
+    }
+#ifndef STRINGLIB_MUTABLE
+    if (count == 0 && STRINGLIB_CHECK_EXACT(str_obj)) {
+        /* ch not in str_obj, so just use str_obj as list[0] */
+        Py_INCREF(str_obj);
+        PyList_InitItem(list, 0, (PyObject *)str_obj);
+        count++;
+    } else
+#endif
+    if (i <= str_len) {
+        SPLIT_ADD(str, i, str_len);
+    }
+    FIX_PREALLOC_SIZE(list);
+    return list;
+
+  onError:
+    Py_DECREF(list);
+    return NULL;
+}
+
+Py_LOCAL_INLINE(PyObject *)
+STRINGLIB(split)(PyObject* str_obj,
+                const STRINGLIB_CHAR* str, Py_ssize_t str_len,
+                const STRINGLIB_CHAR* sep, Py_ssize_t sep_len,
+                Py_ssize_t maxcount)
+{
+    Py_ssize_t i, j, pos, count=0;
+    PyObject *list, *sub;
+
+    if (sep_len == 0) {
+        PyErr_SetString(PyExc_ValueError, "empty separator");
+        return NULL;
+    }
+    else if (sep_len == 1)
+        return STRINGLIB(split_char)(str_obj, str, str_len, sep[0], maxcount);
+
+    list = PyList_New(PREALLOC_SIZE(maxcount));
+    if (list == NULL)
+        return NULL;
+
+    i = j = 0;
+    while (maxcount-- > 0) {
+        pos = FASTSEARCH(str+i, str_len-i, sep, sep_len, -1, FAST_SEARCH);
+        if (pos < 0)
+            break;
+        j = i + pos;
+        SPLIT_ADD(str, i, j);
+        i = j + sep_len;
+    }
+#ifndef STRINGLIB_MUTABLE
+    if (count == 0 && STRINGLIB_CHECK_EXACT(str_obj)) {
+        /* No match in str_obj, so just use it as list[0] */
+        Py_INCREF(str_obj);
+        PyList_InitItem(list, 0, (PyObject *)str_obj);
+        count++;
+    } else
+#endif
+    {
+        SPLIT_ADD(str, i, str_len);
+    }
+    FIX_PREALLOC_SIZE(list);
+    return list;
+
+  onError:
+    Py_DECREF(list);
+    return NULL;
+}
+
+Py_LOCAL_INLINE(PyObject *)
+STRINGLIB(rsplit_whitespace)(PyObject* str_obj,
+                            const STRINGLIB_CHAR* str, Py_ssize_t str_len,
+                            Py_ssize_t maxcount)
+{
+    Py_ssize_t i, j, count=0;
+    PyObject *list = PyList_New(PREALLOC_SIZE(maxcount));
+    PyObject *sub;
+
+    if (list == NULL)
+        return NULL;
+
+    i = j = str_len - 1;
+    while (maxcount-- > 0) {
+        while (i >= 0 && STRINGLIB_ISSPACE(str[i]))
+            i--;
+        if (i < 0) break;
+        j = i; i--;
+        while (i >= 0 && !STRINGLIB_ISSPACE(str[i]))
+            i--;
+#ifndef STRINGLIB_MUTABLE
+        if (j == str_len - 1 && i < 0 && STRINGLIB_CHECK_EXACT(str_obj)) {
+            /* No whitespace in str_obj, so just use it as list[0] */
+            Py_INCREF(str_obj);
+            PyList_InitItem(list, 0, (PyObject *)str_obj);
+            count++;
+            break;
+        }
+#endif
+        SPLIT_ADD(str, i + 1, j + 1);
+    }
+
+    if (i >= 0) {
+        /* Only occurs when maxcount was reached */
+        /* Skip any remaining whitespace and copy to beginning of string */
+        while (i >= 0 && STRINGLIB_ISSPACE(str[i]))
+            i--;
+        if (i >= 0)
+            SPLIT_ADD(str, 0, i + 1);
+    }
+    FIX_PREALLOC_SIZE(list);
+    if (PyList_Reverse(list) < 0)
+        goto onError;
+    return list;
+
+  onError:
+    Py_DECREF(list);
+    return NULL;
+}
+
+Py_LOCAL_INLINE(PyObject *)
+STRINGLIB(rsplit_char)(PyObject* str_obj,
+                      const STRINGLIB_CHAR* str, Py_ssize_t str_len,
+                      const STRINGLIB_CHAR ch,
+                      Py_ssize_t maxcount)
+{
+    Py_ssize_t i, j, count=0;
+    PyObject *list = PyList_New(PREALLOC_SIZE(maxcount));
+    PyObject *sub;
+
+    if (list == NULL)
+        return NULL;
+
+    i = j = str_len - 1;
+    while ((i >= 0) && (maxcount-- > 0)) {
+        for(; i >= 0; i--) {
+            if (str[i] == ch) {
+                SPLIT_ADD(str, i + 1, j + 1);
+                j = i = i - 1;
+                break;
+            }
+        }
+    }
+#ifndef STRINGLIB_MUTABLE
+    if (count == 0 && STRINGLIB_CHECK_EXACT(str_obj)) {
+        /* ch not in str_obj, so just use str_obj as list[0] */
+        Py_INCREF(str_obj);
+        PyList_InitItem(list, 0, (PyObject *)str_obj);
+        count++;
+    } else
+#endif
+    if (j >= -1) {
+        SPLIT_ADD(str, 0, j + 1);
+    }
+    FIX_PREALLOC_SIZE(list);
+    if (PyList_Reverse(list) < 0)
+        goto onError;
+    return list;
+
+  onError:
+    Py_DECREF(list);
+    return NULL;
+}
+
+Py_LOCAL_INLINE(PyObject *)
+STRINGLIB(rsplit)(PyObject* str_obj,
+                 const STRINGLIB_CHAR* str, Py_ssize_t str_len,
+                 const STRINGLIB_CHAR* sep, Py_ssize_t sep_len,
+                 Py_ssize_t maxcount)
+{
+    Py_ssize_t j, pos, count=0;
+    PyObject *list, *sub;
+
+    if (sep_len == 0) {
+        PyErr_SetString(PyExc_ValueError, "empty separator");
+        return NULL;
+    }
+    else if (sep_len == 1)
+        return STRINGLIB(rsplit_char)(str_obj, str, str_len, sep[0], maxcount);
+
+    list = PyList_New(PREALLOC_SIZE(maxcount));
+    if (list == NULL)
+        return NULL;
+
+    j = str_len;
+    while (maxcount-- > 0) {
+        pos = FASTSEARCH(str, j, sep, sep_len, -1, FAST_RSEARCH);
+        if (pos < 0)
+            break;
+        SPLIT_ADD(str, pos + sep_len, j);
+        j = pos;
+    }
+#ifndef STRINGLIB_MUTABLE
+    if (count == 0 && STRINGLIB_CHECK_EXACT(str_obj)) {
+        /* No match in str_obj, so just use it as list[0] */
+        Py_INCREF(str_obj);
+        PyList_InitItem(list, 0, (PyObject *)str_obj);
+        count++;
+    } else
+#endif
+    {
+        SPLIT_ADD(str, 0, j);
+    }
+    FIX_PREALLOC_SIZE(list);
+    if (PyList_Reverse(list) < 0)
+        goto onError;
+    return list;
+
+  onError:
+    Py_DECREF(list);
+    return NULL;
+}
+
+Py_LOCAL_INLINE(PyObject *)
+STRINGLIB(splitlines)(PyObject* str_obj,
+                     const STRINGLIB_CHAR* str, Py_ssize_t str_len,
+                     int keepends)
+{
+    /* This does not use the preallocated list because splitlines is
+       usually run with hundreds of newlines.  The overhead of
+       switching between PyList_InitItem and append causes about a
+       2-3% slowdown for that common case.  A smarter implementation
+       could move the if check out, so the SET_ITEMs are done first
+       and the appends only done when the prealloc buffer is full.
+       That's too much work for little gain.*/
+
+    Py_ssize_t i;
+    Py_ssize_t j;
+    PyObject *list = PyList_New(0);
+    PyObject *sub;
+
+    if (list == NULL)
+        return NULL;
+
+    for (i = j = 0; i < str_len; ) {
+        Py_ssize_t eol;
+
+        /* Find a line and append it */
+        while (i < str_len && !STRINGLIB_ISLINEBREAK(str[i]))
+            i++;
+
+        /* Skip the line break reading CRLF as one line break */
+        eol = i;
+        if (i < str_len) {
+            if (str[i] == '\r' && i + 1 < str_len && str[i+1] == '\n')
+                i += 2;
+            else
+                i++;
+            if (keepends)
+                eol = i;
+        }
+#ifndef STRINGLIB_MUTABLE
+        if (j == 0 && eol == str_len && STRINGLIB_CHECK_EXACT(str_obj)) {
+            /* No linebreak in str_obj, so just use it as list[0] */
+            if (PyList_Append(list, str_obj))
+                goto onError;
+            break;
+        }
+#endif
+        SPLIT_APPEND(str, j, eol);
+        j = i;
+    }
+    return list;
+
+  onError:
+    Py_DECREF(list);
+    return NULL;
+}
+
+/* -- count.h -- */
+/* stringlib: count implementation */
+
+#ifndef STRINGLIB_FASTSEARCH_H
+#error must include "stringlib/fastsearch.h" before including this module
+#endif
+
+Py_LOCAL_INLINE(Py_ssize_t)
+STRINGLIB(count)(const STRINGLIB_CHAR* str, Py_ssize_t str_len,
+                const STRINGLIB_CHAR* sub, Py_ssize_t sub_len,
+                Py_ssize_t maxcount)
+{
+    Py_ssize_t count;
+
+    if (str_len < 0)
+        return 0; /* start > len(str) */
+    if (sub_len == 0)
+        return (str_len < maxcount) ? str_len + 1 : maxcount;
+
+    count = FASTSEARCH(str, str_len, sub, sub_len, maxcount, FAST_COUNT);
+
+    if (count < 0)
+        return 0; /* no match */
+
+    return count;
+}
+
+/* -- find.h -- */
+
+/* stringlib: find/index implementation */
+
+#ifndef STRINGLIB_FASTSEARCH_H
+#error must include "stringlib/fastsearch.h" before including this module
+#endif
+
+Py_LOCAL_INLINE(Py_ssize_t)
+STRINGLIB(find)(const STRINGLIB_CHAR* str, Py_ssize_t str_len,
+               const STRINGLIB_CHAR* sub, Py_ssize_t sub_len,
+               Py_ssize_t offset)
+{
+    Py_ssize_t pos;
+
+    assert(str_len >= 0);
+    if (sub_len == 0)
+        return offset;
+
+    pos = FASTSEARCH(str, str_len, sub, sub_len, -1, FAST_SEARCH);
+
+    if (pos >= 0)
+        pos += offset;
+
+    return pos;
+}
+
+Py_LOCAL_INLINE(Py_ssize_t)
+STRINGLIB(rfind)(const STRINGLIB_CHAR* str, Py_ssize_t str_len,
+                const STRINGLIB_CHAR* sub, Py_ssize_t sub_len,
+                Py_ssize_t offset)
+{
+    Py_ssize_t pos;
+
+    assert(str_len >= 0);
+    if (sub_len == 0)
+        return str_len + offset;
+
+    pos = FASTSEARCH(str, str_len, sub, sub_len, -1, FAST_RSEARCH);
+
+    if (pos >= 0)
+        pos += offset;
+
+    return pos;
+}
+
+Py_LOCAL_INLINE(Py_ssize_t)
+STRINGLIB(find_slice)(const STRINGLIB_CHAR* str, Py_ssize_t str_len,
+                     const STRINGLIB_CHAR* sub, Py_ssize_t sub_len,
+                     Py_ssize_t start, Py_ssize_t end)
+{
+    return STRINGLIB(find)(str + start, end - start, sub, sub_len, start);
+}
+
+Py_LOCAL_INLINE(Py_ssize_t)
+STRINGLIB(rfind_slice)(const STRINGLIB_CHAR* str, Py_ssize_t str_len,
+                      const STRINGLIB_CHAR* sub, Py_ssize_t sub_len,
+                      Py_ssize_t start, Py_ssize_t end)
+{
+    return STRINGLIB(rfind)(str + start, end - start, sub, sub_len, start);
+}
+
+#ifdef STRINGLIB_WANT_CONTAINS_OBJ
+
+Py_LOCAL_INLINE(int)
+STRINGLIB(contains_obj)(PyObject* str, PyObject* sub)
+{
+    return STRINGLIB(find)(
+        STRINGLIB_STR(str), STRINGLIB_LEN(str),
+        STRINGLIB_STR(sub), STRINGLIB_LEN(sub), 0
+        ) != -1;
+}
+
+#endif /* STRINGLIB_WANT_CONTAINS_OBJ */
+
+/*
+This function is a helper for the "find" family (find, rfind, index,
+rindex) and for count, startswith and endswith, because they all have
+the same behaviour for the arguments.
+
+It does not touch the variables received until it knows everything
+is ok.
+*/
+
+#define FORMAT_BUFFER_SIZE 50
+
+Py_LOCAL_INLINE(int)
+STRINGLIB(parse_args_finds)(const char * function_name, PyObject *args,
+                           PyObject **subobj,
+                           Py_ssize_t *start, Py_ssize_t *end)
+{
+    PyObject *tmp_subobj;
+    Py_ssize_t tmp_start = 0;
+    Py_ssize_t tmp_end = PY_SSIZE_T_MAX;
+    PyObject *obj_start=Py_None, *obj_end=Py_None;
+    char format[FORMAT_BUFFER_SIZE] = "O|OO:";
+    size_t len = strlen(format);
+
+    strncpy(format + len, function_name, FORMAT_BUFFER_SIZE - len - 1);
+    format[FORMAT_BUFFER_SIZE - 1] = '\0';
+
+    if (!PyArg_ParseTuple(args, format, &tmp_subobj, &obj_start, &obj_end))
+        return 0;
+
+    /* To support None in "start" and "end" arguments, meaning
+       the same as if they were not passed.
+    */
+    if (obj_start != Py_None)
+        if (!_PyEval_SliceIndex(obj_start, &tmp_start))
+            return 0;
+    if (obj_end != Py_None)
+        if (!_PyEval_SliceIndex(obj_end, &tmp_end))
+            return 0;
+
+    *start = tmp_start;
+    *end = tmp_end;
+    *subobj = tmp_subobj;
+    return 1;
+}
+
+#undef FORMAT_BUFFER_SIZE
+
+/* -- replace.h -- */
+
+/* stringlib: replace implementation */
+
+#ifndef STRINGLIB_FASTSEARCH_H
+#error must include "stringlib/fastsearch.h" before including this module
+#endif
+
+Py_LOCAL_INLINE(void)
+STRINGLIB(replace_1char_inplace)(STRINGLIB_CHAR* s, STRINGLIB_CHAR* end,
+                                 Py_UCS1 u1, Py_UCS1 u2, Py_ssize_t maxcount)
+{
+    *s = u2;
+    while (--maxcount && ++s != end) {
+        /* Find the next character to be replaced.
+
+           If it occurs often, it is faster to scan for it using an inline
+           loop.  If it occurs seldom, it is faster to scan for it using a
+           function call; the overhead of the function call is amortized
+           across the many characters that call covers.  We start with an
+           inline loop and use a heuristic to determine whether to fall back
+           to a function call. */
+        if (*s != u1) {
+            int attempts = 10;
+            /* search u1 in a dummy loop */
+            while (1) {
+                if (++s == end)
+                    return;
+                if (*s == u1)
+                    break;
+                if (!--attempts) {
+                    /* if u1 was not found for attempts iterations,
+                       use FASTSEARCH() or memchr() */
+#if STRINGLIB_SIZEOF_CHAR == 1
+                    s++;
+                    s = memchr(s, u1, end - s);
+                    if (s == NULL)
+                        return;
+#else
+                    Py_ssize_t i;
+                    STRINGLIB_CHAR ch1 = (STRINGLIB_CHAR) u1;
+                    s++;
+                    i = FASTSEARCH(s, end - s, &ch1, 1, 0, FAST_SEARCH);
+                    if (i < 0)
+                        return;
+                    s += i;
+#endif
+                    /* restart the dummy loop */
+                    break;
+                }
+            }
+        }
+        *s = u2;
+    }
+}
+
+/* -- undef.h -- */
+#undef  FASTSEARCH
+#undef  STRINGLIB
+#undef  STRINGLIB_SIZEOF_CHAR
+#undef  STRINGLIB_MAX_CHAR
+#undef  STRINGLIB_CHAR
+#undef  STRINGLIB_STR
+#undef  STRINGLIB_LEN
+#undef  STRINGLIB_NEW
+#undef STRINGLIB_IS_UNICODE
 
 /* --- Unicode Object ----------------------------------------------------- */
 
@@ -2001,15 +2935,12 @@ static PyObject*
 _PyUnicode_FromUCS1(const Py_UCS1* u, Py_ssize_t size)
 {
     PyObject *res;
-    unsigned char max_char;
-
     if (size == 0)
         _Py_RETURN_UNICODE_EMPTY();
     assert(size > 0);
     if (size == 1)
         return get_latin1_char(u[0]);
 
-    max_char = ucs1lib_find_max_char(u, u + size);
     res = PyString_New(size);
     if (!res)
         return NULL;
