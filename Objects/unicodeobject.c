@@ -1598,21 +1598,6 @@ Py_LOCAL_INLINE(Py_ssize_t)
 STRINGLIB(rfind_char)(const STRINGLIB_CHAR* s, Py_ssize_t n, STRINGLIB_CHAR ch)
 {
     const STRINGLIB_CHAR *p;
-#ifdef HAVE_MEMRCHR
-    /* memrchr() is a GNU extension, available since glibc 2.1.91.
-       it doesn't seem as optimized as memchr(), but is still quite
-       faster than our hand-written loop below */
-
-    if (n > MEMCHR_CUT_OFF) {
-#if STRINGLIB_SIZEOF_CHAR == 1
-        p = memrchr(s, ch, n);
-        if (p != NULL)
-            return (p - s);
-        return -1;
-#else
-#endif
-    }
-#endif  /* HAVE_MEMRCHR */
     p = s + n;
     while (p > s) {
         p--;
@@ -1775,23 +1760,12 @@ STRINGLIB(partition)(PyObject* str_obj,
     pos = FASTSEARCH(str, str_len, sep, sep_len, -1, FAST_SEARCH);
 
     if (pos < 0) {
-#if STRINGLIB_MUTABLE
-        PyTuple_InitItem(out, 0, STRINGLIB_NEW(str, str_len));
-        PyTuple_InitItem(out, 1, STRINGLIB_NEW(NULL, 0));
-        PyTuple_InitItem(out, 2, STRINGLIB_NEW(NULL, 0));
-
-        if (PyErr_Occurred()) {
-            Py_DECREF(out);
-            return NULL;
-        }
-#else
         Py_INCREF(str_obj);
         PyTuple_InitItem(out, 0, (PyObject*) str_obj);
         Py_INCREF(STRINGLIB_EMPTY);
         PyTuple_InitItem(out, 1, (PyObject*) STRINGLIB_EMPTY);
         Py_INCREF(STRINGLIB_EMPTY);
         PyTuple_InitItem(out, 2, (PyObject*) STRINGLIB_EMPTY);
-#endif
         return out;
     }
 
@@ -1830,23 +1804,12 @@ STRINGLIB(rpartition)(PyObject* str_obj,
     pos = FASTSEARCH(str, str_len, sep, sep_len, -1, FAST_RSEARCH);
 
     if (pos < 0) {
-#if STRINGLIB_MUTABLE
-        PyTuple_InitItem(out, 0, STRINGLIB_NEW(NULL, 0));
-        PyTuple_InitItem(out, 1, STRINGLIB_NEW(NULL, 0));
-        PyTuple_InitItem(out, 2, STRINGLIB_NEW(str, str_len));
-
-        if (PyErr_Occurred()) {
-            Py_DECREF(out);
-            return NULL;
-        }
-#else
         Py_INCREF(STRINGLIB_EMPTY);
         PyTuple_InitItem(out, 0, (PyObject*) STRINGLIB_EMPTY);
         Py_INCREF(STRINGLIB_EMPTY);
         PyTuple_InitItem(out, 1, (PyObject*) STRINGLIB_EMPTY);
         Py_INCREF(str_obj);
         PyTuple_InitItem(out, 2, (PyObject*) str_obj);
-#endif
         return out;
     }
 
@@ -1937,7 +1900,6 @@ STRINGLIB(split_whitespace)(PyObject* str_obj,
         j = i; i++;
         while (i < str_len && !STRINGLIB_ISSPACE(str[i]))
             i++;
-#ifndef STRINGLIB_MUTABLE
         if (j == 0 && i == str_len && STRINGLIB_CHECK_EXACT(str_obj)) {
             /* No whitespace in str_obj, so just use it as list[0] */
             Py_INCREF(str_obj);
@@ -1945,7 +1907,6 @@ STRINGLIB(split_whitespace)(PyObject* str_obj,
             count++;
             break;
         }
-#endif
         SPLIT_ADD(str, j, i);
     }
 
@@ -1989,14 +1950,12 @@ STRINGLIB(split_char)(PyObject* str_obj,
             }
         }
     }
-#ifndef STRINGLIB_MUTABLE
     if (count == 0 && STRINGLIB_CHECK_EXACT(str_obj)) {
         /* ch not in str_obj, so just use str_obj as list[0] */
         Py_INCREF(str_obj);
         PyList_InitItem(list, 0, (PyObject *)str_obj);
         count++;
     } else
-#endif
     if (i <= str_len) {
         SPLIT_ADD(str, i, str_len);
     }
@@ -2037,14 +1996,12 @@ STRINGLIB(split)(PyObject* str_obj,
         SPLIT_ADD(str, i, j);
         i = j + sep_len;
     }
-#ifndef STRINGLIB_MUTABLE
     if (count == 0 && STRINGLIB_CHECK_EXACT(str_obj)) {
         /* No match in str_obj, so just use it as list[0] */
         Py_INCREF(str_obj);
         PyList_InitItem(list, 0, (PyObject *)str_obj);
         count++;
     } else
-#endif
     {
         SPLIT_ADD(str, i, str_len);
     }
@@ -2076,7 +2033,6 @@ STRINGLIB(rsplit_whitespace)(PyObject* str_obj,
         j = i; i--;
         while (i >= 0 && !STRINGLIB_ISSPACE(str[i]))
             i--;
-#ifndef STRINGLIB_MUTABLE
         if (j == str_len - 1 && i < 0 && STRINGLIB_CHECK_EXACT(str_obj)) {
             /* No whitespace in str_obj, so just use it as list[0] */
             Py_INCREF(str_obj);
@@ -2084,7 +2040,6 @@ STRINGLIB(rsplit_whitespace)(PyObject* str_obj,
             count++;
             break;
         }
-#endif
         SPLIT_ADD(str, i + 1, j + 1);
     }
 
@@ -2129,14 +2084,12 @@ STRINGLIB(rsplit_char)(PyObject* str_obj,
             }
         }
     }
-#ifndef STRINGLIB_MUTABLE
     if (count == 0 && STRINGLIB_CHECK_EXACT(str_obj)) {
         /* ch not in str_obj, so just use str_obj as list[0] */
         Py_INCREF(str_obj);
         PyList_InitItem(list, 0, (PyObject *)str_obj);
         count++;
     } else
-#endif
     if (j >= -1) {
         SPLIT_ADD(str, 0, j + 1);
     }
@@ -2178,14 +2131,12 @@ STRINGLIB(rsplit)(PyObject* str_obj,
         SPLIT_ADD(str, pos + sep_len, j);
         j = pos;
     }
-#ifndef STRINGLIB_MUTABLE
     if (count == 0 && STRINGLIB_CHECK_EXACT(str_obj)) {
         /* No match in str_obj, so just use it as list[0] */
         Py_INCREF(str_obj);
         PyList_InitItem(list, 0, (PyObject *)str_obj);
         count++;
     } else
-#endif
     {
         SPLIT_ADD(str, 0, j);
     }
@@ -2237,14 +2188,12 @@ STRINGLIB(splitlines)(PyObject* str_obj,
             if (keepends)
                 eol = i;
         }
-#ifndef STRINGLIB_MUTABLE
         if (j == 0 && eol == str_len && STRINGLIB_CHECK_EXACT(str_obj)) {
             /* No linebreak in str_obj, so just use it as list[0] */
             if (PyList_Append(list, str_obj))
                 goto onError;
             break;
         }
-#endif
         SPLIT_APPEND(str, j, eol);
         j = i;
     }
@@ -2437,20 +2386,10 @@ STRINGLIB(replace_1char_inplace)(STRINGLIB_CHAR* s, STRINGLIB_CHAR* end,
                 if (!--attempts) {
                     /* if u1 was not found for attempts iterations,
                        use FASTSEARCH() or memchr() */
-#if STRINGLIB_SIZEOF_CHAR == 1
                     s++;
                     s = memchr(s, u1, end - s);
                     if (s == NULL)
                         return;
-#else
-                    Py_ssize_t i;
-                    STRINGLIB_CHAR ch1 = (STRINGLIB_CHAR) u1;
-                    s++;
-                    i = FASTSEARCH(s, end - s, &ch1, 1, 0, FAST_SEARCH);
-                    if (i < 0)
-                        return;
-                    s += i;
-#endif
                     /* restart the dummy loop */
                     break;
                 }
