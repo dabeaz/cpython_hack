@@ -190,6 +190,8 @@ Halfway to somewhere... or nowhere?
 - Day 59 (2/27/2021). Strings.
 - Day 60 (2/28/2021). Strings.
 - Day 61 (3/01/2021). Strings.
+- Day 62 (3/02/2021). Strings.
+- Day 63 (3/03/2021). Strings.
   
 Copyright and License Information
 ---------------------------------

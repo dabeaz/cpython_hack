@@ -1527,7 +1527,11 @@ ensure_unicode(PyObject *obj)
 
 /* Compilation of templated routines */
 
-#include "stringlib/ucs1lib.h"
+/* this is sort of a hack.  there's at least one place (formatting
+   floats) where some stringlib code takes a different path if it's
+   compiled as unicode. */
+
+#define STRINGLIB(F)             ucs1lib_##F
 
 /* ---- fastsearch.h ---- */
 /* stringlib: fastsearch implementation */
@@ -1564,28 +1568,15 @@ ensure_unicode(PyObject *obj)
 #define STRINGLIB_BLOOM(mask, ch)     \
     ((mask &  (1UL << ((ch) & (STRINGLIB_BLOOM_WIDTH -1)))))
 
-#if STRINGLIB_SIZEOF_CHAR == 1
-#  define MEMCHR_CUT_OFF 15
-#else
-#  define MEMCHR_CUT_OFF 40
-#endif
+#define MEMCHR_CUT_OFF 15
 
 Py_LOCAL_INLINE(Py_ssize_t)
-STRINGLIB(find_char)(const STRINGLIB_CHAR* s, Py_ssize_t n, STRINGLIB_CHAR ch)
+STRINGLIB(find_char)(const Py_UCS1* s, Py_ssize_t n, Py_UCS1 ch)
 {
-    const STRINGLIB_CHAR *p, *e;
+    const Py_UCS1 *p, *e;
 
     p = s;
     e = s + n;
-    if (n > MEMCHR_CUT_OFF) {
-#if STRINGLIB_SIZEOF_CHAR == 1
-        p = memchr(s, ch, n);
-        if (p != NULL)
-            return (p - s);
-        return -1;
-#else
-#endif
-    }
     while (p < e) {
         if (*p == ch)
             return (p - s);
@@ -1595,9 +1586,9 @@ STRINGLIB(find_char)(const STRINGLIB_CHAR* s, Py_ssize_t n, STRINGLIB_CHAR ch)
 }
 
 Py_LOCAL_INLINE(Py_ssize_t)
-STRINGLIB(rfind_char)(const STRINGLIB_CHAR* s, Py_ssize_t n, STRINGLIB_CHAR ch)
+STRINGLIB(rfind_char)(const Py_UCS1* s, Py_ssize_t n, Py_UCS1 ch)
 {
-    const STRINGLIB_CHAR *p;
+    const Py_UCS1 *p;
     p = s + n;
     while (p > s) {
         p--;
@@ -1610,8 +1601,8 @@ STRINGLIB(rfind_char)(const STRINGLIB_CHAR* s, Py_ssize_t n, STRINGLIB_CHAR ch)
 #undef MEMCHR_CUT_OFF
 
 Py_LOCAL_INLINE(Py_ssize_t)
-FASTSEARCH(const STRINGLIB_CHAR* s, Py_ssize_t n,
-           const STRINGLIB_CHAR* p, Py_ssize_t m,
+ucs1lib_fastsearch(const Py_UCS1* s, Py_ssize_t n,
+           const Py_UCS1* p, Py_ssize_t m,
            Py_ssize_t maxcount, int mode)
 {
     unsigned long mask;
@@ -1648,8 +1639,8 @@ FASTSEARCH(const STRINGLIB_CHAR* s, Py_ssize_t n,
     mask = 0;
 
     if (mode != FAST_RSEARCH) {
-        const STRINGLIB_CHAR *ss = s + m - 1;
-        const STRINGLIB_CHAR *pp = p + m - 1;
+        const Py_UCS1 *ss = s + m - 1;
+        const Py_UCS1 *pp = p + m - 1;
 
         /* create compressed boyer-moore delta 1 table */
 
@@ -1741,9 +1732,9 @@ FASTSEARCH(const STRINGLIB_CHAR* s, Py_ssize_t n,
 
 Py_LOCAL_INLINE(PyObject*)
 STRINGLIB(partition)(PyObject* str_obj,
-                    const STRINGLIB_CHAR* str, Py_ssize_t str_len,
+                    const Py_UCS1* str, Py_ssize_t str_len,
                     PyObject* sep_obj,
-                    const STRINGLIB_CHAR* sep, Py_ssize_t sep_len)
+                    const Py_UCS1* sep, Py_ssize_t sep_len)
 {
     PyObject* out;
     Py_ssize_t pos;
@@ -1757,23 +1748,23 @@ STRINGLIB(partition)(PyObject* str_obj,
     if (!out)
         return NULL;
 
-    pos = FASTSEARCH(str, str_len, sep, sep_len, -1, FAST_SEARCH);
+    pos = ucs1lib_fastsearch(str, str_len, sep, sep_len, -1, FAST_SEARCH);
 
     if (pos < 0) {
         Py_INCREF(str_obj);
         PyTuple_InitItem(out, 0, (PyObject*) str_obj);
-        Py_INCREF(STRINGLIB_EMPTY);
-        PyTuple_InitItem(out, 1, (PyObject*) STRINGLIB_EMPTY);
-        Py_INCREF(STRINGLIB_EMPTY);
-        PyTuple_InitItem(out, 2, (PyObject*) STRINGLIB_EMPTY);
+        Py_INCREF(unicode_empty);
+        PyTuple_InitItem(out, 1, (PyObject*) unicode_empty);
+        Py_INCREF(unicode_empty);
+        PyTuple_InitItem(out, 2, (PyObject*) unicode_empty);
         return out;
     }
 
-    PyTuple_InitItem(out, 0, STRINGLIB_NEW(str, pos));
+    PyTuple_InitItem(out, 0, _PyUnicode_FromUCS1(str, pos));
     Py_INCREF(sep_obj);
     PyTuple_InitItem(out, 1, sep_obj);
     pos += sep_len;
-    PyTuple_InitItem(out, 2, STRINGLIB_NEW(str + pos, str_len - pos));
+    PyTuple_InitItem(out, 2, _PyUnicode_FromUCS1(str + pos, str_len - pos));
 
     if (PyErr_Occurred()) {
         Py_DECREF(out);
@@ -1785,9 +1776,9 @@ STRINGLIB(partition)(PyObject* str_obj,
 
 Py_LOCAL_INLINE(PyObject*)
 STRINGLIB(rpartition)(PyObject* str_obj,
-                     const STRINGLIB_CHAR* str, Py_ssize_t str_len,
+                     const Py_UCS1* str, Py_ssize_t str_len,
                      PyObject* sep_obj,
-                     const STRINGLIB_CHAR* sep, Py_ssize_t sep_len)
+                     const Py_UCS1* sep, Py_ssize_t sep_len)
 {
     PyObject* out;
     Py_ssize_t pos;
@@ -1801,23 +1792,23 @@ STRINGLIB(rpartition)(PyObject* str_obj,
     if (!out)
         return NULL;
 
-    pos = FASTSEARCH(str, str_len, sep, sep_len, -1, FAST_RSEARCH);
+    pos = ucs1lib_fastsearch(str, str_len, sep, sep_len, -1, FAST_RSEARCH);
 
     if (pos < 0) {
-        Py_INCREF(STRINGLIB_EMPTY);
-        PyTuple_InitItem(out, 0, (PyObject*) STRINGLIB_EMPTY);
-        Py_INCREF(STRINGLIB_EMPTY);
-        PyTuple_InitItem(out, 1, (PyObject*) STRINGLIB_EMPTY);
+        Py_INCREF(unicode_empty);
+        PyTuple_InitItem(out, 0, (PyObject*) unicode_empty);
+        Py_INCREF(unicode_empty);
+        PyTuple_InitItem(out, 1, (PyObject*) unicode_empty);
         Py_INCREF(str_obj);
         PyTuple_InitItem(out, 2, (PyObject*) str_obj);
         return out;
     }
 
-    PyTuple_InitItem(out, 0, STRINGLIB_NEW(str, pos));
+    PyTuple_InitItem(out, 0, _PyUnicode_FromUCS1(str, pos));
     Py_INCREF(sep_obj);
     PyTuple_InitItem(out, 1, sep_obj);
     pos += sep_len;
-    PyTuple_InitItem(out, 2, STRINGLIB_NEW(str + pos, str_len - pos));
+    PyTuple_InitItem(out, 2, _PyUnicode_FromUCS1(str + pos, str_len - pos));
 
     if (PyErr_Occurred()) {
         Py_DECREF(out);
@@ -1848,7 +1839,7 @@ STRINGLIB(rpartition)(PyObject* str_obj,
     (maxsplit >= MAX_PREALLOC ? MAX_PREALLOC : maxsplit+1)
 
 #define SPLIT_APPEND(data, left, right)         \
-    sub = STRINGLIB_NEW((data) + (left),        \
+    sub = _PyUnicode_FromUCS1((data) + (left),        \
                         (right) - (left));      \
     if (sub == NULL)                            \
         goto onError;                           \
@@ -1860,7 +1851,7 @@ STRINGLIB(rpartition)(PyObject* str_obj,
         Py_DECREF(sub);
 
 #define SPLIT_ADD(data, left, right) {          \
-    sub = STRINGLIB_NEW((data) + (left),        \
+    sub = _PyUnicode_FromUCS1((data) + (left),        \
                         (right) - (left));      \
     if (sub == NULL)                            \
         goto onError;                           \
@@ -1882,7 +1873,7 @@ STRINGLIB(rpartition)(PyObject* str_obj,
 
 Py_LOCAL_INLINE(PyObject *)
 STRINGLIB(split_whitespace)(PyObject* str_obj,
-                           const STRINGLIB_CHAR* str, Py_ssize_t str_len,
+                           const Py_UCS1* str, Py_ssize_t str_len,
                            Py_ssize_t maxcount)
 {
     Py_ssize_t i, j, count=0;
@@ -1894,13 +1885,13 @@ STRINGLIB(split_whitespace)(PyObject* str_obj,
 
     i = j = 0;
     while (maxcount-- > 0) {
-        while (i < str_len && STRINGLIB_ISSPACE(str[i]))
+        while (i < str_len && PyString_IsWhitespace(str[i]))
             i++;
         if (i == str_len) break;
         j = i; i++;
-        while (i < str_len && !STRINGLIB_ISSPACE(str[i]))
+        while (i < str_len && !PyString_IsWhitespace(str[i]))
             i++;
-        if (j == 0 && i == str_len && STRINGLIB_CHECK_EXACT(str_obj)) {
+        if (j == 0 && i == str_len && PyString_CheckExact(str_obj)) {
             /* No whitespace in str_obj, so just use it as list[0] */
             Py_INCREF(str_obj);
             PyList_InitItem(list, 0, (PyObject *)str_obj);
@@ -1913,7 +1904,7 @@ STRINGLIB(split_whitespace)(PyObject* str_obj,
     if (i < str_len) {
         /* Only occurs when maxcount was reached */
         /* Skip any remaining whitespace and copy to end of string */
-        while (i < str_len && STRINGLIB_ISSPACE(str[i]))
+        while (i < str_len && PyString_IsWhitespace(str[i]))
             i++;
         if (i != str_len)
             SPLIT_ADD(str, i, str_len);
@@ -1928,8 +1919,8 @@ STRINGLIB(split_whitespace)(PyObject* str_obj,
 
 Py_LOCAL_INLINE(PyObject *)
 STRINGLIB(split_char)(PyObject* str_obj,
-                     const STRINGLIB_CHAR* str, Py_ssize_t str_len,
-                     const STRINGLIB_CHAR ch,
+                     const Py_UCS1* str, Py_ssize_t str_len,
+                     const Py_UCS1 ch,
                      Py_ssize_t maxcount)
 {
     Py_ssize_t i, j, count=0;
@@ -1950,7 +1941,7 @@ STRINGLIB(split_char)(PyObject* str_obj,
             }
         }
     }
-    if (count == 0 && STRINGLIB_CHECK_EXACT(str_obj)) {
+    if (count == 0 && PyString_CheckExact(str_obj)) {
         /* ch not in str_obj, so just use str_obj as list[0] */
         Py_INCREF(str_obj);
         PyList_InitItem(list, 0, (PyObject *)str_obj);
@@ -1969,8 +1960,8 @@ STRINGLIB(split_char)(PyObject* str_obj,
 
 Py_LOCAL_INLINE(PyObject *)
 STRINGLIB(split)(PyObject* str_obj,
-                const STRINGLIB_CHAR* str, Py_ssize_t str_len,
-                const STRINGLIB_CHAR* sep, Py_ssize_t sep_len,
+                const Py_UCS1* str, Py_ssize_t str_len,
+                const Py_UCS1* sep, Py_ssize_t sep_len,
                 Py_ssize_t maxcount)
 {
     Py_ssize_t i, j, pos, count=0;
@@ -1989,14 +1980,14 @@ STRINGLIB(split)(PyObject* str_obj,
 
     i = j = 0;
     while (maxcount-- > 0) {
-        pos = FASTSEARCH(str+i, str_len-i, sep, sep_len, -1, FAST_SEARCH);
+        pos = ucs1lib_fastsearch(str+i, str_len-i, sep, sep_len, -1, FAST_SEARCH);
         if (pos < 0)
             break;
         j = i + pos;
         SPLIT_ADD(str, i, j);
         i = j + sep_len;
     }
-    if (count == 0 && STRINGLIB_CHECK_EXACT(str_obj)) {
+    if (count == 0 && PyString_CheckExact(str_obj)) {
         /* No match in str_obj, so just use it as list[0] */
         Py_INCREF(str_obj);
         PyList_InitItem(list, 0, (PyObject *)str_obj);
@@ -2015,7 +2006,7 @@ STRINGLIB(split)(PyObject* str_obj,
 
 Py_LOCAL_INLINE(PyObject *)
 STRINGLIB(rsplit_whitespace)(PyObject* str_obj,
-                            const STRINGLIB_CHAR* str, Py_ssize_t str_len,
+                            const Py_UCS1* str, Py_ssize_t str_len,
                             Py_ssize_t maxcount)
 {
     Py_ssize_t i, j, count=0;
@@ -2027,13 +2018,13 @@ STRINGLIB(rsplit_whitespace)(PyObject* str_obj,
 
     i = j = str_len - 1;
     while (maxcount-- > 0) {
-        while (i >= 0 && STRINGLIB_ISSPACE(str[i]))
+        while (i >= 0 && PyString_IsWhitespace(str[i]))
             i--;
         if (i < 0) break;
         j = i; i--;
-        while (i >= 0 && !STRINGLIB_ISSPACE(str[i]))
+        while (i >= 0 && !PyString_IsWhitespace(str[i]))
             i--;
-        if (j == str_len - 1 && i < 0 && STRINGLIB_CHECK_EXACT(str_obj)) {
+        if (j == str_len - 1 && i < 0 && PyString_CheckExact(str_obj)) {
             /* No whitespace in str_obj, so just use it as list[0] */
             Py_INCREF(str_obj);
             PyList_InitItem(list, 0, (PyObject *)str_obj);
@@ -2046,7 +2037,7 @@ STRINGLIB(rsplit_whitespace)(PyObject* str_obj,
     if (i >= 0) {
         /* Only occurs when maxcount was reached */
         /* Skip any remaining whitespace and copy to beginning of string */
-        while (i >= 0 && STRINGLIB_ISSPACE(str[i]))
+        while (i >= 0 && PyString_IsWhitespace(str[i]))
             i--;
         if (i >= 0)
             SPLIT_ADD(str, 0, i + 1);
@@ -2063,8 +2054,8 @@ STRINGLIB(rsplit_whitespace)(PyObject* str_obj,
 
 Py_LOCAL_INLINE(PyObject *)
 STRINGLIB(rsplit_char)(PyObject* str_obj,
-                      const STRINGLIB_CHAR* str, Py_ssize_t str_len,
-                      const STRINGLIB_CHAR ch,
+                      const Py_UCS1* str, Py_ssize_t str_len,
+                      const Py_UCS1 ch,
                       Py_ssize_t maxcount)
 {
     Py_ssize_t i, j, count=0;
@@ -2084,7 +2075,7 @@ STRINGLIB(rsplit_char)(PyObject* str_obj,
             }
         }
     }
-    if (count == 0 && STRINGLIB_CHECK_EXACT(str_obj)) {
+    if (count == 0 && PyString_CheckExact(str_obj)) {
         /* ch not in str_obj, so just use str_obj as list[0] */
         Py_INCREF(str_obj);
         PyList_InitItem(list, 0, (PyObject *)str_obj);
@@ -2105,8 +2096,8 @@ STRINGLIB(rsplit_char)(PyObject* str_obj,
 
 Py_LOCAL_INLINE(PyObject *)
 STRINGLIB(rsplit)(PyObject* str_obj,
-                 const STRINGLIB_CHAR* str, Py_ssize_t str_len,
-                 const STRINGLIB_CHAR* sep, Py_ssize_t sep_len,
+                 const Py_UCS1* str, Py_ssize_t str_len,
+                 const Py_UCS1* sep, Py_ssize_t sep_len,
                  Py_ssize_t maxcount)
 {
     Py_ssize_t j, pos, count=0;
@@ -2125,13 +2116,13 @@ STRINGLIB(rsplit)(PyObject* str_obj,
 
     j = str_len;
     while (maxcount-- > 0) {
-        pos = FASTSEARCH(str, j, sep, sep_len, -1, FAST_RSEARCH);
+        pos = ucs1lib_fastsearch(str, j, sep, sep_len, -1, FAST_RSEARCH);
         if (pos < 0)
             break;
         SPLIT_ADD(str, pos + sep_len, j);
         j = pos;
     }
-    if (count == 0 && STRINGLIB_CHECK_EXACT(str_obj)) {
+    if (count == 0 && PyString_CheckExact(str_obj)) {
         /* No match in str_obj, so just use it as list[0] */
         Py_INCREF(str_obj);
         PyList_InitItem(list, 0, (PyObject *)str_obj);
@@ -2152,7 +2143,7 @@ STRINGLIB(rsplit)(PyObject* str_obj,
 
 Py_LOCAL_INLINE(PyObject *)
 STRINGLIB(splitlines)(PyObject* str_obj,
-                     const STRINGLIB_CHAR* str, Py_ssize_t str_len,
+                     const Py_UCS1* str, Py_ssize_t str_len,
                      int keepends)
 {
     /* This does not use the preallocated list because splitlines is
@@ -2175,7 +2166,7 @@ STRINGLIB(splitlines)(PyObject* str_obj,
         Py_ssize_t eol;
 
         /* Find a line and append it */
-        while (i < str_len && !STRINGLIB_ISLINEBREAK(str[i]))
+        while (i < str_len && !BLOOM_LINEBREAK(str[i]))
             i++;
 
         /* Skip the line break reading CRLF as one line break */
@@ -2188,7 +2179,7 @@ STRINGLIB(splitlines)(PyObject* str_obj,
             if (keepends)
                 eol = i;
         }
-        if (j == 0 && eol == str_len && STRINGLIB_CHECK_EXACT(str_obj)) {
+        if (j == 0 && eol == str_len && PyString_CheckExact(str_obj)) {
             /* No linebreak in str_obj, so just use it as list[0] */
             if (PyList_Append(list, str_obj))
                 goto onError;
@@ -2212,8 +2203,8 @@ STRINGLIB(splitlines)(PyObject* str_obj,
 #endif
 
 Py_LOCAL_INLINE(Py_ssize_t)
-STRINGLIB(count)(const STRINGLIB_CHAR* str, Py_ssize_t str_len,
-                const STRINGLIB_CHAR* sub, Py_ssize_t sub_len,
+STRINGLIB(count)(const Py_UCS1* str, Py_ssize_t str_len,
+                const Py_UCS1* sub, Py_ssize_t sub_len,
                 Py_ssize_t maxcount)
 {
     Py_ssize_t count;
@@ -2223,7 +2214,7 @@ STRINGLIB(count)(const STRINGLIB_CHAR* str, Py_ssize_t str_len,
     if (sub_len == 0)
         return (str_len < maxcount) ? str_len + 1 : maxcount;
 
-    count = FASTSEARCH(str, str_len, sub, sub_len, maxcount, FAST_COUNT);
+    count = ucs1lib_fastsearch(str, str_len, sub, sub_len, maxcount, FAST_COUNT);
 
     if (count < 0)
         return 0; /* no match */
@@ -2240,8 +2231,8 @@ STRINGLIB(count)(const STRINGLIB_CHAR* str, Py_ssize_t str_len,
 #endif
 
 Py_LOCAL_INLINE(Py_ssize_t)
-STRINGLIB(find)(const STRINGLIB_CHAR* str, Py_ssize_t str_len,
-               const STRINGLIB_CHAR* sub, Py_ssize_t sub_len,
+STRINGLIB(find)(const Py_UCS1* str, Py_ssize_t str_len,
+               const Py_UCS1* sub, Py_ssize_t sub_len,
                Py_ssize_t offset)
 {
     Py_ssize_t pos;
@@ -2250,7 +2241,7 @@ STRINGLIB(find)(const STRINGLIB_CHAR* str, Py_ssize_t str_len,
     if (sub_len == 0)
         return offset;
 
-    pos = FASTSEARCH(str, str_len, sub, sub_len, -1, FAST_SEARCH);
+    pos = ucs1lib_fastsearch(str, str_len, sub, sub_len, -1, FAST_SEARCH);
 
     if (pos >= 0)
         pos += offset;
@@ -2259,8 +2250,8 @@ STRINGLIB(find)(const STRINGLIB_CHAR* str, Py_ssize_t str_len,
 }
 
 Py_LOCAL_INLINE(Py_ssize_t)
-STRINGLIB(rfind)(const STRINGLIB_CHAR* str, Py_ssize_t str_len,
-                const STRINGLIB_CHAR* sub, Py_ssize_t sub_len,
+STRINGLIB(rfind)(const Py_UCS1* str, Py_ssize_t str_len,
+                const Py_UCS1* sub, Py_ssize_t sub_len,
                 Py_ssize_t offset)
 {
     Py_ssize_t pos;
@@ -2269,7 +2260,7 @@ STRINGLIB(rfind)(const STRINGLIB_CHAR* str, Py_ssize_t str_len,
     if (sub_len == 0)
         return str_len + offset;
 
-    pos = FASTSEARCH(str, str_len, sub, sub_len, -1, FAST_RSEARCH);
+    pos = ucs1lib_fastsearch(str, str_len, sub, sub_len, -1, FAST_RSEARCH);
 
     if (pos >= 0)
         pos += offset;
@@ -2278,16 +2269,16 @@ STRINGLIB(rfind)(const STRINGLIB_CHAR* str, Py_ssize_t str_len,
 }
 
 Py_LOCAL_INLINE(Py_ssize_t)
-STRINGLIB(find_slice)(const STRINGLIB_CHAR* str, Py_ssize_t str_len,
-                     const STRINGLIB_CHAR* sub, Py_ssize_t sub_len,
+STRINGLIB(find_slice)(const Py_UCS1* str, Py_ssize_t str_len,
+                     const Py_UCS1* sub, Py_ssize_t sub_len,
                      Py_ssize_t start, Py_ssize_t end)
 {
     return STRINGLIB(find)(str + start, end - start, sub, sub_len, start);
 }
 
 Py_LOCAL_INLINE(Py_ssize_t)
-STRINGLIB(rfind_slice)(const STRINGLIB_CHAR* str, Py_ssize_t str_len,
-                      const STRINGLIB_CHAR* sub, Py_ssize_t sub_len,
+STRINGLIB(rfind_slice)(const Py_UCS1* str, Py_ssize_t str_len,
+                      const Py_UCS1* sub, Py_ssize_t sub_len,
                       Py_ssize_t start, Py_ssize_t end)
 {
     return STRINGLIB(rfind)(str + start, end - start, sub, sub_len, start);
@@ -2362,7 +2353,7 @@ STRINGLIB(parse_args_finds)(const char * function_name, PyObject *args,
 #endif
 
 Py_LOCAL_INLINE(void)
-STRINGLIB(replace_1char_inplace)(STRINGLIB_CHAR* s, STRINGLIB_CHAR* end,
+STRINGLIB(replace_1char_inplace)(Py_UCS1* s, Py_UCS1* end,
                                  Py_UCS1 u1, Py_UCS1 u2, Py_ssize_t maxcount)
 {
     *s = u2;
@@ -2398,17 +2389,6 @@ STRINGLIB(replace_1char_inplace)(STRINGLIB_CHAR* s, STRINGLIB_CHAR* end,
         *s = u2;
     }
 }
-
-/* -- undef.h -- */
-#undef  FASTSEARCH
-#undef  STRINGLIB
-#undef  STRINGLIB_SIZEOF_CHAR
-#undef  STRINGLIB_MAX_CHAR
-#undef  STRINGLIB_CHAR
-#undef  STRINGLIB_STR
-#undef  STRINGLIB_LEN
-#undef  STRINGLIB_NEW
-#undef STRINGLIB_IS_UNICODE
 
 /* --- Unicode Object ----------------------------------------------------- */
 
