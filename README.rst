@@ -192,6 +192,11 @@ Halfway to somewhere... or nowhere?
 - Day 61 (3/01/2021). Strings.
 - Day 62 (3/02/2021). Strings.
 - Day 63 (3/03/2021). Strings.
+- Day 64 (3/04/2021). Pondering
+- Day 65 (3/05/2021). Pondering.
+- Day 66 (3/06/2021). Pondering.
+- Day 67 (3/07/2021). Biking.
+- Day 68 (3/08/2021). Minor tuple cleanup.
   
 Copyright and License Information
 ---------------------------------

@@ -14,9 +14,8 @@ typedef struct {
     PyObject *ob_item[1];
 } PyTupleObject;
 
-#define _PyTuple_CAST(op) (assert(PyTuple_Check(op)), (PyTupleObject *)(op))
-#define PyTuple_GET_SIZE(op)    Py_SIZE(_PyTuple_CAST(op))
-#define PyTuple_GET_ITEM(op, i) (_PyTuple_CAST(op)->ob_item[i])
+#define PyTuple_GET_SIZE(op)    Py_SIZE((PyTupleObject *) op)
+#define PyTuple_GET_ITEM(op, i) (((PyTupleObject *) op)->ob_item[i])
 
 int PyTuple_Check(PyObject *op) {
   return PyType_HasFeature(Py_TYPE(op), Py_TPFLAGS_TUPLE_SUBCLASS);
@@ -24,6 +23,34 @@ int PyTuple_Check(PyObject *op) {
 
 int PyTuple_CheckExact(PyObject *op) {
   return Py_IS_TYPE(op, &PyTuple_Type);
+}
+
+PyObject *
+PyTuple_Index(PyTupleObject *self, PyObject *value, Py_ssize_t start,
+                 Py_ssize_t stop)
+{
+    Py_ssize_t i;
+
+    if (start < 0) {
+        start += Py_SIZE(self);
+        if (start < 0)
+            start = 0;
+    }
+    if (stop < 0) {
+        stop += Py_SIZE(self);
+    }
+    else if (stop > Py_SIZE(self)) {
+        stop = Py_SIZE(self);
+    }
+    for (i = start; i < stop; i++) {
+        int cmp = PyObject_RichCompareBool(self->ob_item[i], value, Py_EQ);
+        if (cmp > 0)
+            return PyLong_FromSsize_t(i);
+        else if (cmp < 0)
+            return NULL;
+    }
+    PyErr_SetString(PyExc_ValueError, "tuple.index(x): x not in tuple");
+    return NULL;
 }
 
 /*[clinic input]
@@ -45,10 +72,6 @@ PyDoc_STRVAR(tuple_index__doc__,
 
 #define TUPLE_INDEX_METHODDEF    \
     {"index", (PyCFunction)(void(*)(void))tuple_index, METH_FASTCALL, tuple_index__doc__},
-
-static PyObject *
-tuple_index_impl(PyTupleObject *self, PyObject *value, Py_ssize_t start,
-                 Py_ssize_t stop);
 
 static PyObject *
 tuple_index(PyTupleObject *self, PyObject *const *args, Py_ssize_t nargs)
@@ -75,7 +98,7 @@ tuple_index(PyTupleObject *self, PyObject *const *args, Py_ssize_t nargs)
         goto exit;
     }
 skip_optional:
-    return_value = tuple_index_impl(self, value, start, stop);
+    return_value = PyTuple_Index(self, value, start, stop);
 
 exit:
     return return_value;
@@ -88,7 +111,7 @@ PyDoc_STRVAR(tuple_count__doc__,
 "Return number of occurrences of value.");
 
 #define TUPLE_COUNT_METHODDEF    \
-    {"count", (PyCFunction)tuple_count, METH_O, tuple_count__doc__},
+    {"count", (PyCFunction)PyTuple_Count, METH_O, tuple_count__doc__},
 
 PyDoc_STRVAR(tuple_new__doc__,
 "tuple(iterable=(), /)\n"
@@ -560,47 +583,6 @@ tuplerepeat(PyTupleObject *a, Py_ssize_t n)
     return (PyObject *) np;
 }
 
-/*[clinic input]
-tuple.index
-
-    value: object
-    start: slice_index(accept={int}) = 0
-    stop: slice_index(accept={int}, c_default="PY_SSIZE_T_MAX") = sys.maxsize
-    /
-
-Return first index of value.
-
-Raises ValueError if the value is not present.
-[clinic start generated code]*/
-
-static PyObject *
-tuple_index_impl(PyTupleObject *self, PyObject *value, Py_ssize_t start,
-                 Py_ssize_t stop)
-/*[clinic end generated code: output=07b6f9f3cb5c33eb input=fb39e9874a21fe3f]*/
-{
-    Py_ssize_t i;
-
-    if (start < 0) {
-        start += Py_SIZE(self);
-        if (start < 0)
-            start = 0;
-    }
-    if (stop < 0) {
-        stop += Py_SIZE(self);
-    }
-    else if (stop > Py_SIZE(self)) {
-        stop = Py_SIZE(self);
-    }
-    for (i = start; i < stop; i++) {
-        int cmp = PyObject_RichCompareBool(self->ob_item[i], value, Py_EQ);
-        if (cmp > 0)
-            return PyLong_FromSsize_t(i);
-        else if (cmp < 0)
-            return NULL;
-    }
-    PyErr_SetString(PyExc_ValueError, "tuple.index(x): x not in tuple");
-    return NULL;
-}
 
 /*[clinic input]
 tuple.count
@@ -611,9 +593,8 @@ tuple.count
 Return number of occurrences of value.
 [clinic start generated code]*/
 
-static PyObject *
-tuple_count(PyTupleObject *self, PyObject *value)
-/*[clinic end generated code: output=aa927affc5a97605 input=531721aff65bd772]*/
+PyObject *
+PyTuple_Count(PyTupleObject *self, PyObject *value)
 {
     Py_ssize_t count = 0;
     Py_ssize_t i;

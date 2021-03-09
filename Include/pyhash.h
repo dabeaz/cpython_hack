@@ -136,6 +136,7 @@ PyAPI_FUNC(PyHash_FuncDef*) PyHash_GetFuncDef(void);
 #  endif /* uint64_t && uint32_t && aligned */
 #endif /* Py_HASH_ALGORITHM */
 
+  
 #ifdef __cplusplus
 }
 #endif
