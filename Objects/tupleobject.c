@@ -53,6 +53,26 @@ PyTuple_Index(PyTupleObject *self, PyObject *value, Py_ssize_t start,
     return NULL;
 }
 
+PyObject *
+PyTuple_Count(PyTupleObject *self, PyObject *value)
+{
+    Py_ssize_t count = 0;
+    Py_ssize_t i;
+
+    for (i = 0; i < Py_SIZE(self); i++) {
+        int cmp = PyObject_RichCompareBool(self->ob_item[i], value, Py_EQ);
+        if (cmp > 0)
+            count++;
+        else if (cmp < 0)
+            return NULL;
+    }
+    return PyLong_FromSsize_t(count);
+}
+
+
+
+
+
 /*[clinic input]
 class tuple "PyTupleObject *" "&PyTuple_Type"
 [clinic start generated code]*/
@@ -294,8 +314,8 @@ tupledealloc(PyTupleObject *op)
     Py_TYPE(op)->tp_free((PyObject *)op);
 }
 
-static PyObject *
-tuplerepr(PyTupleObject *v)
+PyObject *
+PyTuple_Repr(PyTupleObject *v)
 {
     Py_ssize_t i, n;
     _PyStringWriter writer;
@@ -593,22 +613,6 @@ tuple.count
 Return number of occurrences of value.
 [clinic start generated code]*/
 
-PyObject *
-PyTuple_Count(PyTupleObject *self, PyObject *value)
-{
-    Py_ssize_t count = 0;
-    Py_ssize_t i;
-
-    for (i = 0; i < Py_SIZE(self); i++) {
-        int cmp = PyObject_RichCompareBool(self->ob_item[i], value, Py_EQ);
-        if (cmp > 0)
-            count++;
-        else if (cmp < 0)
-            return NULL;
-    }
-    return PyLong_FromSsize_t(count);
-}
-
 static PyObject *
 tuplerichcompare(PyObject *v, PyObject *w, int op)
 {
@@ -838,7 +842,7 @@ PyTypeObject PyTuple_Type = {
     0,                                          /* tp_getattr */
     0,                                          /* tp_setattr */
     0,                                          /* tp_as_async */
-    (reprfunc)tuplerepr,                        /* tp_repr */
+    (reprfunc)PyTuple_Repr,                        /* tp_repr */
     0,                                          /* tp_as_number */
     &tuple_as_sequence,                         /* tp_as_sequence */
     &tuple_as_mapping,                          /* tp_as_mapping */

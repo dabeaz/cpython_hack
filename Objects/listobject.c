@@ -40,10 +40,6 @@ int PyList_Check(PyObject *op) {
   return PyType_HasFeature(Py_TYPE(op), Py_TPFLAGS_LIST_SUBCLASS);
 }
 
-int PyList_CheckExact(PyObject *op) {
-  return Py_IS_TYPE(op, &PyList_Type);
-}
-
 /*[clinic input]
 class list "PyListObject *" "&PyList_Type"
 [clinic start generated code]*/
@@ -1163,8 +1159,7 @@ list_extend(PyListObject *self, PyObject *iterable)
        1) lists and tuples which can use PySequence_Fast ops
        2) extending self to self requires making a copy first
     */
-    if (PyList_CheckExact(iterable) || PyTuple_CheckExact(iterable) ||
-                (PyObject *)self == iterable) {
+    if ((PyObject *)self == iterable) {
         PyObject **src, **dest;
         iterable = PySequence_Fast(iterable, "argument must be iterable");
         if (!iterable)
@@ -1199,7 +1194,7 @@ list_extend(PyListObject *self, PyObject *iterable)
         Py_DECREF(iterable);
         Py_RETURN_NONE;
     }
-
+    
     it = PyObject_GetIter(iterable);
     if (it == NULL)
         return NULL;

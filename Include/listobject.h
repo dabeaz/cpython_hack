@@ -20,8 +20,6 @@ extern "C" {
 PyAPI_DATA(PyTypeObject) PyList_Type;
   
 PyAPI_FUNC(int) PyList_Check(PyObject *);
-PyAPI_FUNC(int) PyList_CheckExact(PyObject *);  
-  
 PyAPI_FUNC(PyObject *) PyList_New(Py_ssize_t size);
 PyAPI_FUNC(Py_ssize_t) PyList_Size(PyObject *);
 

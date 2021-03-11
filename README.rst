@@ -197,6 +197,9 @@ Halfway to somewhere... or nowhere?
 - Day 66 (3/06/2021). Pondering.
 - Day 67 (3/07/2021). Biking.
 - Day 68 (3/08/2021). Minor tuple cleanup.
+- Day 69 (3/09/2021). Pondering.
+- Day 70 (3/10/2021). Pondering.
+- Day 71 (3/11/2021). Removed PyList_CheckExact.
   
 Copyright and License Information
 ---------------------------------

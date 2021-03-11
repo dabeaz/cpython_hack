@@ -1256,11 +1256,13 @@ PySequence_Fast(PyObject *v, const char *m)
         return null_error();
     }
 
+    #if 0
     if (PyList_CheckExact(v) || PyTuple_CheckExact(v)) {
         Py_INCREF(v);
         return v;
     }
-
+    #endif
+    
     it = PyObject_GetIter(v);
     if (it == NULL) {
         if (PyErr_ExceptionMatches(PyExc_TypeError))
@@ -1514,7 +1516,7 @@ method_output_as_list(PyObject *o, _Py_Identifier *meth_id)
 
     assert(o != NULL);
     meth_output = _PyObject_CallMethodIdNoArgs(o, meth_id);
-    if (meth_output == NULL || PyList_CheckExact(meth_output)) {
+    if (meth_output == NULL) { //  || PyList_CheckExact(meth_output)) {
         return meth_output;
     }
     it = PyObject_GetIter(meth_output);
